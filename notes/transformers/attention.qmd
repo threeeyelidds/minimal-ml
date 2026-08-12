@@ -1,0 +1,79 @@
+---
+title: "Scaled Dot-Product Attention"
+---
+
+## Intuition
+
+Attention computes a content-dependent weighted average of values.
+
+## Derivation
+
+Given query, key, and value matrices,
+
+$$
+Q \in \mathbb{R}^{n_q \times d}, \quad
+K \in \mathbb{R}^{n_k \times d}, \quad
+V \in \mathbb{R}^{n_k \times d_v},
+$$
+
+scaled dot-product attention is
+
+$$
+\operatorname{Attention}(Q,K,V)
+=
+\operatorname{softmax}\left(\frac{QK^T}{\sqrt d}\right)V.
+$$
+
+### Why divide by $\sqrt d$?
+
+If the coordinates of $q$ and $k$ are approximately independent with unit variance, then
+
+$$
+\operatorname{Var}(q^T k) \approx d.
+$$
+
+Dividing by $\sqrt d$ keeps logits at an approximately constant scale as head dimension grows, avoiding increasingly saturated softmax outputs.
+
+## Minimal PyTorch implementation
+
+```{python}
+import math
+import torch
+
+
+def attention(q, k, v, mask=None):
+    scores = q @ k.transpose(-2, -1) / math.sqrt(q.shape[-1])
+
+    if mask is not None:
+        scores = scores.masked_fill(~mask, float("-inf"))
+
+    weights = torch.softmax(scores, dim=-1)
+    return weights @ v
+```
+
+## Sanity check
+
+```{python}
+torch.manual_seed(0)
+q = torch.randn(2, 4, 8)
+k = torch.randn(2, 4, 8)
+v = torch.randn(2, 4, 8)
+
+out = attention(q, k, v)
+out.shape
+```
+
+## Interview questions
+
+- Why is the scaling factor $1/\sqrt d$ rather than $1/d$?
+- What happens to gradient flow when attention logits become very large?
+- What are the time and memory complexities of standard attention?
+- What does FlashAttention change, and what does it leave mathematically unchanged?
+- How do MHA, MQA, and GQA differ?
+
+## Things I should be able to implement next
+
+- causal masking
+- multi-head attention
+- KV caching
+- grouped-query attention

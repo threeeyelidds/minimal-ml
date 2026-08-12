@@ -1,0 +1,12 @@
+{
+  "hash": "23b664d9dd45f7ea82b6ef2161c86c0c",
+  "result": {
+    "engine": "jupyter",
+    "markdown": "---\ntitle: \"Scaled Dot-Product Attention\"\n---\n\n## Intuition\n\nAttention computes a content-dependent weighted average of values.\n\n## Derivation\n\nGiven query, key, and value matrices,\n\n$$\nQ \\in \\mathbb{R}^{n_q \\times d}, \\quad\nK \\in \\mathbb{R}^{n_k \\times d}, \\quad\nV \\in \\mathbb{R}^{n_k \\times d_v},\n$$\n\nscaled dot-product attention is\n\n$$\n\\operatorname{Attention}(Q,K,V)\n=\n\\operatorname{softmax}\\left(\\frac{QK^T}{\\sqrt d}\\right)V.\n$$\n\n### Why divide by $\\sqrt d$?\n\nIf the coordinates of $q$ and $k$ are approximately independent with unit variance, then\n\n$$\n\\operatorname{Var}(q^T k) \\approx d.\n$$\n\nDividing by $\\sqrt d$ keeps logits at an approximately constant scale as head dimension grows, avoiding increasingly saturated softmax outputs.\n\n## Minimal PyTorch implementation\n\n::: {#f50c659d .cell execution_count=1}\n``` {.python .cell-code}\nimport math\nimport torch\n\n\ndef attention(q, k, v, mask=None):\n    scores = q @ k.transpose(-2, -1) / math.sqrt(q.shape[-1])\n\n    if mask is not None:\n        scores = scores.masked_fill(~mask, float(\"-inf\"))\n\n    weights = torch.softmax(scores, dim=-1)\n    return weights @ v\n```\n:::\n\n\n## Sanity check\n\n::: {#273d174d .cell execution_count=2}\n``` {.python .cell-code}\ntorch.manual_seed(0)\nq = torch.randn(2, 4, 8)\nk = torch.randn(2, 4, 8)\nv = torch.randn(2, 4, 8)\n\nout = attention(q, k, v)\nout.shape\n```\n\n::: {.cell-output .cell-output-display execution_count=2}\n```\ntorch.Size([2, 4, 8])\n```\n:::\n:::\n\n\n## Interview questions\n\n- Why is the scaling factor $1/\\sqrt d$ rather than $1/d$?\n- What happens to gradient flow when attention logits become very large?\n- What are the time and memory complexities of standard attention?\n- What does FlashAttention change, and what does it leave mathematically unchanged?\n- How do MHA, MQA, and GQA differ?\n\n## Things I should be able to implement next\n\n- causal masking\n- multi-head attention\n- KV caching\n- grouped-query attention\n\n",
+    "supporting": [
+      "attention_files"
+    ],
+    "filters": [],
+    "includes": {}
+  }
+}

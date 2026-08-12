@@ -1,0 +1,16 @@
+---
+title: "Notes"
+---
+
+## Transformers
+
+- [Scaled Dot-Product Attention](transformers/attention.qmd)
+
+## Coming next
+
+- KL divergence
+- DPO
+- PPO / GRPO
+- KV cache
+- FlashAttention
+- Distributed training

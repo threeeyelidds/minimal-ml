@@ -1,0 +1,9 @@
+---
+title: "Blog"
+listing:
+  contents: "*.qmd"
+  sort: "date desc"
+  type: default
+---
+
+Longer notes worth polishing and sharing publicly.
