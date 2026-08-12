@@ -19,6 +19,9 @@ format:
     code-fold: false
     code-copy: true
     theme: cosmo
+    css:
+      - styles.css
+      - colors.css
 
 execute:
   freeze: auto

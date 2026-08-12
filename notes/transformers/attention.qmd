@@ -4,12 +4,13 @@ title: "Scaled Dot-Product Attention"
 
 ## Intuition
 
-Compared to MLP, attention uses input-dependent mixing weights rather than a fixed learned weight matrix. The attention weight $w_{ij}$ measures how strongly the query representation $q_i$ matches the key representation  $k_j$. For each output token $o_i$, it is a weighted sum of the value sequence tokens $v_j$, weighted by softmax-normalized similarity scores between the query token $q_i$ and each key token $k_j$.
+Compared to MLP, attention uses input-dependent mixing weights rather than a fixed learned weight matrix. The attention weight $w_{ij}$ measures **how strongly the query representation $q_i$ matches the key representation  $k_j$**.  
+For each output token $o_i$, it is a weighted sum of the value sequence tokens $v_j$, weighted by softmax-normalized similarity scores between the query token $q_i$ and each key token $k_j$.
 So intuitively:
 
-query→which positions matter?
-keys→what does each position match on?
-values→what information gets retrieved?
+query→which positions matter?  
+keys→what does each position match on?  
+values→what information gets retrieved?  
 
 ## Derivation
 
@@ -29,15 +30,161 @@ $$
 \operatorname{softmax}\left(\frac{QK^T}{\sqrt d}\right)V.
 $$
 
-### Why divide by $\sqrt d$?
+## Why Scale Dot-Product Attention by $\sqrt{d_k}$?
 
-If the coordinates of $q$ and $k$ are approximately independent with unit variance, then
+### Why does a larger $QK^T$ make softmax more peaked?
+
+Softmax depends on the **difference between logits**, not whether all logits are large.
 
 $$
-\operatorname{Var}(q^T k) \approx d.
+\operatorname{softmax}(x_i)
+=
+\frac{e^{x_i}}
+{\sum_{j=1}^{n} e^{x_j}}
 $$
 
-Dividing by $\sqrt d$ keeps logits at an approximately constant scale as head dimension grows, avoiding increasingly saturated softmax outputs.
+For example:
+
+$$
+\operatorname{softmax}([1,2,3])
+\approx
+[0.09, 0.24, 0.67]
+$$
+
+but
+
+$$
+\operatorname{softmax}([10,20,30])
+\approx
+[0,0,1].
+$$
+
+Softmax is invariant to adding a constant:
+
+$$
+\operatorname{softmax}(x)
+=
+\operatorname{softmax}(x+c),
+$$
+
+but not to multiplying by a constant:
+
+$$
+\operatorname{softmax}(\alpha x)
+=
+\operatorname{softmax}\left(\frac{x}{T}\right),
+\qquad
+T=\frac{1}{\alpha}.
+$$
+
+So increasing the spread of the logits is equivalent to lowering the softmax temperature, which makes the distribution more peaked.
+
+### Why does $q^T k$ grow with dimension?
+
+Assume each component is approximately zero-mean with unit variance:
+
+$$
+q_r, k_r \sim (0,1).
+$$
+
+Then
+
+$$
+q^T k
+=
+\sum_{r=1}^{d_k} q_r k_r.
+$$
+
+If the terms are approximately independent,
+
+$$
+\operatorname{Var}(q^T k)
+\approx d_k,
+$$
+
+so
+
+$$
+\operatorname{Std}(q^T k)
+\approx \sqrt{d_k}.
+$$
+
+The scores do not all become large positive numbers. Instead, their **spread** grows with $\sqrt{d_k}$, which makes softmax increasingly saturated (peaked).
+
+Therefore attention uses
+
+$$
+\frac{q^T k}{\sqrt{d_k}}
+$$
+
+so that the logit scale stays roughly constant as $d_k$ changes.
+
+> **Intuition:** $1/\sqrt{d_k}$ is variance normalization, not vector normalization.
+
+### Why Not Use Cosine Similarity?
+
+Cosine similarity is
+
+$$
+\frac{q^T k}{\|q\|\|k\|}.
+$$
+
+Since
+
+$$
+q^T k
+=
+\|q\|\|k\|\cos\theta,
+$$
+
+::: {.purple}
+**dot-product attention can use both:**
+
+- **direction / alignment**
+- **vector magnitude**
+:::
+[**Cosine similarity removes the magnitude information.**]{.pink}
+
+This matters because $Q$ and $K$ are learned specifically for attention:
+
+$$
+q_i = x_iW_Q,
+\qquad
+k_j = x_jW_K.
+$$
+
+The model may therefore learn useful information in their norms.
+
+For random high-dimensional vectors,
+
+$$
+\|q\| \approx \sqrt{d_k},
+\qquad
+\|k\| \approx \sqrt{d_k},
+$$
+
+so
+
+$$
+\frac{q^T k}{\|q\|\|k\|}
+\approx
+O\left(\frac{1}{\sqrt{d_k}}\right).
+$$
+
+Cosine similarities therefore concentrate near zero as dimension grows, so cosine attention usually needs an additional temperature parameter to control softmax sharpness.
+
+### Interview Takeaway
+
+Scaled dot-product attention uses
+
+$$
+\operatorname{softmax}
+\left(
+\frac{QK^T}{\sqrt{d_k}}
+\right)V.
+$$
+
+The $1/\sqrt{d_k}$ term keeps the **variance of attention logits roughly constant** as head dimension grows, preventing softmax saturation while preserving magnitude information in $Q$ and $K$.
 
 ## Minimal PyTorch implementation
 
