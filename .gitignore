@@ -3,8 +3,8 @@ __pycache__/
 .ipynb_checkpoints/
 .quarto/
 _site/
+_freeze/
 .DS_Store
 
 /.quarto/
-_freeze/
 **/*.quarto_ipynb
