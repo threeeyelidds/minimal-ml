@@ -4,7 +4,12 @@ title: "Scaled Dot-Product Attention"
 
 ## Intuition
 
-Attention computes a content-dependent weighted average of values.
+Compared to MLP, attention uses input-dependent mixing weights rather than a fixed learned weight matrix. The attention weight $w_{ij}$ measures how strongly the query representation $q_i$ matches the key representation  $k_j$. For each output token $o_i$, it is a weighted sum of the value sequence tokens $v_j$, weighted by softmax-normalized similarity scores between the query token $q_i$ and each key token $k_j$.
+So intuitively:
+
+query→which positions matter?
+keys→what does each position match on?
+values→what information gets retrieved?
 
 ## Derivation
 
