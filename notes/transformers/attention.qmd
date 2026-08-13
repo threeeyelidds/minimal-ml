@@ -1,5 +1,5 @@
 ---
-title: "Scaled Dot-Product Attention"
+title: "Attention"
 ---
 
 ## Intuition
@@ -12,7 +12,8 @@ query→which positions matter?
 keys→what does each position match on?  
 values→what information gets retrieved?  
 
-## Derivation
+## SDPA 
+### Derivation
 
 Given query, key, and value matrices,
 
@@ -29,6 +30,35 @@ $$
 =
 \operatorname{softmax}\left(\frac{QK^T}{\sqrt d}\right)V.
 $$
+
+### Minimal PyTorch implementation
+
+```{python}
+import math
+import torch
+
+
+def attention(q, k, v, mask=None):
+    scores = q @ k.transpose(-2, -1) / math.sqrt(q.shape[-1])
+
+    if mask is not None:
+        scores = scores.masked_fill(~mask, float("-inf"))
+
+    weights = torch.softmax(scores, dim=-1)
+    return weights @ v
+```
+
+### Sanity check
+
+```{python}
+torch.manual_seed(0)
+q = torch.randn(2, 4, 8)
+k = torch.randn(2, 4, 8)
+v = torch.randn(2, 4, 8)
+
+out = attention(q, k, v)
+out.shape
+```
 
 ## Why Scale Dot-Product Attention by $\sqrt{d_k}$?
 
@@ -186,46 +216,342 @@ $$
 
 The $1/\sqrt{d_k}$ term keeps the **variance of attention logits roughly constant** as head dimension grows, preventing softmax saturation while preserving magnitude information in $Q$ and $K$.
 
-## Minimal PyTorch implementation
-
-```{python}
-import math
-import torch
-
-
-def attention(q, k, v, mask=None):
-    scores = q @ k.transpose(-2, -1) / math.sqrt(q.shape[-1])
-
-    if mask is not None:
-        scores = scores.masked_fill(~mask, float("-inf"))
-
-    weights = torch.softmax(scores, dim=-1)
-    return weights @ v
-```
-
-## Sanity check
-
-```{python}
-torch.manual_seed(0)
-q = torch.randn(2, 4, 8)
-k = torch.randn(2, 4, 8)
-v = torch.randn(2, 4, 8)
-
-out = attention(q, k, v)
-out.shape
-```
 
 ## Interview questions
 
 - Why is the scaling factor $1/\sqrt d$ rather than $1/d$?
 - What happens to gradient flow when attention logits become very large?
+    - Softmax saturation. Gradients vanish for Q and K, but not for V. The routing becomes fixed.
 - What are the time and memory complexities of standard attention?
 - What does FlashAttention change, and what does it leave mathematically unchanged?
 - How do MHA, MQA, and GQA differ?
 
-## Things I should be able to implement next
+## Multi-Head Attention (MHA)
 
-- causal masking
-- multi-head attention
-- KV caching
-- grouped-query attention
+### Motivation
+
+Attention can be viewed as factorizing interaction into **token mixing** and **feature mixing**. MHA gives different feature subspaces different [token-mixing operators]{.purple}.
+
+In single-head attention, the same token-mixing scalar $A_{ij}$ is shared across all feature dimensions. Multi-head attention [**relaxes**]{.purple} this by introducing a head dimension, $A_{ij}^{(h)}$, so different feature subspaces can use different attention weights. In this sense, heads are an efficient way to make token mixing conditional on the representation subspace, without paying the cost of fully feature-dependent routing $A_{ijc}$.
+
+Instead of performing one attention operation with the full model dimension, multi-head attention projects the input into $h$ different query, key, and value subspaces:
+
+$$
+Q_i = XW_i^Q, \qquad
+K_i = XW_i^K, \qquad
+V_i = XW_i^V.
+$$
+
+Each head independently computes
+
+$$
+\operatorname{head}_i
+=
+\operatorname{Attention}(Q_i,K_i,V_i),
+$$
+
+and the results are concatenated and projected:
+
+$$
+\operatorname{MHA}(X)
+=
+\operatorname{Concat}(\operatorname{head}_1,\ldots,\operatorname{head}_h)W_O.
+$$
+
+
+::: {.note-box}
+### Low-Rank Note
+
+For each head,
+
+$$
+S^{(h)} = Q^{(h)}K^{(h)T}
+$$
+
+and therefore
+
+$$
+\operatorname{rank}(S^{(h)}) \le d_h.
+$$
+
+So each head's pre-softmax token-interaction matrix is low-rank when $d_h \ll T$.
+
+:::
+
+#### Shapes
+
+Fill in the missing shapes:
+
+| Tensor | Shape |
+|---|---|
+| Input $X$ | $(B,T,d_{\text{model}})$ |
+| Projected $Q,K,V$ | TODO |
+| Split into heads | TODO |
+| Attention scores | TODO |
+| Per-head output | TODO |
+| Concatenated output | TODO |
+
+> **Learning prompt:** If the total projection dimension remains $d_{\text{model}}$, does using more heads increase the leading-order compute complexity?
+
+### Minimal PyTorch implementation
+
+```{python}
+import torch.nn as nn
+
+
+class MultiHeadSelfAttention(nn.Module):
+    def __init__(self, d_model, num_heads):
+        super().__init__()
+        assert d_model % num_heads == 0
+
+        self.d_model = d_model
+        self.num_heads = num_heads
+        self.d_head = d_model // num_heads
+
+        self.qkv_proj = nn.Linear(d_model, 3 * d_model, bias=False)
+        self.out_proj = nn.Linear(d_model, d_model, bias=False)
+
+    def forward(self, x, mask=None):
+        batch_size, seq_len, _ = x.shape
+
+        # (B, T, 3 * D) -> three tensors of shape (B, T, D)
+        q, k, v = self.qkv_proj(x).chunk(3, dim=-1)
+
+        # (B, T, D) -> (B, H, T, D_h)
+        def split_heads(tensor):
+            return tensor.view(
+                batch_size, seq_len, self.num_heads, self.d_head
+            ).transpose(1, 2)
+
+        q, k, v = map(split_heads, (q, k, v))
+
+        # mask must be broadcastable to (B, H, T, T), where True means allowed.
+        head_outputs = attention(q, k, v, mask=mask)
+
+        # (B, H, T, D_h) -> (B, T, D)
+        output = head_outputs.transpose(1, 2).contiguous().view(
+            batch_size, seq_len, self.d_model
+        )
+        return self.out_proj(output)
+```
+
+```{python}
+torch.manual_seed(0)
+x = torch.randn(2, 4, 16)
+mha = MultiHeadSelfAttention(d_model=16, num_heads=4)
+mha(x).shape
+```
+
+#### Implementation exercises
+
+- [ ] Annotate every intermediate tensor shape.
+- [ ] Replace the fused `qkv_proj` with three separate projections.
+- [ ] Extend the module from self-attention to cross-attention.
+- [ ] Add attention dropout and output dropout.
+- [ ] Compare the output against `torch.nn.MultiheadAttention`.
+
+## Causal Masking
+
+In autoregressive self-attention, token $i$ must not attend to future tokens $j>i$.
+
+$$
+M_{ij}
+=
+\begin{cases}
+0, & j \le i, \\
+-\infty, & j > i.
+\end{cases}
+$$
+
+The mask is applied **before** softmax:
+
+$$
+A
+=
+\operatorname{softmax}\left(
+\frac{QK^T}{\sqrt{d_k}} + M
+\right).
+$$
+
+### Minimal implementation
+
+The `attention` function above uses a Boolean mask where `True` means that attention is allowed.
+
+```{python}
+def causal_mask(seq_len, device=None):
+    return torch.ones(
+        seq_len, seq_len, dtype=torch.bool, device=device
+    ).tril()
+
+
+mask = causal_mask(seq_len=4)
+mask
+```
+
+For multi-head attention, `(T, T)` broadcasts across the batch and head dimensions:
+
+```{python}
+out = mha(x, mask=causal_mask(x.shape[1], x.device))
+out.shape
+```
+
+#### Questions to fill in
+
+- Why must masking happen before softmax?
+- Why does using a large negative finite number sometimes work in place of $-\infty$?
+- What happens if an entire row is masked?
+- How do a causal mask and a padding mask combine?
+- During single-token autoregressive decoding with a complete KV cache, is an explicit causal mask still necessary?
+
+## Multi-Query Attention (MQA) and Grouped-Query Attention (GQA)
+
+MHA gives each query head its own key and value heads. MQA shares one key head and one value head across all query heads. GQA is the interpolation between them.
+
+| Variant | Query heads | KV heads | Group size |
+|---|---:|---:|---:|
+| MHA | $h$ | $h$ | $1$ |
+| GQA | $h$ | $g$, where $1<g<h$ | $h/g$ |
+| MQA | $h$ | $1$ | $h$ |
+
+Using $h_q$ query heads and $h_{kv}$ key/value heads:
+
+$$
+Q \in \mathbb{R}^{B \times h_q \times T_q \times d_h},
+$$
+
+$$
+K,V \in \mathbb{R}^{B \times h_{kv} \times T_{kv} \times d_h},
+\qquad h_q \bmod h_{kv}=0.
+$$
+
+Each KV head serves
+
+$$
+n_{\text{rep}} = \frac{h_q}{h_{kv}}
+$$
+
+query heads.
+
+### Why use fewer KV heads?
+
+> **Learning prompt:** Separate the effect on training compute, parameter count, KV-cache memory, and memory bandwidth during autoregressive decoding.
+
+### Implementation skeleton
+
+```{python}
+def repeat_kv(x, num_repeats):
+    """Expand (B, H_kv, T, D_h) to (B, H_q, T, D_h)."""
+    if num_repeats == 1:
+        return x
+
+    batch_size, num_kv_heads, seq_len, d_head = x.shape
+    return (
+        x[:, :, None, :, :]
+        .expand(batch_size, num_kv_heads, num_repeats, seq_len, d_head)
+        .reshape(batch_size, num_kv_heads * num_repeats, seq_len, d_head)
+    )
+```
+
+Implementation exercises:
+
+- [ ] Write a `GroupedQueryAttention` module with `num_heads` and `num_kv_heads`.
+- [ ] Verify that `num_kv_heads == num_heads` recovers MHA.
+- [ ] Verify that `num_kv_heads == 1` gives MQA.
+- [ ] Derive the Q, K, V projection parameter counts for MHA, GQA, and MQA.
+- [ ] Calculate KV-cache memory for a concrete model and context length.
+
+## Attention Optimization Methods
+
+### FlashAttention
+
+Standard attention materializes the $T \times T$ score and probability matrices in high-bandwidth memory (HBM). FlashAttention computes exact attention in tiles and uses an online softmax so these full intermediate matrices do not need to be stored in HBM.
+
+> **Key distinction:** FlashAttention changes the algorithm's memory access pattern, not the mathematical definition of attention.
+
+#### Concepts to fill in
+
+- [ ] Why can attention be slow even when the GPU has enough FLOPs?
+- [ ] What are HBM and SRAM, and why does data movement matter?
+- [ ] Derive online softmax using a running maximum and normalization term.
+- [ ] Explain why naive tiling does not work without correcting earlier softmax terms.
+- [ ] Compare standard attention and FlashAttention memory complexity.
+- [ ] Distinguish exact FlashAttention from approximate or sparse attention.
+
+#### Interview checkpoint
+
+Explain this statement precisely:
+
+> FlashAttention is IO-aware exact attention; it does not make dense attention asymptotically subquadratic in arithmetic complexity.
+
+### KV Caching
+
+During autoregressive generation, previously computed keys and values do not change. Cache them instead of recomputing them at every decoding step.
+
+At decoding step $t$:
+
+$$
+K_{1:t} = \operatorname{Concat}(K_{1:t-1}, k_t),
+\qquad
+V_{1:t} = \operatorname{Concat}(V_{1:t-1}, v_t).
+$$
+
+The new query attends to the cached prefix:
+
+$$
+o_t
+=
+\operatorname{softmax}\left(
+\frac{q_tK_{1:t}^T}{\sqrt{d_h}}
+\right)V_{1:t}.
+$$
+
+#### Prefill versus decode
+
+| Phase | Query length | Main operation | Typical bottleneck |
+|---|---:|---|---|
+| Prefill | $T$ | Process the prompt in parallel | TODO |
+| Decode | $1$ per step | Read cached K/V and produce one token | TODO |
+
+#### Cache-size derivation
+
+For $L$ layers, batch size $B$, sequence length $T$, $h_{kv}$ KV heads, head dimension $d_h$, and $s$ bytes per element:
+
+$$
+\text{KV-cache bytes}
+=
+2LBTh_{kv}d_hs.
+$$
+
+> **Exercise:** Calculate the cache size for one sequence using your choice of model configuration in FP16/BF16. Then repeat for MHA, GQA, and MQA.
+
+#### Implementation skeleton
+
+```{python}
+def append_to_kv_cache(k_new, v_new, cache=None):
+    """A simple educational cache; production systems preallocate storage."""
+    if cache is None:
+        return k_new, v_new
+
+    k_cache, v_cache = cache
+    k_cache = torch.cat([k_cache, k_new], dim=-2)
+    v_cache = torch.cat([v_cache, v_new], dim=-2)
+    return k_cache, v_cache
+```
+
+Questions to fill in:
+
+- Why is repeated `torch.cat` inefficient in a production decoder?
+- Why does KV caching reduce computation but increase persistent memory use?
+- How do MQA and GQA reduce decode-time memory bandwidth?
+- What changes when prompts in a batch have different lengths?
+- What are paged attention, prefix caching, and cache quantization?
+
+## Suggested Next Topics
+
+After the path above, useful additions would be:
+
+1. **RoPE and positional information** — attention alone is permutation-equivariant; modern LLMs need position-dependent Q/K representations.
+2. **Numerical stability and precision** — stable softmax, FP16/BF16 behavior, masking edge cases, and accumulation precision.
+3. **Sliding-window and sparse attention** — methods that change which token pairs interact and can reduce arithmetic complexity.
+4. **Cross-attention** — separates the query sequence from the key/value sequence and makes the general SDPA shapes concrete.
+5. **Production inference details** — paged KV caches, continuous batching, and speculative decoding.

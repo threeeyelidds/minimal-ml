@@ -1,0 +1,12 @@
+.bold {
+  font-weight: 700;
+}
+
+.note-box {
+  border: 1px solid #d9d2e9;
+  border-left: 4px solid #8b7bb8;
+  background: #faf8fc;
+  border-radius: 8px;
+  padding: 1rem 1.1rem;
+  margin: 1rem 0;
+}
