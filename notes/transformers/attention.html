@@ -276,7 +276,7 @@ V \in \mathbb{R}^{n_k \times d_v},
 </section>
 <section id="minimal-pytorch-implementation" class="level3">
 <h3 class="anchored" data-anchor-id="minimal-pytorch-implementation">Minimal PyTorch implementation</h3>
-<div id="d77afaba" class="cell" data-execution_count="1">
+<div id="1c50f8cc" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> math</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -293,7 +293,7 @@ V \in \mathbb{R}^{n_k \times d_v},
 </section>
 <section id="sanity-check" class="level3">
 <h3 class="anchored" data-anchor-id="sanity-check">Sanity check</h3>
-<div id="33cdddac" class="cell" data-execution_count="2">
+<div id="f3e13bb8" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>torch.manual_seed(<span class="dv">0</span>)</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>q <span class="op">=</span> torch.randn(<span class="dv">2</span>, <span class="dv">4</span>, <span class="dv">8</span>)</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>k <span class="op">=</span> torch.randn(<span class="dv">2</span>, <span class="dv">4</span>, <span class="dv">8</span>)</span>
@@ -524,7 +524,7 @@ S^{(h)} = Q^{(h)}K^{(h)T}
 </section>
 <section id="minimal-pytorch-implementation-1" class="level3">
 <h3 class="anchored" data-anchor-id="minimal-pytorch-implementation-1">Minimal PyTorch implementation</h3>
-<div id="8faa76d6" class="cell" data-execution_count="3">
+<div id="c0aa3485" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch.nn <span class="im">as</span> nn</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -563,7 +563,7 @@ S^{(h)} = Q^{(h)}K^{(h)T}
 <span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a>        )</span>
 <span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">self</span>.out_proj(output)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="67f4e044" class="cell" data-execution_count="4">
+<div id="48517b28" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>torch.manual_seed(<span class="dv">0</span>)</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> torch.randn(<span class="dv">2</span>, <span class="dv">4</span>, <span class="dv">16</span>)</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>mha <span class="op">=</span> MultiHeadSelfAttention(d_model<span class="op">=</span><span class="dv">16</span>, num_heads<span class="op">=</span><span class="dv">4</span>)</span>
@@ -606,7 +606,7 @@ A
 <section id="minimal-implementation" class="level3">
 <h3 class="anchored" data-anchor-id="minimal-implementation">Minimal implementation</h3>
 <p>The <code>attention</code> function above uses a Boolean mask where <code>True</code> means that attention is allowed.</p>
-<div id="cc1a276a" class="cell" data-execution_count="5">
+<div id="eaaffdda" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> causal_mask(seq_len, device<span class="op">=</span><span class="va">None</span>):</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> torch.ones(</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>        seq_len, seq_len, dtype<span class="op">=</span>torch.<span class="bu">bool</span>, device<span class="op">=</span>device</span>
@@ -623,7 +623,7 @@ A
 </div>
 </div>
 <p>For multi-head attention, <code>(T, T)</code> broadcasts across the batch and head dimensions:</p>
-<div id="c43e1ae0" class="cell" data-execution_count="6">
+<div id="390e74c0" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>out <span class="op">=</span> mha(x, mask<span class="op">=</span>causal_mask(x.shape[<span class="dv">1</span>], x.device))</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>out.shape</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="6">
@@ -696,7 +696,7 @@ n_{\text{rep}} = \frac{h_q}{h_{kv}}
 </section>
 <section id="implementation-skeleton" class="level3">
 <h3 class="anchored" data-anchor-id="implementation-skeleton">Implementation skeleton</h3>
-<div id="693105c7" class="cell" data-execution_count="7">
+<div id="ee0052f0" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> repeat_kv(x, num_repeats):</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Expand (B, H_kv, T, D_h) to (B, H_q, T, D_h)."""</span></span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> num_repeats <span class="op">==</span> <span class="dv">1</span>:</span>
@@ -804,7 +804,7 @@ o_t
 </section>
 <section id="implementation-skeleton-1" class="level4">
 <h4 class="anchored" data-anchor-id="implementation-skeleton-1">Implementation skeleton</h4>
-<div id="a57d0a44" class="cell" data-execution_count="8">
+<div id="6a07364b" class="cell" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> append_to_kv_cache(k_new, v_new, cache<span class="op">=</span><span class="va">None</span>):</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""A simple educational cache; production systems preallocate storage."""</span></span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> cache <span class="kw">is</span> <span class="va">None</span>:</span>
