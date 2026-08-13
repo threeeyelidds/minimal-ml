@@ -114,21 +114,21 @@
   {
     "objectID": "index.html",
     "href": "index.html",
-    "title": "ML Interview Notes",
+    "title": "Minimal ML",
     "section": "",
     "text": "Each topic should answer four questions:\n\nWhat is the core idea?\nCan I derive it?\nCan I implement it in PyTorch?\nWhat deep dive questions expose whether I really understand it?"
   },
   {
     "objectID": "index.html#how-i-use-this-site",
     "href": "index.html#how-i-use-this-site",
-    "title": "ML Interview Notes",
+    "title": "Minimal ML",
     "section": "",
     "text": "Each topic should answer four questions:\n\nWhat is the core idea?\nCan I derive it?\nCan I implement it in PyTorch?\nWhat deep dive questions expose whether I really understand it?"
   },
   {
     "objectID": "index.html#current-focus",
     "href": "index.html#current-focus",
-    "title": "ML Interview Notes",
+    "title": "Minimal ML",
     "section": "Current focus",
     "text": "Current focus\n\nML fundamentals\nTransformers\nPost-training / RL\nML systems\nResearch reasoning"
   },
