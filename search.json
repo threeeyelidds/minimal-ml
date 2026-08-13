@@ -4,14 +4,14 @@
     "href": "notes/index.html",
     "title": "Notes",
     "section": "",
-    "text": "Attention"
+    "text": "Attention\nTransformers"
   },
   {
     "objectID": "notes/index.html#transformers",
     "href": "notes/index.html#transformers",
     "title": "Notes",
     "section": "",
-    "text": "Attention"
+    "text": "Attention\nTransformers"
   },
   {
     "objectID": "notes/index.html#coming-next",
@@ -21,25 +21,88 @@
     "text": "Coming next\n\nKL divergence\nDPO\nPPO / GRPO\nKV cache\nFlashAttention\nDistributed training"
   },
   {
-    "objectID": "index.html",
-    "href": "index.html",
-    "title": "ML Interview Notes",
+    "objectID": "notes/transformers/transformer.html",
+    "href": "notes/transformers/transformer.html",
+    "title": "Transformer Architecture",
     "section": "",
-    "text": "A working notebook for senior MLE / research engineer interview preparation."
+    "text": "A Transformer block alternates between:\n\nToken mixing via attention\nFeature mixing via the MLP\n\nFor hidden states\n\\[\nX \\in \\mathbb{R}^{B \\times T \\times d_{\\text{model}}},\n\\]\na modern pre-norm Transformer block is roughly\n\\[\nX' = X + \\operatorname{Attention}(\\operatorname{Norm}(X))\n\\]\n\\[\nX_{\\text{out}}\n=\nX' + \\operatorname{MLP}(\\operatorname{Norm}(X')).\n\\]\n\n\n\n\n\n\nNoteCore intuition\n\n\n\n\nAttention mixes information across tokens.\nThe MLP mixes information across features within each token.\nResidual connections preserve and incrementally update the residual stream.\n\n\n\n\n\n\n\n\n\nTODO: - Interpret \\(X\\) as the shared communication channel across layers. - Attention and MLP blocks write updates into this stream. - Why residual connections make deep Transformers easier to optimize.\n\\[\nX_{l+1} = X_l + \\Delta X_l.\n\\]\n\n\n\nTODO: - Gradient flow - Identity path - Incremental feature refinement\n\n\n\n\n\n\n\n\\[\n\\operatorname{LN}(x)\n=\n\\gamma\n\\frac{x-\\mu}{\\sqrt{\\sigma^2+\\epsilon}}\n+\n\\beta.\n\\]\n\n\n\n\\[\n\\operatorname{RMSNorm}(x)\n=\n\\gamma\n\\frac{x}\n{\\sqrt{\\frac{1}{d}\\sum_i x_i^2+\\epsilon}}.\n\\]\nTODO: - Difference between LayerNorm and RMSNorm - Why modern LLMs often use RMSNorm - What dimensions are normalized\n\n\n\nPost-norm\n\\[\nX_{l+1}\n=\n\\operatorname{Norm}\n\\left(\nX_l + F(X_l)\n\\right)\n\\]\nPre-norm\n\\[\nX_{l+1}\n=\nX_l\n+\nF(\\operatorname{Norm}(X_l)).\n\\]\nTODO: - Optimization stability - Gradient propagation - Why pre-norm became dominant in large LLMs - Potential tradeoff in representational depth\n\n\n\n\n\nBrief recap only; keep detailed derivations in the attention note.\n\\[\n\\operatorname{Attention}(Q,K,V)\n=\n\\operatorname{softmax}\n\\left(\n\\frac{QK^\\top}{\\sqrt{d_h}}\n\\right)V.\n\\]\nTODO: - MHA / GQA / MQA - Causal masking - KV cache - Link to attention note\n\n\n\n\nThe MLP operates independently on each token.\nClassic Transformer FFN:\n\\[\n\\operatorname{FFN}(x)\n=\nW_2 \\sigma(W_1x).\n\\]\nTypical dimensions:\n\\[\nd_{\\text{model}}\n\\rightarrow\nd_{\\text{ff}}\n\\rightarrow\nd_{\\text{model}}.\n\\]\nUsually\n\\[\nd_{\\text{ff}} &gt; d_{\\text{model}}.\n\\]\n\n\nModern LLMs often use gated MLPs:\n\\[\n\\operatorname{SwiGLU}(x)\n=\nW_o\n\\left[\n\\operatorname{SiLU}(W_gx)\n\\odot\n(W_ux)\n\\right].\n\\]\nTODO: - Why gating helps - Why SwiGLU replaced ReLU/GELU FFNs in many LLMs - Parameter-count implications\n\n\n\n\n\n\nNoteAttention vs MLP\n\n\n\nAttention:\n\\[\n[B,T,d]\n\\rightarrow\n\\text{mix across } T\n\\]\nMLP:\n\\[\n[B,T,d]\n\\rightarrow\n\\text{mix across } d\n\\]\nThis is a useful way to think about a Transformer as alternating token mixing and feature mixing.\n\n\n\n\n\n\n\nSelf-attention alone is permutation-equivariant, so positional information must be introduced separately.\n\n\nTODO\n\n\n\nTODO: - Rotate Q/K by position-dependent angles - Relative-position interpretation - Why RoPE is common in modern LLMs\n\\[\nq_t' = R_t q_t,\n\\qquad\nk_s' = R_s k_s.\n\\]\nThen\n\\[\n(q_t')^\\top k_s'\n=\nq_t^\\top R_{s-t}k_s.\n\\]\n\n\n\nTODO: - RoPE scaling - NTK-aware scaling - YaRN / related approaches\n\n\n\n\n\nPipeline:\n\\[\n\\text{tokens}\n\\rightarrow\n\\text{embeddings}\n\\rightarrow\nL \\times \\text{Transformer blocks}\n\\rightarrow\n\\text{final norm}\n\\rightarrow\n\\text{LM head}\n\\rightarrow\n\\text{logits}.\n\\]\nFor vocabulary size \\(V\\),\n\\[\nX_L \\in \\mathbb{R}^{B\\times T\\times d}\n\\]\nand\n\\[\n\\text{logits}\n=\nX_L W_{\\text{vocab}}\n\\in\n\\mathbb{R}^{B\\times T\\times V}.\n\\]\nTODO: - Weight tying - Final normalization - Autoregressive next-token objective\n\n\n\n\n\n\nExamples: BERT-style models.\nTODO: - Bidirectional attention - Representation learning\n\n\n\nExamples: GPT-style LLMs.\nTODO: - Causal attention - Autoregressive generation\n\n\n\nExamples: original Transformer / T5-style models.\nTODO: - Encoder self-attention - Decoder self-attention - Cross-attention\n\n\n\n\n\nFor sequence length \\(T\\) and hidden dimension \\(d\\):\n\n\n\\[\nO(T^2 d)\n\\]\n\n\n\n\\[\nO(Td\\,d_{\\text{ff}})\n\\]\nTODO: - Why MLP FLOPs can dominate at shorter contexts - Why attention dominates as \\(T\\) grows - Activation memory - KV-cache memory during decoding\n\n\n\n\n\nA typical modern decoder block looks roughly like:\nx\n│\n├── RMSNorm\n│\n├── Attention\n│\n└── + residual\n    │\n    ├── RMSNorm\n    │\n    ├── SwiGLU MLP\n    │\n    └── + residual\nCommon modern choices:\n\ndecoder-only architecture\npre-norm\nRMSNorm\nRoPE\nSwiGLU\nGQA\nFlashAttention\nKV cache\n\n\n\n\n\n\nWhy do Transformers need residual connections?\nPre-norm vs post-norm?\nWhy RMSNorm instead of LayerNorm?\nWhy is attention token mixing while the MLP is feature mixing?\nWhy does the MLP expand to a larger hidden dimension?\nWhy use SwiGLU?\nWhy is positional encoding required?\nHow does RoPE encode relative positions?\nWhat dominates Transformer compute?\nWhy does KV-cache memory become a bottleneck during inference?\nWhat architectural changes distinguish modern LLMs from the original Transformer?"
   },
   {
-    "objectID": "index.html#how-i-use-this-site",
-    "href": "index.html#how-i-use-this-site",
-    "title": "ML Interview Notes",
-    "section": "How I use this site",
-    "text": "How I use this site\nEach topic should answer four questions:\n\nWhat is the core idea?\nCan I derive it?\nCan I implement it in PyTorch?\nWhat interview questions expose whether I really understand it?"
+    "objectID": "notes/transformers/transformer.html#high-level-view",
+    "href": "notes/transformers/transformer.html#high-level-view",
+    "title": "Transformer Architecture",
+    "section": "",
+    "text": "A Transformer block alternates between:\n\nToken mixing via attention\nFeature mixing via the MLP\n\nFor hidden states\n\\[\nX \\in \\mathbb{R}^{B \\times T \\times d_{\\text{model}}},\n\\]\na modern pre-norm Transformer block is roughly\n\\[\nX' = X + \\operatorname{Attention}(\\operatorname{Norm}(X))\n\\]\n\\[\nX_{\\text{out}}\n=\nX' + \\operatorname{MLP}(\\operatorname{Norm}(X')).\n\\]\n\n\n\n\n\n\nNoteCore intuition\n\n\n\n\nAttention mixes information across tokens.\nThe MLP mixes information across features within each token.\nResidual connections preserve and incrementally update the residual stream."
   },
   {
-    "objectID": "index.html#current-focus",
-    "href": "index.html#current-focus",
-    "title": "ML Interview Notes",
-    "section": "Current focus",
-    "text": "Current focus\n\nML fundamentals\nTransformers\nPost-training / RL\nML systems\nResearch reasoning"
+    "objectID": "notes/transformers/transformer.html#residual-stream",
+    "href": "notes/transformers/transformer.html#residual-stream",
+    "title": "Transformer Architecture",
+    "section": "",
+    "text": "TODO: - Interpret \\(X\\) as the shared communication channel across layers. - Attention and MLP blocks write updates into this stream. - Why residual connections make deep Transformers easier to optimize.\n\\[\nX_{l+1} = X_l + \\Delta X_l.\n\\]\n\n\n\nTODO: - Gradient flow - Identity path - Incremental feature refinement"
+  },
+  {
+    "objectID": "notes/transformers/transformer.html#normalization",
+    "href": "notes/transformers/transformer.html#normalization",
+    "title": "Transformer Architecture",
+    "section": "",
+    "text": "\\[\n\\operatorname{LN}(x)\n=\n\\gamma\n\\frac{x-\\mu}{\\sqrt{\\sigma^2+\\epsilon}}\n+\n\\beta.\n\\]\n\n\n\n\\[\n\\operatorname{RMSNorm}(x)\n=\n\\gamma\n\\frac{x}\n{\\sqrt{\\frac{1}{d}\\sum_i x_i^2+\\epsilon}}.\n\\]\nTODO: - Difference between LayerNorm and RMSNorm - Why modern LLMs often use RMSNorm - What dimensions are normalized\n\n\n\nPost-norm\n\\[\nX_{l+1}\n=\n\\operatorname{Norm}\n\\left(\nX_l + F(X_l)\n\\right)\n\\]\nPre-norm\n\\[\nX_{l+1}\n=\nX_l\n+\nF(\\operatorname{Norm}(X_l)).\n\\]\nTODO: - Optimization stability - Gradient propagation - Why pre-norm became dominant in large LLMs - Potential tradeoff in representational depth"
+  },
+  {
+    "objectID": "notes/transformers/transformer.html#attention-sub-layer",
+    "href": "notes/transformers/transformer.html#attention-sub-layer",
+    "title": "Transformer Architecture",
+    "section": "",
+    "text": "Brief recap only; keep detailed derivations in the attention note.\n\\[\n\\operatorname{Attention}(Q,K,V)\n=\n\\operatorname{softmax}\n\\left(\n\\frac{QK^\\top}{\\sqrt{d_h}}\n\\right)V.\n\\]\nTODO: - MHA / GQA / MQA - Causal masking - KV cache - Link to attention note"
+  },
+  {
+    "objectID": "notes/transformers/transformer.html#feed-forward-network",
+    "href": "notes/transformers/transformer.html#feed-forward-network",
+    "title": "Transformer Architecture",
+    "section": "",
+    "text": "The MLP operates independently on each token.\nClassic Transformer FFN:\n\\[\n\\operatorname{FFN}(x)\n=\nW_2 \\sigma(W_1x).\n\\]\nTypical dimensions:\n\\[\nd_{\\text{model}}\n\\rightarrow\nd_{\\text{ff}}\n\\rightarrow\nd_{\\text{model}}.\n\\]\nUsually\n\\[\nd_{\\text{ff}} &gt; d_{\\text{model}}.\n\\]\n\n\nModern LLMs often use gated MLPs:\n\\[\n\\operatorname{SwiGLU}(x)\n=\nW_o\n\\left[\n\\operatorname{SiLU}(W_gx)\n\\odot\n(W_ux)\n\\right].\n\\]\nTODO: - Why gating helps - Why SwiGLU replaced ReLU/GELU FFNs in many LLMs - Parameter-count implications\n\n\n\n\n\n\nNoteAttention vs MLP\n\n\n\nAttention:\n\\[\n[B,T,d]\n\\rightarrow\n\\text{mix across } T\n\\]\nMLP:\n\\[\n[B,T,d]\n\\rightarrow\n\\text{mix across } d\n\\]\nThis is a useful way to think about a Transformer as alternating token mixing and feature mixing."
+  },
+  {
+    "objectID": "notes/transformers/transformer.html#positional-information",
+    "href": "notes/transformers/transformer.html#positional-information",
+    "title": "Transformer Architecture",
+    "section": "",
+    "text": "Self-attention alone is permutation-equivariant, so positional information must be introduced separately.\n\n\nTODO\n\n\n\nTODO: - Rotate Q/K by position-dependent angles - Relative-position interpretation - Why RoPE is common in modern LLMs\n\\[\nq_t' = R_t q_t,\n\\qquad\nk_s' = R_s k_s.\n\\]\nThen\n\\[\n(q_t')^\\top k_s'\n=\nq_t^\\top R_{s-t}k_s.\n\\]\n\n\n\nTODO: - RoPE scaling - NTK-aware scaling - YaRN / related approaches"
+  },
+  {
+    "objectID": "notes/transformers/transformer.html#full-decoder-only-transformer",
+    "href": "notes/transformers/transformer.html#full-decoder-only-transformer",
+    "title": "Transformer Architecture",
+    "section": "",
+    "text": "Pipeline:\n\\[\n\\text{tokens}\n\\rightarrow\n\\text{embeddings}\n\\rightarrow\nL \\times \\text{Transformer blocks}\n\\rightarrow\n\\text{final norm}\n\\rightarrow\n\\text{LM head}\n\\rightarrow\n\\text{logits}.\n\\]\nFor vocabulary size \\(V\\),\n\\[\nX_L \\in \\mathbb{R}^{B\\times T\\times d}\n\\]\nand\n\\[\n\\text{logits}\n=\nX_L W_{\\text{vocab}}\n\\in\n\\mathbb{R}^{B\\times T\\times V}.\n\\]\nTODO: - Weight tying - Final normalization - Autoregressive next-token objective"
+  },
+  {
+    "objectID": "notes/transformers/transformer.html#encoder-vs-decoder-vs-encoderdecoder",
+    "href": "notes/transformers/transformer.html#encoder-vs-decoder-vs-encoderdecoder",
+    "title": "Transformer Architecture",
+    "section": "",
+    "text": "Examples: BERT-style models.\nTODO: - Bidirectional attention - Representation learning\n\n\n\nExamples: GPT-style LLMs.\nTODO: - Causal attention - Autoregressive generation\n\n\n\nExamples: original Transformer / T5-style models.\nTODO: - Encoder self-attention - Decoder self-attention - Cross-attention"
+  },
+  {
+    "objectID": "notes/transformers/transformer.html#compute-and-memory",
+    "href": "notes/transformers/transformer.html#compute-and-memory",
+    "title": "Transformer Architecture",
+    "section": "",
+    "text": "For sequence length \\(T\\) and hidden dimension \\(d\\):\n\n\n\\[\nO(T^2 d)\n\\]\n\n\n\n\\[\nO(Td\\,d_{\\text{ff}})\n\\]\nTODO: - Why MLP FLOPs can dominate at shorter contexts - Why attention dominates as \\(T\\) grows - Activation memory - KV-cache memory during decoding"
+  },
+  {
+    "objectID": "notes/transformers/transformer.html#modern-llm-block",
+    "href": "notes/transformers/transformer.html#modern-llm-block",
+    "title": "Transformer Architecture",
+    "section": "",
+    "text": "A typical modern decoder block looks roughly like:\nx\n│\n├── RMSNorm\n│\n├── Attention\n│\n└── + residual\n    │\n    ├── RMSNorm\n    │\n    ├── SwiGLU MLP\n    │\n    └── + residual\nCommon modern choices:\n\ndecoder-only architecture\npre-norm\nRMSNorm\nRoPE\nSwiGLU\nGQA\nFlashAttention\nKV cache"
+  },
+  {
+    "objectID": "notes/transformers/transformer.html#interview-questions",
+    "href": "notes/transformers/transformer.html#interview-questions",
+    "title": "Transformer Architecture",
+    "section": "",
+    "text": "Why do Transformers need residual connections?\nPre-norm vs post-norm?\nWhy RMSNorm instead of LayerNorm?\nWhy is attention token mixing while the MLP is feature mixing?\nWhy does the MLP expand to a larger hidden dimension?\nWhy use SwiGLU?\nWhy is positional encoding required?\nHow does RoPE encode relative positions?\nWhat dominates Transformer compute?\nWhy does KV-cache memory become a bottleneck during inference?\nWhat architectural changes distinguish modern LLMs from the original Transformer?"
   },
   {
     "objectID": "posts/index.html",
@@ -47,6 +110,27 @@
     "title": "Blog",
     "section": "",
     "text": "Longer notes worth polishing and sharing publicly.\n\n\n\n\n\n\n\n\nNo matching items"
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "ML Interview Notes",
+    "section": "",
+    "text": "Each topic should answer four questions:\n\nWhat is the core idea?\nCan I derive it?\nCan I implement it in PyTorch?\nWhat deep dive questions expose whether I really understand it?"
+  },
+  {
+    "objectID": "index.html#how-i-use-this-site",
+    "href": "index.html#how-i-use-this-site",
+    "title": "ML Interview Notes",
+    "section": "",
+    "text": "Each topic should answer four questions:\n\nWhat is the core idea?\nCan I derive it?\nCan I implement it in PyTorch?\nWhat deep dive questions expose whether I really understand it?"
+  },
+  {
+    "objectID": "index.html#current-focus",
+    "href": "index.html#current-focus",
+    "title": "ML Interview Notes",
+    "section": "Current focus",
+    "text": "Current focus\n\nML fundamentals\nTransformers\nPost-training / RL\nML systems\nResearch reasoning"
   },
   {
     "objectID": "notes/transformers/attention.html",
@@ -109,7 +193,7 @@
     "href": "notes/transformers/attention.html#attention-optimization-methods",
     "title": "Attention",
     "section": "Attention Optimization Methods",
-    "text": "Attention Optimization Methods\n\nFlashAttention\nStandard attention materializes the \\(T \\times T\\) score and probability matrices in high-bandwidth memory (HBM). FlashAttention computes exact attention in tiles and uses an online softmax so these full intermediate matrices do not need to be stored in HBM.\n\nKey distinction: FlashAttention changes the algorithm’s memory access pattern, not the mathematical definition of attention.\n\n\nConcepts to fill in\n\nWhy can attention be slow even when the GPU has enough FLOPs?\nWhat are HBM and SRAM, and why does data movement matter?\nDerive online softmax using a running maximum and normalization term.\nExplain why naive tiling does not work without correcting earlier softmax terms.\nCompare standard attention and FlashAttention memory complexity.\nDistinguish exact FlashAttention from approximate or sparse attention.\n\n\n\nInterview checkpoint\nExplain this statement precisely:\n\nFlashAttention is IO-aware exact attention; it does not make dense attention asymptotically subquadratic in arithmetic complexity.\n\n\n\n\nKV Caching\nDuring autoregressive generation, previously computed keys and values do not change. Cache them instead of recomputing them at every decoding step.\nAt decoding step \\(t\\):\n\\[\nK_{1:t} = \\operatorname{Concat}(K_{1:t-1}, k_t),\n\\qquad\nV_{1:t} = \\operatorname{Concat}(V_{1:t-1}, v_t).\n\\]\nThe new query attends to the cached prefix:\n\\[\no_t\n=\n\\operatorname{softmax}\\left(\n\\frac{q_tK_{1:t}^T}{\\sqrt{d_h}}\n\\right)V_{1:t}.\n\\]\n\nPrefill versus decode\n\n\n\nPhase\nQuery length\nMain operation\nTypical bottleneck\n\n\n\n\nPrefill\n\\(T\\)\nProcess the prompt in parallel\nTODO\n\n\nDecode\n\\(1\\) per step\nRead cached K/V and produce one token\nTODO\n\n\n\n\n\nCache-size derivation\nFor \\(L\\) layers, batch size \\(B\\), sequence length \\(T\\), \\(h_{kv}\\) KV heads, head dimension \\(d_h\\), and \\(s\\) bytes per element:\n\\[\n\\text{KV-cache bytes}\n=\n2LBTh_{kv}d_hs.\n\\]\n\nExercise: Calculate the cache size for one sequence using your choice of model configuration in FP16/BF16. Then repeat for MHA, GQA, and MQA.\n\n\n\nImplementation skeleton\n\ndef append_to_kv_cache(k_new, v_new, cache=None):\n    \"\"\"A simple educational cache; production systems preallocate storage.\"\"\"\n    if cache is None:\n        return k_new, v_new\n\n    k_cache, v_cache = cache\n    k_cache = torch.cat([k_cache, k_new], dim=-2)\n    v_cache = torch.cat([v_cache, v_new], dim=-2)\n    return k_cache, v_cache\n\nQuestions to fill in:\n\nWhy is repeated torch.cat inefficient in a production decoder?\nWhy does KV caching reduce computation but increase persistent memory use?\nHow do MQA and GQA reduce decode-time memory bandwidth?\nWhat changes when prompts in a batch have different lengths?\nWhat are paged attention, prefix caching, and cache quantization?"
+    "text": "Attention Optimization Methods\n\nFlashAttention\nStandard attention materializes the \\(T \\times T\\) score and probability matrices in high-bandwidth memory (HBM). FlashAttention computes exact attention in tiles and uses an online softmax so these full intermediate matrices do not need to be stored in HBM.\n\nOnline Softmax Derivation\nFor the first \\(k\\) logits, maintain\n\\[\nm_k = \\max_{1 \\le j \\le k} x_j,\n\\qquad\n\\ell_k = \\sum_{j=1}^{k} e^{x_j-m_k}.\n\\]\nAfter observing \\(x_{k+1}\\),\n\\[\nm_{k+1} = \\max(m_k, x_{k+1}).\n\\]\nThen\n\\[\n\\begin{aligned}\n\\ell_{k+1}\n&= \\sum_{j=1}^{k+1} e^{x_j-m_{k+1}} \\\\\n&= \\sum_{j=1}^{k} e^{x_j-m_{k+1}}\n   + e^{x_{k+1}-m_{k+1}} \\\\\n&= \\sum_{j=1}^{k}\n   e^{x_j-m_k} e^{m_k-m_{k+1}}\n   + e^{x_{k+1}-m_{k+1}} \\\\\n&= \\ell_k e^{m_k-m_{k+1}}\n   + e^{x_{k+1}-m_{k+1}}.\n\\end{aligned}\n\\]\nTherefore the online recurrence is\n\\[\n\\boxed{\nm_{k+1} = \\max(m_k,x_{k+1}),\n\\qquad\n\\ell_{k+1}\n=\n\\ell_k e^{m_k-m_{k+1}}\n+\ne^{x_{k+1}-m_{k+1}}\n}\n\\]\nand after processing all logits,\n\\[\n\\operatorname{softmax}(x_i)\n=\n\\frac{e^{x_i-m_N}}{\\ell_N}.\n\\]\nFlashAttention applies the same idea row-wise and block-wise. The score matrix is divided along both its query-row and key-column dimensions:\n                              key positions\n                         K¹        K²        K³\n                     ┌─────────┬─────────┬─────────┐\n                     │ S⁽¹˒¹⁾  │ S⁽¹˒²⁾  │ S⁽¹˒³⁾  │ → output tile O¹\nquery positions  Q¹  │         │         │         │\n                     ├─────────┼─────────┼─────────┤\n                     │ S⁽²˒¹⁾  │ S⁽²˒²⁾  │ S⁽²˒³⁾  │ → output tile O²\n                 Q²  │         │         │         │\n                     └─────────┴─────────┴─────────┘\n                          stream left to right →\nEach score tile is\n\\[\nS^{(i,j)} = Q^{(i)}K^{(j)T}\n\\in \\mathbb{R}^{B_q \\times B_k}.\n\\]\nFor one query tile \\(Q^{(i)}\\), the algorithm streams from left to right through all key/value tiles. The online-softmax state is maintained separately for each query row. Thus, a score tile spans both rows and columns, while the softmax reduction and streaming happen across the key-column dimension.\n\n\nSymbols and state\nThe batch and head dimensions are omitted below. \\(B_q\\) and \\(B_k\\) are the query and key tile sizes, and \\(d_v\\) is the value-head dimension.\n\n\n\n\n\n\n\n\n\nSymbol\nShape\nScope\nMeaning\n\n\n\n\n\\(Q^{(i)}\\)\n\\(B_q \\times d_h\\)\nQuery tile \\(i\\)\nA block of query vectors\n\n\n\\(K^{(j)}\\)\n\\(B_k \\times d_h\\)\nKV tile \\(j\\)\nA block of key vectors\n\n\n\\(V^{(j)}\\)\n\\(B_k \\times d_v\\)\nKV tile \\(j\\)\nThe value vectors paired with \\(K^{(j)}\\)\n\n\n\\(S^{(i,j)}\\)\n\\(B_q \\times B_k\\)\nCurrent score tile\nScaled scores \\(Q^{(i)}K^{(j)T}/\\sqrt{d_h}\\)\n\n\n\\(\\widetilde m^{(i,j)}\\)\n\\(B_q \\times 1\\)\nCurrent score tile\nLocal row maximum within only \\(S^{(i,j)}\\)\n\n\n\\(m^{(i,j)}\\)\n\\(B_q \\times 1\\)\nRunning state\nRow maximum across KV tiles \\(1,\\ldots,j\\)\n\n\n\\(P^{(i,j)}\\)\n\\(B_q \\times B_k\\)\nCurrent score tile\nShifted, unnormalized weights \\(e^{S^{(i,j)}-m^{(i,j)}}\\)\n\n\n\\(\\ell^{(i,j)}\\)\n\\(B_q \\times 1\\)\nRunning state\nSoftmax denominator across KV tiles \\(1,\\ldots,j\\)\n\n\n\\(N^{(i,j)}\\)\n\\(B_q \\times d_v\\)\nRunning state\nRescaled, unnormalized weighted sum of values\n\n\n\\(O^{(i)}\\)\n\\(B_q \\times d_v\\)\nCompleted query tile\nFinal normalized output \\(N^{(i,J)}/\\ell^{(i,J)}\\)\n\n\n\nHere, \\(P\\) is not yet the final softmax probability matrix. It contains the unnormalized contribution of the current score tile using the newest running maximum.\nFor a block of scores \\(S^{(b)}\\), let \\(m^{(b-1)}\\), \\(\\ell^{(b-1)}\\), and \\(N^{(b-1)}\\) be the running row maximum, softmax denominator, and unnormalized attention output. The update for each row is\n\\[\n\\begin{aligned}\n\\widetilde m^{(b)}\n&= \\max_j S_{j}^{(b)}, \\\\\nm^{(b)}\n&= \\max\\left(m^{(b-1)}, \\widetilde m^{(b)}\\right), \\\\\nP^{(b)}\n&= \\exp\\left(S^{(b)}-m^{(b)}\\right), \\\\\n\\ell^{(b)}\n&= e^{m^{(b-1)}-m^{(b)}}\\ell^{(b-1)}\n   + \\sum_j P_j^{(b)}, \\\\\nN^{(b)}\n&= e^{m^{(b-1)}-m^{(b)}}N^{(b-1)}\n   + P^{(b)}V^{(b)}.\n\\end{aligned}\n\\]\nAfter the final key/value block,\n\\[\nO = \\frac{N^{(B)}}{\\ell^{(B)}}.\n\\]\nThe factor \\(e^{m^{(b-1)}-m^{(b)}}\\) rescales the old denominator and numerator whenever a later block contains a larger maximum. This is the step that makes block-wise softmax exact: all old and new terms end up expressed relative to the same maximum.\n\n\nHow the tiled algorithm works\nFor each query tile, FlashAttention:\n\nLoads a block of \\(Q\\) into fast on-chip SRAM.\nStreams blocks of \\(K\\) and \\(V\\) through SRAM.\nComputes one score tile \\(Q^{(i)}K^{(j)T}\\) at a time.\nUpdates the running \\(m\\), \\(\\ell\\), and output numerator \\(N\\) with the equations above.\nWrites only the completed output tile back to HBM.\n\nThus, it never writes the full score matrix or softmax matrix to HBM. The arithmetic is still \\(O(T^2d)\\) for dense self-attention, but substantially less HBM traffic makes it faster in practice. During training, the backward pass can recompute score tiles from \\(Q\\), \\(K\\), and \\(V\\) instead of storing the full attention matrix.\n\n\nMinimal tiled implementation\nThis implementation demonstrates the forward algorithm, including optional causal masking. It is mathematically equivalent to standard attention up to floating-point rounding, but Python loops and ordinary PyTorch operations do not make it a fast kernel. Real FlashAttention fuses these operations and manages SRAM explicitly in CUDA or Triton.\n\n@torch.no_grad()\ndef flash_attention_reference(\n    q,\n    k,\n    v,\n    query_block_size=32,\n    kv_block_size=32,\n    causal=False,\n):\n    \"\"\"Educational tiled attention for tensors shaped (B, H, T, D).\"\"\"\n    batch_size, num_heads, query_len, d_head = q.shape\n    _, _, kv_len, _ = k.shape\n    d_value = v.shape[-1]\n    scale = 1.0 / math.sqrt(d_head)\n\n    # Accumulate in FP32 even if the input uses a lower-precision dtype.\n    output = torch.empty(\n        batch_size,\n        num_heads,\n        query_len,\n        d_value,\n        device=q.device,\n        dtype=torch.float32,\n    )\n\n    for q_start in range(0, query_len, query_block_size):\n        q_end = min(q_start + query_block_size, query_len)\n        q_block = q[:, :, q_start:q_end].float()\n        rows = q_end - q_start\n\n        # One running state per attention row.\n        m = torch.full(\n            (batch_size, num_heads, rows, 1),\n            -torch.inf,\n            device=q.device,\n        )\n        ell = torch.zeros_like(m)\n        numerator = torch.zeros(\n            batch_size,\n            num_heads,\n            rows,\n            d_value,\n            device=q.device,\n        )\n\n        for kv_start in range(0, kv_len, kv_block_size):\n            kv_end = min(kv_start + kv_block_size, kv_len)\n            k_block = k[:, :, kv_start:kv_end].float()\n            v_block = v[:, :, kv_start:kv_end].float()\n\n            scores = (q_block @ k_block.transpose(-2, -1)) * scale\n\n            if causal:\n                q_positions = torch.arange(q_start, q_end, device=q.device)\n                kv_positions = torch.arange(kv_start, kv_end, device=q.device)\n                allowed = kv_positions[None, :] &lt;= q_positions[:, None]\n                scores = scores.masked_fill(~allowed, -torch.inf)\n\n            block_max = scores.amax(dim=-1, keepdim=True)\n            new_m = torch.maximum(m, block_max)\n\n            correction = torch.exp(m - new_m)\n            exp_scores = torch.exp(scores - new_m)\n\n            ell = correction * ell + exp_scores.sum(dim=-1, keepdim=True)\n            numerator = (\n                correction * numerator + exp_scores @ v_block\n            )\n            m = new_m\n\n        output[:, :, q_start:q_end] = numerator / ell\n\n    return output.to(q.dtype)\n\n\ntorch.manual_seed(0)\nq = torch.randn(2, 4, 17, 8)\nk = torch.randn(2, 4, 17, 8)\nv = torch.randn(2, 4, 17, 8)\n\nexpected = attention(q, k, v, mask=causal_mask(17))\nactual = flash_attention_reference(\n    q, k, v, query_block_size=5, kv_block_size=7, causal=True\n)\n\ntorch.testing.assert_close(actual, expected, atol=1e-5, rtol=1e-5)\nactual.shape\n\ntorch.Size([2, 4, 17, 8])\n\n\n\nKey distinction: FlashAttention changes the algorithm’s memory access pattern, not the mathematical definition of attention.\n\n\n\nConcepts to fill in\n\nWhy can attention be slow even when the GPU has enough FLOPs?\nWhat are HBM and SRAM, and why does data movement matter?\nRe-derive online softmax using a running maximum and normalization term.\nExplain why naive tiling does not work without rescaling earlier softmax terms.\nCompare standard attention and FlashAttention memory complexity.\nDistinguish exact FlashAttention from approximate or sparse attention.\n\n\n\nInterview checkpoint\nExplain this statement precisely:\n\nFlashAttention is IO-aware exact attention; it does not make dense attention asymptotically subquadratic in arithmetic complexity.\n\n\n\n\nKV Caching\nDuring autoregressive generation, previously computed keys and values do not change. Cache them instead of recomputing them at every decoding step.\nAt decoding step \\(t\\):\n\\[\nK_{1:t} = \\operatorname{Concat}(K_{1:t-1}, k_t),\n\\qquad\nV_{1:t} = \\operatorname{Concat}(V_{1:t-1}, v_t).\n\\]\nThe new query attends to the cached prefix:\n\\[\no_t\n=\n\\operatorname{softmax}\\left(\n\\frac{q_tK_{1:t}^T}{\\sqrt{d_h}}\n\\right)V_{1:t}.\n\\]\n\nPrefill versus decode\n\n\n\nPhase\nQuery length\nMain operation\nTypical bottleneck\n\n\n\n\nPrefill\n\\(T\\)\nProcess the prompt in parallel\nTODO\n\n\nDecode\n\\(1\\) per step\nRead cached K/V and produce one token\nTODO\n\n\n\n\n\nCache-size derivation\nFor \\(L\\) layers, batch size \\(B\\), sequence length \\(T\\), \\(h_{kv}\\) KV heads, head dimension \\(d_h\\), and \\(s\\) bytes per element:\n\\[\n\\text{KV-cache bytes}\n=\n2LBTh_{kv}d_hs.\n\\]\n\nExercise: Calculate the cache size for one sequence using your choice of model configuration in FP16/BF16. Then repeat for MHA, GQA, and MQA.\n\n\n\nImplementation skeleton\n\ndef append_to_kv_cache(k_new, v_new, cache=None):\n    \"\"\"A simple educational cache; production systems preallocate storage.\"\"\"\n    if cache is None:\n        return k_new, v_new\n\n    k_cache, v_cache = cache\n    k_cache = torch.cat([k_cache, k_new], dim=-2)\n    v_cache = torch.cat([v_cache, v_new], dim=-2)\n    return k_cache, v_cache\n\nQuestions to fill in:\n\nWhy is repeated torch.cat inefficient in a production decoder?\nWhy does KV caching reduce computation but increase persistent memory use?\nHow do MQA and GQA reduce decode-time memory bandwidth?\nWhat changes when prompts in a batch have different lengths?\nWhat are paged attention, prefix caching, and cache quantization?"
   },
   {
     "objectID": "notes/transformers/attention.html#suggested-next-topics",

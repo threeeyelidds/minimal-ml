@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Notes – ML Interview Notes</title>
+<title>transformer – ML Interview Notes</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -29,23 +29,23 @@ ul.task-list li input[type="checkbox"] {
 </style>
 
 
-<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
-<script src="../site_libs/quarto-nav/headroom.min.js"></script>
-<script src="../site_libs/clipboard/clipboard.min.js"></script>
-<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
-<script src="../site_libs/quarto-search/fuse.min.js"></script>
-<script src="../site_libs/quarto-search/quarto-search.js"></script>
-<meta name="quarto:offset" content="../">
-<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
-<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
-<script src="../site_libs/quarto-html/popper.min.js"></script>
-<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
-<script src="../site_libs/quarto-html/anchor.min.js"></script>
-<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
-<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
-<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-f83c246346592b24d02aa84ae3974412.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-f83c246346592b24d02aa84ae3974412.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -74,9 +74,38 @@ ul.task-list li input[type="checkbox"] {
   }
 }</script>
 
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
 
-<link rel="stylesheet" href="../styles.css">
-<link rel="stylesheet" href="../colors.css">
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../../styles.css">
+<link rel="stylesheet" href="../../colors.css">
 </head>
 
 <body class="nav-fixed quarto-light">
@@ -86,7 +115,7 @@ ul.task-list li input[type="checkbox"] {
     <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
       <div class="navbar-container container-fluid">
       <div class="navbar-brand-container mx-auto">
-    <a class="navbar-brand" href="../index.html">
+    <a class="navbar-brand" href="../../index.html">
     <span class="navbar-title">ML Interview Notes</span>
     </a>
   </div>
@@ -97,15 +126,15 @@ ul.task-list li input[type="checkbox"] {
           <div class="collapse navbar-collapse" id="navbarCollapse">
             <ul class="navbar-nav navbar-nav-scroll me-auto">
   <li class="nav-item">
-    <a class="nav-link" href="../index.html"> 
+    <a class="nav-link" href="../../index.html"> 
 <span class="menu-text">Home</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link active" href="../notes/index.html" aria-current="page"> 
+    <a class="nav-link" href="../../notes/index.html"> 
 <span class="menu-text">Notes</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="../posts/index.html"> 
+    <a class="nav-link" href="../../posts/index.html"> 
 <span class="menu-text">Blog</span></a>
   </li>  
 </ul>
@@ -124,52 +153,378 @@ ul.task-list li input[type="checkbox"] {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#transformers" id="toc-transformers" class="nav-link active" data-scroll-target="#transformers">Transformers</a></li>
-  <li><a href="#coming-next" id="toc-coming-next" class="nav-link" data-scroll-target="#coming-next">Coming next</a></li>
+  <li><a href="#transformer-architecture" id="toc-transformer-architecture" class="nav-link active" data-scroll-target="#transformer-architecture">Transformer Architecture</a>
+  <ul class="collapse">
+  <li><a href="#high-level-view" id="toc-high-level-view" class="nav-link" data-scroll-target="#high-level-view">1. High-Level View</a></li>
+  <li><a href="#residual-stream" id="toc-residual-stream" class="nav-link" data-scroll-target="#residual-stream">2. Residual Stream</a>
+  <ul class="collapse">
+  <li><a href="#what-is-the-residual-stream" id="toc-what-is-the-residual-stream" class="nav-link" data-scroll-target="#what-is-the-residual-stream">What is the residual stream?</a></li>
+  <li><a href="#why-residual-connections-matter" id="toc-why-residual-connections-matter" class="nav-link" data-scroll-target="#why-residual-connections-matter">Why residual connections matter</a></li>
+  </ul></li>
+  <li><a href="#normalization" id="toc-normalization" class="nav-link" data-scroll-target="#normalization">3. Normalization</a>
+  <ul class="collapse">
+  <li><a href="#layernorm" id="toc-layernorm" class="nav-link" data-scroll-target="#layernorm">LayerNorm</a></li>
+  <li><a href="#rmsnorm" id="toc-rmsnorm" class="nav-link" data-scroll-target="#rmsnorm">RMSNorm</a></li>
+  <li><a href="#pre-norm-vs-post-norm" id="toc-pre-norm-vs-post-norm" class="nav-link" data-scroll-target="#pre-norm-vs-post-norm">Pre-Norm vs Post-Norm</a></li>
+  </ul></li>
+  <li><a href="#attention-sub-layer" id="toc-attention-sub-layer" class="nav-link" data-scroll-target="#attention-sub-layer">4. Attention Sub-Layer</a></li>
+  <li><a href="#feed-forward-network" id="toc-feed-forward-network" class="nav-link" data-scroll-target="#feed-forward-network">5. Feed-Forward Network</a>
+  <ul class="collapse">
+  <li><a href="#swiglu" id="toc-swiglu" class="nav-link" data-scroll-target="#swiglu">SwiGLU</a></li>
+  </ul></li>
+  <li><a href="#positional-information" id="toc-positional-information" class="nav-link" data-scroll-target="#positional-information">6. Positional Information</a>
+  <ul class="collapse">
+  <li><a href="#absolute-positional-embeddings" id="toc-absolute-positional-embeddings" class="nav-link" data-scroll-target="#absolute-positional-embeddings">Absolute positional embeddings</a></li>
+  <li><a href="#rope" id="toc-rope" class="nav-link" data-scroll-target="#rope">RoPE</a></li>
+  <li><a href="#context-length-extensions" id="toc-context-length-extensions" class="nav-link" data-scroll-target="#context-length-extensions">Context-length extensions</a></li>
+  </ul></li>
+  <li><a href="#full-decoder-only-transformer" id="toc-full-decoder-only-transformer" class="nav-link" data-scroll-target="#full-decoder-only-transformer">7. Full Decoder-Only Transformer</a></li>
+  <li><a href="#encoder-vs-decoder-vs-encoderdecoder" id="toc-encoder-vs-decoder-vs-encoderdecoder" class="nav-link" data-scroll-target="#encoder-vs-decoder-vs-encoderdecoder">8. Encoder vs Decoder vs Encoder–Decoder</a>
+  <ul class="collapse">
+  <li><a href="#encoder-only" id="toc-encoder-only" class="nav-link" data-scroll-target="#encoder-only">Encoder-only</a></li>
+  <li><a href="#decoder-only" id="toc-decoder-only" class="nav-link" data-scroll-target="#decoder-only">Decoder-only</a></li>
+  <li><a href="#encoderdecoder" id="toc-encoderdecoder" class="nav-link" data-scroll-target="#encoderdecoder">Encoder–decoder</a></li>
+  </ul></li>
+  <li><a href="#compute-and-memory" id="toc-compute-and-memory" class="nav-link" data-scroll-target="#compute-and-memory">9. Compute and Memory</a>
+  <ul class="collapse">
+  <li><a href="#attention" id="toc-attention" class="nav-link" data-scroll-target="#attention">Attention</a></li>
+  <li><a href="#mlp" id="toc-mlp" class="nav-link" data-scroll-target="#mlp">MLP</a></li>
+  </ul></li>
+  <li><a href="#modern-llm-block" id="toc-modern-llm-block" class="nav-link" data-scroll-target="#modern-llm-block">10. Modern LLM Block</a></li>
+  <li><a href="#interview-questions" id="toc-interview-questions" class="nav-link" data-scroll-target="#interview-questions">Interview Questions</a></li>
+  </ul></li>
   </ul>
 </nav>
     </div>
 <!-- main -->
-<main class="content" id="quarto-document-content">
+<main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"></header>
 
-<header id="title-block-header" class="quarto-title-block default">
-<div class="quarto-title">
-<h1 class="title">Notes</h1>
+
+
+
+<section id="transformer-architecture" class="level1">
+<h1>Transformer Architecture</h1>
+<section id="high-level-view" class="level2">
+<h2 class="anchored" data-anchor-id="high-level-view">1. High-Level View</h2>
+<p>A Transformer block alternates between:</p>
+<ol type="1">
+<li><strong>Token mixing</strong> via attention</li>
+<li><strong>Feature mixing</strong> via the MLP</li>
+</ol>
+<p>For hidden states</p>
+<p><span class="math display">\[
+X \in \mathbb{R}^{B \times T \times d_{\text{model}}},
+\]</span></p>
+<p>a modern pre-norm Transformer block is roughly</p>
+<p><span class="math display">\[
+X' = X + \operatorname{Attention}(\operatorname{Norm}(X))
+\]</span></p>
+<p><span class="math display">\[
+X_{\text{out}}
+=
+X' + \operatorname{MLP}(\operatorname{Norm}(X')).
+\]</span></p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
 </div>
-
-
-
-<div class="quarto-title-meta">
-
-    
-  
-    
-  </div>
-  
-
-
-</header>
-
-
-<section id="transformers" class="level2">
-<h2 class="anchored" data-anchor-id="transformers">Transformers</h2>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Core intuition
+</div>
+</div>
+<div class="callout-body-container callout-body">
 <ul>
-<li><a href="../notes/transformers/attention.html">Attention</a></li>
-<li><a href="../notes/transformers/transformer.html">Transformers</a></li>
+<li>Attention mixes information <strong>across tokens</strong>.</li>
+<li>The MLP mixes information <strong>across features within each token</strong>.</li>
+<li>Residual connections preserve and incrementally update the residual stream.</li>
 </ul>
+</div>
+</div>
+<hr>
 </section>
-<section id="coming-next" class="level2">
-<h2 class="anchored" data-anchor-id="coming-next">Coming next</h2>
+<section id="residual-stream" class="level2">
+<h2 class="anchored" data-anchor-id="residual-stream">2. Residual Stream</h2>
+<section id="what-is-the-residual-stream" class="level3">
+<h3 class="anchored" data-anchor-id="what-is-the-residual-stream">What is the residual stream?</h3>
+<p>TODO: - Interpret <span class="math inline">\(X\)</span> as the shared communication channel across layers. - Attention and MLP blocks write updates into this stream. - Why residual connections make deep Transformers easier to optimize.</p>
+<p><span class="math display">\[
+X_{l+1} = X_l + \Delta X_l.
+\]</span></p>
+</section>
+<section id="why-residual-connections-matter" class="level3">
+<h3 class="anchored" data-anchor-id="why-residual-connections-matter">Why residual connections matter</h3>
+<p>TODO: - Gradient flow - Identity path - Incremental feature refinement</p>
+<hr>
+</section>
+</section>
+<section id="normalization" class="level2">
+<h2 class="anchored" data-anchor-id="normalization">3. Normalization</h2>
+<section id="layernorm" class="level3">
+<h3 class="anchored" data-anchor-id="layernorm">LayerNorm</h3>
+<p><span class="math display">\[
+\operatorname{LN}(x)
+=
+\gamma
+\frac{x-\mu}{\sqrt{\sigma^2+\epsilon}}
++
+\beta.
+\]</span></p>
+</section>
+<section id="rmsnorm" class="level3">
+<h3 class="anchored" data-anchor-id="rmsnorm">RMSNorm</h3>
+<p><span class="math display">\[
+\operatorname{RMSNorm}(x)
+=
+\gamma
+\frac{x}
+{\sqrt{\frac{1}{d}\sum_i x_i^2+\epsilon}}.
+\]</span></p>
+<p>TODO: - Difference between LayerNorm and RMSNorm - Why modern LLMs often use RMSNorm - What dimensions are normalized</p>
+</section>
+<section id="pre-norm-vs-post-norm" class="level3">
+<h3 class="anchored" data-anchor-id="pre-norm-vs-post-norm">Pre-Norm vs Post-Norm</h3>
+<p><strong>Post-norm</strong></p>
+<p><span class="math display">\[
+X_{l+1}
+=
+\operatorname{Norm}
+\left(
+X_l + F(X_l)
+\right)
+\]</span></p>
+<p><strong>Pre-norm</strong></p>
+<p><span class="math display">\[
+X_{l+1}
+=
+X_l
++
+F(\operatorname{Norm}(X_l)).
+\]</span></p>
+<p>TODO: - Optimization stability - Gradient propagation - Why pre-norm became dominant in large LLMs - Potential tradeoff in representational depth</p>
+<hr>
+</section>
+</section>
+<section id="attention-sub-layer" class="level2">
+<h2 class="anchored" data-anchor-id="attention-sub-layer">4. Attention Sub-Layer</h2>
+<p>Brief recap only; keep detailed derivations in the attention note.</p>
+<p><span class="math display">\[
+\operatorname{Attention}(Q,K,V)
+=
+\operatorname{softmax}
+\left(
+\frac{QK^\top}{\sqrt{d_h}}
+\right)V.
+\]</span></p>
+<p>TODO: - MHA / GQA / MQA - Causal masking - KV cache - Link to attention note</p>
+<hr>
+</section>
+<section id="feed-forward-network" class="level2">
+<h2 class="anchored" data-anchor-id="feed-forward-network">5. Feed-Forward Network</h2>
+<p>The MLP operates independently on each token.</p>
+<p>Classic Transformer FFN:</p>
+<p><span class="math display">\[
+\operatorname{FFN}(x)
+=
+W_2 \sigma(W_1x).
+\]</span></p>
+<p>Typical dimensions:</p>
+<p><span class="math display">\[
+d_{\text{model}}
+\rightarrow
+d_{\text{ff}}
+\rightarrow
+d_{\text{model}}.
+\]</span></p>
+<p>Usually</p>
+<p><span class="math display">\[
+d_{\text{ff}} &gt; d_{\text{model}}.
+\]</span></p>
+<section id="swiglu" class="level3">
+<h3 class="anchored" data-anchor-id="swiglu">SwiGLU</h3>
+<p>Modern LLMs often use gated MLPs:</p>
+<p><span class="math display">\[
+\operatorname{SwiGLU}(x)
+=
+W_o
+\left[
+\operatorname{SiLU}(W_gx)
+\odot
+(W_ux)
+\right].
+\]</span></p>
+<p>TODO: - Why gating helps - Why SwiGLU replaced ReLU/GELU FFNs in many LLMs - Parameter-count implications</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Attention vs MLP
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Attention:</p>
+<p><span class="math display">\[
+[B,T,d]
+\rightarrow
+\text{mix across } T
+\]</span></p>
+<p>MLP:</p>
+<p><span class="math display">\[
+[B,T,d]
+\rightarrow
+\text{mix across } d
+\]</span></p>
+<p>This is a useful way to think about a Transformer as alternating <strong>token mixing</strong> and <strong>feature mixing</strong>.</p>
+</div>
+</div>
+<hr>
+</section>
+</section>
+<section id="positional-information" class="level2">
+<h2 class="anchored" data-anchor-id="positional-information">6. Positional Information</h2>
+<p>Self-attention alone is permutation-equivariant, so positional information must be introduced separately.</p>
+<section id="absolute-positional-embeddings" class="level3">
+<h3 class="anchored" data-anchor-id="absolute-positional-embeddings">Absolute positional embeddings</h3>
+<p>TODO</p>
+</section>
+<section id="rope" class="level3">
+<h3 class="anchored" data-anchor-id="rope">RoPE</h3>
+<p>TODO: - Rotate Q/K by position-dependent angles - Relative-position interpretation - Why RoPE is common in modern LLMs</p>
+<p><span class="math display">\[
+q_t' = R_t q_t,
+\qquad
+k_s' = R_s k_s.
+\]</span></p>
+<p>Then</p>
+<p><span class="math display">\[
+(q_t')^\top k_s'
+=
+q_t^\top R_{s-t}k_s.
+\]</span></p>
+</section>
+<section id="context-length-extensions" class="level3">
+<h3 class="anchored" data-anchor-id="context-length-extensions">Context-length extensions</h3>
+<p>TODO: - RoPE scaling - NTK-aware scaling - YaRN / related approaches</p>
+<hr>
+</section>
+</section>
+<section id="full-decoder-only-transformer" class="level2">
+<h2 class="anchored" data-anchor-id="full-decoder-only-transformer">7. Full Decoder-Only Transformer</h2>
+<p>Pipeline:</p>
+<p><span class="math display">\[
+\text{tokens}
+\rightarrow
+\text{embeddings}
+\rightarrow
+L \times \text{Transformer blocks}
+\rightarrow
+\text{final norm}
+\rightarrow
+\text{LM head}
+\rightarrow
+\text{logits}.
+\]</span></p>
+<p>For vocabulary size <span class="math inline">\(V\)</span>,</p>
+<p><span class="math display">\[
+X_L \in \mathbb{R}^{B\times T\times d}
+\]</span></p>
+<p>and</p>
+<p><span class="math display">\[
+\text{logits}
+=
+X_L W_{\text{vocab}}
+\in
+\mathbb{R}^{B\times T\times V}.
+\]</span></p>
+<p>TODO: - Weight tying - Final normalization - Autoregressive next-token objective</p>
+<hr>
+</section>
+<section id="encoder-vs-decoder-vs-encoderdecoder" class="level2">
+<h2 class="anchored" data-anchor-id="encoder-vs-decoder-vs-encoderdecoder">8. Encoder vs Decoder vs Encoder–Decoder</h2>
+<section id="encoder-only" class="level3">
+<h3 class="anchored" data-anchor-id="encoder-only">Encoder-only</h3>
+<p>Examples: BERT-style models.</p>
+<p>TODO: - Bidirectional attention - Representation learning</p>
+</section>
+<section id="decoder-only" class="level3">
+<h3 class="anchored" data-anchor-id="decoder-only">Decoder-only</h3>
+<p>Examples: GPT-style LLMs.</p>
+<p>TODO: - Causal attention - Autoregressive generation</p>
+</section>
+<section id="encoderdecoder" class="level3">
+<h3 class="anchored" data-anchor-id="encoderdecoder">Encoder–decoder</h3>
+<p>Examples: original Transformer / T5-style models.</p>
+<p>TODO: - Encoder self-attention - Decoder self-attention - Cross-attention</p>
+<hr>
+</section>
+</section>
+<section id="compute-and-memory" class="level2">
+<h2 class="anchored" data-anchor-id="compute-and-memory">9. Compute and Memory</h2>
+<p>For sequence length <span class="math inline">\(T\)</span> and hidden dimension <span class="math inline">\(d\)</span>:</p>
+<section id="attention" class="level3">
+<h3 class="anchored" data-anchor-id="attention">Attention</h3>
+<p><span class="math display">\[
+O(T^2 d)
+\]</span></p>
+</section>
+<section id="mlp" class="level3">
+<h3 class="anchored" data-anchor-id="mlp">MLP</h3>
+<p><span class="math display">\[
+O(Td\,d_{\text{ff}})
+\]</span></p>
+<p>TODO: - Why MLP FLOPs can dominate at shorter contexts - Why attention dominates as <span class="math inline">\(T\)</span> grows - Activation memory - KV-cache memory during decoding</p>
+<hr>
+</section>
+</section>
+<section id="modern-llm-block" class="level2">
+<h2 class="anchored" data-anchor-id="modern-llm-block">10. Modern LLM Block</h2>
+<p>A typical modern decoder block looks roughly like:</p>
+<pre class="text"><code>x
+│
+├── RMSNorm
+│
+├── Attention
+│
+└── + residual
+    │
+    ├── RMSNorm
+    │
+    ├── SwiGLU MLP
+    │
+    └── + residual</code></pre>
+<p>Common modern choices:</p>
 <ul>
-<li>KL divergence</li>
-<li>DPO</li>
-<li>PPO / GRPO</li>
-<li>KV cache</li>
+<li>decoder-only architecture</li>
+<li>pre-norm</li>
+<li>RMSNorm</li>
+<li>RoPE</li>
+<li>SwiGLU</li>
+<li>GQA</li>
 <li>FlashAttention</li>
-<li>Distributed training</li>
+<li>KV cache</li>
+</ul>
+<hr>
+</section>
+<section id="interview-questions" class="level2">
+<h2 class="anchored" data-anchor-id="interview-questions">Interview Questions</h2>
+<ul>
+<li>Why do Transformers need residual connections?</li>
+<li>Pre-norm vs post-norm?</li>
+<li>Why RMSNorm instead of LayerNorm?</li>
+<li>Why is attention token mixing while the MLP is feature mixing?</li>
+<li>Why does the MLP expand to a larger hidden dimension?</li>
+<li>Why use SwiGLU?</li>
+<li>Why is positional encoding required?</li>
+<li>How does RoPE encode relative positions?</li>
+<li>What dominates Transformer compute?</li>
+<li>Why does KV-cache memory become a bottleneck during inference?</li>
+<li>What architectural changes distinguish modern LLMs from the original Transformer?</li>
 </ul>
 
 
+</section>
 </section>
 
 </main> <!-- /main -->

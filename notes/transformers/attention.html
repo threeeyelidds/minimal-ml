@@ -80,7 +80,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../../site_libs/bootstrap/bootstrap-d94f0129d652a5a8036266edffbc062c.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../../site_libs/bootstrap/bootstrap-f83c246346592b24d02aa84ae3974412.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -276,7 +276,7 @@ V \in \mathbb{R}^{n_k \times d_v},
 </section>
 <section id="minimal-pytorch-implementation" class="level3">
 <h3 class="anchored" data-anchor-id="minimal-pytorch-implementation">Minimal PyTorch implementation</h3>
-<div id="1c50f8cc" class="cell" data-execution_count="1">
+<div id="1aa2839f" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> math</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -293,7 +293,7 @@ V \in \mathbb{R}^{n_k \times d_v},
 </section>
 <section id="sanity-check" class="level3">
 <h3 class="anchored" data-anchor-id="sanity-check">Sanity check</h3>
-<div id="f3e13bb8" class="cell" data-execution_count="2">
+<div id="fe1b7d8b" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>torch.manual_seed(<span class="dv">0</span>)</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>q <span class="op">=</span> torch.randn(<span class="dv">2</span>, <span class="dv">4</span>, <span class="dv">8</span>)</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>k <span class="op">=</span> torch.randn(<span class="dv">2</span>, <span class="dv">4</span>, <span class="dv">8</span>)</span>
@@ -524,7 +524,7 @@ S^{(h)} = Q^{(h)}K^{(h)T}
 </section>
 <section id="minimal-pytorch-implementation-1" class="level3">
 <h3 class="anchored" data-anchor-id="minimal-pytorch-implementation-1">Minimal PyTorch implementation</h3>
-<div id="c0aa3485" class="cell" data-execution_count="3">
+<div id="493965d8" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch.nn <span class="im">as</span> nn</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -563,7 +563,7 @@ S^{(h)} = Q^{(h)}K^{(h)T}
 <span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a>        )</span>
 <span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">self</span>.out_proj(output)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="48517b28" class="cell" data-execution_count="4">
+<div id="a3084d1d" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>torch.manual_seed(<span class="dv">0</span>)</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> torch.randn(<span class="dv">2</span>, <span class="dv">4</span>, <span class="dv">16</span>)</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>mha <span class="op">=</span> MultiHeadSelfAttention(d_model<span class="op">=</span><span class="dv">16</span>, num_heads<span class="op">=</span><span class="dv">4</span>)</span>
@@ -606,7 +606,7 @@ A
 <section id="minimal-implementation" class="level3">
 <h3 class="anchored" data-anchor-id="minimal-implementation">Minimal implementation</h3>
 <p>The <code>attention</code> function above uses a Boolean mask where <code>True</code> means that attention is allowed.</p>
-<div id="eaaffdda" class="cell" data-execution_count="5">
+<div id="c724aaad" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> causal_mask(seq_len, device<span class="op">=</span><span class="va">None</span>):</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> torch.ones(</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>        seq_len, seq_len, dtype<span class="op">=</span>torch.<span class="bu">bool</span>, device<span class="op">=</span>device</span>
@@ -623,7 +623,7 @@ A
 </div>
 </div>
 <p>For multi-head attention, <code>(T, T)</code> broadcasts across the batch and head dimensions:</p>
-<div id="390e74c0" class="cell" data-execution_count="6">
+<div id="3f43a215" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>out <span class="op">=</span> mha(x, mask<span class="op">=</span>causal_mask(x.shape[<span class="dv">1</span>], x.device))</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>out.shape</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="6">
@@ -696,7 +696,7 @@ n_{\text{rep}} = \frac{h_q}{h_{kv}}
 </section>
 <section id="implementation-skeleton" class="level3">
 <h3 class="anchored" data-anchor-id="implementation-skeleton">Implementation skeleton</h3>
-<div id="ee0052f0" class="cell" data-execution_count="7">
+<div id="c5613cd8" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> repeat_kv(x, num_repeats):</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Expand (B, H_kv, T, D_h) to (B, H_q, T, D_h)."""</span></span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> num_repeats <span class="op">==</span> <span class="dv">1</span>:</span>
@@ -724,16 +724,291 @@ n_{\text{rep}} = \frac{h_q}{h_{kv}}
 <section id="flashattention" class="level3">
 <h3 class="anchored" data-anchor-id="flashattention">FlashAttention</h3>
 <p>Standard attention materializes the <span class="math inline">\(T \times T\)</span> score and probability matrices in high-bandwidth memory (HBM). FlashAttention computes exact attention in tiles and uses an online softmax so these full intermediate matrices do not need to be stored in HBM.</p>
+<section id="online-softmax-derivation" class="level4">
+<h4 class="anchored" data-anchor-id="online-softmax-derivation">Online Softmax Derivation</h4>
+<p>For the first <span class="math inline">\(k\)</span> logits, maintain</p>
+<p><span class="math display">\[
+m_k = \max_{1 \le j \le k} x_j,
+\qquad
+\ell_k = \sum_{j=1}^{k} e^{x_j-m_k}.
+\]</span></p>
+<p>After observing <span class="math inline">\(x_{k+1}\)</span>,</p>
+<p><span class="math display">\[
+m_{k+1} = \max(m_k, x_{k+1}).
+\]</span></p>
+<p>Then</p>
+<p><span class="math display">\[
+\begin{aligned}
+\ell_{k+1}
+&amp;= \sum_{j=1}^{k+1} e^{x_j-m_{k+1}} \\
+&amp;= \sum_{j=1}^{k} e^{x_j-m_{k+1}}
+   + e^{x_{k+1}-m_{k+1}} \\
+&amp;= \sum_{j=1}^{k}
+   e^{x_j-m_k} e^{m_k-m_{k+1}}
+   + e^{x_{k+1}-m_{k+1}} \\
+&amp;= \ell_k e^{m_k-m_{k+1}}
+   + e^{x_{k+1}-m_{k+1}}.
+\end{aligned}
+\]</span></p>
+<p>Therefore the online recurrence is</p>
+<p><span class="math display">\[
+\boxed{
+m_{k+1} = \max(m_k,x_{k+1}),
+\qquad
+\ell_{k+1}
+=
+\ell_k e^{m_k-m_{k+1}}
++
+e^{x_{k+1}-m_{k+1}}
+}
+\]</span></p>
+<p>and after processing all logits,</p>
+<p><span class="math display">\[
+\operatorname{softmax}(x_i)
+=
+\frac{e^{x_i-m_N}}{\ell_N}.
+\]</span></p>
+<p>FlashAttention applies the same idea <strong>row-wise and block-wise</strong>. The score matrix is divided along both its query-row and key-column dimensions:</p>
+<pre class="text"><code>                              key positions
+                         K¹        K²        K³
+                     ┌─────────┬─────────┬─────────┐
+                     │ S⁽¹˒¹⁾  │ S⁽¹˒²⁾  │ S⁽¹˒³⁾  │ → output tile O¹
+query positions  Q¹  │         │         │         │
+                     ├─────────┼─────────┼─────────┤
+                     │ S⁽²˒¹⁾  │ S⁽²˒²⁾  │ S⁽²˒³⁾  │ → output tile O²
+                 Q²  │         │         │         │
+                     └─────────┴─────────┴─────────┘
+                          stream left to right →</code></pre>
+<p>Each score tile is</p>
+<p><span class="math display">\[
+S^{(i,j)} = Q^{(i)}K^{(j)T}
+\in \mathbb{R}^{B_q \times B_k}.
+\]</span></p>
+<p>For one query tile <span class="math inline">\(Q^{(i)}\)</span>, the algorithm streams from left to right through all key/value tiles. The online-softmax state is maintained separately for each query row. Thus, a score tile spans <strong>both</strong> rows and columns, while the softmax reduction and streaming happen across the <strong>key-column dimension</strong>.</p>
+</section>
+<section id="symbols-and-state" class="level4">
+<h4 class="anchored" data-anchor-id="symbols-and-state">Symbols and state</h4>
+<p>The batch and head dimensions are omitted below. <span class="math inline">\(B_q\)</span> and <span class="math inline">\(B_k\)</span> are the query and key tile sizes, and <span class="math inline">\(d_v\)</span> is the value-head dimension.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 23%">
+<col style="width: 30%">
+<col style="width: 23%">
+<col style="width: 23%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Symbol</th>
+<th style="text-align: right;">Shape</th>
+<th>Scope</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\(Q^{(i)}\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(B_q \times d_h\)</span></td>
+<td>Query tile <span class="math inline">\(i\)</span></td>
+<td>A block of query vectors</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(K^{(j)}\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(B_k \times d_h\)</span></td>
+<td>KV tile <span class="math inline">\(j\)</span></td>
+<td>A block of key vectors</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(V^{(j)}\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(B_k \times d_v\)</span></td>
+<td>KV tile <span class="math inline">\(j\)</span></td>
+<td>The value vectors paired with <span class="math inline">\(K^{(j)}\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(S^{(i,j)}\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(B_q \times B_k\)</span></td>
+<td>Current score tile</td>
+<td>Scaled scores <span class="math inline">\(Q^{(i)}K^{(j)T}/\sqrt{d_h}\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(\widetilde m^{(i,j)}\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(B_q \times 1\)</span></td>
+<td>Current score tile</td>
+<td>Local row maximum within only <span class="math inline">\(S^{(i,j)}\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(m^{(i,j)}\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(B_q \times 1\)</span></td>
+<td>Running state</td>
+<td>Row maximum across KV tiles <span class="math inline">\(1,\ldots,j\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(P^{(i,j)}\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(B_q \times B_k\)</span></td>
+<td>Current score tile</td>
+<td>Shifted, <strong>unnormalized</strong> weights <span class="math inline">\(e^{S^{(i,j)}-m^{(i,j)}}\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(\ell^{(i,j)}\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(B_q \times 1\)</span></td>
+<td>Running state</td>
+<td>Softmax denominator across KV tiles <span class="math inline">\(1,\ldots,j\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(N^{(i,j)}\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(B_q \times d_v\)</span></td>
+<td>Running state</td>
+<td>Rescaled, unnormalized weighted sum of values</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(O^{(i)}\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(B_q \times d_v\)</span></td>
+<td>Completed query tile</td>
+<td>Final normalized output <span class="math inline">\(N^{(i,J)}/\ell^{(i,J)}\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>Here, <span class="math inline">\(P\)</span> is not yet the final softmax probability matrix. It contains the unnormalized contribution of the current score tile using the newest running maximum.</p>
+<p>For a block of scores <span class="math inline">\(S^{(b)}\)</span>, let <span class="math inline">\(m^{(b-1)}\)</span>, <span class="math inline">\(\ell^{(b-1)}\)</span>, and <span class="math inline">\(N^{(b-1)}\)</span> be the running row maximum, softmax denominator, and unnormalized attention output. The update for each row is</p>
+<p><span class="math display">\[
+\begin{aligned}
+\widetilde m^{(b)}
+&amp;= \max_j S_{j}^{(b)}, \\
+m^{(b)}
+&amp;= \max\left(m^{(b-1)}, \widetilde m^{(b)}\right), \\
+P^{(b)}
+&amp;= \exp\left(S^{(b)}-m^{(b)}\right), \\
+\ell^{(b)}
+&amp;= e^{m^{(b-1)}-m^{(b)}}\ell^{(b-1)}
+   + \sum_j P_j^{(b)}, \\
+N^{(b)}
+&amp;= e^{m^{(b-1)}-m^{(b)}}N^{(b-1)}
+   + P^{(b)}V^{(b)}.
+\end{aligned}
+\]</span></p>
+<p>After the final key/value block,</p>
+<p><span class="math display">\[
+O = \frac{N^{(B)}}{\ell^{(B)}}.
+\]</span></p>
+<p>The factor <span class="math inline">\(e^{m^{(b-1)}-m^{(b)}}\)</span> rescales the old denominator and numerator whenever a later block contains a larger maximum. This is the step that makes block-wise softmax exact: all old and new terms end up expressed relative to the same maximum.</p>
+</section>
+<section id="how-the-tiled-algorithm-works" class="level4">
+<h4 class="anchored" data-anchor-id="how-the-tiled-algorithm-works">How the tiled algorithm works</h4>
+<p>For each query tile, FlashAttention:</p>
+<ol type="1">
+<li>Loads a block of <span class="math inline">\(Q\)</span> into fast on-chip SRAM.</li>
+<li>Streams blocks of <span class="math inline">\(K\)</span> and <span class="math inline">\(V\)</span> through SRAM.</li>
+<li>Computes one score tile <span class="math inline">\(Q^{(i)}K^{(j)T}\)</span> at a time.</li>
+<li>Updates the running <span class="math inline">\(m\)</span>, <span class="math inline">\(\ell\)</span>, and output numerator <span class="math inline">\(N\)</span> with the equations above.</li>
+<li>Writes only the completed output tile back to HBM.</li>
+</ol>
+<p>Thus, it never writes the full score matrix or softmax matrix to HBM. The arithmetic is still <span class="math inline">\(O(T^2d)\)</span> for dense self-attention, but substantially less HBM traffic makes it faster in practice. During training, the backward pass can recompute score tiles from <span class="math inline">\(Q\)</span>, <span class="math inline">\(K\)</span>, and <span class="math inline">\(V\)</span> instead of storing the full attention matrix.</p>
+</section>
+<section id="minimal-tiled-implementation" class="level4">
+<h4 class="anchored" data-anchor-id="minimal-tiled-implementation">Minimal tiled implementation</h4>
+<p>This implementation demonstrates the forward algorithm, including optional causal masking. It is mathematically equivalent to standard attention up to floating-point rounding, but Python loops and ordinary PyTorch operations do <strong>not</strong> make it a fast kernel. Real FlashAttention fuses these operations and manages SRAM explicitly in CUDA or Triton.</p>
+<div id="c84d8518" class="cell" data-execution_count="8">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="at">@torch.no_grad</span>()</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> flash_attention_reference(</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    q,</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    k,</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    v,</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    query_block_size<span class="op">=</span><span class="dv">32</span>,</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>    kv_block_size<span class="op">=</span><span class="dv">32</span>,</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>    causal<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>):</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Educational tiled attention for tensors shaped (B, H, T, D)."""</span></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>    batch_size, num_heads, query_len, d_head <span class="op">=</span> q.shape</span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>    _, _, kv_len, _ <span class="op">=</span> k.shape</span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>    d_value <span class="op">=</span> v.shape[<span class="op">-</span><span class="dv">1</span>]</span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>    scale <span class="op">=</span> <span class="fl">1.0</span> <span class="op">/</span> math.sqrt(d_head)</span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Accumulate in FP32 even if the input uses a lower-precision dtype.</span></span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>    output <span class="op">=</span> torch.empty(</span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>        batch_size,</span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>        num_heads,</span>
+<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>        query_len,</span>
+<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>        d_value,</span>
+<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>        device<span class="op">=</span>q.device,</span>
+<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a>        dtype<span class="op">=</span>torch.float32,</span>
+<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> q_start <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">0</span>, query_len, query_block_size):</span>
+<span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a>        q_end <span class="op">=</span> <span class="bu">min</span>(q_start <span class="op">+</span> query_block_size, query_len)</span>
+<span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a>        q_block <span class="op">=</span> q[:, :, q_start:q_end].<span class="bu">float</span>()</span>
+<span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a>        rows <span class="op">=</span> q_end <span class="op">-</span> q_start</span>
+<span id="cb13-30"><a href="#cb13-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-31"><a href="#cb13-31" aria-hidden="true" tabindex="-1"></a>        <span class="co"># One running state per attention row.</span></span>
+<span id="cb13-32"><a href="#cb13-32" aria-hidden="true" tabindex="-1"></a>        m <span class="op">=</span> torch.full(</span>
+<span id="cb13-33"><a href="#cb13-33" aria-hidden="true" tabindex="-1"></a>            (batch_size, num_heads, rows, <span class="dv">1</span>),</span>
+<span id="cb13-34"><a href="#cb13-34" aria-hidden="true" tabindex="-1"></a>            <span class="op">-</span>torch.inf,</span>
+<span id="cb13-35"><a href="#cb13-35" aria-hidden="true" tabindex="-1"></a>            device<span class="op">=</span>q.device,</span>
+<span id="cb13-36"><a href="#cb13-36" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb13-37"><a href="#cb13-37" aria-hidden="true" tabindex="-1"></a>        ell <span class="op">=</span> torch.zeros_like(m)</span>
+<span id="cb13-38"><a href="#cb13-38" aria-hidden="true" tabindex="-1"></a>        numerator <span class="op">=</span> torch.zeros(</span>
+<span id="cb13-39"><a href="#cb13-39" aria-hidden="true" tabindex="-1"></a>            batch_size,</span>
+<span id="cb13-40"><a href="#cb13-40" aria-hidden="true" tabindex="-1"></a>            num_heads,</span>
+<span id="cb13-41"><a href="#cb13-41" aria-hidden="true" tabindex="-1"></a>            rows,</span>
+<span id="cb13-42"><a href="#cb13-42" aria-hidden="true" tabindex="-1"></a>            d_value,</span>
+<span id="cb13-43"><a href="#cb13-43" aria-hidden="true" tabindex="-1"></a>            device<span class="op">=</span>q.device,</span>
+<span id="cb13-44"><a href="#cb13-44" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb13-45"><a href="#cb13-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-46"><a href="#cb13-46" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> kv_start <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">0</span>, kv_len, kv_block_size):</span>
+<span id="cb13-47"><a href="#cb13-47" aria-hidden="true" tabindex="-1"></a>            kv_end <span class="op">=</span> <span class="bu">min</span>(kv_start <span class="op">+</span> kv_block_size, kv_len)</span>
+<span id="cb13-48"><a href="#cb13-48" aria-hidden="true" tabindex="-1"></a>            k_block <span class="op">=</span> k[:, :, kv_start:kv_end].<span class="bu">float</span>()</span>
+<span id="cb13-49"><a href="#cb13-49" aria-hidden="true" tabindex="-1"></a>            v_block <span class="op">=</span> v[:, :, kv_start:kv_end].<span class="bu">float</span>()</span>
+<span id="cb13-50"><a href="#cb13-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-51"><a href="#cb13-51" aria-hidden="true" tabindex="-1"></a>            scores <span class="op">=</span> (q_block <span class="op">@</span> k_block.transpose(<span class="op">-</span><span class="dv">2</span>, <span class="op">-</span><span class="dv">1</span>)) <span class="op">*</span> scale</span>
+<span id="cb13-52"><a href="#cb13-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-53"><a href="#cb13-53" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> causal:</span>
+<span id="cb13-54"><a href="#cb13-54" aria-hidden="true" tabindex="-1"></a>                q_positions <span class="op">=</span> torch.arange(q_start, q_end, device<span class="op">=</span>q.device)</span>
+<span id="cb13-55"><a href="#cb13-55" aria-hidden="true" tabindex="-1"></a>                kv_positions <span class="op">=</span> torch.arange(kv_start, kv_end, device<span class="op">=</span>q.device)</span>
+<span id="cb13-56"><a href="#cb13-56" aria-hidden="true" tabindex="-1"></a>                allowed <span class="op">=</span> kv_positions[<span class="va">None</span>, :] <span class="op">&lt;=</span> q_positions[:, <span class="va">None</span>]</span>
+<span id="cb13-57"><a href="#cb13-57" aria-hidden="true" tabindex="-1"></a>                scores <span class="op">=</span> scores.masked_fill(<span class="op">~</span>allowed, <span class="op">-</span>torch.inf)</span>
+<span id="cb13-58"><a href="#cb13-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-59"><a href="#cb13-59" aria-hidden="true" tabindex="-1"></a>            block_max <span class="op">=</span> scores.amax(dim<span class="op">=-</span><span class="dv">1</span>, keepdim<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb13-60"><a href="#cb13-60" aria-hidden="true" tabindex="-1"></a>            new_m <span class="op">=</span> torch.maximum(m, block_max)</span>
+<span id="cb13-61"><a href="#cb13-61" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-62"><a href="#cb13-62" aria-hidden="true" tabindex="-1"></a>            correction <span class="op">=</span> torch.exp(m <span class="op">-</span> new_m)</span>
+<span id="cb13-63"><a href="#cb13-63" aria-hidden="true" tabindex="-1"></a>            exp_scores <span class="op">=</span> torch.exp(scores <span class="op">-</span> new_m)</span>
+<span id="cb13-64"><a href="#cb13-64" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-65"><a href="#cb13-65" aria-hidden="true" tabindex="-1"></a>            ell <span class="op">=</span> correction <span class="op">*</span> ell <span class="op">+</span> exp_scores.<span class="bu">sum</span>(dim<span class="op">=-</span><span class="dv">1</span>, keepdim<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb13-66"><a href="#cb13-66" aria-hidden="true" tabindex="-1"></a>            numerator <span class="op">=</span> (</span>
+<span id="cb13-67"><a href="#cb13-67" aria-hidden="true" tabindex="-1"></a>                correction <span class="op">*</span> numerator <span class="op">+</span> exp_scores <span class="op">@</span> v_block</span>
+<span id="cb13-68"><a href="#cb13-68" aria-hidden="true" tabindex="-1"></a>            )</span>
+<span id="cb13-69"><a href="#cb13-69" aria-hidden="true" tabindex="-1"></a>            m <span class="op">=</span> new_m</span>
+<span id="cb13-70"><a href="#cb13-70" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-71"><a href="#cb13-71" aria-hidden="true" tabindex="-1"></a>        output[:, :, q_start:q_end] <span class="op">=</span> numerator <span class="op">/</span> ell</span>
+<span id="cb13-72"><a href="#cb13-72" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-73"><a href="#cb13-73" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> output.to(q.dtype)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="093639e4" class="cell" data-execution_count="9">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>torch.manual_seed(<span class="dv">0</span>)</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>q <span class="op">=</span> torch.randn(<span class="dv">2</span>, <span class="dv">4</span>, <span class="dv">17</span>, <span class="dv">8</span>)</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>k <span class="op">=</span> torch.randn(<span class="dv">2</span>, <span class="dv">4</span>, <span class="dv">17</span>, <span class="dv">8</span>)</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>v <span class="op">=</span> torch.randn(<span class="dv">2</span>, <span class="dv">4</span>, <span class="dv">17</span>, <span class="dv">8</span>)</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>expected <span class="op">=</span> attention(q, k, v, mask<span class="op">=</span>causal_mask(<span class="dv">17</span>))</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>actual <span class="op">=</span> flash_attention_reference(</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>    q, k, v, query_block_size<span class="op">=</span><span class="dv">5</span>, kv_block_size<span class="op">=</span><span class="dv">7</span>, causal<span class="op">=</span><span class="va">True</span></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>torch.testing.assert_close(actual, expected, atol<span class="op">=</span><span class="fl">1e-5</span>, rtol<span class="op">=</span><span class="fl">1e-5</span>)</span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>actual.shape</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="9">
+<pre><code>torch.Size([2, 4, 17, 8])</code></pre>
+</div>
+</div>
 <blockquote class="blockquote">
 <p><strong>Key distinction:</strong> FlashAttention changes the algorithm’s memory access pattern, not the mathematical definition of attention.</p>
 </blockquote>
+</section>
 <section id="concepts-to-fill-in" class="level4">
 <h4 class="anchored" data-anchor-id="concepts-to-fill-in">Concepts to fill in</h4>
 <ul class="task-list">
 <li><label><input type="checkbox">Why can attention be slow even when the GPU has enough FLOPs?</label></li>
 <li><label><input type="checkbox">What are HBM and SRAM, and why does data movement matter?</label></li>
-<li><label><input type="checkbox">Derive online softmax using a running maximum and normalization term.</label></li>
-<li><label><input type="checkbox">Explain why naive tiling does not work without correcting earlier softmax terms.</label></li>
+<li><label><input type="checkbox">Re-derive online softmax using a running maximum and normalization term.</label></li>
+<li><label><input type="checkbox">Explain why naive tiling does not work without rescaling earlier softmax terms.</label></li>
 <li><label><input type="checkbox">Compare standard attention and FlashAttention memory complexity.</label></li>
 <li><label><input type="checkbox">Distinguish exact FlashAttention from approximate or sparse attention.</label></li>
 </ul>
@@ -804,16 +1079,16 @@ o_t
 </section>
 <section id="implementation-skeleton-1" class="level4">
 <h4 class="anchored" data-anchor-id="implementation-skeleton-1">Implementation skeleton</h4>
-<div id="6a07364b" class="cell" data-execution_count="8">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> append_to_kv_cache(k_new, v_new, cache<span class="op">=</span><span class="va">None</span>):</span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""A simple educational cache; production systems preallocate storage."""</span></span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> cache <span class="kw">is</span> <span class="va">None</span>:</span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> k_new, v_new</span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>    k_cache, v_cache <span class="op">=</span> cache</span>
-<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>    k_cache <span class="op">=</span> torch.cat([k_cache, k_new], dim<span class="op">=-</span><span class="dv">2</span>)</span>
-<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>    v_cache <span class="op">=</span> torch.cat([v_cache, v_new], dim<span class="op">=-</span><span class="dv">2</span>)</span>
-<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> k_cache, v_cache</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="6562e50b" class="cell" data-execution_count="10">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> append_to_kv_cache(k_new, v_new, cache<span class="op">=</span><span class="va">None</span>):</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""A simple educational cache; production systems preallocate storage."""</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> cache <span class="kw">is</span> <span class="va">None</span>:</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> k_new, v_new</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>    k_cache, v_cache <span class="op">=</span> cache</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>    k_cache <span class="op">=</span> torch.cat([k_cache, k_new], dim<span class="op">=-</span><span class="dv">2</span>)</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>    v_cache <span class="op">=</span> torch.cat([v_cache, v_new], dim<span class="op">=-</span><span class="dv">2</span>)</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> k_cache, v_cache</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Questions to fill in:</p>
 <ul>
