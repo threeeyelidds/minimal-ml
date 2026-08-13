@@ -4,7 +4,7 @@ title: "Notes"
 
 ## Transformers
 
-- [Scaled Dot-Product Attention](transformers/attention.qmd)
+- [Attention](transformers/attention.qmd)
 
 ## Coming next
 
