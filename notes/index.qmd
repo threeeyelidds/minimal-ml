@@ -5,6 +5,7 @@ title: "Notes"
 ## Transformers
 
 - [Attention](transformers/attention.qmd)
+- [Transformers](transformers/transformer.qmd)
 
 ## Coming next
 

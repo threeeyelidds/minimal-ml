@@ -1,0 +1,390 @@
+# Transformer Architecture
+
+## 1. High-Level View
+
+A Transformer block alternates between:
+
+1. **Token mixing** via attention
+2. **Feature mixing** via the MLP
+
+For hidden states
+
+$$
+X \in \mathbb{R}^{B \times T \times d_{\text{model}}},
+$$
+
+a modern pre-norm Transformer block is roughly
+
+$$
+X' = X + \operatorname{Attention}(\operatorname{Norm}(X))
+$$
+
+$$
+X_{\text{out}}
+=
+X' + \operatorname{MLP}(\operatorname{Norm}(X')).
+$$
+
+::: {.callout-note}
+## Core intuition
+
+- Attention mixes information **across tokens**.
+- The MLP mixes information **across features within each token**.
+- Residual connections preserve and incrementally update the residual stream.
+:::
+
+---
+
+## 2. Residual Stream
+
+### What is the residual stream?
+
+TODO:
+- Interpret $X$ as the shared communication channel across layers.
+- Attention and MLP blocks write updates into this stream.
+- Why residual connections make deep Transformers easier to optimize.
+
+$$
+X_{l+1} = X_l + \Delta X_l.
+$$
+
+### Why residual connections matter
+
+TODO:
+- Gradient flow
+- Identity path
+- Incremental feature refinement
+
+---
+
+## 3. Normalization
+
+### LayerNorm
+
+$$
+\operatorname{LN}(x)
+=
+\gamma
+\frac{x-\mu}{\sqrt{\sigma^2+\epsilon}}
++
+\beta.
+$$
+
+### RMSNorm
+
+$$
+\operatorname{RMSNorm}(x)
+=
+\gamma
+\frac{x}
+{\sqrt{\frac{1}{d}\sum_i x_i^2+\epsilon}}.
+$$
+
+TODO:
+- Difference between LayerNorm and RMSNorm
+- Why modern LLMs often use RMSNorm
+- What dimensions are normalized
+
+### Pre-Norm vs Post-Norm
+
+**Post-norm**
+
+$$
+X_{l+1}
+=
+\operatorname{Norm}
+\left(
+X_l + F(X_l)
+\right)
+$$
+
+**Pre-norm**
+
+$$
+X_{l+1}
+=
+X_l
++
+F(\operatorname{Norm}(X_l)).
+$$
+
+TODO:
+- Optimization stability
+- Gradient propagation
+- Why pre-norm became dominant in large LLMs
+- Potential tradeoff in representational depth
+
+---
+
+## 4. Attention Sub-Layer
+
+Brief recap only; keep detailed derivations in the attention note.
+
+$$
+\operatorname{Attention}(Q,K,V)
+=
+\operatorname{softmax}
+\left(
+\frac{QK^\top}{\sqrt{d_h}}
+\right)V.
+$$
+
+TODO:
+- MHA / GQA / MQA
+- Causal masking
+- KV cache
+- Link to attention note
+
+---
+
+## 5. Feed-Forward Network
+
+The MLP operates independently on each token.
+
+Classic Transformer FFN:
+
+$$
+\operatorname{FFN}(x)
+=
+W_2 \sigma(W_1x).
+$$
+
+Typical dimensions:
+
+$$
+d_{\text{model}}
+\rightarrow
+d_{\text{ff}}
+\rightarrow
+d_{\text{model}}.
+$$
+
+Usually
+
+$$
+d_{\text{ff}} > d_{\text{model}}.
+$$
+
+### SwiGLU
+
+Modern LLMs often use gated MLPs:
+
+$$
+\operatorname{SwiGLU}(x)
+=
+W_o
+\left[
+\operatorname{SiLU}(W_gx)
+\odot
+(W_ux)
+\right].
+$$
+
+TODO:
+- Why gating helps
+- Why SwiGLU replaced ReLU/GELU FFNs in many LLMs
+- Parameter-count implications
+
+::: {.callout-note}
+## Attention vs MLP
+
+Attention:
+
+$$
+[B,T,d]
+\rightarrow
+\text{mix across } T
+$$
+
+MLP:
+
+$$
+[B,T,d]
+\rightarrow
+\text{mix across } d
+$$
+
+This is a useful way to think about a Transformer as alternating
+**token mixing** and **feature mixing**.
+:::
+
+---
+
+## 6. Positional Information
+
+Self-attention alone is permutation-equivariant, so positional information must be introduced separately.
+
+### Absolute positional embeddings
+
+TODO
+
+### RoPE
+
+TODO:
+- Rotate Q/K by position-dependent angles
+- Relative-position interpretation
+- Why RoPE is common in modern LLMs
+
+$$
+q_t' = R_t q_t,
+\qquad
+k_s' = R_s k_s.
+$$
+
+Then
+
+$$
+(q_t')^\top k_s'
+=
+q_t^\top R_{s-t}k_s.
+$$
+
+### Context-length extensions
+
+TODO:
+- RoPE scaling
+- NTK-aware scaling
+- YaRN / related approaches
+
+---
+
+## 7. Full Decoder-Only Transformer
+
+Pipeline:
+
+$$
+\text{tokens}
+\rightarrow
+\text{embeddings}
+\rightarrow
+L \times \text{Transformer blocks}
+\rightarrow
+\text{final norm}
+\rightarrow
+\text{LM head}
+\rightarrow
+\text{logits}.
+$$
+
+For vocabulary size $V$,
+
+$$
+X_L \in \mathbb{R}^{B\times T\times d}
+$$
+
+and
+
+$$
+\text{logits}
+=
+X_L W_{\text{vocab}}
+\in
+\mathbb{R}^{B\times T\times V}.
+$$
+
+TODO:
+- Weight tying
+- Final normalization
+- Autoregressive next-token objective
+
+---
+
+## 8. Encoder vs Decoder vs Encoder–Decoder
+
+### Encoder-only
+
+Examples: BERT-style models.
+
+TODO:
+- Bidirectional attention
+- Representation learning
+
+### Decoder-only
+
+Examples: GPT-style LLMs.
+
+TODO:
+- Causal attention
+- Autoregressive generation
+
+### Encoder–decoder
+
+Examples: original Transformer / T5-style models.
+
+TODO:
+- Encoder self-attention
+- Decoder self-attention
+- Cross-attention
+
+---
+
+## 9. Compute and Memory
+
+For sequence length $T$ and hidden dimension $d$:
+
+### Attention
+
+$$
+O(T^2 d)
+$$
+
+### MLP
+
+$$
+O(Td\,d_{\text{ff}})
+$$
+
+TODO:
+- Why MLP FLOPs can dominate at shorter contexts
+- Why attention dominates as $T$ grows
+- Activation memory
+- KV-cache memory during decoding
+
+---
+
+## 10. Modern LLM Block
+
+A typical modern decoder block looks roughly like:
+
+```text
+x
+│
+├── RMSNorm
+│
+├── Attention
+│
+└── + residual
+    │
+    ├── RMSNorm
+    │
+    ├── SwiGLU MLP
+    │
+    └── + residual
+```
+
+Common modern choices:
+
+- decoder-only architecture
+- pre-norm
+- RMSNorm
+- RoPE
+- SwiGLU
+- GQA
+- FlashAttention
+- KV cache
+
+---
+
+## Interview Questions
+
+- Why do Transformers need residual connections?
+- Pre-norm vs post-norm?
+- Why RMSNorm instead of LayerNorm?
+- Why is attention token mixing while the MLP is feature mixing?
+- Why does the MLP expand to a larger hidden dimension?
+- Why use SwiGLU?
+- Why is positional encoding required?
+- How does RoPE encode relative positions?
+- What dominates Transformer compute?
+- Why does KV-cache memory become a bottleneck during inference?
+- What architectural changes distinguish modern LLMs from the original Transformer?

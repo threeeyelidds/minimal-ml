@@ -1,9 +1,3 @@
----
-title: "ML Interview Notes"
----
-
-A working notebook for senior MLE / research engineer interview preparation.
-
 ## How I use this site
 
 Each topic should answer four questions:
@@ -11,7 +5,7 @@ Each topic should answer four questions:
 1. What is the core idea?
 2. Can I derive it?
 3. Can I implement it in PyTorch?
-4. What interview questions expose whether I really understand it?
+4. What deep dive questions expose whether I really understand it?
 
 ## Current focus
 
