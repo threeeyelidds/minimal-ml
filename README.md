@@ -1,6 +1,6 @@
-# ML Interview Notes
+# Minimal ML
 
-Quarto + PyTorch notes for senior MLE / research engineer interview preparation.
+Concise, executable notes for understanding machine learning from first principles.
 
 ## Setup
 

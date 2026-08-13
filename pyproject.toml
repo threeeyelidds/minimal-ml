@@ -1,7 +1,7 @@
 [project]
-name = "ml-interview-notes"
+name = "minimal-ml"
 version = "0.1.0"
-description = "Executable ML notes for interview preparation"
+description = "Concise, executable notes for understanding machine learning"
 requires-python = ">=3.11"
 dependencies = [
   "ipykernel>=6.29",

@@ -1424,7 +1424,7 @@ wheels = [
 ]
 
 [[package]]
-name = "ml-interview-notes"
+name = "minimal-ml"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
