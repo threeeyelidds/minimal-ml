@@ -1,0 +1,121 @@
+[
+  {
+    "objectID": "notes/transformers/attention.html",
+    "href": "notes/transformers/attention.html",
+    "title": "Attention",
+    "section": "",
+    "text": "Compared to MLP, attention uses input-dependent mixing weights rather than a fixed learned weight matrix. The attention weight \\(w_{ij}\\) measures how strongly the query representation \\(q_i\\) matches the key representation \\(k_j\\).\nFor each output token \\(o_i\\), it is a weighted sum of the value sequence tokens \\(v_j\\), weighted by softmax-normalized similarity scores between the query token \\(q_i\\) and each key token \\(k_j\\). So intuitively:\nquery→which positions matter?\nkeys→what does each position match on?\nvalues→what information gets retrieved?"
+  },
+  {
+    "objectID": "notes/transformers/attention.html#intuition",
+    "href": "notes/transformers/attention.html#intuition",
+    "title": "Attention",
+    "section": "",
+    "text": "Compared to MLP, attention uses input-dependent mixing weights rather than a fixed learned weight matrix. The attention weight \\(w_{ij}\\) measures how strongly the query representation \\(q_i\\) matches the key representation \\(k_j\\).\nFor each output token \\(o_i\\), it is a weighted sum of the value sequence tokens \\(v_j\\), weighted by softmax-normalized similarity scores between the query token \\(q_i\\) and each key token \\(k_j\\). So intuitively:\nquery→which positions matter?\nkeys→what does each position match on?\nvalues→what information gets retrieved?"
+  },
+  {
+    "objectID": "notes/transformers/attention.html#sdpa",
+    "href": "notes/transformers/attention.html#sdpa",
+    "title": "Attention",
+    "section": "SDPA",
+    "text": "SDPA\n\nDerivation\nGiven query, key, and value matrices,\n\\[\nQ \\in \\mathbb{R}^{n_q \\times d}, \\quad\nK \\in \\mathbb{R}^{n_k \\times d}, \\quad\nV \\in \\mathbb{R}^{n_k \\times d_v},\n\\]\nscaled dot-product attention is\n\\[\n\\operatorname{Attention}(Q,K,V)\n=\n\\operatorname{softmax}\\left(\\frac{QK^T}{\\sqrt d}\\right)V.\n\\]\n\n\nMinimal PyTorch implementation\n\nimport math\nimport torch\n\n\ndef attention(q, k, v, mask=None):\n    scores = q @ k.transpose(-2, -1) / math.sqrt(q.shape[-1])\n\n    if mask is not None:\n        scores = scores.masked_fill(~mask, float(\"-inf\"))\n\n    weights = torch.softmax(scores, dim=-1)\n    return weights @ v\n\n\n\nSanity check\n\ntorch.manual_seed(0)\nq = torch.randn(2, 4, 8)\nk = torch.randn(2, 4, 8)\nv = torch.randn(2, 4, 8)\n\nout = attention(q, k, v)\nout.shape\n\ntorch.Size([2, 4, 8])"
+  },
+  {
+    "objectID": "notes/transformers/attention.html#why-scale-dot-product-attention-by-sqrtd_k",
+    "href": "notes/transformers/attention.html#why-scale-dot-product-attention-by-sqrtd_k",
+    "title": "Attention",
+    "section": "Why Scale Dot-Product Attention by \\(\\sqrt{d_k}\\)?",
+    "text": "Why Scale Dot-Product Attention by \\(\\sqrt{d_k}\\)?\n\nWhy does a larger \\(QK^T\\) make softmax more peaked?\nSoftmax depends on the difference between logits, not whether all logits are large.\n\\[\n\\operatorname{softmax}(x_i)\n=\n\\frac{e^{x_i}}\n{\\sum_{j=1}^{n} e^{x_j}}\n\\]\nFor example:\n\\[\n\\operatorname{softmax}([1,2,3])\n\\approx\n[0.09, 0.24, 0.67]\n\\]\nbut\n\\[\n\\operatorname{softmax}([10,20,30])\n\\approx\n[0,0,1].\n\\]\nSoftmax is invariant to adding a constant:\n\\[\n\\operatorname{softmax}(x)\n=\n\\operatorname{softmax}(x+c),\n\\]\nbut not to multiplying by a constant:\n\\[\n\\operatorname{softmax}(\\alpha x)\n=\n\\operatorname{softmax}\\left(\\frac{x}{T}\\right),\n\\qquad\nT=\\frac{1}{\\alpha}.\n\\]\nSo increasing the spread of the logits is equivalent to lowering the softmax temperature, which makes the distribution more peaked.\n\n\nWhy does \\(q^T k\\) grow with dimension?\nAssume each component is approximately zero-mean with unit variance:\n\\[\nq_r, k_r \\sim (0,1).\n\\]\nThen\n\\[\nq^T k\n=\n\\sum_{r=1}^{d_k} q_r k_r.\n\\]\nIf the terms are approximately independent,\n\\[\n\\operatorname{Var}(q^T k)\n\\approx d_k,\n\\]\nso\n\\[\n\\operatorname{Std}(q^T k)\n\\approx \\sqrt{d_k}.\n\\]\nThe scores do not all become large positive numbers. Instead, their spread grows with \\(\\sqrt{d_k}\\), which makes softmax increasingly saturated (peaked).\nTherefore attention uses\n\\[\n\\frac{q^T k}{\\sqrt{d_k}}\n\\]\nso that the logit scale stays roughly constant as \\(d_k\\) changes.\n\nIntuition: \\(1/\\sqrt{d_k}\\) is variance normalization, not vector normalization.\n\n\n\nWhy Not Use Cosine Similarity?\nCosine similarity is\n\\[\n\\frac{q^T k}{\\|q\\|\\|k\\|}.\n\\]\nSince\n\\[\nq^T k\n=\n\\|q\\|\\|k\\|\\cos\\theta,\n\\]\n\ndot-product attention can use both:\n\ndirection / alignment\nvector magnitude\n\n\nCosine similarity removes the magnitude information.\nThis matters because \\(Q\\) and \\(K\\) are learned specifically for attention:\n\\[\nq_i = x_iW_Q,\n\\qquad\nk_j = x_jW_K.\n\\]\nThe model may therefore learn useful information in their norms.\nFor random high-dimensional vectors,\n\\[\n\\|q\\| \\approx \\sqrt{d_k},\n\\qquad\n\\|k\\| \\approx \\sqrt{d_k},\n\\]\nso\n\\[\n\\frac{q^T k}{\\|q\\|\\|k\\|}\n\\approx\nO\\left(\\frac{1}{\\sqrt{d_k}}\\right).\n\\]\nCosine similarities therefore concentrate near zero as dimension grows, so cosine attention usually needs an additional temperature parameter to control softmax sharpness.\n\n\nInterview Takeaway\nScaled dot-product attention uses\n\\[\n\\operatorname{softmax}\n\\left(\n\\frac{QK^T}{\\sqrt{d_k}}\n\\right)V.\n\\]\nThe \\(1/\\sqrt{d_k}\\) term keeps the variance of attention logits roughly constant as head dimension grows, preventing softmax saturation while preserving magnitude information in \\(Q\\) and \\(K\\)."
+  },
+  {
+    "objectID": "notes/transformers/attention.html#interview-questions",
+    "href": "notes/transformers/attention.html#interview-questions",
+    "title": "Attention",
+    "section": "Interview questions",
+    "text": "Interview questions\n\nWhy is the scaling factor \\(1/\\sqrt d\\) rather than \\(1/d\\)?\nWhat happens to gradient flow when attention logits become very large?\n\nSoftmax saturation. Gradients vanish for Q and K, but not for V. The routing becomes fixed.\n\nWhat are the time and memory complexities of standard attention?\nWhat does FlashAttention change, and what does it leave mathematically unchanged?\nHow do MHA, MQA, and GQA differ?"
+  },
+  {
+    "objectID": "notes/transformers/attention.html#multi-head-attention-mha",
+    "href": "notes/transformers/attention.html#multi-head-attention-mha",
+    "title": "Attention",
+    "section": "Multi-Head Attention (MHA)",
+    "text": "Multi-Head Attention (MHA)\n\nMotivation\nAttention can be viewed as factorizing interaction into token mixing and feature mixing. MHA gives different feature subspaces different token-mixing operators.\nIn single-head attention, the same token-mixing scalar \\(A_{ij}\\) is shared across all feature dimensions. Multi-head attention relaxes this by introducing a head dimension, \\(A_{ij}^{(h)}\\), so different feature subspaces can use different attention weights. In this sense, heads are an efficient way to make token mixing conditional on the representation subspace, without paying the cost of fully feature-dependent routing \\(A_{ijc}\\).\nInstead of performing one attention operation with the full model dimension, multi-head attention projects the input into \\(h\\) different query, key, and value subspaces:\n\\[\nQ_i = XW_i^Q, \\qquad\nK_i = XW_i^K, \\qquad\nV_i = XW_i^V.\n\\]\nEach head independently computes\n\\[\n\\operatorname{head}_i\n=\n\\operatorname{Attention}(Q_i,K_i,V_i),\n\\]\nand the results are concatenated and projected:\n\\[\n\\operatorname{MHA}(X)\n=\n\\operatorname{Concat}(\\operatorname{head}_1,\\ldots,\\operatorname{head}_h)W_O.\n\\]\n\n\nLow-Rank Note\nFor each head,\n\\[\nS^{(h)} = Q^{(h)}K^{(h)T}\n\\]\nand therefore\n\\[\n\\operatorname{rank}(S^{(h)}) \\le d_h.\n\\]\nSo each head’s pre-softmax token-interaction matrix is low-rank when \\(d_h \\ll T\\).\n\n\nShapes\nFill in the missing shapes:\n\n\n\nTensor\nShape\n\n\n\n\nInput \\(X\\)\n\\((B,T,d_{\\text{model}})\\)\n\n\nProjected \\(Q,K,V\\)\nTODO\n\n\nSplit into heads\nTODO\n\n\nAttention scores\nTODO\n\n\nPer-head output\nTODO\n\n\nConcatenated output\nTODO\n\n\n\n\nLearning prompt: If the total projection dimension remains \\(d_{\\text{model}}\\), does using more heads increase the leading-order compute complexity?\n\n\n\nMinimal PyTorch implementation\n\nimport torch.nn as nn\n\n\nclass MultiHeadSelfAttention(nn.Module):\n    def __init__(self, d_model, num_heads):\n        super().__init__()\n        assert d_model % num_heads == 0\n\n        self.d_model = d_model\n        self.num_heads = num_heads\n        self.d_head = d_model // num_heads\n\n        self.qkv_proj = nn.Linear(d_model, 3 * d_model, bias=False)\n        self.out_proj = nn.Linear(d_model, d_model, bias=False)\n\n    def forward(self, x, mask=None):\n        batch_size, seq_len, _ = x.shape\n\n        # (B, T, 3 * D) -&gt; three tensors of shape (B, T, D)\n        q, k, v = self.qkv_proj(x).chunk(3, dim=-1)\n\n        # (B, T, D) -&gt; (B, H, T, D_h)\n        def split_heads(tensor):\n            return tensor.view(\n                batch_size, seq_len, self.num_heads, self.d_head\n            ).transpose(1, 2)\n\n        q, k, v = map(split_heads, (q, k, v))\n\n        # mask must be broadcastable to (B, H, T, T), where True means allowed.\n        head_outputs = attention(q, k, v, mask=mask)\n\n        # (B, H, T, D_h) -&gt; (B, T, D)\n        output = head_outputs.transpose(1, 2).contiguous().view(\n            batch_size, seq_len, self.d_model\n        )\n        return self.out_proj(output)\n\n\ntorch.manual_seed(0)\nx = torch.randn(2, 4, 16)\nmha = MultiHeadSelfAttention(d_model=16, num_heads=4)\nmha(x).shape\n\ntorch.Size([2, 4, 16])\n\n\n\nImplementation exercises\n\nAnnotate every intermediate tensor shape.\nReplace the fused qkv_proj with three separate projections.\nExtend the module from self-attention to cross-attention.\nAdd attention dropout and output dropout.\nCompare the output against torch.nn.MultiheadAttention."
+  },
+  {
+    "objectID": "notes/transformers/attention.html#causal-masking",
+    "href": "notes/transformers/attention.html#causal-masking",
+    "title": "Attention",
+    "section": "Causal Masking",
+    "text": "Causal Masking\nIn autoregressive self-attention, token \\(i\\) must not attend to future tokens \\(j&gt;i\\).\n\\[\nM_{ij}\n=\n\\begin{cases}\n0, & j \\le i, \\\\\n-\\infty, & j &gt; i.\n\\end{cases}\n\\]\nThe mask is applied before softmax:\n\\[\nA\n=\n\\operatorname{softmax}\\left(\n\\frac{QK^T}{\\sqrt{d_k}} + M\n\\right).\n\\]\n\nMinimal implementation\nThe attention function above uses a Boolean mask where True means that attention is allowed.\n\ndef causal_mask(seq_len, device=None):\n    return torch.ones(\n        seq_len, seq_len, dtype=torch.bool, device=device\n    ).tril()\n\n\nmask = causal_mask(seq_len=4)\nmask\n\ntensor([[ True, False, False, False],\n        [ True,  True, False, False],\n        [ True,  True,  True, False],\n        [ True,  True,  True,  True]])\n\n\nFor multi-head attention, (T, T) broadcasts across the batch and head dimensions:\n\nout = mha(x, mask=causal_mask(x.shape[1], x.device))\nout.shape\n\ntorch.Size([2, 4, 16])\n\n\n\nQuestions to fill in\n\nWhy must masking happen before softmax?\nWhy does using a large negative finite number sometimes work in place of \\(-\\infty\\)?\nWhat happens if an entire row is masked?\nHow do a causal mask and a padding mask combine?\nDuring single-token autoregressive decoding with a complete KV cache, is an explicit causal mask still necessary?"
+  },
+  {
+    "objectID": "notes/transformers/attention.html#multi-query-attention-mqa-and-grouped-query-attention-gqa",
+    "href": "notes/transformers/attention.html#multi-query-attention-mqa-and-grouped-query-attention-gqa",
+    "title": "Attention",
+    "section": "Multi-Query Attention (MQA) and Grouped-Query Attention (GQA)",
+    "text": "Multi-Query Attention (MQA) and Grouped-Query Attention (GQA)\nMHA gives each query head its own key and value heads. MQA shares one key head and one value head across all query heads. GQA is the interpolation between them.\n\n\n\nVariant\nQuery heads\nKV heads\nGroup size\n\n\n\n\nMHA\n\\(h\\)\n\\(h\\)\n\\(1\\)\n\n\nGQA\n\\(h\\)\n\\(g\\), where \\(1&lt;g&lt;h\\)\n\\(h/g\\)\n\n\nMQA\n\\(h\\)\n\\(1\\)\n\\(h\\)\n\n\n\nUsing \\(h_q\\) query heads and \\(h_{kv}\\) key/value heads:\n\\[\nQ \\in \\mathbb{R}^{B \\times h_q \\times T_q \\times d_h},\n\\]\n\\[\nK,V \\in \\mathbb{R}^{B \\times h_{kv} \\times T_{kv} \\times d_h},\n\\qquad h_q \\bmod h_{kv}=0.\n\\]\nEach KV head serves\n\\[\nn_{\\text{rep}} = \\frac{h_q}{h_{kv}}\n\\]\nquery heads.\n\nWhy use fewer KV heads?\n\nLearning prompt: Separate the effect on training compute, parameter count, KV-cache memory, and memory bandwidth during autoregressive decoding.\n\n\n\nImplementation skeleton\n\ndef repeat_kv(x, num_repeats):\n    \"\"\"Expand (B, H_kv, T, D_h) to (B, H_q, T, D_h).\"\"\"\n    if num_repeats == 1:\n        return x\n\n    batch_size, num_kv_heads, seq_len, d_head = x.shape\n    return (\n        x[:, :, None, :, :]\n        .expand(batch_size, num_kv_heads, num_repeats, seq_len, d_head)\n        .reshape(batch_size, num_kv_heads * num_repeats, seq_len, d_head)\n    )\n\nImplementation exercises:\n\nWrite a GroupedQueryAttention module with num_heads and num_kv_heads.\nVerify that num_kv_heads == num_heads recovers MHA.\nVerify that num_kv_heads == 1 gives MQA.\nDerive the Q, K, V projection parameter counts for MHA, GQA, and MQA.\nCalculate KV-cache memory for a concrete model and context length."
+  },
+  {
+    "objectID": "notes/transformers/attention.html#attention-optimization-methods",
+    "href": "notes/transformers/attention.html#attention-optimization-methods",
+    "title": "Attention",
+    "section": "Attention Optimization Methods",
+    "text": "Attention Optimization Methods\n\nFlashAttention\nStandard attention materializes the \\(T \\times T\\) score and probability matrices in high-bandwidth memory (HBM). FlashAttention computes exact attention in tiles and uses an online softmax so these full intermediate matrices do not need to be stored in HBM.\n\nKey distinction: FlashAttention changes the algorithm’s memory access pattern, not the mathematical definition of attention.\n\n\nConcepts to fill in\n\nWhy can attention be slow even when the GPU has enough FLOPs?\nWhat are HBM and SRAM, and why does data movement matter?\nDerive online softmax using a running maximum and normalization term.\nExplain why naive tiling does not work without correcting earlier softmax terms.\nCompare standard attention and FlashAttention memory complexity.\nDistinguish exact FlashAttention from approximate or sparse attention.\n\n\n\nInterview checkpoint\nExplain this statement precisely:\n\nFlashAttention is IO-aware exact attention; it does not make dense attention asymptotically subquadratic in arithmetic complexity.\n\n\n\n\nKV Caching\nDuring autoregressive generation, previously computed keys and values do not change. Cache them instead of recomputing them at every decoding step.\nAt decoding step \\(t\\):\n\\[\nK_{1:t} = \\operatorname{Concat}(K_{1:t-1}, k_t),\n\\qquad\nV_{1:t} = \\operatorname{Concat}(V_{1:t-1}, v_t).\n\\]\nThe new query attends to the cached prefix:\n\\[\no_t\n=\n\\operatorname{softmax}\\left(\n\\frac{q_tK_{1:t}^T}{\\sqrt{d_h}}\n\\right)V_{1:t}.\n\\]\n\nPrefill versus decode\n\n\n\nPhase\nQuery length\nMain operation\nTypical bottleneck\n\n\n\n\nPrefill\n\\(T\\)\nProcess the prompt in parallel\nTODO\n\n\nDecode\n\\(1\\) per step\nRead cached K/V and produce one token\nTODO\n\n\n\n\n\nCache-size derivation\nFor \\(L\\) layers, batch size \\(B\\), sequence length \\(T\\), \\(h_{kv}\\) KV heads, head dimension \\(d_h\\), and \\(s\\) bytes per element:\n\\[\n\\text{KV-cache bytes}\n=\n2LBTh_{kv}d_hs.\n\\]\n\nExercise: Calculate the cache size for one sequence using your choice of model configuration in FP16/BF16. Then repeat for MHA, GQA, and MQA.\n\n\n\nImplementation skeleton\n\ndef append_to_kv_cache(k_new, v_new, cache=None):\n    \"\"\"A simple educational cache; production systems preallocate storage.\"\"\"\n    if cache is None:\n        return k_new, v_new\n\n    k_cache, v_cache = cache\n    k_cache = torch.cat([k_cache, k_new], dim=-2)\n    v_cache = torch.cat([v_cache, v_new], dim=-2)\n    return k_cache, v_cache\n\nQuestions to fill in:\n\nWhy is repeated torch.cat inefficient in a production decoder?\nWhy does KV caching reduce computation but increase persistent memory use?\nHow do MQA and GQA reduce decode-time memory bandwidth?\nWhat changes when prompts in a batch have different lengths?\nWhat are paged attention, prefix caching, and cache quantization?"
+  },
+  {
+    "objectID": "notes/transformers/attention.html#suggested-next-topics",
+    "href": "notes/transformers/attention.html#suggested-next-topics",
+    "title": "Attention",
+    "section": "Suggested Next Topics",
+    "text": "Suggested Next Topics\nAfter the path above, useful additions would be:\n\nRoPE and positional information — attention alone is permutation-equivariant; modern LLMs need position-dependent Q/K representations.\nNumerical stability and precision — stable softmax, FP16/BF16 behavior, masking edge cases, and accumulation precision.\nSliding-window and sparse attention — methods that change which token pairs interact and can reduce arithmetic complexity.\nCross-attention — separates the query sequence from the key/value sequence and makes the general SDPA shapes concrete.\nProduction inference details — paged KV caches, continuous batching, and speculative decoding."
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "ML Interview Notes",
+    "section": "",
+    "text": "A working notebook for senior MLE / research engineer interview preparation."
+  },
+  {
+    "objectID": "index.html#how-i-use-this-site",
+    "href": "index.html#how-i-use-this-site",
+    "title": "ML Interview Notes",
+    "section": "How I use this site",
+    "text": "How I use this site\nEach topic should answer four questions:\n\nWhat is the core idea?\nCan I derive it?\nCan I implement it in PyTorch?\nWhat interview questions expose whether I really understand it?"
+  },
+  {
+    "objectID": "index.html#current-focus",
+    "href": "index.html#current-focus",
+    "title": "ML Interview Notes",
+    "section": "Current focus",
+    "text": "Current focus\n\nML fundamentals\nTransformers\nPost-training / RL\nML systems\nResearch reasoning"
+  },
+  {
+    "objectID": "posts/index.html",
+    "href": "posts/index.html",
+    "title": "Blog",
+    "section": "",
+    "text": "Longer notes worth polishing and sharing publicly.\n\n\n\n\n\n\n\n\nNo matching items"
+  },
+  {
+    "objectID": "notes/index.html",
+    "href": "notes/index.html",
+    "title": "Notes",
+    "section": "",
+    "text": "Scaled Dot-Product Attention"
+  },
+  {
+    "objectID": "notes/index.html#transformers",
+    "href": "notes/index.html#transformers",
+    "title": "Notes",
+    "section": "",
+    "text": "Scaled Dot-Product Attention"
+  },
+  {
+    "objectID": "notes/index.html#coming-next",
+    "href": "notes/index.html#coming-next",
+    "title": "Notes",
+    "section": "Coming next",
+    "text": "Coming next\n\nKL divergence\nDPO\nPPO / GRPO\nKV cache\nFlashAttention\nDistributed training"
+  }
+]

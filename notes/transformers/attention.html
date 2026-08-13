@@ -1,0 +1,1249 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Attention – ML Interview Notes</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-6a2b564723c042b0e428f357d9a015bd.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../../styles.css">
+<link rel="stylesheet" href="../../colors.css">
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">ML Interview Notes</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../notes/index.html"> 
+<span class="menu-text">Notes</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../posts/index.html"> 
+<span class="menu-text">Blog</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#intuition" id="toc-intuition" class="nav-link active" data-scroll-target="#intuition">Intuition</a></li>
+  <li><a href="#sdpa" id="toc-sdpa" class="nav-link" data-scroll-target="#sdpa">SDPA</a>
+  <ul class="collapse">
+  <li><a href="#derivation" id="toc-derivation" class="nav-link" data-scroll-target="#derivation">Derivation</a></li>
+  <li><a href="#minimal-pytorch-implementation" id="toc-minimal-pytorch-implementation" class="nav-link" data-scroll-target="#minimal-pytorch-implementation">Minimal PyTorch implementation</a></li>
+  <li><a href="#sanity-check" id="toc-sanity-check" class="nav-link" data-scroll-target="#sanity-check">Sanity check</a></li>
+  </ul></li>
+  <li><a href="#why-scale-dot-product-attention-by-sqrtd_k" id="toc-why-scale-dot-product-attention-by-sqrtd_k" class="nav-link" data-scroll-target="#why-scale-dot-product-attention-by-sqrtd_k">Why Scale Dot-Product Attention by <span class="math inline">\(\sqrt{d_k}\)</span>?</a>
+  <ul class="collapse">
+  <li><a href="#why-does-a-larger-qkt-make-softmax-more-peaked" id="toc-why-does-a-larger-qkt-make-softmax-more-peaked" class="nav-link" data-scroll-target="#why-does-a-larger-qkt-make-softmax-more-peaked">Why does a larger <span class="math inline">\(QK^T\)</span> make softmax more peaked?</a></li>
+  <li><a href="#why-does-qt-k-grow-with-dimension" id="toc-why-does-qt-k-grow-with-dimension" class="nav-link" data-scroll-target="#why-does-qt-k-grow-with-dimension">Why does <span class="math inline">\(q^T k\)</span> grow with dimension?</a></li>
+  <li><a href="#why-not-use-cosine-similarity" id="toc-why-not-use-cosine-similarity" class="nav-link" data-scroll-target="#why-not-use-cosine-similarity">Why Not Use Cosine Similarity?</a></li>
+  <li><a href="#interview-takeaway" id="toc-interview-takeaway" class="nav-link" data-scroll-target="#interview-takeaway">Interview Takeaway</a></li>
+  </ul></li>
+  <li><a href="#interview-questions" id="toc-interview-questions" class="nav-link" data-scroll-target="#interview-questions">Interview questions</a></li>
+  <li><a href="#multi-head-attention-mha" id="toc-multi-head-attention-mha" class="nav-link" data-scroll-target="#multi-head-attention-mha">Multi-Head Attention (MHA)</a>
+  <ul class="collapse">
+  <li><a href="#motivation" id="toc-motivation" class="nav-link" data-scroll-target="#motivation">Motivation</a></li>
+  <li><a href="#low-rank-note" id="toc-low-rank-note" class="nav-link" data-scroll-target="#low-rank-note">Low-Rank Note</a></li>
+  <li><a href="#minimal-pytorch-implementation-1" id="toc-minimal-pytorch-implementation-1" class="nav-link" data-scroll-target="#minimal-pytorch-implementation-1">Minimal PyTorch implementation</a></li>
+  </ul></li>
+  <li><a href="#causal-masking" id="toc-causal-masking" class="nav-link" data-scroll-target="#causal-masking">Causal Masking</a>
+  <ul class="collapse">
+  <li><a href="#minimal-implementation" id="toc-minimal-implementation" class="nav-link" data-scroll-target="#minimal-implementation">Minimal implementation</a></li>
+  </ul></li>
+  <li><a href="#multi-query-attention-mqa-and-grouped-query-attention-gqa" id="toc-multi-query-attention-mqa-and-grouped-query-attention-gqa" class="nav-link" data-scroll-target="#multi-query-attention-mqa-and-grouped-query-attention-gqa">Multi-Query Attention (MQA) and Grouped-Query Attention (GQA)</a>
+  <ul class="collapse">
+  <li><a href="#why-use-fewer-kv-heads" id="toc-why-use-fewer-kv-heads" class="nav-link" data-scroll-target="#why-use-fewer-kv-heads">Why use fewer KV heads?</a></li>
+  <li><a href="#implementation-skeleton" id="toc-implementation-skeleton" class="nav-link" data-scroll-target="#implementation-skeleton">Implementation skeleton</a></li>
+  </ul></li>
+  <li><a href="#attention-optimization-methods" id="toc-attention-optimization-methods" class="nav-link" data-scroll-target="#attention-optimization-methods">Attention Optimization Methods</a>
+  <ul class="collapse">
+  <li><a href="#flashattention" id="toc-flashattention" class="nav-link" data-scroll-target="#flashattention">FlashAttention</a></li>
+  <li><a href="#kv-caching" id="toc-kv-caching" class="nav-link" data-scroll-target="#kv-caching">KV Caching</a></li>
+  </ul></li>
+  <li><a href="#suggested-next-topics" id="toc-suggested-next-topics" class="nav-link" data-scroll-target="#suggested-next-topics">Suggested Next Topics</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Attention</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="intuition" class="level2">
+<h2 class="anchored" data-anchor-id="intuition">Intuition</h2>
+<p>Compared to MLP, attention uses input-dependent mixing weights rather than a fixed learned weight matrix. The attention weight <span class="math inline">\(w_{ij}\)</span> measures <strong>how strongly the query representation <span class="math inline">\(q_i\)</span> matches the key representation <span class="math inline">\(k_j\)</span></strong>.<br>
+For each output token <span class="math inline">\(o_i\)</span>, it is a weighted sum of the value sequence tokens <span class="math inline">\(v_j\)</span>, weighted by softmax-normalized similarity scores between the query token <span class="math inline">\(q_i\)</span> and each key token <span class="math inline">\(k_j\)</span>. So intuitively:</p>
+<p>query→which positions matter?<br>
+keys→what does each position match on?<br>
+values→what information gets retrieved?</p>
+</section>
+<section id="sdpa" class="level2">
+<h2 class="anchored" data-anchor-id="sdpa">SDPA</h2>
+<section id="derivation" class="level3">
+<h3 class="anchored" data-anchor-id="derivation">Derivation</h3>
+<p>Given query, key, and value matrices,</p>
+<p><span class="math display">\[
+Q \in \mathbb{R}^{n_q \times d}, \quad
+K \in \mathbb{R}^{n_k \times d}, \quad
+V \in \mathbb{R}^{n_k \times d_v},
+\]</span></p>
+<p>scaled dot-product attention is</p>
+<p><span class="math display">\[
+\operatorname{Attention}(Q,K,V)
+=
+\operatorname{softmax}\left(\frac{QK^T}{\sqrt d}\right)V.
+\]</span></p>
+</section>
+<section id="minimal-pytorch-implementation" class="level3">
+<h3 class="anchored" data-anchor-id="minimal-pytorch-implementation">Minimal PyTorch implementation</h3>
+<div id="d713a758" class="cell" data-execution_count="1">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> math</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> attention(q, k, v, mask<span class="op">=</span><span class="va">None</span>):</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    scores <span class="op">=</span> q <span class="op">@</span> k.transpose(<span class="op">-</span><span class="dv">2</span>, <span class="op">-</span><span class="dv">1</span>) <span class="op">/</span> math.sqrt(q.shape[<span class="op">-</span><span class="dv">1</span>])</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> mask <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>        scores <span class="op">=</span> scores.masked_fill(<span class="op">~</span>mask, <span class="bu">float</span>(<span class="st">"-inf"</span>))</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    weights <span class="op">=</span> torch.softmax(scores, dim<span class="op">=-</span><span class="dv">1</span>)</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> weights <span class="op">@</span> v</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="sanity-check" class="level3">
+<h3 class="anchored" data-anchor-id="sanity-check">Sanity check</h3>
+<div id="85278acc" class="cell" data-execution_count="2">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>torch.manual_seed(<span class="dv">0</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>q <span class="op">=</span> torch.randn(<span class="dv">2</span>, <span class="dv">4</span>, <span class="dv">8</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>k <span class="op">=</span> torch.randn(<span class="dv">2</span>, <span class="dv">4</span>, <span class="dv">8</span>)</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>v <span class="op">=</span> torch.randn(<span class="dv">2</span>, <span class="dv">4</span>, <span class="dv">8</span>)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>out <span class="op">=</span> attention(q, k, v)</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>out.shape</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="10">
+<pre><code>torch.Size([2, 4, 8])</code></pre>
+</div>
+</div>
+</section>
+</section>
+<section id="why-scale-dot-product-attention-by-sqrtd_k" class="level2">
+<h2 class="anchored" data-anchor-id="why-scale-dot-product-attention-by-sqrtd_k">Why Scale Dot-Product Attention by <span class="math inline">\(\sqrt{d_k}\)</span>?</h2>
+<section id="why-does-a-larger-qkt-make-softmax-more-peaked" class="level3">
+<h3 class="anchored" data-anchor-id="why-does-a-larger-qkt-make-softmax-more-peaked">Why does a larger <span class="math inline">\(QK^T\)</span> make softmax more peaked?</h3>
+<p>Softmax depends on the <strong>difference between logits</strong>, not whether all logits are large.</p>
+<p><span class="math display">\[
+\operatorname{softmax}(x_i)
+=
+\frac{e^{x_i}}
+{\sum_{j=1}^{n} e^{x_j}}
+\]</span></p>
+<p>For example:</p>
+<p><span class="math display">\[
+\operatorname{softmax}([1,2,3])
+\approx
+[0.09, 0.24, 0.67]
+\]</span></p>
+<p>but</p>
+<p><span class="math display">\[
+\operatorname{softmax}([10,20,30])
+\approx
+[0,0,1].
+\]</span></p>
+<p>Softmax is invariant to adding a constant:</p>
+<p><span class="math display">\[
+\operatorname{softmax}(x)
+=
+\operatorname{softmax}(x+c),
+\]</span></p>
+<p>but not to multiplying by a constant:</p>
+<p><span class="math display">\[
+\operatorname{softmax}(\alpha x)
+=
+\operatorname{softmax}\left(\frac{x}{T}\right),
+\qquad
+T=\frac{1}{\alpha}.
+\]</span></p>
+<p>So increasing the spread of the logits is equivalent to lowering the softmax temperature, which makes the distribution more peaked.</p>
+</section>
+<section id="why-does-qt-k-grow-with-dimension" class="level3">
+<h3 class="anchored" data-anchor-id="why-does-qt-k-grow-with-dimension">Why does <span class="math inline">\(q^T k\)</span> grow with dimension?</h3>
+<p>Assume each component is approximately zero-mean with unit variance:</p>
+<p><span class="math display">\[
+q_r, k_r \sim (0,1).
+\]</span></p>
+<p>Then</p>
+<p><span class="math display">\[
+q^T k
+=
+\sum_{r=1}^{d_k} q_r k_r.
+\]</span></p>
+<p>If the terms are approximately independent,</p>
+<p><span class="math display">\[
+\operatorname{Var}(q^T k)
+\approx d_k,
+\]</span></p>
+<p>so</p>
+<p><span class="math display">\[
+\operatorname{Std}(q^T k)
+\approx \sqrt{d_k}.
+\]</span></p>
+<p>The scores do not all become large positive numbers. Instead, their <strong>spread</strong> grows with <span class="math inline">\(\sqrt{d_k}\)</span>, which makes softmax increasingly saturated (peaked).</p>
+<p>Therefore attention uses</p>
+<p><span class="math display">\[
+\frac{q^T k}{\sqrt{d_k}}
+\]</span></p>
+<p>so that the logit scale stays roughly constant as <span class="math inline">\(d_k\)</span> changes.</p>
+<blockquote class="blockquote">
+<p><strong>Intuition:</strong> <span class="math inline">\(1/\sqrt{d_k}\)</span> is variance normalization, not vector normalization.</p>
+</blockquote>
+</section>
+<section id="why-not-use-cosine-similarity" class="level3">
+<h3 class="anchored" data-anchor-id="why-not-use-cosine-similarity">Why Not Use Cosine Similarity?</h3>
+<p>Cosine similarity is</p>
+<p><span class="math display">\[
+\frac{q^T k}{\|q\|\|k\|}.
+\]</span></p>
+<p>Since</p>
+<p><span class="math display">\[
+q^T k
+=
+\|q\|\|k\|\cos\theta,
+\]</span></p>
+<div class="purple">
+<p><strong>dot-product attention can use both:</strong></p>
+<ul>
+<li><strong>direction / alignment</strong></li>
+<li><strong>vector magnitude</strong></li>
+</ul>
+</div>
+<p><span class="pink"><strong>Cosine similarity removes the magnitude information.</strong></span></p>
+<p>This matters because <span class="math inline">\(Q\)</span> and <span class="math inline">\(K\)</span> are learned specifically for attention:</p>
+<p><span class="math display">\[
+q_i = x_iW_Q,
+\qquad
+k_j = x_jW_K.
+\]</span></p>
+<p>The model may therefore learn useful information in their norms.</p>
+<p>For random high-dimensional vectors,</p>
+<p><span class="math display">\[
+\|q\| \approx \sqrt{d_k},
+\qquad
+\|k\| \approx \sqrt{d_k},
+\]</span></p>
+<p>so</p>
+<p><span class="math display">\[
+\frac{q^T k}{\|q\|\|k\|}
+\approx
+O\left(\frac{1}{\sqrt{d_k}}\right).
+\]</span></p>
+<p>Cosine similarities therefore concentrate near zero as dimension grows, so cosine attention usually needs an additional temperature parameter to control softmax sharpness.</p>
+</section>
+<section id="interview-takeaway" class="level3">
+<h3 class="anchored" data-anchor-id="interview-takeaway">Interview Takeaway</h3>
+<p>Scaled dot-product attention uses</p>
+<p><span class="math display">\[
+\operatorname{softmax}
+\left(
+\frac{QK^T}{\sqrt{d_k}}
+\right)V.
+\]</span></p>
+<p>The <span class="math inline">\(1/\sqrt{d_k}\)</span> term keeps the <strong>variance of attention logits roughly constant</strong> as head dimension grows, preventing softmax saturation while preserving magnitude information in <span class="math inline">\(Q\)</span> and <span class="math inline">\(K\)</span>.</p>
+</section>
+</section>
+<section id="interview-questions" class="level2">
+<h2 class="anchored" data-anchor-id="interview-questions">Interview questions</h2>
+<ul>
+<li>Why is the scaling factor <span class="math inline">\(1/\sqrt d\)</span> rather than <span class="math inline">\(1/d\)</span>?</li>
+<li>What happens to gradient flow when attention logits become very large?
+<ul>
+<li>Softmax saturation. Gradients vanish for Q and K, but not for V. The routing becomes fixed.</li>
+</ul></li>
+<li>What are the time and memory complexities of standard attention?</li>
+<li>What does FlashAttention change, and what does it leave mathematically unchanged?</li>
+<li>How do MHA, MQA, and GQA differ?</li>
+</ul>
+</section>
+<section id="multi-head-attention-mha" class="level2">
+<h2 class="anchored" data-anchor-id="multi-head-attention-mha">Multi-Head Attention (MHA)</h2>
+<section id="motivation" class="level3">
+<h3 class="anchored" data-anchor-id="motivation">Motivation</h3>
+<p>Attention can be viewed as factorizing interaction into <strong>token mixing</strong> and <strong>feature mixing</strong>. MHA gives different feature subspaces different <span class="purple">token-mixing operators</span>.</p>
+<p>In single-head attention, the same token-mixing scalar <span class="math inline">\(A_{ij}\)</span> is shared across all feature dimensions. Multi-head attention <span class="purple"><strong>relaxes</strong></span> this by introducing a head dimension, <span class="math inline">\(A_{ij}^{(h)}\)</span>, so different feature subspaces can use different attention weights. In this sense, heads are an efficient way to make token mixing conditional on the representation subspace, without paying the cost of fully feature-dependent routing <span class="math inline">\(A_{ijc}\)</span>.</p>
+<p>Instead of performing one attention operation with the full model dimension, multi-head attention projects the input into <span class="math inline">\(h\)</span> different query, key, and value subspaces:</p>
+<p><span class="math display">\[
+Q_i = XW_i^Q, \qquad
+K_i = XW_i^K, \qquad
+V_i = XW_i^V.
+\]</span></p>
+<p>Each head independently computes</p>
+<p><span class="math display">\[
+\operatorname{head}_i
+=
+\operatorname{Attention}(Q_i,K_i,V_i),
+\]</span></p>
+<p>and the results are concatenated and projected:</p>
+<p><span class="math display">\[
+\operatorname{MHA}(X)
+=
+\operatorname{Concat}(\operatorname{head}_1,\ldots,\operatorname{head}_h)W_O.
+\]</span></p>
+</section>
+<section id="low-rank-note" class="level3 note-box">
+<h3 class="anchored" data-anchor-id="low-rank-note">Low-Rank Note</h3>
+<p>For each head,</p>
+<p><span class="math display">\[
+S^{(h)} = Q^{(h)}K^{(h)T}
+\]</span></p>
+<p>and therefore</p>
+<p><span class="math display">\[
+\operatorname{rank}(S^{(h)}) \le d_h.
+\]</span></p>
+<p>So each head’s pre-softmax token-interaction matrix is low-rank when <span class="math inline">\(d_h \ll T\)</span>.</p>
+</section>
+<section id="shapes" class="level4">
+<h4 class="anchored" data-anchor-id="shapes">Shapes</h4>
+<p>Fill in the missing shapes:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Tensor</th>
+<th>Shape</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Input <span class="math inline">\(X\)</span></td>
+<td><span class="math inline">\((B,T,d_{\text{model}})\)</span></td>
+</tr>
+<tr class="even">
+<td>Projected <span class="math inline">\(Q,K,V\)</span></td>
+<td>TODO</td>
+</tr>
+<tr class="odd">
+<td>Split into heads</td>
+<td>TODO</td>
+</tr>
+<tr class="even">
+<td>Attention scores</td>
+<td>TODO</td>
+</tr>
+<tr class="odd">
+<td>Per-head output</td>
+<td>TODO</td>
+</tr>
+<tr class="even">
+<td>Concatenated output</td>
+<td>TODO</td>
+</tr>
+</tbody>
+</table>
+<blockquote class="blockquote">
+<p><strong>Learning prompt:</strong> If the total projection dimension remains <span class="math inline">\(d_{\text{model}}\)</span>, does using more heads increase the leading-order compute complexity?</p>
+</blockquote>
+</section>
+<section id="minimal-pytorch-implementation-1" class="level3">
+<h3 class="anchored" data-anchor-id="minimal-pytorch-implementation-1">Minimal PyTorch implementation</h3>
+<div id="1c8daa8e" class="cell" data-execution_count="3">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch.nn <span class="im">as</span> nn</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> MultiHeadSelfAttention(nn.Module):</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, d_model, num_heads):</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>        <span class="bu">super</span>().<span class="fu">__init__</span>()</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>        <span class="cf">assert</span> d_model <span class="op">%</span> num_heads <span class="op">==</span> <span class="dv">0</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.d_model <span class="op">=</span> d_model</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.num_heads <span class="op">=</span> num_heads</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.d_head <span class="op">=</span> d_model <span class="op">//</span> num_heads</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.qkv_proj <span class="op">=</span> nn.Linear(d_model, <span class="dv">3</span> <span class="op">*</span> d_model, bias<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.out_proj <span class="op">=</span> nn.Linear(d_model, d_model, bias<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> forward(<span class="va">self</span>, x, mask<span class="op">=</span><span class="va">None</span>):</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>        batch_size, seq_len, _ <span class="op">=</span> x.shape</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>        <span class="co"># (B, T, 3 * D) -&gt; three tensors of shape (B, T, D)</span></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>        q, k, v <span class="op">=</span> <span class="va">self</span>.qkv_proj(x).chunk(<span class="dv">3</span>, dim<span class="op">=-</span><span class="dv">1</span>)</span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>        <span class="co"># (B, T, D) -&gt; (B, H, T, D_h)</span></span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>        <span class="kw">def</span> split_heads(tensor):</span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> tensor.view(</span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>                batch_size, seq_len, <span class="va">self</span>.num_heads, <span class="va">self</span>.d_head</span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>            ).transpose(<span class="dv">1</span>, <span class="dv">2</span>)</span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>        q, k, v <span class="op">=</span> <span class="bu">map</span>(split_heads, (q, k, v))</span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>        <span class="co"># mask must be broadcastable to (B, H, T, T), where True means allowed.</span></span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>        head_outputs <span class="op">=</span> attention(q, k, v, mask<span class="op">=</span>mask)</span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>        <span class="co"># (B, H, T, D_h) -&gt; (B, T, D)</span></span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a>        output <span class="op">=</span> head_outputs.transpose(<span class="dv">1</span>, <span class="dv">2</span>).contiguous().view(</span>
+<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a>            batch_size, seq_len, <span class="va">self</span>.d_model</span>
+<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">self</span>.out_proj(output)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="3514dd9b" class="cell" data-execution_count="4">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>torch.manual_seed(<span class="dv">0</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> torch.randn(<span class="dv">2</span>, <span class="dv">4</span>, <span class="dv">16</span>)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>mha <span class="op">=</span> MultiHeadSelfAttention(d_model<span class="op">=</span><span class="dv">16</span>, num_heads<span class="op">=</span><span class="dv">4</span>)</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>mha(x).shape</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="12">
+<pre><code>torch.Size([2, 4, 16])</code></pre>
+</div>
+</div>
+<section id="implementation-exercises" class="level4">
+<h4 class="anchored" data-anchor-id="implementation-exercises">Implementation exercises</h4>
+<ul class="task-list">
+<li><label><input type="checkbox">Annotate every intermediate tensor shape.</label></li>
+<li><label><input type="checkbox">Replace the fused <code>qkv_proj</code> with three separate projections.</label></li>
+<li><label><input type="checkbox">Extend the module from self-attention to cross-attention.</label></li>
+<li><label><input type="checkbox">Add attention dropout and output dropout.</label></li>
+<li><label><input type="checkbox">Compare the output against <code>torch.nn.MultiheadAttention</code>.</label></li>
+</ul>
+</section>
+</section>
+</section>
+<section id="causal-masking" class="level2">
+<h2 class="anchored" data-anchor-id="causal-masking">Causal Masking</h2>
+<p>In autoregressive self-attention, token <span class="math inline">\(i\)</span> must not attend to future tokens <span class="math inline">\(j&gt;i\)</span>.</p>
+<p><span class="math display">\[
+M_{ij}
+=
+\begin{cases}
+0, &amp; j \le i, \\
+-\infty, &amp; j &gt; i.
+\end{cases}
+\]</span></p>
+<p>The mask is applied <strong>before</strong> softmax:</p>
+<p><span class="math display">\[
+A
+=
+\operatorname{softmax}\left(
+\frac{QK^T}{\sqrt{d_k}} + M
+\right).
+\]</span></p>
+<section id="minimal-implementation" class="level3">
+<h3 class="anchored" data-anchor-id="minimal-implementation">Minimal implementation</h3>
+<p>The <code>attention</code> function above uses a Boolean mask where <code>True</code> means that attention is allowed.</p>
+<div id="a5629acb" class="cell" data-execution_count="5">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> causal_mask(seq_len, device<span class="op">=</span><span class="va">None</span>):</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> torch.ones(</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>        seq_len, seq_len, dtype<span class="op">=</span>torch.<span class="bu">bool</span>, device<span class="op">=</span>device</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    ).tril()</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>mask <span class="op">=</span> causal_mask(seq_len<span class="op">=</span><span class="dv">4</span>)</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>mask</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="13">
+<pre><code>tensor([[ True, False, False, False],
+        [ True,  True, False, False],
+        [ True,  True,  True, False],
+        [ True,  True,  True,  True]])</code></pre>
+</div>
+</div>
+<p>For multi-head attention, <code>(T, T)</code> broadcasts across the batch and head dimensions:</p>
+<div id="50869491" class="cell" data-execution_count="6">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>out <span class="op">=</span> mha(x, mask<span class="op">=</span>causal_mask(x.shape[<span class="dv">1</span>], x.device))</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>out.shape</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="14">
+<pre><code>torch.Size([2, 4, 16])</code></pre>
+</div>
+</div>
+<section id="questions-to-fill-in" class="level4">
+<h4 class="anchored" data-anchor-id="questions-to-fill-in">Questions to fill in</h4>
+<ul>
+<li>Why must masking happen before softmax?</li>
+<li>Why does using a large negative finite number sometimes work in place of <span class="math inline">\(-\infty\)</span>?</li>
+<li>What happens if an entire row is masked?</li>
+<li>How do a causal mask and a padding mask combine?</li>
+<li>During single-token autoregressive decoding with a complete KV cache, is an explicit causal mask still necessary?</li>
+</ul>
+</section>
+</section>
+</section>
+<section id="multi-query-attention-mqa-and-grouped-query-attention-gqa" class="level2">
+<h2 class="anchored" data-anchor-id="multi-query-attention-mqa-and-grouped-query-attention-gqa">Multi-Query Attention (MQA) and Grouped-Query Attention (GQA)</h2>
+<p>MHA gives each query head its own key and value heads. MQA shares one key head and one value head across all query heads. GQA is the interpolation between them.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Variant</th>
+<th style="text-align: right;">Query heads</th>
+<th style="text-align: right;">KV heads</th>
+<th style="text-align: right;">Group size</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>MHA</td>
+<td style="text-align: right;"><span class="math inline">\(h\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(h\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(1\)</span></td>
+</tr>
+<tr class="even">
+<td>GQA</td>
+<td style="text-align: right;"><span class="math inline">\(h\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(g\)</span>, where <span class="math inline">\(1&lt;g&lt;h\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(h/g\)</span></td>
+</tr>
+<tr class="odd">
+<td>MQA</td>
+<td style="text-align: right;"><span class="math inline">\(h\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(1\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(h\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>Using <span class="math inline">\(h_q\)</span> query heads and <span class="math inline">\(h_{kv}\)</span> key/value heads:</p>
+<p><span class="math display">\[
+Q \in \mathbb{R}^{B \times h_q \times T_q \times d_h},
+\]</span></p>
+<p><span class="math display">\[
+K,V \in \mathbb{R}^{B \times h_{kv} \times T_{kv} \times d_h},
+\qquad h_q \bmod h_{kv}=0.
+\]</span></p>
+<p>Each KV head serves</p>
+<p><span class="math display">\[
+n_{\text{rep}} = \frac{h_q}{h_{kv}}
+\]</span></p>
+<p>query heads.</p>
+<section id="why-use-fewer-kv-heads" class="level3">
+<h3 class="anchored" data-anchor-id="why-use-fewer-kv-heads">Why use fewer KV heads?</h3>
+<blockquote class="blockquote">
+<p><strong>Learning prompt:</strong> Separate the effect on training compute, parameter count, KV-cache memory, and memory bandwidth during autoregressive decoding.</p>
+</blockquote>
+</section>
+<section id="implementation-skeleton" class="level3">
+<h3 class="anchored" data-anchor-id="implementation-skeleton">Implementation skeleton</h3>
+<div id="61281025" class="cell" data-execution_count="7">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> repeat_kv(x, num_repeats):</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Expand (B, H_kv, T, D_h) to (B, H_q, T, D_h)."""</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> num_repeats <span class="op">==</span> <span class="dv">1</span>:</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> x</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    batch_size, num_kv_heads, seq_len, d_head <span class="op">=</span> x.shape</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> (</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>        x[:, :, <span class="va">None</span>, :, :]</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>        .expand(batch_size, num_kv_heads, num_repeats, seq_len, d_head)</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>        .reshape(batch_size, num_kv_heads <span class="op">*</span> num_repeats, seq_len, d_head)</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>    )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Implementation exercises:</p>
+<ul class="task-list">
+<li><label><input type="checkbox">Write a <code>GroupedQueryAttention</code> module with <code>num_heads</code> and <code>num_kv_heads</code>.</label></li>
+<li><label><input type="checkbox">Verify that <code>num_kv_heads == num_heads</code> recovers MHA.</label></li>
+<li><label><input type="checkbox">Verify that <code>num_kv_heads == 1</code> gives MQA.</label></li>
+<li><label><input type="checkbox">Derive the Q, K, V projection parameter counts for MHA, GQA, and MQA.</label></li>
+<li><label><input type="checkbox">Calculate KV-cache memory for a concrete model and context length.</label></li>
+</ul>
+</section>
+</section>
+<section id="attention-optimization-methods" class="level2">
+<h2 class="anchored" data-anchor-id="attention-optimization-methods">Attention Optimization Methods</h2>
+<section id="flashattention" class="level3">
+<h3 class="anchored" data-anchor-id="flashattention">FlashAttention</h3>
+<p>Standard attention materializes the <span class="math inline">\(T \times T\)</span> score and probability matrices in high-bandwidth memory (HBM). FlashAttention computes exact attention in tiles and uses an online softmax so these full intermediate matrices do not need to be stored in HBM.</p>
+<blockquote class="blockquote">
+<p><strong>Key distinction:</strong> FlashAttention changes the algorithm’s memory access pattern, not the mathematical definition of attention.</p>
+</blockquote>
+<section id="concepts-to-fill-in" class="level4">
+<h4 class="anchored" data-anchor-id="concepts-to-fill-in">Concepts to fill in</h4>
+<ul class="task-list">
+<li><label><input type="checkbox">Why can attention be slow even when the GPU has enough FLOPs?</label></li>
+<li><label><input type="checkbox">What are HBM and SRAM, and why does data movement matter?</label></li>
+<li><label><input type="checkbox">Derive online softmax using a running maximum and normalization term.</label></li>
+<li><label><input type="checkbox">Explain why naive tiling does not work without correcting earlier softmax terms.</label></li>
+<li><label><input type="checkbox">Compare standard attention and FlashAttention memory complexity.</label></li>
+<li><label><input type="checkbox">Distinguish exact FlashAttention from approximate or sparse attention.</label></li>
+</ul>
+</section>
+<section id="interview-checkpoint" class="level4">
+<h4 class="anchored" data-anchor-id="interview-checkpoint">Interview checkpoint</h4>
+<p>Explain this statement precisely:</p>
+<blockquote class="blockquote">
+<p>FlashAttention is IO-aware exact attention; it does not make dense attention asymptotically subquadratic in arithmetic complexity.</p>
+</blockquote>
+</section>
+</section>
+<section id="kv-caching" class="level3">
+<h3 class="anchored" data-anchor-id="kv-caching">KV Caching</h3>
+<p>During autoregressive generation, previously computed keys and values do not change. Cache them instead of recomputing them at every decoding step.</p>
+<p>At decoding step <span class="math inline">\(t\)</span>:</p>
+<p><span class="math display">\[
+K_{1:t} = \operatorname{Concat}(K_{1:t-1}, k_t),
+\qquad
+V_{1:t} = \operatorname{Concat}(V_{1:t-1}, v_t).
+\]</span></p>
+<p>The new query attends to the cached prefix:</p>
+<p><span class="math display">\[
+o_t
+=
+\operatorname{softmax}\left(
+\frac{q_tK_{1:t}^T}{\sqrt{d_h}}
+\right)V_{1:t}.
+\]</span></p>
+<section id="prefill-versus-decode" class="level4">
+<h4 class="anchored" data-anchor-id="prefill-versus-decode">Prefill versus decode</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Phase</th>
+<th style="text-align: right;">Query length</th>
+<th>Main operation</th>
+<th>Typical bottleneck</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Prefill</td>
+<td style="text-align: right;"><span class="math inline">\(T\)</span></td>
+<td>Process the prompt in parallel</td>
+<td>TODO</td>
+</tr>
+<tr class="even">
+<td>Decode</td>
+<td style="text-align: right;"><span class="math inline">\(1\)</span> per step</td>
+<td>Read cached K/V and produce one token</td>
+<td>TODO</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="cache-size-derivation" class="level4">
+<h4 class="anchored" data-anchor-id="cache-size-derivation">Cache-size derivation</h4>
+<p>For <span class="math inline">\(L\)</span> layers, batch size <span class="math inline">\(B\)</span>, sequence length <span class="math inline">\(T\)</span>, <span class="math inline">\(h_{kv}\)</span> KV heads, head dimension <span class="math inline">\(d_h\)</span>, and <span class="math inline">\(s\)</span> bytes per element:</p>
+<p><span class="math display">\[
+\text{KV-cache bytes}
+=
+2LBTh_{kv}d_hs.
+\]</span></p>
+<blockquote class="blockquote">
+<p><strong>Exercise:</strong> Calculate the cache size for one sequence using your choice of model configuration in FP16/BF16. Then repeat for MHA, GQA, and MQA.</p>
+</blockquote>
+</section>
+<section id="implementation-skeleton-1" class="level4">
+<h4 class="anchored" data-anchor-id="implementation-skeleton-1">Implementation skeleton</h4>
+<div id="3f84b502" class="cell" data-execution_count="8">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> append_to_kv_cache(k_new, v_new, cache<span class="op">=</span><span class="va">None</span>):</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""A simple educational cache; production systems preallocate storage."""</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> cache <span class="kw">is</span> <span class="va">None</span>:</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> k_new, v_new</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>    k_cache, v_cache <span class="op">=</span> cache</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>    k_cache <span class="op">=</span> torch.cat([k_cache, k_new], dim<span class="op">=-</span><span class="dv">2</span>)</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>    v_cache <span class="op">=</span> torch.cat([v_cache, v_new], dim<span class="op">=-</span><span class="dv">2</span>)</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> k_cache, v_cache</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Questions to fill in:</p>
+<ul>
+<li>Why is repeated <code>torch.cat</code> inefficient in a production decoder?</li>
+<li>Why does KV caching reduce computation but increase persistent memory use?</li>
+<li>How do MQA and GQA reduce decode-time memory bandwidth?</li>
+<li>What changes when prompts in a batch have different lengths?</li>
+<li>What are paged attention, prefix caching, and cache quantization?</li>
+</ul>
+</section>
+</section>
+</section>
+<section id="suggested-next-topics" class="level2">
+<h2 class="anchored" data-anchor-id="suggested-next-topics">Suggested Next Topics</h2>
+<p>After the path above, useful additions would be:</p>
+<ol type="1">
+<li><strong>RoPE and positional information</strong> — attention alone is permutation-equivariant; modern LLMs need position-dependent Q/K representations.</li>
+<li><strong>Numerical stability and precision</strong> — stable softmax, FP16/BF16 behavior, masking edge cases, and accumulation precision.</li>
+<li><strong>Sliding-window and sparse attention</strong> — methods that change which token pairs interact and can reduce arithmetic complexity.</li>
+<li><strong>Cross-attention</strong> — separates the query sequence from the key/value sequence and makes the general SDPA shapes concrete.</li>
+<li><strong>Production inference details</strong> — paged KV caches, continuous batching, and speculative decoding.</li>
+</ol>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
