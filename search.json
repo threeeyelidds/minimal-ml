@@ -1,5 +1,54 @@
 [
   {
+    "objectID": "notes/index.html",
+    "href": "notes/index.html",
+    "title": "Notes",
+    "section": "",
+    "text": "Scaled Dot-Product Attention"
+  },
+  {
+    "objectID": "notes/index.html#transformers",
+    "href": "notes/index.html#transformers",
+    "title": "Notes",
+    "section": "",
+    "text": "Scaled Dot-Product Attention"
+  },
+  {
+    "objectID": "notes/index.html#coming-next",
+    "href": "notes/index.html#coming-next",
+    "title": "Notes",
+    "section": "Coming next",
+    "text": "Coming next\n\nKL divergence\nDPO\nPPO / GRPO\nKV cache\nFlashAttention\nDistributed training"
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "ML Interview Notes",
+    "section": "",
+    "text": "A working notebook for senior MLE / research engineer interview preparation."
+  },
+  {
+    "objectID": "index.html#how-i-use-this-site",
+    "href": "index.html#how-i-use-this-site",
+    "title": "ML Interview Notes",
+    "section": "How I use this site",
+    "text": "How I use this site\nEach topic should answer four questions:\n\nWhat is the core idea?\nCan I derive it?\nCan I implement it in PyTorch?\nWhat interview questions expose whether I really understand it?"
+  },
+  {
+    "objectID": "index.html#current-focus",
+    "href": "index.html#current-focus",
+    "title": "ML Interview Notes",
+    "section": "Current focus",
+    "text": "Current focus\n\nML fundamentals\nTransformers\nPost-training / RL\nML systems\nResearch reasoning"
+  },
+  {
+    "objectID": "posts/index.html",
+    "href": "posts/index.html",
+    "title": "Blog",
+    "section": "",
+    "text": "Longer notes worth polishing and sharing publicly.\n\n\n\n\n\n\n\n\nNo matching items"
+  },
+  {
     "objectID": "notes/transformers/attention.html",
     "href": "notes/transformers/attention.html",
     "title": "Attention",
@@ -68,54 +117,5 @@
     "title": "Attention",
     "section": "Suggested Next Topics",
     "text": "Suggested Next Topics\nAfter the path above, useful additions would be:\n\nRoPE and positional information — attention alone is permutation-equivariant; modern LLMs need position-dependent Q/K representations.\nNumerical stability and precision — stable softmax, FP16/BF16 behavior, masking edge cases, and accumulation precision.\nSliding-window and sparse attention — methods that change which token pairs interact and can reduce arithmetic complexity.\nCross-attention — separates the query sequence from the key/value sequence and makes the general SDPA shapes concrete.\nProduction inference details — paged KV caches, continuous batching, and speculative decoding."
-  },
-  {
-    "objectID": "index.html",
-    "href": "index.html",
-    "title": "ML Interview Notes",
-    "section": "",
-    "text": "A working notebook for senior MLE / research engineer interview preparation."
-  },
-  {
-    "objectID": "index.html#how-i-use-this-site",
-    "href": "index.html#how-i-use-this-site",
-    "title": "ML Interview Notes",
-    "section": "How I use this site",
-    "text": "How I use this site\nEach topic should answer four questions:\n\nWhat is the core idea?\nCan I derive it?\nCan I implement it in PyTorch?\nWhat interview questions expose whether I really understand it?"
-  },
-  {
-    "objectID": "index.html#current-focus",
-    "href": "index.html#current-focus",
-    "title": "ML Interview Notes",
-    "section": "Current focus",
-    "text": "Current focus\n\nML fundamentals\nTransformers\nPost-training / RL\nML systems\nResearch reasoning"
-  },
-  {
-    "objectID": "posts/index.html",
-    "href": "posts/index.html",
-    "title": "Blog",
-    "section": "",
-    "text": "Longer notes worth polishing and sharing publicly.\n\n\n\n\n\n\n\n\nNo matching items"
-  },
-  {
-    "objectID": "notes/index.html",
-    "href": "notes/index.html",
-    "title": "Notes",
-    "section": "",
-    "text": "Scaled Dot-Product Attention"
-  },
-  {
-    "objectID": "notes/index.html#transformers",
-    "href": "notes/index.html#transformers",
-    "title": "Notes",
-    "section": "",
-    "text": "Scaled Dot-Product Attention"
-  },
-  {
-    "objectID": "notes/index.html#coming-next",
-    "href": "notes/index.html#coming-next",
-    "title": "Notes",
-    "section": "Coming next",
-    "text": "Coming next\n\nKL divergence\nDPO\nPPO / GRPO\nKV cache\nFlashAttention\nDistributed training"
   }
 ]
