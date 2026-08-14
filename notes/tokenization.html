@@ -1,0 +1,1278 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Tokenization Across Modalities – Minimal ML</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-f83c246346592b24d02aa84ae3974412.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../styles.css">
+<link rel="stylesheet" href="../colors.css">
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">Minimal ML</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../notes/index.html"> 
+<span class="menu-text">Notes</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../posts/index.html"> 
+<span class="menu-text">Blog</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#core-idea" id="toc-core-idea" class="nav-link active" data-scroll-target="#core-idea">Core Idea</a>
+  <ul class="collapse">
+  <li><a href="#a-shared-view-across-modalities" id="toc-a-shared-view-across-modalities" class="nav-link" data-scroll-target="#a-shared-view-across-modalities">A shared view across modalities</a></li>
+  </ul></li>
+  <li><a href="#text-tokenization" id="toc-text-tokenization" class="nav-link" data-scroll-target="#text-tokenization">Text Tokenization</a>
+  <ul class="collapse">
+  <li><a href="#common-methods" id="toc-common-methods" class="nav-link" data-scroll-target="#common-methods">Common methods</a></li>
+  <li><a href="#typical-pipeline" id="toc-typical-pipeline" class="nav-link" data-scroll-target="#typical-pipeline">Typical pipeline</a></li>
+  <li><a href="#minimal-byte-tokenizer" id="toc-minimal-byte-tokenizer" class="nav-link" data-scroll-target="#minimal-byte-tokenizer">Minimal byte tokenizer</a></li>
+  <li><a href="#questions-to-fill-in" id="toc-questions-to-fill-in" class="nav-link" data-scroll-target="#questions-to-fill-in">Questions to fill in</a></li>
+  </ul></li>
+  <li><a href="#image-tokenization" id="toc-image-tokenization" class="nav-link" data-scroll-target="#image-tokenization">Image Tokenization</a>
+  <ul class="collapse">
+  <li><a href="#patch-tokens" id="toc-patch-tokens" class="nav-link" data-scroll-target="#patch-tokens">Patch tokens</a></li>
+  <li><a href="#discrete-visual-tokens" id="toc-discrete-visual-tokens" class="nav-link" data-scroll-target="#discrete-visual-tokens">Discrete visual tokens</a></li>
+  </ul></li>
+  <li><a href="#audio-tokenization" id="toc-audio-tokenization" class="nav-link" data-scroll-target="#audio-tokenization">Audio Tokenization</a>
+  <ul class="collapse">
+  <li><a href="#common-methods-1" id="toc-common-methods-1" class="nav-link" data-scroll-target="#common-methods-1">Common methods</a></li>
+  </ul></li>
+  <li><a href="#video-tokenization" id="toc-video-tokenization" class="nav-link" data-scroll-target="#video-tokenization">Video Tokenization</a>
+  <ul class="collapse">
+  <li><a href="#common-methods-2" id="toc-common-methods-2" class="nav-link" data-scroll-target="#common-methods-2">Common methods</a></li>
+  <li><a href="#questions-to-fill-in-1" id="toc-questions-to-fill-in-1" class="nav-link" data-scroll-target="#questions-to-fill-in-1">Questions to fill in</a></li>
+  </ul></li>
+  <li><a href="#semantic-ids-in-recommendation-systems" id="toc-semantic-ids-in-recommendation-systems" class="nav-link" data-scroll-target="#semantic-ids-in-recommendation-systems">Semantic IDs in Recommendation Systems</a>
+  <ul class="collapse">
+  <li><a href="#residual-quantization" id="toc-residual-quantization" class="nav-link" data-scroll-target="#residual-quantization">Residual quantization</a></li>
+  <li><a href="#minimal-residual-quantizer" id="toc-minimal-residual-quantizer" class="nav-link" data-scroll-target="#minimal-residual-quantizer">Minimal residual quantizer</a></li>
+  <li><a href="#why-semantic-ids-can-help" id="toc-why-semantic-ids-can-help" class="nav-link" data-scroll-target="#why-semantic-ids-can-help">Why semantic IDs can help</a></li>
+  <li><a href="#what-can-go-wrong" id="toc-what-can-go-wrong" class="nav-link" data-scroll-target="#what-can-go-wrong">What can go wrong</a></li>
+  <li><a href="#atomic-ids-versus-semantic-ids" id="toc-atomic-ids-versus-semantic-ids" class="nav-link" data-scroll-target="#atomic-ids-versus-semantic-ids">Atomic IDs versus semantic IDs</a></li>
+  <li><a href="#interview-questions" id="toc-interview-questions" class="nav-link" data-scroll-target="#interview-questions">Interview questions</a></li>
+  </ul></li>
+  <li><a href="#one-framework-for-all-modalities" id="toc-one-framework-for-all-modalities" class="nav-link" data-scroll-target="#one-framework-for-all-modalities">One Framework for All Modalities</a></li>
+  <li><a href="#general-interview-questions" id="toc-general-interview-questions" class="nav-link" data-scroll-target="#general-interview-questions">General Interview Questions</a></li>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Tokenization Across Modalities</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="core-idea" class="level2">
+<h2 class="anchored" data-anchor-id="core-idea">Core Idea</h2>
+<p>Tokenization converts a large or structured input into a sequence of units that a model can process:</p>
+<p><span class="math display">\[
+x
+\xrightarrow{\text{segment}}
+(u_1,\ldots,u_T)
+\xrightarrow{\text{encode}}
+(z_1,\ldots,z_T).
+\]</span></p>
+<p>Depending on the method, <span class="math inline">\(z_t\)</span> may be either:</p>
+<ul>
+<li>a <strong>discrete ID</strong> looked up in an embedding table, or</li>
+<li>a <strong>continuous vector</strong> produced by a linear layer or neural encoder.</li>
+</ul>
+<p>This distinction is important. A ViT image patch is commonly called a token, but it is usually projected directly into a continuous vector rather than assigned a discrete vocabulary ID.</p>
+<section id="a-shared-view-across-modalities" class="level3">
+<h3 class="anchored" data-anchor-id="a-shared-view-across-modalities">A shared view across modalities</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Modality</th>
+<th>Common unit</th>
+<th>Discrete or continuous?</th>
+<th>Typical sequence axis</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Text</td>
+<td>byte, character, or subword</td>
+<td>Discrete</td>
+<td>reading order</td>
+</tr>
+<tr class="even">
+<td>Image</td>
+<td>patch, region, or VQ code</td>
+<td>Either</td>
+<td>flattened 2D grid</td>
+</tr>
+<tr class="odd">
+<td>Audio</td>
+<td>frame, spectrogram patch, or codec code</td>
+<td>Either</td>
+<td>time, sometimes time <span class="math inline">\(\times\)</span> codebook</td>
+</tr>
+<tr class="even">
+<td>Video</td>
+<td>frame patch, tubelet, or VQ code</td>
+<td>Either</td>
+<td>time <span class="math inline">\(\times\)</span> 2D grid</td>
+</tr>
+<tr class="odd">
+<td>Recommendation</td>
+<td>item ID or semantic-ID codes</td>
+<td>Discrete</td>
+<td>user-event order, then code depth</td>
+</tr>
+</tbody>
+</table>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Tokenization is an information bottleneck
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Smaller units preserve fine detail but create longer sequences. Larger units shorten the sequence but compress more information into each token. The choice affects model compute, vocabulary size, reconstruction quality, robustness, and what invariances the model must learn.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="text-tokenization" class="level2">
+<h2 class="anchored" data-anchor-id="text-tokenization">Text Tokenization</h2>
+<section id="common-methods" class="level3">
+<h3 class="anchored" data-anchor-id="common-methods">Common methods</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Method</th>
+<th>Unit</th>
+<th>Strength</th>
+<th>Weakness</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Word</td>
+<td>whole word</td>
+<td>short, interpretable sequences</td>
+<td>huge vocabulary and out-of-vocabulary words</td>
+</tr>
+<tr class="even">
+<td>Character</td>
+<td>Unicode character</td>
+<td>open vocabulary</td>
+<td>long sequences; characters are not equally meaningful across languages</td>
+</tr>
+<tr class="odd">
+<td>Byte</td>
+<td>UTF-8 byte</td>
+<td>fixed vocabulary of 256 and no unknown input bytes</td>
+<td>longer sequences, especially for some scripts</td>
+</tr>
+<tr class="even">
+<td>BPE</td>
+<td>frequent pair merges</td>
+<td>simple and efficient subwords</td>
+<td>greedy merge history is not a probabilistic model</td>
+</tr>
+<tr class="odd">
+<td>WordPiece</td>
+<td>subwords chosen to improve a language-model objective</td>
+<td>useful compromise between words and characters</td>
+<td>training details differ across implementations</td>
+</tr>
+<tr class="even">
+<td>Unigram LM</td>
+<td>selects a segmentation from a probabilistic subword vocabulary</td>
+<td>supports multiple candidate segmentations and subword regularization</td>
+<td>requires vocabulary pruning and segmentation search</td>
+</tr>
+</tbody>
+</table>
+<p><a href="https://arxiv.org/abs/1508.07909">BPE</a> repeatedly merges frequent adjacent symbols. <a href="https://arxiv.org/abs/1808.06226">SentencePiece</a> can learn BPE or a unigram tokenizer directly from raw text without requiring language-specific pre-tokenization.</p>
+</section>
+<section id="typical-pipeline" class="level3">
+<h3 class="anchored" data-anchor-id="typical-pipeline">Typical pipeline</h3>
+<pre class="text"><code>raw text
+   ↓
+Unicode normalization
+   ↓
+optional pre-tokenization
+   ↓
+subword or byte segmentation
+   ↓
+special tokens + token IDs</code></pre>
+<p>Important design choices:</p>
+<ul>
+<li>vocabulary size</li>
+<li>byte fallback and unknown-token behavior</li>
+<li>whitespace representation</li>
+<li>Unicode normalization</li>
+<li>special tokens such as BOS, EOS, PAD, and modality separators</li>
+<li>whether segmentation is deterministic or sampled during training</li>
+</ul>
+</section>
+<section id="minimal-byte-tokenizer" class="level3">
+<h3 class="anchored" data-anchor-id="minimal-byte-tokenizer">Minimal byte tokenizer</h3>
+<p>This is lossless for valid UTF-8 text and has no learned vocabulary. It is educational rather than a complete production tokenizer.</p>
+<div id="d064f702" class="cell" data-execution_count="1">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> ByteTokenizer:</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    vocab_size <span class="op">=</span> <span class="dv">256</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> encode(<span class="va">self</span>, text):</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="bu">list</span>(text.encode(<span class="st">"utf-8"</span>))</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> decode(<span class="va">self</span>, token_ids):</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="bu">bytes</span>(token_ids).decode(<span class="st">"utf-8"</span>)</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>byte_tokenizer <span class="op">=</span> ByteTokenizer()</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>text <span class="op">=</span> <span class="st">"Minimal ML 🤖"</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>text_ids <span class="op">=</span> byte_tokenizer.encode(text)</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> byte_tokenizer.decode(text_ids) <span class="op">==</span> text</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>text_ids</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="1">
+<pre><code>[77, 105, 110, 105, 109, 97, 108, 32, 77, 76, 32, 240, 159, 164, 150]</code></pre>
+</div>
+</div>
+</section>
+<section id="questions-to-fill-in" class="level3">
+<h3 class="anchored" data-anchor-id="questions-to-fill-in">Questions to fill in</h3>
+<ul>
+<li>Why does increasing vocabulary size usually reduce sequence length?</li>
+<li>What is the difference between BPE, WordPiece, and unigram tokenization?</li>
+<li>Why can tokenization make arithmetic, spelling, and multilingual modeling difficult?</li>
+<li>What happens when the tokenizer used at inference differs from training?</li>
+<li>Why might byte fallback be preferable to an unknown token?</li>
+</ul>
+</section>
+</section>
+<section id="image-tokenization" class="level2">
+<h2 class="anchored" data-anchor-id="image-tokenization">Image Tokenization</h2>
+<section id="patch-tokens" class="level3">
+<h3 class="anchored" data-anchor-id="patch-tokens">Patch tokens</h3>
+<p>Given an image</p>
+<p><span class="math display">\[
+X \in \mathbb{R}^{C \times H \times W},
+\]</span></p>
+<p>split it into non-overlapping <span class="math inline">\(P\times P\)</span> patches. The token count is</p>
+<p><span class="math display">\[
+T = \frac{H}{P}\frac{W}{P},
+\]</span></p>
+<p>and each flattened patch has dimension <span class="math inline">\(CP^2\)</span>. A learned projection maps it to <span class="math inline">\(d_{\text{model}}\)</span>. This is the continuous-token approach used by <a href="https://arxiv.org/abs/2010.11929">Vision Transformer</a>.</p>
+<div id="aea1f3ee" class="cell" data-execution_count="2">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch.nn.functional <span class="im">as</span> F</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> patchify(images, patch_size):</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Convert (B, C, H, W) images to (B, num_patches, patch_dim)."""</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    batch_size, channels, height, width <span class="op">=</span> images.shape</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> height <span class="op">%</span> patch_size <span class="kw">or</span> width <span class="op">%</span> patch_size:</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="st">"height and width must be divisible by patch_size"</span>)</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    patches <span class="op">=</span> F.unfold(</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>        images, kernel_size<span class="op">=</span>patch_size, stride<span class="op">=</span>patch_size</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> patches.transpose(<span class="dv">1</span>, <span class="dv">2</span>)</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>images <span class="op">=</span> torch.randn(<span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">32</span>, <span class="dv">32</span>)</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>image_tokens <span class="op">=</span> patchify(images, patch_size<span class="op">=</span><span class="dv">8</span>)</span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> image_tokens.shape <span class="op">==</span> (<span class="dv">2</span>, <span class="dv">16</span>, <span class="dv">3</span> <span class="op">*</span> <span class="dv">8</span> <span class="op">*</span> <span class="dv">8</span>)</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>image_tokens.shape</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="2">
+<pre><code>torch.Size([2, 16, 192])</code></pre>
+</div>
+</div>
+</section>
+<section id="discrete-visual-tokens" class="level3">
+<h3 class="anchored" data-anchor-id="discrete-visual-tokens">Discrete visual tokens</h3>
+<p>An encoder can first produce a spatial latent grid and then quantize every latent vector to its nearest codebook entry:</p>
+<p><span class="math display">\[
+z_e(x)_{ij}
+\longrightarrow
+k_{ij}
+=
+\arg\min_k \left\|z_e(x)_{ij}-e_k\right\|_2^2.
+\]</span></p>
+<p>The grid of codebook indices <span class="math inline">\((k_{ij})\)</span> is a sequence of discrete image tokens. A decoder reconstructs pixels from the selected code vectors. This is the key idea behind <a href="https://arxiv.org/abs/1711.00937">VQ-VAE</a>.</p>
+<p>Common image units:</p>
+<ul>
+<li>pixels: maximum granularity, extremely long sequence</li>
+<li>fixed patches: simple continuous tokens for understanding tasks</li>
+<li>learned VQ codes: discrete tokens useful for generation</li>
+<li>region or object tokens: adaptive units intended to capture semantic objects</li>
+</ul>
+<blockquote class="blockquote">
+<p><strong>Learning prompt:</strong> Why might an image tokenizer optimized only for pixel reconstruction preserve texture better than semantic identity?</p>
+</blockquote>
+</section>
+</section>
+<section id="audio-tokenization" class="level2">
+<h2 class="anchored" data-anchor-id="audio-tokenization">Audio Tokenization</h2>
+<p>Audio is a one-dimensional signal with a high sampling rate, so treating every sample as a token produces very long sequences.</p>
+<section id="common-methods-1" class="level3">
+<h3 class="anchored" data-anchor-id="common-methods-1">Common methods</h3>
+<ol type="1">
+<li><strong>Waveform chunks:</strong> group raw samples into fixed-length frames and project them.</li>
+<li><strong>Spectrogram patches:</strong> transform the waveform into time-frequency features, then patch them like an image.</li>
+<li><strong>Neural codec tokens:</strong> encode audio into a lower-rate latent sequence and quantize it with one or more codebooks.</li>
+<li><strong>Semantic speech tokens:</strong> cluster hidden representations from a pretrained speech encoder; these emphasize linguistic content more than exact waveform reconstruction.</li>
+</ol>
+<p>For sample rate <span class="math inline">\(f_s\)</span>, frame size <span class="math inline">\(W\)</span>, and hop size <span class="math inline">\(H_s\)</span>, the approximate number of frames in an <span class="math inline">\(L\)</span>-sample waveform is</p>
+<p><span class="math display">\[
+T = 1 + \left\lfloor\frac{L-W}{H_s}\right\rfloor.
+\]</span></p>
+<div id="6626e0a9" class="cell" data-execution_count="3">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> frame_audio(waveforms, frame_size, hop_size):</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Convert (B, samples) waveforms to (B, frames, frame_size)."""</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> waveforms.shape[<span class="op">-</span><span class="dv">1</span>] <span class="op">&lt;</span> frame_size:</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="st">"waveform is shorter than one frame"</span>)</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> waveforms.unfold(<span class="op">-</span><span class="dv">1</span>, frame_size, hop_size)</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>waveforms <span class="op">=</span> torch.randn(<span class="dv">2</span>, <span class="dv">16_000</span>)  <span class="co"># one second at 16 kHz</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>audio_frames <span class="op">=</span> frame_audio(waveforms, frame_size<span class="op">=</span><span class="dv">400</span>, hop_size<span class="op">=</span><span class="dv">160</span>)</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> audio_frames.shape <span class="op">==</span> (<span class="dv">2</span>, <span class="dv">98</span>, <span class="dv">400</span>)</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>audio_frames.shape</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="3">
+<pre><code>torch.Size([2, 98, 400])</code></pre>
+</div>
+</div>
+<p>Neural codecs such as <a href="https://arxiv.org/abs/2107.03312">SoundStream</a> use residual vector quantization: multiple codebooks progressively encode the residual error. At each time step, this creates several parallel discrete codes.</p>
+<p>If the codec emits <span class="math inline">\(n_q\)</span> codebook IDs per frame at frame rate <span class="math inline">\(f\)</span>, its token rate is</p>
+<p><span class="math display">\[
+n_q f \quad \text{tokens per second}.
+\]</span></p>
+<p>Important tradeoffs:</p>
+<ul>
+<li>semantic content versus acoustic detail</li>
+<li>bitrate versus reconstruction quality</li>
+<li>causal/streamable encoding versus bidirectional encoding</li>
+<li>robustness to speakers, noise, and recording conditions</li>
+</ul>
+</section>
+</section>
+<section id="video-tokenization" class="level2">
+<h2 class="anchored" data-anchor-id="video-tokenization">Video Tokenization</h2>
+<p>A video introduces a temporal dimension:</p>
+<p><span class="math display">\[
+X \in \mathbb{R}^{C \times T \times H \times W}.
+\]</span></p>
+<section id="common-methods-2" class="level3">
+<h3 class="anchored" data-anchor-id="common-methods-2">Common methods</h3>
+<ul>
+<li><strong>Frame tokens:</strong> encode each frame into one vector; cheap but discards spatial detail.</li>
+<li><strong>Per-frame patches:</strong> patchify every frame; preserves detail but creates long sequences.</li>
+<li><strong>Tubelets:</strong> split a video into 3D blocks spanning time and space.</li>
+<li><strong>Discrete video codes:</strong> quantize a learned spatiotemporal latent grid.</li>
+<li><strong>Adaptive tokens:</strong> pool tracks, objects, or events into content-dependent units.</li>
+</ul>
+<p>For tubelet size <span class="math inline">\(P_t\times P_h\times P_w\)</span>, the number of tokens is</p>
+<p><span class="math display">\[
+N
+=
+\frac{T}{P_t}
+\frac{H}{P_h}
+\frac{W}{P_w}.
+\]</span></p>
+<div id="a891d726" class="cell" data-execution_count="4">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch.nn <span class="im">as</span> nn</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> TubeletTokenizer(nn.Module):</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, in_channels, d_model, tubelet_size, patch_size):</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>        <span class="bu">super</span>().<span class="fu">__init__</span>()</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>        kernel <span class="op">=</span> (tubelet_size, patch_size, patch_size)</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.projection <span class="op">=</span> nn.Conv3d(</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>            in_channels,</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>            d_model,</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>            kernel_size<span class="op">=</span>kernel,</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>            stride<span class="op">=</span>kernel,</span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> forward(<span class="va">self</span>, videos):</span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>        <span class="co"># (B, C, T, H, W) -&gt; (B, D, T', H', W')</span></span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>        tokens <span class="op">=</span> <span class="va">self</span>.projection(videos)</span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Preserve a conventional time-major raster order.</span></span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> tokens.flatten(<span class="dv">2</span>).transpose(<span class="dv">1</span>, <span class="dv">2</span>)</span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>videos <span class="op">=</span> torch.randn(<span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">8</span>, <span class="dv">32</span>, <span class="dv">32</span>)</span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>video_tokenizer <span class="op">=</span> TubeletTokenizer(</span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>    in_channels<span class="op">=</span><span class="dv">3</span>, d_model<span class="op">=</span><span class="dv">64</span>, tubelet_size<span class="op">=</span><span class="dv">2</span>, patch_size<span class="op">=</span><span class="dv">8</span></span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a>video_tokens <span class="op">=</span> video_tokenizer(videos)</span>
+<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> video_tokens.shape <span class="op">==</span> (<span class="dv">2</span>, <span class="dv">4</span> <span class="op">*</span> <span class="dv">4</span> <span class="op">*</span> <span class="dv">4</span>, <span class="dv">64</span>)</span>
+<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a>video_tokens.shape</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="4">
+<pre><code>torch.Size([2, 64, 64])</code></pre>
+</div>
+</div>
+<p>Video sequence length grows across three axes. Tokenization therefore controls not only information loss but also the quadratic cost of dense attention.</p>
+</section>
+<section id="questions-to-fill-in-1" class="level3">
+<h3 class="anchored" data-anchor-id="questions-to-fill-in-1">Questions to fill in</h3>
+<ul>
+<li>What temporal information is lost when every frame is tokenized independently?</li>
+<li>How does tubelet size affect motion resolution and sequence length?</li>
+<li>When should spatial and temporal attention be factorized?</li>
+<li>How should variable frame rates and video durations be handled?</li>
+</ul>
+</section>
+</section>
+<section id="semantic-ids-in-recommendation-systems" class="level2">
+<h2 class="anchored" data-anchor-id="semantic-ids-in-recommendation-systems">Semantic IDs in Recommendation Systems</h2>
+<p>Traditional recommenders often assign every item an arbitrary atomic ID:</p>
+<p><span class="math display">\[
+\text{item} \longrightarrow i.
+\]</span></p>
+<p>The ID uniquely identifies the item but says nothing about its content or its relationship to other items. A <strong>semantic ID</strong> instead maps an item embedding to a short sequence of learned discrete codes:</p>
+<p><span class="math display">\[
+\text{item}
+\xrightarrow{\text{encoder}}
+z
+\xrightarrow{\text{quantizer}}
+(c_1,c_2,\ldots,c_M).
+\]</span></p>
+<p>Generative recommenders can then predict the next item’s semantic ID autoregressively. <a href="https://papers.neurips.cc/paper_files/paper/2023/file/20dcab0f14046a5c6b02b61da9f13229-Paper-Conference.pdf">TIGER</a> is a representative example using residual-quantized semantic IDs for generative retrieval.</p>
+<section id="residual-quantization" class="level3">
+<h3 class="anchored" data-anchor-id="residual-quantization">Residual quantization</h3>
+<p>Starting with item embedding <span class="math inline">\(z\)</span> and residual <span class="math inline">\(r_0=z\)</span>, codebook level <span class="math inline">\(m\)</span> selects</p>
+<p><span class="math display">\[
+c_m
+=
+\arg\min_k
+\left\|r_{m-1}-e_k^{(m)}\right\|_2^2,
+\]</span></p>
+<p>then updates</p>
+<p><span class="math display">\[
+r_m = r_{m-1}-e_{c_m}^{(m)}.
+\]</span></p>
+<p>The quantized approximation is</p>
+<p><span class="math display">\[
+\widehat z
+=
+\sum_{m=1}^{M}e_{c_m}^{(m)}.
+\]</span></p>
+<p>Early codes capture coarse structure; later codes refine the residual. Shared prefixes may therefore reflect semantic similarity, although this is an optimization outcome rather than an unconditional guarantee.</p>
+</section>
+<section id="minimal-residual-quantizer" class="level3">
+<h3 class="anchored" data-anchor-id="minimal-residual-quantizer">Minimal residual quantizer</h3>
+<div id="06e3a9d4" class="cell" data-execution_count="5">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> residual_quantize(vectors, codebooks):</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="co">    Args:</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="co">        vectors: (N, D)</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="co">        codebooks: (M, K, D), one K-entry codebook per level</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="co">    Returns:</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="co">        semantic_ids: (N, M)</span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a><span class="co">        quantized: (N, D)</span></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a><span class="co">    """</span></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>    residual <span class="op">=</span> vectors</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>    quantized <span class="op">=</span> torch.zeros_like(vectors)</span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>    all_ids <span class="op">=</span> []</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> codebook <span class="kw">in</span> codebooks:</span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>        distances <span class="op">=</span> torch.cdist(residual.<span class="bu">float</span>(), codebook.<span class="bu">float</span>())</span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>        code_ids <span class="op">=</span> distances.argmin(dim<span class="op">=-</span><span class="dv">1</span>)</span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>        selected <span class="op">=</span> codebook[code_ids]</span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>        all_ids.append(code_ids)</span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>        quantized <span class="op">=</span> quantized <span class="op">+</span> selected</span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>        residual <span class="op">=</span> residual <span class="op">-</span> selected</span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> torch.stack(all_ids, dim<span class="op">=-</span><span class="dv">1</span>), quantized</span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a>torch.manual_seed(<span class="dv">0</span>)</span>
+<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a>item_embeddings <span class="op">=</span> torch.randn(<span class="dv">6</span>, <span class="dv">8</span>)</span>
+<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a>codebooks <span class="op">=</span> torch.randn(<span class="dv">3</span>, <span class="dv">16</span>, <span class="dv">8</span>)</span>
+<span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a>semantic_ids, reconstructed <span class="op">=</span> residual_quantize(</span>
+<span id="cb10-31"><a href="#cb10-31" aria-hidden="true" tabindex="-1"></a>    item_embeddings, codebooks</span>
+<span id="cb10-32"><a href="#cb10-32" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb10-33"><a href="#cb10-33" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> semantic_ids.shape <span class="op">==</span> (<span class="dv">6</span>, <span class="dv">3</span>)</span>
+<span id="cb10-34"><a href="#cb10-34" aria-hidden="true" tabindex="-1"></a>semantic_ids</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="5">
+<pre><code>tensor([[ 8,  6,  9],
+        [14,  7,  9],
+        [ 8, 11,  0],
+        [10,  5,  9],
+        [ 4,  2,  0],
+        [12,  6,  9]])</code></pre>
+</div>
+</div>
+<p>This function performs only nearest-code assignment. Training an RQ-VAE also requires an encoder, decoder, reconstruction objective, codebook/commitment losses, and a strategy for updating codebooks.</p>
+</section>
+<section id="why-semantic-ids-can-help" class="level3">
+<h3 class="anchored" data-anchor-id="why-semantic-ids-can-help">Why semantic IDs can help</h3>
+<ul>
+<li>replace a massive item embedding table with shared code embeddings</li>
+<li>expose similarity through shared codes or prefixes</li>
+<li>let a sequence model generate and retrieve items token by token</li>
+<li>transfer information to rare or new items when their content embeddings can be encoded</li>
+</ul>
+</section>
+<section id="what-can-go-wrong" class="level3">
+<h3 class="anchored" data-anchor-id="what-can-go-wrong">What can go wrong</h3>
+<ul>
+<li><strong>Collisions:</strong> multiple items may receive the same complete semantic ID.</li>
+<li><strong>Invalid generations:</strong> a predicted code sequence may not correspond to any catalog item.</li>
+<li><strong>Quantization loss:</strong> nearby or distinct item embeddings may be distorted by codebook boundaries.</li>
+<li><strong>Catalog drift:</strong> new items and changing item semantics can require re-tokenization.</li>
+<li><strong>Popularity leakage:</strong> content-derived similarity may not capture collaborative preference signals.</li>
+<li><strong>Longer decoding:</strong> one recommendation now requires predicting several tokens.</li>
+</ul>
+<p>Practical systems may add a disambiguation token for collisions and use a catalog trie or constrained beam search so every generated prefix can lead to a valid item.</p>
+</section>
+<section id="atomic-ids-versus-semantic-ids" class="level3">
+<h3 class="anchored" data-anchor-id="atomic-ids-versus-semantic-ids">Atomic IDs versus semantic IDs</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Property</th>
+<th>Atomic item ID</th>
+<th>Semantic ID</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Tokens per item</td>
+<td>1</td>
+<td><span class="math inline">\(M\)</span></td>
+</tr>
+<tr class="even">
+<td>Meaning of token</td>
+<td>arbitrary identity</td>
+<td>learned code or cluster</td>
+</tr>
+<tr class="odd">
+<td>Similar items share parameters</td>
+<td>indirectly</td>
+<td>explicitly through codes</td>
+</tr>
+<tr class="even">
+<td>Collision-free</td>
+<td>yes by construction</td>
+<td>requires handling</td>
+</tr>
+<tr class="odd">
+<td>New-item support</td>
+<td>requires a new embedding</td>
+<td>can encode item features, subject to model design</td>
+</tr>
+<tr class="even">
+<td>Generative retrieval</td>
+<td>one huge vocabulary</td>
+<td>smaller vocabulary over multiple decoding steps</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="interview-questions" class="level3">
+<h3 class="anchored" data-anchor-id="interview-questions">Interview questions</h3>
+<ul>
+<li>How are semantic IDs different from hashing item IDs?</li>
+<li>Why use multiple residual codebooks rather than one enormous codebook?</li>
+<li>Do shared semantic-ID prefixes guarantee similar user preference?</li>
+<li>How would you prevent the decoder from generating nonexistent items?</li>
+<li>How do collisions affect training targets and retrieval?</li>
+<li>When should the item encoder use content, collaborative signals, or both?</li>
+<li>How do codebook size and depth affect capacity and decoding latency?</li>
+</ul>
+</section>
+</section>
+<section id="one-framework-for-all-modalities" class="level2">
+<h2 class="anchored" data-anchor-id="one-framework-for-all-modalities">One Framework for All Modalities</h2>
+<p>Many learned tokenizers can be summarized as</p>
+<p><span class="math display">\[
+x
+\xrightarrow{E}
+z_{1:T}
+\xrightarrow{Q}
+c_{1:T}
+\xrightarrow{D}
+\widehat x,
+\]</span></p>
+<p>where:</p>
+<ul>
+<li><span class="math inline">\(E\)</span> segments and encodes the input,</li>
+<li><span class="math inline">\(Q\)</span> optionally quantizes continuous latents into discrete IDs,</li>
+<li>a sequence model processes or predicts the tokens,</li>
+<li><span class="math inline">\(D\)</span> is needed when reconstructing the original modality.</li>
+</ul>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Goal</th>
+<th>Tokenizer should preserve</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Classification/retrieval</td>
+<td>task-relevant semantics</td>
+</tr>
+<tr class="even">
+<td>Autoregressive generation</td>
+<td>enough detail for faithful reconstruction</td>
+</tr>
+<tr class="odd">
+<td>Streaming</td>
+<td>causal, low-latency state</td>
+</tr>
+<tr class="even">
+<td>Multimodal modeling</td>
+<td>manageable token rate and alignment across modalities</td>
+</tr>
+<tr class="odd">
+<td>Recommendation</td>
+<td>item identity, useful similarity, and valid catalog structure</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="general-interview-questions" class="level2">
+<h2 class="anchored" data-anchor-id="general-interview-questions">General Interview Questions</h2>
+<ul>
+<li>What makes a good tokenization?</li>
+<li>When must tokens be discrete, and when can they remain continuous?</li>
+<li>How does token rate affect Transformer compute and memory?</li>
+<li>What is the tradeoff between semantic abstraction and reconstruction fidelity?</li>
+<li>Why is token ordering obvious for text but a design choice for images and video?</li>
+<li>How would you combine several modality vocabularies in one autoregressive model?</li>
+<li>Which tokenizer components are trained jointly with the downstream model?</li>
+</ul>
+</section>
+<section id="references" class="level2">
+<h2 class="anchored" data-anchor-id="references">References</h2>
+<ul>
+<li><a href="https://arxiv.org/abs/1508.07909">BPE for neural machine translation</a></li>
+<li><a href="https://arxiv.org/abs/1808.06226">SentencePiece</a></li>
+<li><a href="https://arxiv.org/abs/2010.11929">Vision Transformer</a></li>
+<li><a href="https://arxiv.org/abs/1711.00937">VQ-VAE</a></li>
+<li><a href="https://arxiv.org/abs/2107.03312">SoundStream</a></li>
+<li><a href="https://papers.neurips.cc/paper_files/paper/2023/file/20dcab0f14046a5c6b02b61da9f13229-Paper-Conference.pdf">TIGER: Recommender Systems with Generative Retrieval</a></li>
+</ul>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/threeeyelidds\.github\.io\/ml-interview-notes\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

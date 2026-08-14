@@ -1,0 +1,1296 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>First- and Second-Order Optimization – Minimal ML</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-f83c246346592b24d02aa84ae3974412.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../../styles.css">
+<link rel="stylesheet" href="../../colors.css">
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">Minimal ML</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../notes/index.html"> 
+<span class="menu-text">Notes</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../posts/index.html"> 
+<span class="menu-text">Blog</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#optimization-setup" id="toc-optimization-setup" class="nav-link active" data-scroll-target="#optimization-setup">Optimization Setup</a></li>
+  <li><a href="#stochastic-gradient-descent" id="toc-stochastic-gradient-descent" class="nav-link" data-scroll-target="#stochastic-gradient-descent">Stochastic Gradient Descent</a>
+  <ul class="collapse">
+  <li><a href="#why-stochasticity-can-help" id="toc-why-stochasticity-can-help" class="nav-link" data-scroll-target="#why-stochasticity-can-help">Why stochasticity can help</a></li>
+  </ul></li>
+  <li><a href="#momentum" id="toc-momentum" class="nav-link" data-scroll-target="#momentum">Momentum</a>
+  <ul class="collapse">
+  <li><a href="#nesterov-momentum" id="toc-nesterov-momentum" class="nav-link" data-scroll-target="#nesterov-momentum">Nesterov momentum</a></li>
+  </ul></li>
+  <li><a href="#per-parameter-adaptive-learning-rates" id="toc-per-parameter-adaptive-learning-rates" class="nav-link" data-scroll-target="#per-parameter-adaptive-learning-rates">Per-Parameter Adaptive Learning Rates</a>
+  <ul class="collapse">
+  <li><a href="#adagrad" id="toc-adagrad" class="nav-link" data-scroll-target="#adagrad">AdaGrad</a></li>
+  <li><a href="#rmsprop" id="toc-rmsprop" class="nav-link" data-scroll-target="#rmsprop">RMSProp</a></li>
+  </ul></li>
+  <li><a href="#adam" id="toc-adam" class="nav-link" data-scroll-target="#adam">Adam</a>
+  <ul class="collapse">
+  <li><a href="#why-bias-correction-matters" id="toc-why-bias-correction-matters" class="nav-link" data-scroll-target="#why-bias-correction-matters">Why bias correction matters</a></li>
+  </ul></li>
+  <li><a href="#adamw-and-weight-decay" id="toc-adamw-and-weight-decay" class="nav-link" data-scroll-target="#adamw-and-weight-decay">AdamW and Weight Decay</a>
+  <ul class="collapse">
+  <li><a href="#l2-regularization" id="toc-l2-regularization" class="nav-link" data-scroll-target="#l2-regularization">L2 regularization</a></li>
+  <li><a href="#decoupled-weight-decay" id="toc-decoupled-weight-decay" class="nav-link" data-scroll-target="#decoupled-weight-decay">Decoupled weight decay</a></li>
+  </ul></li>
+  <li><a href="#first-order-second-order-and-preconditioning" id="toc-first-order-second-order-and-preconditioning" class="nav-link" data-scroll-target="#first-order-second-order-and-preconditioning">First Order, Second Order, and Preconditioning</a></li>
+  <li><a href="#shampoo" id="toc-shampoo" class="nav-link" data-scroll-target="#shampoo">Shampoo</a>
+  <ul class="collapse">
+  <li><a href="#why-the-exponent-is--14" id="toc-why-the-exponent-is--14" class="nav-link" data-scroll-target="#why-the-exponent-is--14">Why the exponent is <span class="math inline">\(-1/4\)</span></a></li>
+  <li><a href="#why-shampoo-is-more-structured-than-adam" id="toc-why-shampoo-is-more-structured-than-adam" class="nav-link" data-scroll-target="#why-shampoo-is-more-structured-than-adam">Why Shampoo is more structured than Adam</a></li>
+  <li><a href="#minimal-matrix-shampoo-direction" id="toc-minimal-matrix-shampoo-direction" class="nav-link" data-scroll-target="#minimal-matrix-shampoo-direction">Minimal matrix Shampoo direction</a></li>
+  <li><a href="#shampoo-costs" id="toc-shampoo-costs" class="nav-link" data-scroll-target="#shampoo-costs">Shampoo costs</a></li>
+  </ul></li>
+  <li><a href="#muon" id="toc-muon" class="nav-link" data-scroll-target="#muon">Muon</a>
+  <ul class="collapse">
+  <li><a href="#newtonschulz-orthogonalization" id="toc-newtonschulz-orthogonalization" class="nav-link" data-scroll-target="#newtonschulz-orthogonalization">Newton–Schulz orthogonalization</a></li>
+  <li><a href="#which-parameters-use-muon" id="toc-which-parameters-use-muon" class="nav-link" data-scroll-target="#which-parameters-use-muon">Which parameters use Muon?</a></li>
+  <li><a href="#is-muon-a-second-order-optimizer" id="toc-is-muon-a-second-order-optimizer" class="nav-link" data-scroll-target="#is-muon-a-second-order-optimizer">Is Muon a second-order optimizer?</a></li>
+  <li><a href="#shampoo-versus-muon" id="toc-shampoo-versus-muon" class="nav-link" data-scroll-target="#shampoo-versus-muon">Shampoo versus Muon</a></li>
+  </ul></li>
+  <li><a href="#optimizer-comparison" id="toc-optimizer-comparison" class="nav-link" data-scroll-target="#optimizer-comparison">Optimizer Comparison</a></li>
+  <li><a href="#minimal-adamw-implementation" id="toc-minimal-adamw-implementation" class="nav-link" data-scroll-target="#minimal-adamw-implementation">Minimal AdamW Implementation</a></li>
+  <li><a href="#learning-rate-schedules" id="toc-learning-rate-schedules" class="nav-link" data-scroll-target="#learning-rate-schedules">Learning-Rate Schedules</a>
+  <ul class="collapse">
+  <li><a href="#warmup" id="toc-warmup" class="nav-link" data-scroll-target="#warmup">Warmup</a></li>
+  <li><a href="#cosine-decay" id="toc-cosine-decay" class="nav-link" data-scroll-target="#cosine-decay">Cosine decay</a></li>
+  </ul></li>
+  <li><a href="#gradient-clipping" id="toc-gradient-clipping" class="nav-link" data-scroll-target="#gradient-clipping">Gradient Clipping</a></li>
+  <li><a href="#large-scale-training-considerations" id="toc-large-scale-training-considerations" class="nav-link" data-scroll-target="#large-scale-training-considerations">Large-Scale Training Considerations</a></li>
+  <li><a href="#interview-questions" id="toc-interview-questions" class="nav-link" data-scroll-target="#interview-questions">Interview Questions</a></li>
+  <li><a href="#exercises" id="toc-exercises" class="nav-link" data-scroll-target="#exercises">Exercises</a></li>
+  <li><a href="#primary-references" id="toc-primary-references" class="nav-link" data-scroll-target="#primary-references">Primary References</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">First- and Second-Order Optimization</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="optimization-setup" class="level2">
+<h2 class="anchored" data-anchor-id="optimization-setup">Optimization Setup</h2>
+<p>Training seeks parameters <span class="math inline">\(\theta\)</span> that minimize an empirical objective:</p>
+<p><span class="math display">\[
+\min_\theta
+L(\theta)
+=
+\frac{1}{N}\sum_{i=1}^{N}\ell(f_\theta(x_i),y_i).
+\]</span></p>
+<p>A mini-batch provides a stochastic gradient</p>
+<p><span class="math display">\[
+g_t=\nabla_\theta L_{\mathcal B_t}(\theta_t),
+\]</span></p>
+<p>which is an estimate of the full-dataset gradient. An optimizer converts the current gradient and its accumulated state into a parameter update.</p>
+<p>Optimization quality depends on more than the optimizer name:</p>
+<ul>
+<li>learning rate and schedule</li>
+<li>batch size and gradient noise</li>
+<li>initialization and normalization</li>
+<li>gradient clipping</li>
+<li>regularization and weight decay</li>
+<li>numerical precision</li>
+</ul>
+</section>
+<section id="stochastic-gradient-descent" class="level2">
+<h2 class="anchored" data-anchor-id="stochastic-gradient-descent">Stochastic Gradient Descent</h2>
+<p>Vanilla SGD updates</p>
+<p><span class="math display">\[
+\theta_{t+1}=\theta_t-\eta g_t,
+\]</span></p>
+<p>where <span class="math inline">\(\eta\)</span> is the learning rate.</p>
+<p>Full-batch gradient descent uses the entire dataset per step. SGD historically means one example per step; in deep learning, “SGD” commonly means mini-batch SGD.</p>
+<section id="why-stochasticity-can-help" class="level3">
+<h3 class="anchored" data-anchor-id="why-stochasticity-can-help">Why stochasticity can help</h3>
+<ul>
+<li>mini-batches make each update cheaper</li>
+<li>gradient noise can help leave saddle points or narrow regions</li>
+<li>many updates can be made before one full pass through the data</li>
+</ul>
+<p>But noisy gradients may oscillate, especially in directions of high curvature.</p>
+</section>
+</section>
+<section id="momentum" class="level2">
+<h2 class="anchored" data-anchor-id="momentum">Momentum</h2>
+<p>Momentum maintains an exponential moving average of gradients:</p>
+<p><span class="math display">\[
+v_t=\beta v_{t-1}+g_t,
+\]</span></p>
+<p><span class="math display">\[
+\theta_{t+1}=\theta_t-\eta v_t.
+\]</span></p>
+<p>Some texts instead define <span class="math inline">\(v_t=\beta v_{t-1}-\eta g_t\)</span> and then add <span class="math inline">\(v_t\)</span> to <span class="math inline">\(\theta\)</span>. Always inspect the convention before comparing equations.</p>
+<p>Momentum:</p>
+<ul>
+<li>accelerates movement along consistently aligned gradients</li>
+<li>damps oscillation when gradients repeatedly change sign</li>
+<li>introduces one state scalar per parameter</li>
+</ul>
+<section id="nesterov-momentum" class="level3">
+<h3 class="anchored" data-anchor-id="nesterov-momentum">Nesterov momentum</h3>
+<p>Nesterov accelerated gradient evaluates the gradient at an approximate look-ahead position:</p>
+<p><span class="math display">\[
+g_t=\nabla L(\theta_t-\eta\beta v_{t-1}).
+\]</span></p>
+<p>The exact update form depends on the momentum convention and framework.</p>
+</section>
+</section>
+<section id="per-parameter-adaptive-learning-rates" class="level2">
+<h2 class="anchored" data-anchor-id="per-parameter-adaptive-learning-rates">Per-Parameter Adaptive Learning Rates</h2>
+<section id="adagrad" class="level3">
+<h3 class="anchored" data-anchor-id="adagrad">AdaGrad</h3>
+<p>AdaGrad accumulates squared gradients:</p>
+<p><span class="math display">\[
+s_t=s_{t-1}+g_t^2,
+\]</span></p>
+<p><span class="math display">\[
+\theta_{t+1}
+=
+\theta_t-\eta\frac{g_t}{\sqrt{s_t}+\epsilon}.
+\]</span></p>
+<p>Parameters with frequent large gradients receive smaller effective learning rates. This can work well for sparse features, but <span class="math inline">\(s_t\)</span> only grows, so the learning rate may decay too aggressively.</p>
+</section>
+<section id="rmsprop" class="level3">
+<h3 class="anchored" data-anchor-id="rmsprop">RMSProp</h3>
+<p>RMSProp replaces the sum with an exponential moving average:</p>
+<p><span class="math display">\[
+s_t=\beta_2s_{t-1}+(1-\beta_2)g_t^2,
+\]</span></p>
+<p><span class="math display">\[
+\theta_{t+1}
+=
+\theta_t-eta\frac{g_t}{\sqrt{s_t}+\epsilon}.
+\]</span></p>
+<p>Old squared gradients decay, preventing the denominator from growing forever.</p>
+</section>
+</section>
+<section id="adam" class="level2">
+<h2 class="anchored" data-anchor-id="adam">Adam</h2>
+<p>Adam combines a first-moment estimate with an RMSProp-like second moment:</p>
+<p><span class="math display">\[
+m_t=\beta_1m_{t-1}+(1-\beta_1)g_t,
+\]</span></p>
+<p><span class="math display">\[
+v_t=\beta_2v_{t-1}+(1-\beta_2)g_t^2.
+\]</span></p>
+<p>Because both moving averages start at zero, early estimates are biased toward zero. Adam corrects this:</p>
+<p><span class="math display">\[
+\widehat m_t=\frac{m_t}{1-\beta_1^t},
+\qquad
+\widehat v_t=\frac{v_t}{1-\beta_2^t}.
+\]</span></p>
+<p>The update is</p>
+<p><span class="math display">\[
+\theta_{t+1}
+=
+\theta_t
+-
+\eta
+\frac{\widehat m_t}{\sqrt{\widehat v_t}+\epsilon}.
+\]</span></p>
+<p>Adam stores two state values per parameter, in addition to gradients and parameters. Optimizer state is therefore a major training-memory cost.</p>
+<section id="why-bias-correction-matters" class="level3">
+<h3 class="anchored" data-anchor-id="why-bias-correction-matters">Why bias correction matters</h3>
+<p>If <span class="math inline">\(m_0=0\)</span> and the expected gradient is constant <span class="math inline">\(\mu\)</span>, then</p>
+<p><span class="math display">\[
+\mathbb E[m_t]=(1-\beta_1^t)\mu.
+\]</span></p>
+<p>Dividing by <span class="math inline">\(1-\beta_1^t\)</span> recovers an unbiased first-moment estimate under this simplified assumption. The same argument applies to <span class="math inline">\(v_t\)</span>.</p>
+</section>
+</section>
+<section id="adamw-and-weight-decay" class="level2">
+<h2 class="anchored" data-anchor-id="adamw-and-weight-decay">AdamW and Weight Decay</h2>
+<section id="l2-regularization" class="level3">
+<h3 class="anchored" data-anchor-id="l2-regularization">L2 regularization</h3>
+<p>Adding an L2 penalty changes the loss:</p>
+<p><span class="math display">\[
+L_{\text{reg}}(\theta)
+=
+L(\theta)+\frac{\lambda}{2}\|\theta\|_2^2,
+\]</span></p>
+<p>so the gradient becomes</p>
+<p><span class="math display">\[
+g_t^{\text{reg}}=g_t+\lambda\theta_t.
+\]</span></p>
+</section>
+<section id="decoupled-weight-decay" class="level3">
+<h3 class="anchored" data-anchor-id="decoupled-weight-decay">Decoupled weight decay</h3>
+<p>AdamW applies parameter shrinkage separately from the adaptive gradient update:</p>
+<p><span class="math display">\[
+\theta_{t+1}
+=
+(1-\eta\lambda)\theta_t
+-
+\eta
+\frac{\widehat m_t}{\sqrt{\widehat v_t}+\epsilon}.
+\]</span></p>
+<p>With ordinary SGD, L2 regularization and weight decay can be equivalent under a matching convention. With Adam, adding <span class="math inline">\(\lambda\theta\)</span> to the gradient causes the penalty to be rescaled by the adaptive denominator, so it is not equivalent to uniform parameter decay. AdamW restores the decoupled interpretation.</p>
+<p>Common practice excludes biases and normalization scale parameters from weight decay, though this remains a modeling choice rather than a mathematical law.</p>
+</section>
+</section>
+<section id="first-order-second-order-and-preconditioning" class="level2">
+<h2 class="anchored" data-anchor-id="first-order-second-order-and-preconditioning">First Order, Second Order, and Preconditioning</h2>
+<p>The terminology is easy to blur:</p>
+<ul>
+<li>A <strong>first-order</strong> method uses gradients <span class="math inline">\(g=\nabla L(\theta)\)</span>.</li>
+<li>A classical <strong>second-order</strong> method uses the Hessian <span class="math inline">\(H=\nabla^2L(\theta)\)</span> or an approximation to its curvature.</li>
+<li>A <strong>preconditioned</strong> method transforms the gradient with a matrix chosen to improve the optimization geometry.</li>
+</ul>
+<p>Newton’s method uses</p>
+<p><span class="math display">\[
+\Delta\theta=-H^{-1}g.
+\]</span></p>
+<p>The Hessian rescales directions according to local curvature, which can correct ill-conditioning. For a model with <span class="math inline">\(P\)</span> parameters, however, a dense Hessian has <span class="math inline">\(P^2\)</span> entries and solving the Newton system is generally impractical.</p>
+<p>Modern methods therefore use structured approximations. Shampoo constructs preconditioners from gradient covariance matrices and is commonly grouped with second-order or second-order-inspired optimizers. Muon is also sometimes called second-order-inspired, but it does <strong>not</strong> estimate the loss Hessian: it orthogonalizes matrix momentum using the parameter’s matrix geometry.</p>
+</section>
+<section id="shampoo" class="level2">
+<h2 class="anchored" data-anchor-id="shampoo">Shampoo</h2>
+<p><a href="https://arxiv.org/abs/1802.09568">Shampoo</a> preserves the tensor structure of a parameter instead of flattening every dimension into one vector. For a matrix parameter <span class="math inline">\(W\in\mathbb R^{m\times n}\)</span> with gradient <span class="math inline">\(G_t\)</span>, it accumulates</p>
+<p><span class="math display">\[
+L_t=\epsilon I_m+\sum_{s=1}^{t}G_sG_s^T,
+\]</span></p>
+<p><span class="math display">\[
+R_t=\epsilon I_n+\sum_{s=1}^{t}G_s^TG_s.
+\]</span></p>
+<p>The preconditioned direction is</p>
+<p><span class="math display">\[
+\widetilde G_t
+=
+L_t^{-1/4}G_tR_t^{-1/4}.
+\]</span></p>
+<section id="why-the-exponent-is--14" class="level3">
+<h3 class="anchored" data-anchor-id="why-the-exponent-is--14">Why the exponent is <span class="math inline">\(-1/4\)</span></h3>
+<p>Vector AdaGrad applies the inverse square root of one second-moment matrix. A matrix parameter has a left and right preconditioner. Giving each side a <span class="math inline">\(-1/4\)</span> power makes their combined action analogous to an inverse square root.</p>
+<p>For an order-<span class="math inline">\(k\)</span> tensor, Shampoo maintains one preconditioner per tensor axis; the corresponding exponent is <span class="math inline">\(-1/(2k)\)</span>.</p>
+</section>
+<section id="why-shampoo-is-more-structured-than-adam" class="level3">
+<h3 class="anchored" data-anchor-id="why-shampoo-is-more-structured-than-adam">Why Shampoo is more structured than Adam</h3>
+<p>Adam keeps an element-wise second moment:</p>
+<p><span class="math display">\[
+v_{ij}\approx\mathbb E[G_{ij}^2].
+\]</span></p>
+<p>Shampoo’s <span class="math inline">\(L\)</span> and <span class="math inline">\(R\)</span> retain correlations between rows and between columns. This can produce a better-conditioned update, but matrix inverse roots cost more than element-wise division.</p>
+</section>
+<section id="minimal-matrix-shampoo-direction" class="level3">
+<h3 class="anchored" data-anchor-id="minimal-matrix-shampoo-direction">Minimal matrix Shampoo direction</h3>
+<div id="1a793637" class="cell" data-execution_count="1">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> symmetric_matrix_power(matrix, power, eps<span class="op">=</span><span class="fl">1e-12</span>):</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Apply a scalar power to a symmetric positive-definite matrix."""</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    eigenvalues, eigenvectors <span class="op">=</span> torch.linalg.eigh(matrix.<span class="bu">float</span>())</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    powered <span class="op">=</span> eigenvalues.clamp_min(eps).<span class="bu">pow</span>(power)</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> (eigenvectors <span class="op">*</span> powered.unsqueeze(<span class="dv">0</span>)) <span class="op">@</span> eigenvectors.T</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> shampoo_direction(gradient, left_state, right_state, eps<span class="op">=</span><span class="fl">1e-4</span>):</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""One educational Shampoo update for a 2D parameter gradient."""</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    rows, columns <span class="op">=</span> gradient.shape</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    g <span class="op">=</span> gradient.<span class="bu">float</span>()</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    left_state.add_(g <span class="op">@</span> g.T)</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    right_state.add_(g.T <span class="op">@</span> g)</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>    left <span class="op">=</span> left_state <span class="op">+</span> eps <span class="op">*</span> torch.eye(rows, device<span class="op">=</span>g.device)</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>    right <span class="op">=</span> right_state <span class="op">+</span> eps <span class="op">*</span> torch.eye(columns, device<span class="op">=</span>g.device)</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>    left_root <span class="op">=</span> symmetric_matrix_power(left, <span class="op">-</span><span class="fl">0.25</span>)</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>    right_root <span class="op">=</span> symmetric_matrix_power(right, <span class="op">-</span><span class="fl">0.25</span>)</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> left_root <span class="op">@</span> g <span class="op">@</span> right_root</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>gradient <span class="op">=</span> torch.randn(<span class="dv">8</span>, <span class="dv">4</span>)</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>left_state <span class="op">=</span> torch.zeros(<span class="dv">8</span>, <span class="dv">8</span>)</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>right_state <span class="op">=</span> torch.zeros(<span class="dv">4</span>, <span class="dv">4</span>)</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>direction <span class="op">=</span> shampoo_direction(gradient, left_state, right_state)</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> direction.shape <span class="op">==</span> gradient.shape</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> torch.isfinite(direction).<span class="bu">all</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Production Shampoo implementations typically add momentum, weight decay, blocking for large dimensions, distributed state, infrequent inverse-root updates, and <strong>grafting</strong>. Grafting borrows the update magnitude from a simpler optimizer such as SGD or AdaGrad while using Shampoo’s matrix direction.</p>
+</section>
+<section id="shampoo-costs" class="level3">
+<h3 class="anchored" data-anchor-id="shampoo-costs">Shampoo costs</h3>
+<p>For an <span class="math inline">\(m\times n\)</span> parameter, Shampoo stores <span class="math inline">\(m^2+n^2\)</span> preconditioner scalars, not <span class="math inline">\(m^2n^2\)</span>. This is far smaller than a full preconditioner over all <span class="math inline">\(mn\)</span> parameters, but can still be expensive for very wide matrices. Matrix inverse roots are also substantially more expensive than Adam’s element-wise update.</p>
+</section>
+</section>
+<section id="muon" class="level2">
+<h2 class="anchored" data-anchor-id="muon">Muon</h2>
+<p>Muon stands for <strong>MomentUm Orthogonalized by Newton–Schulz</strong>. For a 2D weight matrix, first form momentum</p>
+<p><span class="math display">\[
+M_t=\beta M_{t-1}+(1-\beta)G_t,
+\]</span></p>
+<p>then replace its singular values by approximately one:</p>
+<p><span class="math display">\[
+M_t=U\Sigma V^T
+\quad\Longrightarrow\quad
+\operatorname{orth}(M_t)=UV^T.
+\]</span></p>
+<p>Equivalently, for the appropriate full-rank case,</p>
+<p><span class="math display">\[
+\operatorname{orth}(M)
+=
+M(M^TM)^{-1/2}.
+\]</span></p>
+<p>Muon then steps in this orthogonalized direction, with implementation-specific scaling and weight decay:</p>
+<p><span class="math display">\[
+W_{t+1}=W_t-\eta\,s(W_t)\operatorname{orth}(M_t).
+\]</span></p>
+<p>The polar factor prevents a few large singular directions in the raw momentum matrix from dominating the update. It can also be interpreted as a steepest- descent direction under a matrix spectral-norm geometry.</p>
+<section id="newtonschulz-orthogonalization" class="level3">
+<h3 class="anchored" data-anchor-id="newtonschulz-orthogonalization">Newton–Schulz orthogonalization</h3>
+<p>Computing an SVD for every matrix at every step is expensive. Muon instead uses a small number of matrix-multiplication iterations. A simple Newton–Schulz polar iteration is</p>
+<p><span class="math display">\[
+X_{k+1}
+=
+\frac{3}{2}X_k
+-
+\frac{1}{2}X_kX_k^TX_k,
+\]</span></p>
+<p>after scaling <span class="math inline">\(X_0\)</span> so its singular values lie in the convergence region. Each singular value approximately follows</p>
+<p><span class="math display">\[
+\sigma_{k+1}
+=
+\frac{3}{2}\sigma_k-\frac{1}{2}\sigma_k^3,
+\]</span></p>
+<p>which drives nonzero singular values toward one.</p>
+<div id="49988b7a" class="cell" data-execution_count="2">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> newton_schulz_orthogonalize(matrix, num_steps<span class="op">=</span><span class="dv">10</span>, eps<span class="op">=</span><span class="fl">1e-7</span>):</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Educational polar-factor approximation for a 2D matrix."""</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> matrix.<span class="bu">float</span>()</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> x <span class="op">/</span> (x.norm() <span class="op">+</span> eps)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(num_steps):</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>        x <span class="op">=</span> <span class="fl">1.5</span> <span class="op">*</span> x <span class="op">-</span> <span class="fl">0.5</span> <span class="op">*</span> (x <span class="op">@</span> x.T) <span class="op">@</span> x</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> x.to(matrix.dtype)</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>momentum <span class="op">=</span> torch.randn(<span class="dv">8</span>, <span class="dv">4</span>)</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>orthogonal_momentum <span class="op">=</span> newton_schulz_orthogonalize(momentum)</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="co"># For a tall full-rank matrix, columns of the polar factor are orthonormal.</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>gram <span class="op">=</span> orthogonal_momentum.T <span class="op">@</span> orthogonal_momentum</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>torch.testing.assert_close(gram, torch.eye(<span class="dv">4</span>), atol<span class="op">=</span><span class="fl">2e-3</span>, rtol<span class="op">=</span><span class="fl">2e-3</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The code shows the mathematical idea, not a production Muon kernel. Practical implementations often use tuned higher-order Newton–Schulz polynomials, lower- precision matrix multiplies, Nesterov-style momentum, explicit update scaling, and distributed communication strategies.</p>
+</section>
+<section id="which-parameters-use-muon" class="level3">
+<h3 class="anchored" data-anchor-id="which-parameters-use-muon">Which parameters use Muon?</h3>
+<p>Muon is designed for matrix-structured hidden weights such as attention and MLP projections. A common recipe uses AdamW for:</p>
+<ul>
+<li>embedding tables</li>
+<li>the output language-model head</li>
+<li>biases and scalar parameters</li>
+<li>normalization scales</li>
+<li>other parameters that are not suitable 2D hidden-weight matrices</li>
+</ul>
+<p>Thus “training with Muon” commonly means a hybrid Muon + AdamW optimizer setup.</p>
+</section>
+<section id="is-muon-a-second-order-optimizer" class="level3">
+<h3 class="anchored" data-anchor-id="is-muon-a-second-order-optimizer">Is Muon a second-order optimizer?</h3>
+<p>There are two conventions:</p>
+<ul>
+<li>In a broad geometry-aware sense, Muon is often described as second-order or Shampoo-like because it applies a matrix inverse-square-root-style transform.</li>
+<li>In the classical optimization sense, it is <strong>not Hessian-based</strong>: the Newton–Schulz name refers to the numerical method used to compute a polar factor, not Newton’s method on the loss.</li>
+</ul>
+<p>For interviews, state which definition you are using rather than simply calling Muon “Newton’s method.”</p>
+</section>
+<section id="shampoo-versus-muon" class="level3">
+<h3 class="anchored" data-anchor-id="shampoo-versus-muon">Shampoo versus Muon</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Property</th>
+<th>Shampoo</th>
+<th>Muon</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Input state</td>
+<td>gradient second moments</td>
+<td>momentum matrix</td>
+</tr>
+<tr class="even">
+<td>Matrix operation</td>
+<td>left/right inverse roots</td>
+<td>polar-factor orthogonalization</td>
+</tr>
+<tr class="odd">
+<td>Tracks row/column covariance over time</td>
+<td>yes</td>
+<td>no explicit covariance matrices</td>
+</tr>
+<tr class="even">
+<td>State for an <span class="math inline">\(m\times n\)</span> matrix</td>
+<td>typically <span class="math inline">\(m^2+n^2\)</span> before blocking</td>
+<td>typically one <span class="math inline">\(mn\)</span> momentum buffer</td>
+</tr>
+<tr class="odd">
+<td>Typical expensive operation</td>
+<td>eigendecomposition or inverse root</td>
+<td>repeated matrix multiplications</td>
+</tr>
+<tr class="even">
+<td>Parameter coverage</td>
+<td>general tensors, with practical restrictions</td>
+<td>mainly 2D hidden weights</td>
+</tr>
+<tr class="odd">
+<td>Hessian estimate</td>
+<td>no explicit Hessian</td>
+<td>no</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="optimizer-comparison" class="level2">
+<h2 class="anchored" data-anchor-id="optimizer-comparison">Optimizer Comparison</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 23%">
+<col style="width: 30%">
+<col style="width: 23%">
+<col style="width: 23%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Optimizer</th>
+<th style="text-align: right;">State per parameter</th>
+<th>Main idea</th>
+<th>Common weakness</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>SGD</td>
+<td style="text-align: right;">0</td>
+<td>follow current gradient</td>
+<td>sensitive to conditioning and learning rate</td>
+</tr>
+<tr class="even">
+<td>SGD + momentum</td>
+<td style="text-align: right;">1</td>
+<td>average gradient direction</td>
+<td>still uses one global learning-rate scale</td>
+</tr>
+<tr class="odd">
+<td>AdaGrad</td>
+<td style="text-align: right;">1</td>
+<td>cumulative squared-gradient scaling</td>
+<td>effective rate can vanish</td>
+</tr>
+<tr class="even">
+<td>RMSProp</td>
+<td style="text-align: right;">1</td>
+<td>EMA of squared gradients</td>
+<td>no first-moment estimate in basic form</td>
+</tr>
+<tr class="odd">
+<td>Adam</td>
+<td style="text-align: right;">2</td>
+<td>first and second moments</td>
+<td>coupled L2 is not uniform weight decay</td>
+</tr>
+<tr class="even">
+<td>AdamW</td>
+<td style="text-align: right;">2</td>
+<td>Adam + decoupled decay</td>
+<td>high optimizer-state memory</td>
+</tr>
+<tr class="odd">
+<td>Shampoo</td>
+<td style="text-align: right;">structured matrices</td>
+<td>row/column covariance preconditioning</td>
+<td>inverse roots and matrix state are expensive</td>
+</tr>
+<tr class="even">
+<td>Muon</td>
+<td style="text-align: right;">1 for selected matrices</td>
+<td>orthogonalize momentum</td>
+<td>special parameter routing and matrix multiplies</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="minimal-adamw-implementation" class="level2">
+<h2 class="anchored" data-anchor-id="minimal-adamw-implementation">Minimal AdamW Implementation</h2>
+<p>The implementation below is educational and omits parameter groups, sparse gradients, fused kernels, capturable state, and mixed-precision concerns.</p>
+<div id="2ed73b4f" class="cell" data-execution_count="3">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> math</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> MinimalAdamW:</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>,</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>        parameters,</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>        lr<span class="op">=</span><span class="fl">1e-3</span>,</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>        betas<span class="op">=</span>(<span class="fl">0.9</span>, <span class="fl">0.999</span>),</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>        eps<span class="op">=</span><span class="fl">1e-8</span>,</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>        weight_decay<span class="op">=</span><span class="fl">0.0</span>,</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>    ):</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.parameters <span class="op">=</span> <span class="bu">list</span>(parameters)</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.lr <span class="op">=</span> lr</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.beta1, <span class="va">self</span>.beta2 <span class="op">=</span> betas</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.eps <span class="op">=</span> eps</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.weight_decay <span class="op">=</span> weight_decay</span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.step_count <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.first_moments <span class="op">=</span> [torch.zeros_like(p) <span class="cf">for</span> p <span class="kw">in</span> <span class="va">self</span>.parameters]</span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.second_moments <span class="op">=</span> [torch.zeros_like(p) <span class="cf">for</span> p <span class="kw">in</span> <span class="va">self</span>.parameters]</span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">@torch.no_grad</span>()</span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> step(<span class="va">self</span>):</span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.step_count <span class="op">+=</span> <span class="dv">1</span></span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>        correction1 <span class="op">=</span> <span class="fl">1.0</span> <span class="op">-</span> <span class="va">self</span>.beta1 <span class="op">**</span> <span class="va">self</span>.step_count</span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>        correction2 <span class="op">=</span> <span class="fl">1.0</span> <span class="op">-</span> <span class="va">self</span>.beta2 <span class="op">**</span> <span class="va">self</span>.step_count</span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> parameter, first, second <span class="kw">in</span> <span class="bu">zip</span>(</span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>            <span class="va">self</span>.parameters, <span class="va">self</span>.first_moments, <span class="va">self</span>.second_moments</span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>        ):</span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> parameter.grad <span class="kw">is</span> <span class="va">None</span>:</span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>                <span class="cf">continue</span></span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a>            gradient <span class="op">=</span> parameter.grad</span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a>            <span class="co"># Decoupled weight decay.</span></span>
+<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a>            parameter.mul_(<span class="fl">1.0</span> <span class="op">-</span> <span class="va">self</span>.lr <span class="op">*</span> <span class="va">self</span>.weight_decay)</span>
+<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a>            first.mul_(<span class="va">self</span>.beta1).add_(gradient, alpha<span class="op">=</span><span class="fl">1.0</span> <span class="op">-</span> <span class="va">self</span>.beta1)</span>
+<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a>            second.mul_(<span class="va">self</span>.beta2).addcmul_(</span>
+<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a>                gradient, gradient, value<span class="op">=</span><span class="fl">1.0</span> <span class="op">-</span> <span class="va">self</span>.beta2</span>
+<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a>            )</span>
+<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a>            first_hat <span class="op">=</span> first <span class="op">/</span> correction1</span>
+<span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a>            second_hat <span class="op">=</span> second <span class="op">/</span> correction2</span>
+<span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a>            parameter.addcdiv_(</span>
+<span id="cb3-48"><a href="#cb3-48" aria-hidden="true" tabindex="-1"></a>                first_hat,</span>
+<span id="cb3-49"><a href="#cb3-49" aria-hidden="true" tabindex="-1"></a>                second_hat.sqrt().add_(<span class="va">self</span>.eps),</span>
+<span id="cb3-50"><a href="#cb3-50" aria-hidden="true" tabindex="-1"></a>                value<span class="op">=-</span><span class="va">self</span>.lr,</span>
+<span id="cb3-51"><a href="#cb3-51" aria-hidden="true" tabindex="-1"></a>            )</span>
+<span id="cb3-52"><a href="#cb3-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-53"><a href="#cb3-53" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> zero_grad(<span class="va">self</span>):</span>
+<span id="cb3-54"><a href="#cb3-54" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> parameter <span class="kw">in</span> <span class="va">self</span>.parameters:</span>
+<span id="cb3-55"><a href="#cb3-55" aria-hidden="true" tabindex="-1"></a>            parameter.grad <span class="op">=</span> <span class="va">None</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="d4c9e89f" class="cell" data-execution_count="4">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>parameter <span class="op">=</span> torch.nn.Parameter(torch.tensor([<span class="fl">3.0</span>, <span class="op">-</span><span class="fl">4.0</span>]))</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>optimizer <span class="op">=</span> MinimalAdamW([parameter], lr<span class="op">=</span><span class="fl">0.1</span>, weight_decay<span class="op">=</span><span class="fl">0.01</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>initial_norm <span class="op">=</span> parameter.detach().norm()</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">100</span>):</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    loss <span class="op">=</span> parameter.square().<span class="bu">sum</span>()</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    loss.backward()</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    optimizer.step()</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    optimizer.zero_grad()</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> parameter.norm() <span class="op">&lt;</span> <span class="fl">0.02</span> <span class="op">*</span> initial_norm</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>parameter</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="4">
+<pre><code>Parameter containing:
+tensor([0.0179, 0.0162], requires_grad=True)</code></pre>
+</div>
+</div>
+</section>
+<section id="learning-rate-schedules" class="level2">
+<h2 class="anchored" data-anchor-id="learning-rate-schedules">Learning-Rate Schedules</h2>
+<p>The learning-rate schedule can matter as much as the optimizer.</p>
+<section id="warmup" class="level3">
+<h3 class="anchored" data-anchor-id="warmup">Warmup</h3>
+<p>Early gradients and optimizer moments can be poorly calibrated. Linear warmup increases the learning rate from zero to a peak over <span class="math inline">\(T_w\)</span> steps:</p>
+<p><span class="math display">\[
+\eta_t=\eta_{\max}\frac{t}{T_w},
+\qquad t\le T_w.
+\]</span></p>
+</section>
+<section id="cosine-decay" class="level3">
+<h3 class="anchored" data-anchor-id="cosine-decay">Cosine decay</h3>
+<p>After warmup, cosine decay commonly uses</p>
+<p><span class="math display">\[
+\eta_t
+=
+\eta_{\min}
++
+\frac{1}{2}(\eta_{\max}-\eta_{\min})
+\left[
+1+\cos\left(\pi\frac{t-T_w}{T-T_w}\right)
+\right].
+\]</span></p>
+<p>Other choices include constant-with-warmup, linear decay, inverse-square-root decay, one-cycle schedules, and loss- or validation-triggered schedules.</p>
+</section>
+</section>
+<section id="gradient-clipping" class="level2">
+<h2 class="anchored" data-anchor-id="gradient-clipping">Gradient Clipping</h2>
+<p>Global-norm clipping rescales all gradients together when their norm exceeds <span class="math inline">\(c\)</span>:</p>
+<p><span class="math display">\[
+g
+\leftarrow
+g\min\left(1,\frac{c}{\|g\|_2+\epsilon}\right).
+\]</span></p>
+<p>This preserves the joint gradient direction while bounding its magnitude. Element-wise value clipping changes the direction and is a different operation.</p>
+<p>Clipping can contain rare gradient spikes, but persistent clipping may indicate an excessive learning rate or a deeper stability problem.</p>
+</section>
+<section id="large-scale-training-considerations" class="level2">
+<h2 class="anchored" data-anchor-id="large-scale-training-considerations">Large-Scale Training Considerations</h2>
+<ul>
+<li><strong>Mixed precision:</strong> optimizer moments are often maintained in higher precision than forward weights or activations.</li>
+<li><strong>Loss scaling:</strong> prevents small FP16 gradients from underflowing before the optimizer sees them.</li>
+<li><strong>Gradient accumulation:</strong> simulates a larger batch but changes the number of optimizer steps per token unless the schedule is adjusted.</li>
+<li><strong>State sharding:</strong> ZeRO/FSDP-style methods distribute parameters, gradients, and optimizer states across devices.</li>
+<li><strong>Fused optimizers:</strong> combine many small element-wise operations to reduce kernel launches and memory traffic.</li>
+<li><strong>Adafactor and low-rank state methods:</strong> reduce second-moment memory by factorizing or approximating optimizer state.</li>
+</ul>
+</section>
+<section id="interview-questions" class="level2">
+<h2 class="anchored" data-anchor-id="interview-questions">Interview Questions</h2>
+<ul>
+<li>Why can mini-batch gradients be useful despite being noisy?</li>
+<li>How does momentum reduce oscillation?</li>
+<li>Why does AdaGrad’s effective learning rate continually shrink?</li>
+<li>Derive Adam’s bias-correction terms.</li>
+<li>Why are L2 regularization and weight decay different for Adam?</li>
+<li>How much optimizer-state memory does Adam require?</li>
+<li>Why do large Transformer runs use learning-rate warmup?</li>
+<li>Compare global-norm clipping with element-wise clipping.</li>
+<li>How does gradient accumulation affect optimization and scheduling?</li>
+<li>Why might SGD generalize differently from AdamW?</li>
+<li>How does Shampoo preserve matrix or tensor structure that Adam discards?</li>
+<li>Why does matrix Shampoo use <span class="math inline">\(-1/4\)</span> powers on both sides?</li>
+<li>What does Muon’s Newton–Schulz iteration compute, and why is it not Newton’s method on the training loss?</li>
+<li>Why is Muon commonly paired with AdamW for the remaining parameters?</li>
+<li>Compare the optimizer-state and computation costs of AdamW, Shampoo, and Muon.</li>
+</ul>
+</section>
+<section id="exercises" class="level2">
+<h2 class="anchored" data-anchor-id="exercises">Exercises</h2>
+<ul class="task-list">
+<li><label><input type="checkbox">Implement SGD with momentum using both common sign conventions.</label></li>
+<li><label><input type="checkbox">Compare <code>MinimalAdamW</code> with <code>torch.optim.AdamW</code> for several deterministic steps.</label></li>
+<li><label><input type="checkbox">Plot the effective per-parameter learning rates in Adam.</label></li>
+<li><label><input type="checkbox">Derive training-memory usage for parameters, gradients, and Adam states.</label></li>
+<li><label><input type="checkbox">Implement linear warmup followed by cosine decay.</label></li>
+<li><label><input type="checkbox">Compare Shampoo’s direction with an element-wise AdaGrad direction.</label></li>
+<li><label><input type="checkbox">Compare the Newton–Schulz polar factor against <code>torch.linalg.svd</code>.</label></li>
+<li><label><input type="checkbox">Route 2D hidden weights to Muon and all other parameters to AdamW.</label></li>
+</ul>
+</section>
+<section id="primary-references" class="level2">
+<h2 class="anchored" data-anchor-id="primary-references">Primary References</h2>
+<ul>
+<li><a href="https://arxiv.org/abs/1802.09568">Shampoo: Preconditioned Stochastic Tensor Optimization</a></li>
+<li><a href="https://arxiv.org/abs/2502.16982">Muon Is Scalable for LLM Training</a></li>
+<li><a href="https://arxiv.org/abs/2505.02222">Practical Efficiency of Muon for Pretraining</a></li>
+</ul>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/threeeyelidds\.github\.io\/ml-interview-notes\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

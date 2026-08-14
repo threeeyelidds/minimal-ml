@@ -1,23 +1,51 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://threeeyelidds.github.io/ml-interview-notes/notes/index.html</loc>
-    <lastmod>2026-08-13T18:04:55.352Z</lastmod>
+    <loc>https://threeeyelidds.github.io/ml-interview-notes/notes/foundations/optimizers.html</loc>
+    <lastmod>2026-08-14T03:22:35.022Z</lastmod>
+  </url>
+  <url>
+    <loc>https://threeeyelidds.github.io/ml-interview-notes/notes/foundations/losses.html</loc>
+    <lastmod>2026-08-14T03:22:35.022Z</lastmod>
+  </url>
+  <url>
+    <loc>https://threeeyelidds.github.io/ml-interview-notes/notes/tokenization.html</loc>
+    <lastmod>2026-08-14T03:22:35.022Z</lastmod>
+  </url>
+  <url>
+    <loc>https://threeeyelidds.github.io/ml-interview-notes/notes/transformers/positional_encoding.html</loc>
+    <lastmod>2026-08-14T03:22:35.023Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/ml-interview-notes/notes/transformers/transformer.html</loc>
-    <lastmod>2026-08-13T18:04:55.353Z</lastmod>
-  </url>
-  <url>
-    <loc>https://threeeyelidds.github.io/ml-interview-notes/posts/index.html</loc>
-    <lastmod>2026-08-13T18:04:55.353Z</lastmod>
+    <lastmod>2026-08-14T03:22:35.023Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/ml-interview-notes/index.html</loc>
-    <lastmod>2026-08-13T18:04:55.352Z</lastmod>
+    <lastmod>2026-08-14T03:22:35.021Z</lastmod>
+  </url>
+  <url>
+    <loc>https://threeeyelidds.github.io/ml-interview-notes/posts/index.html</loc>
+    <lastmod>2026-08-14T03:22:35.023Z</lastmod>
+  </url>
+  <url>
+    <loc>https://threeeyelidds.github.io/ml-interview-notes/notes/advanced/advanced_attention.html</loc>
+    <lastmod>2026-08-14T03:22:35.022Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/ml-interview-notes/notes/transformers/attention.html</loc>
-    <lastmod>2026-08-13T18:04:55.353Z</lastmod>
+    <lastmod>2026-08-14T03:22:35.022Z</lastmod>
+  </url>
+  <url>
+    <loc>https://threeeyelidds.github.io/ml-interview-notes/notes/index.html</loc>
+    <lastmod>2026-08-14T03:22:35.022Z</lastmod>
+  </url>
+  <url>
+    <loc>https://threeeyelidds.github.io/ml-interview-notes/notes/foundations/activations.html</loc>
+    <lastmod>2026-08-14T03:22:35.022Z</lastmod>
+  </url>
+  <url>
+    <loc>https://threeeyelidds.github.io/ml-interview-notes/notes/foundations/rnn_lstm.html</loc>
+    <lastmod>2026-08-14T03:22:35.022Z</lastmod>
   </url>
 </urlset>

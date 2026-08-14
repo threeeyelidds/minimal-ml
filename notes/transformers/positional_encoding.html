@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Blog – Minimal ML</title>
+<title>Positional Encoding – Minimal ML</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -29,25 +29,23 @@ ul.task-list li input[type="checkbox"] {
 </style>
 
 
-<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
-<script src="../site_libs/quarto-nav/headroom.min.js"></script>
-<script src="../site_libs/clipboard/clipboard.min.js"></script>
-<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
-<script src="../site_libs/quarto-search/fuse.min.js"></script>
-<script src="../site_libs/quarto-search/quarto-search.js"></script>
-<meta name="quarto:offset" content="../">
-<script src="../site_libs/quarto-listing/list.min.js"></script>
-<script src="../site_libs/quarto-listing/quarto-listing.js"></script>
-<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
-<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
-<script src="../site_libs/quarto-html/popper.min.js"></script>
-<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
-<script src="../site_libs/quarto-html/anchor.min.js"></script>
-<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
-<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
-<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-f83c246346592b24d02aa84ae3974412.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-f83c246346592b24d02aa84ae3974412.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -75,35 +73,6 @@ ul.task-list li input[type="checkbox"] {
     "search-label": "Search"
   }
 }</script>
-<script>
-
-  window.document.addEventListener("DOMContentLoaded", function (_event) {
-    const listingTargetEl = window.document.querySelector('#listing-listing .list');
-    if (!listingTargetEl) {
-      // No listing discovered, do not attach.
-      return; 
-    }
-
-    const options = {
-      valueNames: [{ data: ['index'] },{ data: ['categories'] },{ data: ['listing-date-sort'] },{ data: ['listing-file-modified-sort'] }],
-      
-      searchColumns: [],
-    };
-
-    window['quarto-listings'] = window['quarto-listings'] || {};
-    window['quarto-listings']['listing-listing'] = new List('listing-listing', options);
-
-    if (window['quarto-listing-loaded']) {
-      window['quarto-listing-loaded']();
-    }
-  });
-
-  window.addEventListener('hashchange',() => {
-    if (window['quarto-listing-loaded']) {
-      window['quarto-listing-loaded']();
-    }
-  })
-  </script>
 
   <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
   <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
@@ -135,8 +104,8 @@ window.Quarto = {
 };
 </script>
 
-<link rel="stylesheet" href="../styles.css">
-<link rel="stylesheet" href="../colors.css">
+<link rel="stylesheet" href="../../styles.css">
+<link rel="stylesheet" href="../../colors.css">
 </head>
 
 <body class="nav-fixed quarto-light">
@@ -146,7 +115,7 @@ window.Quarto = {
     <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
       <div class="navbar-container container-fluid">
       <div class="navbar-brand-container mx-auto">
-    <a class="navbar-brand" href="../index.html">
+    <a class="navbar-brand" href="../../index.html">
     <span class="navbar-title">Minimal ML</span>
     </a>
   </div>
@@ -157,15 +126,15 @@ window.Quarto = {
           <div class="collapse navbar-collapse" id="navbarCollapse">
             <ul class="navbar-nav navbar-nav-scroll me-auto">
   <li class="nav-item">
-    <a class="nav-link" href="../index.html"> 
+    <a class="nav-link" href="../../index.html"> 
 <span class="menu-text">Home</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="../notes/index.html"> 
+    <a class="nav-link" href="../../notes/index.html"> 
 <span class="menu-text">Notes</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link active" href="../posts/index.html" aria-current="page"> 
+    <a class="nav-link" href="../../posts/index.html"> 
 <span class="menu-text">Blog</span></a>
   </li>  
 </ul>
@@ -179,15 +148,30 @@ window.Quarto = {
 <div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
 <!-- sidebar -->
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
-        
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#why-position-information-is-necessary" id="toc-why-position-information-is-necessary" class="nav-link active" data-scroll-target="#why-position-information-is-necessary">Why Position Information Is Necessary</a></li>
+  <li><a href="#absolute-positional-encodings" id="toc-absolute-positional-encodings" class="nav-link" data-scroll-target="#absolute-positional-encodings">Absolute Positional Encodings</a>
+  <ul class="collapse">
+  <li><a href="#sinusoidal-encoding" id="toc-sinusoidal-encoding" class="nav-link" data-scroll-target="#sinusoidal-encoding">Sinusoidal encoding</a></li>
+  <li><a href="#learned-position-embeddings" id="toc-learned-position-embeddings" class="nav-link" data-scroll-target="#learned-position-embeddings">Learned position embeddings</a></li>
+  </ul></li>
+  <li><a href="#relative-position-bias" id="toc-relative-position-bias" class="nav-link" data-scroll-target="#relative-position-bias">Relative Position Bias</a></li>
+  <li><a href="#rotary-position-embeddings-rope" id="toc-rotary-position-embeddings-rope" class="nav-link" data-scroll-target="#rotary-position-embeddings-rope">Rotary Position Embeddings (RoPE)</a></li>
+  <li><a href="#context-length-extension" id="toc-context-length-extension" class="nav-link" data-scroll-target="#context-length-extension">Context-Length Extension</a></li>
+  <li><a href="#interview-questions" id="toc-interview-questions" class="nav-link" data-scroll-target="#interview-questions">Interview Questions</a></li>
+  </ul>
+</nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Blog</h1>
+<h1 class="title">Positional Encoding</h1>
 </div>
 
 
@@ -204,17 +188,113 @@ window.Quarto = {
 </header>
 
 
-<p>Longer notes worth polishing and sharing publicly.</p>
+<section id="why-position-information-is-necessary" class="level2">
+<h2 class="anchored" data-anchor-id="why-position-information-is-necessary">Why Position Information Is Necessary</h2>
+<p>Self-attention alone is permutation-equivariant: permuting the input tokens permutes the outputs in the same way. The attention score <span class="math inline">\(q_i^T k_j\)</span> contains content similarity, but it does not inherently say whether token <span class="math inline">\(j\)</span> comes before or after token <span class="math inline">\(i\)</span>, or how far apart they are.</p>
+<p>Position information can be introduced by:</p>
+<ul>
+<li>adding a position-dependent vector to each token representation</li>
+<li>modifying attention scores with a position-dependent bias</li>
+<li>transforming queries and keys as a function of their positions</li>
+</ul>
+<blockquote class="blockquote">
+<p><strong>Learning prompt:</strong> Precisely distinguish permutation equivariance from permutation invariance. Which one describes self-attention?</p>
+</blockquote>
+</section>
+<section id="absolute-positional-encodings" class="level2">
+<h2 class="anchored" data-anchor-id="absolute-positional-encodings">Absolute Positional Encodings</h2>
+<section id="sinusoidal-encoding" class="level3">
+<h3 class="anchored" data-anchor-id="sinusoidal-encoding">Sinusoidal encoding</h3>
+<p>TODO:</p>
+<ul>
+<li>Write the sine/cosine equations.</li>
+<li>Explain why every position has a deterministic representation.</li>
+<li>Show how relative offsets can be expressed through linear transformations.</li>
+<li>Discuss extrapolation beyond the training sequence length.</li>
+</ul>
+</section>
+<section id="learned-position-embeddings" class="level3">
+<h3 class="anchored" data-anchor-id="learned-position-embeddings">Learned position embeddings</h3>
+<p>A learned position table is added to the token embeddings:</p>
+<p><span class="math display">\[
+x_t = E_{\text{token}}[w_t] + E_{\text{position}}[t].
+\]</span></p>
+<p>TODO:</p>
+<ul>
+<li>Compare learned and sinusoidal absolute embeddings.</li>
+<li>Explain the fixed maximum-length limitation of a learned table.</li>
+<li>Identify where the position embedding enters a decoder-only Transformer.</li>
+</ul>
+<p>See the learned-position integration in the <a href="../../notes/transformers/transformer.html#minimal-pytorch-implementation">Transformer implementation</a>.</p>
+</section>
+</section>
+<section id="relative-position-bias" class="level2">
+<h2 class="anchored" data-anchor-id="relative-position-bias">Relative Position Bias</h2>
+<p>Instead of modifying the input representation, add a position-dependent term to the attention logits:</p>
+<p><span class="math display">\[
+S_{ij}
+=
+\frac{q_i^T k_j}{\sqrt{d_h}} + b(i,j).
+\]</span></p>
+<p>TODO:</p>
+<ul>
+<li>When does <span class="math inline">\(b(i,j)\)</span> depend only on <span class="math inline">\(i-j\)</span>?</li>
+<li>How are relative distances bucketed in T5-style biases?</li>
+<li>How does ALiBi bias attention as distance grows?</li>
+</ul>
+</section>
+<section id="rotary-position-embeddings-rope" class="level2">
+<h2 class="anchored" data-anchor-id="rotary-position-embeddings-rope">Rotary Position Embeddings (RoPE)</h2>
+<p>RoPE applies a position-dependent rotation to pairs of query and key dimensions:</p>
+<p><span class="math display">\[
+q_t' = R_t q_t,
+\qquad
+k_s' = R_s k_s.
+\]</span></p>
+<p>Because rotation matrices are orthogonal,</p>
+<p><span class="math display">\[
+(q_t')^T k_s'
+=
+q_t^T R_t^T R_s k_s
+=
+q_t^T R_{s-t}k_s.
+\]</span></p>
+<p>Thus the attention score depends on the relative displacement <span class="math inline">\(s-t\)</span>, even though each query and key is rotated using its absolute position.</p>
+<p>TODO:</p>
+<ul>
+<li>Derive the two-dimensional rotation applied to each feature pair.</li>
+<li>Explain how the rotation frequencies vary across dimensions.</li>
+<li>Implement RoPE for tensors shaped <span class="math inline">\((B,h,T,d_h)\)</span>.</li>
+<li>Explain why RoPE is applied to Q and K but not V.</li>
+<li>Compare RoPE with additive absolute embeddings and relative biases.</li>
+</ul>
+</section>
+<section id="context-length-extension" class="level2">
+<h2 class="anchored" data-anchor-id="context-length-extension">Context-Length Extension</h2>
+<p>TODO:</p>
+<ul>
+<li>Why can RoPE performance degrade beyond its training context length?</li>
+<li>Position interpolation</li>
+<li>Frequency-aware or NTK-aware scaling</li>
+<li>YaRN and related approaches</li>
+<li>Tradeoffs between extrapolation quality and short-context behavior</li>
+</ul>
+</section>
+<section id="interview-questions" class="level2">
+<h2 class="anchored" data-anchor-id="interview-questions">Interview Questions</h2>
+<ul>
+<li>Why does self-attention require position information?</li>
+<li>Does the causal mask by itself fully encode token positions?</li>
+<li>What is the difference between absolute and relative position information?</li>
+<li>How does RoPE make attention scores depend on relative displacement?</li>
+<li>Why must the RoPE head dimension be arranged in pairs?</li>
+<li>What makes context-length extension difficult?</li>
+</ul>
 
 
+</section>
 
-
-<div class="quarto-listing quarto-listing-container-default" id="listing-listing">
-<div class="list quarto-listing-default">
-
-</div>
-<div class="listing-no-matching d-none">No matching items</div>
-</div></main> <!-- /main -->
+</main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
     const icon = "";

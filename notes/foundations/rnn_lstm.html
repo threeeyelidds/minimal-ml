@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>RNNs and LSTMs – Minimal ML</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-f83c246346592b24d02aa84ae3974412.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script src="../../site_libs/quarto-diagram/mermaid.min.js"></script>
+<script src="../../site_libs/quarto-diagram/mermaid-init.js"></script>
+<link href="../../site_libs/quarto-diagram/mermaid.css" rel="stylesheet">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../../styles.css">
+<link rel="stylesheet" href="../../colors.css">
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">Minimal ML</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../notes/index.html"> 
+<span class="menu-text">Notes</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../posts/index.html"> 
+<span class="menu-text">Blog</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#why-sequence-models-need-state" id="toc-why-sequence-models-need-state" class="nav-link active" data-scroll-target="#why-sequence-models-need-state">Why Sequence Models Need State</a></li>
+  <li><a href="#vanilla-rnn" id="toc-vanilla-rnn" class="nav-link" data-scroll-target="#vanilla-rnn">Vanilla RNN</a>
+  <ul class="collapse">
+  <li><a href="#model-structure" id="toc-model-structure" class="nav-link" data-scroll-target="#model-structure">Model structure</a></li>
+  <li><a href="#tensor-shapes" id="toc-tensor-shapes" class="nav-link" data-scroll-target="#tensor-shapes">Tensor shapes</a></li>
+  <li><a href="#minimal-pytorch-implementation" id="toc-minimal-pytorch-implementation" class="nav-link" data-scroll-target="#minimal-pytorch-implementation">Minimal PyTorch implementation</a></li>
+  </ul></li>
+  <li><a href="#backpropagation-through-time" id="toc-backpropagation-through-time" class="nav-link" data-scroll-target="#backpropagation-through-time">Backpropagation Through Time</a>
+  <ul class="collapse">
+  <li><a href="#practical-mitigations" id="toc-practical-mitigations" class="nav-link" data-scroll-target="#practical-mitigations">Practical mitigations</a></li>
+  </ul></li>
+  <li><a href="#long-short-term-memory" id="toc-long-short-term-memory" class="nav-link" data-scroll-target="#long-short-term-memory">Long Short-Term Memory</a>
+  <ul class="collapse">
+  <li><a href="#lstm-cell-structure" id="toc-lstm-cell-structure" class="nav-link" data-scroll-target="#lstm-cell-structure">LSTM cell structure</a></li>
+  <li><a href="#why-the-lstm-helps-gradient-flow" id="toc-why-the-lstm-helps-gradient-flow" class="nav-link" data-scroll-target="#why-the-lstm-helps-gradient-flow">Why the LSTM helps gradient flow</a></li>
+  </ul></li>
+  <li><a href="#minimal-lstm-implementation" id="toc-minimal-lstm-implementation" class="nav-link" data-scroll-target="#minimal-lstm-implementation">Minimal LSTM Implementation</a>
+  <ul class="collapse">
+  <li><a href="#parameter-count" id="toc-parameter-count" class="nav-link" data-scroll-target="#parameter-count">Parameter count</a></li>
+  </ul></li>
+  <li><a href="#understanding-the-gates" id="toc-understanding-the-gates" class="nav-link" data-scroll-target="#understanding-the-gates">Understanding the Gates</a>
+  <ul class="collapse">
+  <li><a href="#connection-to-swiglu" id="toc-connection-to-swiglu" class="nav-link" data-scroll-target="#connection-to-swiglu">Connection to SwiGLU</a></li>
+  </ul></li>
+  <li><a href="#rnn-lstm-and-transformer-comparison" id="toc-rnn-lstm-and-transformer-comparison" class="nav-link" data-scroll-target="#rnn-lstm-and-transformer-comparison">RNN, LSTM, and Transformer Comparison</a></li>
+  <li><a href="#common-variants" id="toc-common-variants" class="nav-link" data-scroll-target="#common-variants">Common Variants</a></li>
+  <li><a href="#interview-questions" id="toc-interview-questions" class="nav-link" data-scroll-target="#interview-questions">Interview Questions</a></li>
+  <li><a href="#exercises" id="toc-exercises" class="nav-link" data-scroll-target="#exercises">Exercises</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">RNNs and LSTMs</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="why-sequence-models-need-state" class="level2">
+<h2 class="anchored" data-anchor-id="why-sequence-models-need-state">Why Sequence Models Need State</h2>
+<p>An ordinary feed-forward network maps each input independently:</p>
+<p><span class="math display">\[
+y_t=f(x_t).
+\]</span></p>
+<p>A recurrent neural network maintains a hidden state that summarizes the prefix:</p>
+<p><span class="math display">\[
+h_t=f(x_t,h_{t-1}),
+\qquad
+y_t=g(h_t).
+\]</span></p>
+<p>The same parameters are reused at every time step. This gives an RNN:</p>
+<ul>
+<li>a variable-length input interface</li>
+<li>parameter sharing across positions</li>
+<li>an inductive bias toward sequential processing</li>
+<li>a fixed-size state through which past information must flow</li>
+</ul>
+</section>
+<section id="vanilla-rnn" class="level2">
+<h2 class="anchored" data-anchor-id="vanilla-rnn">Vanilla RNN</h2>
+<p>The standard tanh RNN is</p>
+<p><span class="math display">\[
+a_t=W_{xh}x_t+W_{hh}h_{t-1}+b_h,
+\]</span></p>
+<p><span class="math display">\[
+h_t=\tanh(a_t),
+\]</span></p>
+<p><span class="math display">\[
+y_t=W_{hy}h_t+b_y.
+\]</span></p>
+<p>The initial state <span class="math inline">\(h_0\)</span> may be zero, learned, or provided by another encoder.</p>
+<section id="model-structure" class="level3">
+<h3 class="anchored" data-anchor-id="model-structure">Model structure</h3>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p><figure class="figure"><p></p>
+<div>
+<pre class="mermaid mermaid-js">flowchart LR
+    X1[Input x₁] --&gt; C1[RNN cell]
+    H0[Initial state h₀] --&gt; C1
+    C1 --&gt; H1[Hidden state h₁]
+    H1 --&gt; C2[RNN cell]
+    X2[Input x₂] --&gt; C2
+    C2 --&gt; H2[Hidden state h₂]
+    H2 --&gt; C3[RNN cell]
+    X3[Input x₃] --&gt; C3
+    C3 --&gt; H3[Hidden state h₃]
+
+    H1 --&gt; Y1[Output y₁]
+    H2 --&gt; Y2[Output y₂]
+    H3 --&gt; Y3[Output y₃]
+
+    classDef state fill:#e8f0fe,stroke:#4c78a8,color:#222;
+    classDef cell fill:#f3e8ff,stroke:#8b5cf6,color:#222;
+    classDef input fill:#e8f8ee,stroke:#3a8f5c,color:#222;
+    class H0,H1,H2,H3 state;
+    class C1,C2,C3 cell;
+    class X1,X2,X3 input;
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+<p>The three cells above are copies of the <strong>same computation with shared parameters</strong>, not three independently learned layers. Drawing the recurrence across time is called <strong>unrolling</strong> the RNN.</p>
+</section>
+<section id="tensor-shapes" class="level3">
+<h3 class="anchored" data-anchor-id="tensor-shapes">Tensor shapes</h3>
+<p>For batch size <span class="math inline">\(B\)</span>, sequence length <span class="math inline">\(T\)</span>, input size <span class="math inline">\(d_x\)</span>, hidden size <span class="math inline">\(d_h\)</span>, and output size <span class="math inline">\(d_y\)</span>:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Tensor</th>
+<th style="text-align: right;">Shape</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Input sequence <span class="math inline">\(X\)</span></td>
+<td style="text-align: right;"><span class="math inline">\((B,T,d_x)\)</span></td>
+</tr>
+<tr class="even">
+<td>Hidden state <span class="math inline">\(h_t\)</span></td>
+<td style="text-align: right;"><span class="math inline">\((B,d_h)\)</span></td>
+</tr>
+<tr class="odd">
+<td>Input weight <span class="math inline">\(W_{xh}\)</span></td>
+<td style="text-align: right;"><span class="math inline">\((d_h,d_x)\)</span></td>
+</tr>
+<tr class="even">
+<td>Recurrent weight <span class="math inline">\(W_{hh}\)</span></td>
+<td style="text-align: right;"><span class="math inline">\((d_h,d_h)\)</span></td>
+</tr>
+<tr class="odd">
+<td>Output sequence <span class="math inline">\(Y\)</span></td>
+<td style="text-align: right;"><span class="math inline">\((B,T,d_y)\)</span></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="minimal-pytorch-implementation" class="level3">
+<h3 class="anchored" data-anchor-id="minimal-pytorch-implementation">Minimal PyTorch implementation</h3>
+<div id="f2925690" class="cell" data-execution_count="1">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch.nn <span class="im">as</span> nn</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> SimpleRNNCell(nn.Module):</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, input_size, hidden_size):</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>        <span class="bu">super</span>().<span class="fu">__init__</span>()</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.hidden_size <span class="op">=</span> hidden_size</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.input_proj <span class="op">=</span> nn.Linear(input_size, hidden_size, bias<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.hidden_proj <span class="op">=</span> nn.Linear(hidden_size, hidden_size, bias<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> forward(<span class="va">self</span>, x_t, h_previous):</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> torch.tanh(</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>            <span class="va">self</span>.input_proj(x_t) <span class="op">+</span> <span class="va">self</span>.hidden_proj(h_previous)</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> SimpleRNN(nn.Module):</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, input_size, hidden_size):</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>        <span class="bu">super</span>().<span class="fu">__init__</span>()</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.hidden_size <span class="op">=</span> hidden_size</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.cell <span class="op">=</span> SimpleRNNCell(input_size, hidden_size)</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> forward(<span class="va">self</span>, inputs, initial_state<span class="op">=</span><span class="va">None</span>):</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>        batch_size, _, _ <span class="op">=</span> inputs.shape</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> initial_state <span class="kw">is</span> <span class="va">None</span>:</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>            hidden <span class="op">=</span> inputs.new_zeros(batch_size, <span class="va">self</span>.hidden_size)</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span>:</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>            hidden <span class="op">=</span> initial_state</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>        outputs <span class="op">=</span> []</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> x_t <span class="kw">in</span> inputs.unbind(dim<span class="op">=</span><span class="dv">1</span>):</span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>            hidden <span class="op">=</span> <span class="va">self</span>.cell(x_t, hidden)</span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>            outputs.append(hidden)</span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> torch.stack(outputs, dim<span class="op">=</span><span class="dv">1</span>), hidden</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>torch.manual_seed(<span class="dv">0</span>)</span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>sequence <span class="op">=</span> torch.randn(<span class="dv">2</span>, <span class="dv">5</span>, <span class="dv">3</span>)</span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>rnn <span class="op">=</span> SimpleRNN(input_size<span class="op">=</span><span class="dv">3</span>, hidden_size<span class="op">=</span><span class="dv">7</span>)</span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>all_hidden_states, final_hidden_state <span class="op">=</span> rnn(sequence)</span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> all_hidden_states.shape <span class="op">==</span> (<span class="dv">2</span>, <span class="dv">5</span>, <span class="dv">7</span>)</span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> final_hidden_state.shape <span class="op">==</span> (<span class="dv">2</span>, <span class="dv">7</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+</section>
+<section id="backpropagation-through-time" class="level2">
+<h2 class="anchored" data-anchor-id="backpropagation-through-time">Backpropagation Through Time</h2>
+<p>Unrolling converts recurrence into a deep computation graph whose depth grows with sequence length. Training differentiates through this graph, which is called <strong>backpropagation through time</strong> (BPTT).</p>
+<p>For the vanilla RNN,</p>
+<p><span class="math display">\[
+\frac{\partial h_t}{\partial h_{t-1}}
+=
+\operatorname{diag}\left(1-\tanh^2(a_t)\right)W_{hh}.
+\]</span></p>
+<p>A gradient traveling from time <span class="math inline">\(T\)</span> to time <span class="math inline">\(t\)</span> contains a product of Jacobians:</p>
+<p><span class="math display">\[
+\frac{\partial h_T}{\partial h_t}
+=
+\prod_{k=t+1}^{T}
+\frac{\partial h_k}{\partial h_{k-1}}.
+\]</span></p>
+<p>Repeated multiplication causes:</p>
+<ul>
+<li><strong>vanishing gradients</strong> when the relevant singular values are mostly below 1</li>
+<li><strong>exploding gradients</strong> when they are mostly above 1</li>
+</ul>
+<p>Tanh saturation further shrinks gradients because <span class="math inline">\(1-\tanh^2(a_t)\approx0\)</span> for large <span class="math inline">\(|a_t|\)</span>.</p>
+<section id="practical-mitigations" class="level3">
+<h3 class="anchored" data-anchor-id="practical-mitigations">Practical mitigations</h3>
+<ul>
+<li>gradient clipping for exploding gradients</li>
+<li>orthogonal or carefully scaled recurrent initialization</li>
+<li>truncated BPTT to limit graph length and memory</li>
+<li>gated cells such as LSTMs and GRUs</li>
+<li>skip connections and normalization in recurrent architectures</li>
+</ul>
+<p>Truncated BPTT bounds training cost, but it also prevents gradients from directly assigning credit across truncation boundaries.</p>
+</section>
+</section>
+<section id="long-short-term-memory" class="level2">
+<h2 class="anchored" data-anchor-id="long-short-term-memory">Long Short-Term Memory</h2>
+<p>An LSTM introduces a cell state <span class="math inline">\(c_t\)</span> with an additive update path. Three gates control what to forget, write, and expose.</p>
+<p>For concatenated input</p>
+<p><span class="math display">\[
+z_t=[x_t;h_{t-1}],
+\]</span></p>
+<p>the gates and candidate memory are</p>
+<p><span class="math display">\[
+f_t=\sigma(W_fz_t+b_f)
+\qquad\text{forget gate},
+\]</span></p>
+<p><span class="math display">\[
+i_t=\sigma(W_iz_t+b_i)
+\qquad\text{input gate},
+\]</span></p>
+<p><span class="math display">\[
+o_t=\sigma(W_oz_t+b_o)
+\qquad\text{output gate},
+\]</span></p>
+<p><span class="math display">\[
+\widetilde c_t=\tanh(W_cz_t+b_c)
+\qquad\text{candidate memory}.
+\]</span></p>
+<p>The cell and hidden states update as</p>
+<p><span class="math display">\[
+\boxed{c_t=f_t\odot c_{t-1}+i_t\odot\widetilde c_t},
+\]</span></p>
+<p><span class="math display">\[
+\boxed{h_t=o_t\odot\tanh(c_t)}.
+\]</span></p>
+<section id="lstm-cell-structure" class="level3">
+<h3 class="anchored" data-anchor-id="lstm-cell-structure">LSTM cell structure</h3>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p><figure class="figure"><p></p>
+<div>
+<pre class="mermaid mermaid-js">flowchart LR
+    C0[Previous cell cₜ₋₁] --&gt; MULF((×))
+    XH[Input xₜ and hidden hₜ₋₁] --&gt; F[Forget gate fₜ = sigmoid]
+    XH --&gt; I[Input gate iₜ = sigmoid]
+    XH --&gt; G[Candidate c̃ₜ = tanh]
+    XH --&gt; O[Output gate oₜ = sigmoid]
+
+    F --&gt; MULF
+    I --&gt; MULI((×))
+    G --&gt; MULI
+    MULF --&gt; ADD((+))
+    MULI --&gt; ADD
+    ADD --&gt; C1[New cell state cₜ]
+
+    C1 --&gt; TANH[tanh]
+    TANH --&gt; MULO((×))
+    O --&gt; MULO
+    MULO --&gt; H1[New hidden state hₜ]
+
+    classDef state fill:#e8f0fe,stroke:#4c78a8,color:#222;
+    classDef gate fill:#fff2cc,stroke:#c49a00,color:#222;
+    classDef candidate fill:#e8f8ee,stroke:#3a8f5c,color:#222;
+    classDef op fill:#f3e8ff,stroke:#8b5cf6,color:#222;
+    class C0,C1,H1 state;
+    class F,I,O gate;
+    class G,TANH candidate;
+    class MULF,MULI,MULO,ADD op;
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+<p>The upper cell-state path is the key difference from a vanilla RNN. It combines old memory and new content <strong>additively</strong>, while sigmoid gates provide element-wise control.</p>
+</section>
+<section id="why-the-lstm-helps-gradient-flow" class="level3">
+<h3 class="anchored" data-anchor-id="why-the-lstm-helps-gradient-flow">Why the LSTM helps gradient flow</h3>
+<p>Holding the gates fixed for intuition,</p>
+<p><span class="math display">\[
+\frac{\partial c_t}{\partial c_{t-1}}=f_t.
+\]</span></p>
+<p>Across several steps,</p>
+<p><span class="math display">\[
+\frac{\partial c_T}{\partial c_t}
+\approx
+\prod_{k=t+1}^{T} f_k.
+\]</span></p>
+<p>When forget gates remain near one, the cell provides a nearly linear path for information and gradients. This avoids repeatedly passing the main memory through a saturating tanh transformation at every time step.</p>
+<p>LSTMs mitigate vanishing gradients; they do not eliminate them. Products of forget gates below one still decay, and the full gradient includes additional paths through gate dependencies.</p>
+</section>
+</section>
+<section id="minimal-lstm-implementation" class="level2">
+<h2 class="anchored" data-anchor-id="minimal-lstm-implementation">Minimal LSTM Implementation</h2>
+<p>Efficient implementations fuse all four affine transformations into one matrix multiplication:</p>
+<p><span class="math display">\[
+[f_t,i_t,\widetilde c_t,o_t]
+=
+W[x_t;h_{t-1}]+b.
+\]</span></p>
+<div id="de95d7c9" class="cell" data-execution_count="2">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> MinimalLSTMCell(nn.Module):</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, input_size, hidden_size):</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>        <span class="bu">super</span>().<span class="fu">__init__</span>()</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.hidden_size <span class="op">=</span> hidden_size</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.gates <span class="op">=</span> nn.Linear(input_size <span class="op">+</span> hidden_size, <span class="dv">4</span> <span class="op">*</span> hidden_size)</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> forward(<span class="va">self</span>, x_t, state):</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>        hidden_previous, cell_previous <span class="op">=</span> state</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>        combined <span class="op">=</span> torch.cat([x_t, hidden_previous], dim<span class="op">=-</span><span class="dv">1</span>)</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>        forget_raw, input_raw, candidate_raw, output_raw <span class="op">=</span> <span class="va">self</span>.gates(</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>            combined</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>        ).chunk(<span class="dv">4</span>, dim<span class="op">=-</span><span class="dv">1</span>)</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>        forget_gate <span class="op">=</span> torch.sigmoid(forget_raw)</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>        input_gate <span class="op">=</span> torch.sigmoid(input_raw)</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>        candidate <span class="op">=</span> torch.tanh(candidate_raw)</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>        output_gate <span class="op">=</span> torch.sigmoid(output_raw)</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>        cell <span class="op">=</span> forget_gate <span class="op">*</span> cell_previous <span class="op">+</span> input_gate <span class="op">*</span> candidate</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>        hidden <span class="op">=</span> output_gate <span class="op">*</span> torch.tanh(cell)</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> hidden, cell</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> MinimalLSTM(nn.Module):</span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, input_size, hidden_size):</span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>        <span class="bu">super</span>().<span class="fu">__init__</span>()</span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.hidden_size <span class="op">=</span> hidden_size</span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.cell <span class="op">=</span> MinimalLSTMCell(input_size, hidden_size)</span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> forward(<span class="va">self</span>, inputs, initial_state<span class="op">=</span><span class="va">None</span>):</span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>        batch_size, _, _ <span class="op">=</span> inputs.shape</span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> initial_state <span class="kw">is</span> <span class="va">None</span>:</span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>            hidden <span class="op">=</span> inputs.new_zeros(batch_size, <span class="va">self</span>.hidden_size)</span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>            cell <span class="op">=</span> inputs.new_zeros(batch_size, <span class="va">self</span>.hidden_size)</span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span>:</span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>            hidden, cell <span class="op">=</span> initial_state</span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>        outputs <span class="op">=</span> []</span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> x_t <span class="kw">in</span> inputs.unbind(dim<span class="op">=</span><span class="dv">1</span>):</span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>            hidden, cell <span class="op">=</span> <span class="va">self</span>.cell(x_t, (hidden, cell))</span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a>            outputs.append(hidden)</span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> torch.stack(outputs, dim<span class="op">=</span><span class="dv">1</span>), (hidden, cell)</span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a>lstm <span class="op">=</span> MinimalLSTM(input_size<span class="op">=</span><span class="dv">3</span>, hidden_size<span class="op">=</span><span class="dv">7</span>)</span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a>lstm_outputs, (final_hidden, final_cell) <span class="op">=</span> lstm(sequence)</span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> lstm_outputs.shape <span class="op">==</span> (<span class="dv">2</span>, <span class="dv">5</span>, <span class="dv">7</span>)</span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> final_hidden.shape <span class="op">==</span> (<span class="dv">2</span>, <span class="dv">7</span>)</span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> final_cell.shape <span class="op">==</span> (<span class="dv">2</span>, <span class="dv">7</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<section id="parameter-count" class="level3">
+<h3 class="anchored" data-anchor-id="parameter-count">Parameter count</h3>
+<p>For input size <span class="math inline">\(d_x\)</span> and hidden size <span class="math inline">\(d_h\)</span>, the fused LSTM affine layer has</p>
+<p><span class="math display">\[
+4d_h(d_x+d_h)+4d_h
+\]</span></p>
+<p>parameters. A comparable vanilla RNN has</p>
+<p><span class="math display">\[
+d_h(d_x+d_h)+d_h.
+\]</span></p>
+<p>An LSTM cell therefore has roughly four times the recurrent-cell parameters and affine compute of a vanilla RNN with the same dimensions.</p>
+</section>
+</section>
+<section id="understanding-the-gates" class="level2">
+<h2 class="anchored" data-anchor-id="understanding-the-gates">Understanding the Gates</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 23%">
+<col style="width: 30%">
+<col style="width: 23%">
+<col style="width: 23%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Gate</th>
+<th style="text-align: right;">Range</th>
+<th>Multiplies</th>
+<th>Interpretation</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Forget <span class="math inline">\(f_t\)</span></td>
+<td style="text-align: right;"><span class="math inline">\((0,1)\)</span></td>
+<td>old cell <span class="math inline">\(c_{t-1}\)</span></td>
+<td>retain or erase old memory</td>
+</tr>
+<tr class="even">
+<td>Input <span class="math inline">\(i_t\)</span></td>
+<td style="text-align: right;"><span class="math inline">\((0,1)\)</span></td>
+<td>candidate <span class="math inline">\(\widetilde c_t\)</span></td>
+<td>write new memory</td>
+</tr>
+<tr class="odd">
+<td>Output <span class="math inline">\(o_t\)</span></td>
+<td style="text-align: right;"><span class="math inline">\((0,1)\)</span></td>
+<td>exposed <span class="math inline">\(\tanh(c_t)\)</span></td>
+<td>reveal cell information as hidden state</td>
+</tr>
+</tbody>
+</table>
+<p>The cell state is not constrained to <span class="math inline">\((-1,1)\)</span> because it is an additive accumulator. The hidden state is bounded by the output gate and tanh.</p>
+<section id="connection-to-swiglu" class="level3">
+<h3 class="anchored" data-anchor-id="connection-to-swiglu">Connection to SwiGLU</h3>
+<p>Both LSTMs and SwiGLU use multiplicative, input-dependent modulation:</p>
+<p><span class="math display">\[
+\text{content}\odot\text{gate}.
+\]</span></p>
+<p>But their roles differ:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>SwiGLU</th>
+<th>LSTM</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>gates features within one feed-forward evaluation</td>
+<td>gates state flow across time</td>
+</tr>
+<tr class="even">
+<td>no persistent cell state</td>
+<td>maintains <span class="math inline">\(c_t\)</span> across sequence positions</td>
+</tr>
+<tr class="odd">
+<td>SiLU gate can exceed one or become slightly negative</td>
+<td>sigmoid gates remain between zero and one</td>
+</tr>
+<tr class="even">
+<td>increases feature interactions</td>
+<td>controls remembering, writing, and reading</td>
+</tr>
+</tbody>
+</table>
+<p>See <a href="../../notes/foundations/activations.html#gated-activations">Activation Functions</a> for the SwiGLU derivation.</p>
+</section>
+</section>
+<section id="rnn-lstm-and-transformer-comparison" class="level2">
+<h2 class="anchored" data-anchor-id="rnn-lstm-and-transformer-comparison">RNN, LSTM, and Transformer Comparison</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Property</th>
+<th>Vanilla RNN</th>
+<th>LSTM</th>
+<th>Causal Transformer</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Sequence computation</td>
+<td>sequential</td>
+<td>sequential</td>
+<td>parallel during training/prefill</td>
+</tr>
+<tr class="even">
+<td>Persistent state</td>
+<td><span class="math inline">\(h_t\)</span></td>
+<td><span class="math inline">\(h_t\)</span> and <span class="math inline">\(c_t\)</span></td>
+<td>KV cache during decoding</td>
+</tr>
+<tr class="odd">
+<td>Direct path to distant token</td>
+<td>through every intermediate state</td>
+<td>gated cell path</td>
+<td>attention edge</td>
+</tr>
+<tr class="even">
+<td>Training path length across distance <span class="math inline">\(T\)</span></td>
+<td><span class="math inline">\(O(T)\)</span></td>
+<td><span class="math inline">\(O(T)\)</span></td>
+<td>often <span class="math inline">\(O(1)\)</span> per layer with full attention</td>
+</tr>
+<tr class="odd">
+<td>Per-layer sequence cost</td>
+<td><span class="math inline">\(O(T)\)</span> recurrent steps</td>
+<td><span class="math inline">\(O(T)\)</span> recurrent steps</td>
+<td><span class="math inline">\(O(T^2)\)</span> dense attention</td>
+</tr>
+<tr class="even">
+<td>Streaming memory</td>
+<td>fixed state</td>
+<td>fixed state</td>
+<td>growing cache unless attention is bounded</td>
+</tr>
+</tbody>
+</table>
+<p>RNNs and LSTMs remain attractive for streaming and bounded-state settings. Transformers dominate many large-scale sequence tasks because training can be parallelized across positions and attention provides short paths between distant tokens.</p>
+</section>
+<section id="common-variants" class="level2">
+<h2 class="anchored" data-anchor-id="common-variants">Common Variants</h2>
+<ul>
+<li><strong>Bidirectional RNN/LSTM:</strong> runs separate recurrences forward and backward; useful when the entire sequence is available, but not causal.</li>
+<li><strong>Stacked RNN/LSTM:</strong> feeds one recurrent layer’s sequence into another.</li>
+<li><strong>GRU:</strong> combines LSTM-style control into reset and update gates with no separate cell state.</li>
+<li><strong>Peephole LSTM:</strong> gates also inspect the cell state.</li>
+<li><strong>Encoder-decoder recurrence:</strong> encodes one sequence and autoregressively generates another, often with attention.</li>
+</ul>
+</section>
+<section id="interview-questions" class="level2">
+<h2 class="anchored" data-anchor-id="interview-questions">Interview Questions</h2>
+<ul>
+<li>Why are shared parameters across time important in an RNN?</li>
+<li>Derive the recurrent Jacobian product that causes vanishing gradients.</li>
+<li>Why can gradient clipping help explosion but not vanishing?</li>
+<li>What is the difference between an LSTM’s cell state and hidden state?</li>
+<li>Explain the forget, input, and output gates without using their names.</li>
+<li>Why does an additive cell update improve gradient flow?</li>
+<li>Does an LSTM eliminate vanishing gradients?</li>
+<li>Derive the LSTM parameter count.</li>
+<li>What does truncated BPTT change mathematically?</li>
+<li>Why are RNNs difficult to parallelize across sequence positions?</li>
+<li>When might an LSTM be preferable to a Transformer?</li>
+<li>Compare an LSTM gate with a SwiGLU gate.</li>
+</ul>
+</section>
+<section id="exercises" class="level2">
+<h2 class="anchored" data-anchor-id="exercises">Exercises</h2>
+<ul class="task-list">
+<li><label><input type="checkbox">Annotate every tensor shape in <code>MinimalLSTMCell</code>.</label></li>
+<li><label><input type="checkbox">Initialize the forget-gate bias to a positive value and explain why this encourages longer memory early in training.</label></li>
+<li><label><input type="checkbox">Implement a GRU cell and compare its parameter count with an LSTM.</label></li>
+<li><label><input type="checkbox">Plot gradient norm versus sequence distance for a vanilla RNN and LSTM.</label></li>
+<li><label><input type="checkbox">Extend <code>MinimalLSTM</code> to multiple layers and variable-length sequences.</label></li>
+</ul>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/threeeyelidds\.github\.io\/ml-interview-notes\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

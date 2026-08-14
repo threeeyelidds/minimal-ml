@@ -1,0 +1,1469 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Activation Functions – Minimal ML</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-f83c246346592b24d02aa84ae3974412.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../../styles.css">
+<link rel="stylesheet" href="../../colors.css">
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">Minimal ML</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../notes/index.html"> 
+<span class="menu-text">Notes</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../posts/index.html"> 
+<span class="menu-text">Blog</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#why-neural-networks-need-activations" id="toc-why-neural-networks-need-activations" class="nav-link active" data-scroll-target="#why-neural-networks-need-activations">Why Neural Networks Need Activations</a></li>
+  <li><a href="#what-makes-a-useful-activation" id="toc-what-makes-a-useful-activation" class="nav-link" data-scroll-target="#what-makes-a-useful-activation">What Makes a Useful Activation?</a></li>
+  <li><a href="#sigmoid" id="toc-sigmoid" class="nav-link" data-scroll-target="#sigmoid">Sigmoid</a></li>
+  <li><a href="#tanh" id="toc-tanh" class="nav-link" data-scroll-target="#tanh">Tanh</a></li>
+  <li><a href="#relu" id="toc-relu" class="nav-link" data-scroll-target="#relu">ReLU</a>
+  <ul class="collapse">
+  <li><a href="#relu-variants" id="toc-relu-variants" class="nav-link" data-scroll-target="#relu-variants">ReLU variants</a></li>
+  </ul></li>
+  <li><a href="#gelu" id="toc-gelu" class="nav-link" data-scroll-target="#gelu">GELU</a></li>
+  <li><a href="#silu-swish" id="toc-silu-swish" class="nav-link" data-scroll-target="#silu-swish">SiLU / Swish</a></li>
+  <li><a href="#sec-gated-activations" id="toc-sec-gated-activations" class="nav-link" data-scroll-target="#sec-gated-activations">Gated Activations</a>
+  <ul class="collapse">
+  <li><a href="#gpt-osss-modified-swiglu" id="toc-gpt-osss-modified-swiglu" class="nav-link" data-scroll-target="#gpt-osss-modified-swiglu">GPT-OSS’s modified SwiGLU</a></li>
+  <li><a href="#why-the-parameter-matched-width-is-about-2.67d" id="toc-why-the-parameter-matched-width-is-about-2.67d" class="nav-link" data-scroll-target="#why-the-parameter-matched-width-is-about-2.67d">Why the parameter-matched width is about <span class="math inline">\(2.67d\)</span></a></li>
+  <li><a href="#what-public-llm-configurations-actually-use" id="toc-what-public-llm-configurations-actually-use" class="nav-link" data-scroll-target="#what-public-llm-configurations-actually-use">What public LLM configurations actually use</a></li>
+  </ul></li>
+  <li><a href="#comparison" id="toc-comparison" class="nav-link" data-scroll-target="#comparison">Comparison</a></li>
+  <li><a href="#activation-and-derivative-graphs" id="toc-activation-and-derivative-graphs" class="nav-link" data-scroll-target="#activation-and-derivative-graphs">Activation and Derivative Graphs</a></li>
+  <li><a href="#minimal-pytorch-implementations" id="toc-minimal-pytorch-implementations" class="nav-link" data-scroll-target="#minimal-pytorch-implementations">Minimal PyTorch Implementations</a>
+  <ul class="collapse">
+  <li><a href="#inspect-the-gradients" id="toc-inspect-the-gradients" class="nav-link" data-scroll-target="#inspect-the-gradients">Inspect the gradients</a></li>
+  </ul></li>
+  <li><a href="#initialization-interaction" id="toc-initialization-interaction" class="nav-link" data-scroll-target="#initialization-interaction">Initialization Interaction</a>
+  <ul class="collapse">
+  <li><a href="#forward-signal-propagation" id="toc-forward-signal-propagation" class="nav-link" data-scroll-target="#forward-signal-propagation">Forward signal propagation</a></li>
+  <li><a href="#why-xavier-balances-two-directions" id="toc-why-xavier-balances-two-directions" class="nav-link" data-scroll-target="#why-xavier-balances-two-directions">Why Xavier balances two directions</a></li>
+  <li><a href="#the-backward-view" id="toc-the-backward-view" class="nav-link" data-scroll-target="#the-backward-view">The backward view</a></li>
+  <li><a href="#gelu-silu-and-gated-mlps" id="toc-gelu-silu-and-gated-mlps" class="nav-link" data-scroll-target="#gelu-silu-and-gated-mlps">GELU, SiLU, and gated MLPs</a></li>
+  <li><a href="#residual-networks-and-transformers" id="toc-residual-networks-and-transformers" class="nav-link" data-scroll-target="#residual-networks-and-transformers">Residual networks and Transformers</a></li>
+  <li><a href="#practical-starting-points" id="toc-practical-starting-points" class="nav-link" data-scroll-target="#practical-starting-points">Practical starting points</a></li>
+  </ul></li>
+  <li><a href="#interview-questions" id="toc-interview-questions" class="nav-link" data-scroll-target="#interview-questions">Interview Questions</a></li>
+  <li><a href="#exercises" id="toc-exercises" class="nav-link" data-scroll-target="#exercises">Exercises</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Activation Functions</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="why-neural-networks-need-activations" class="level2">
+<h2 class="anchored" data-anchor-id="why-neural-networks-need-activations">Why Neural Networks Need Activations</h2>
+<p>Without nonlinear activation functions, a stack of linear layers collapses into one linear transformation:</p>
+<p><span class="math display">\[
+W_2(W_1x+b_1)+b_2
+=
+(W_2W_1)x+(W_2b_1+b_2).
+\]</span></p>
+<p>For a neuron,</p>
+<p><span class="math display">\[
+z=w^Tx+b,
+\qquad
+h=\phi(z),
+\]</span></p>
+<p>and backpropagation multiplies the upstream gradient by <span class="math inline">\(\phi'(z)\)</span>. An activation affects both <strong>what the network can represent</strong> and <strong>how easily it can be optimized</strong>.</p>
+</section>
+<section id="what-makes-a-useful-activation" class="level2">
+<h2 class="anchored" data-anchor-id="what-makes-a-useful-activation">What Makes a Useful Activation?</h2>
+<p>Useful properties depend on the model, but commonly include:</p>
+<ul>
+<li>nonlinearity</li>
+<li>useful gradients over a wide input range</li>
+<li>inexpensive evaluation</li>
+<li>stable output scale</li>
+<li>smoothness when optimization benefits from it</li>
+<li>compatibility with initialization and normalization</li>
+</ul>
+<p>No activation has every desirable property. For example, bounded activations can stabilize output values but often saturate; unbounded activations preserve gradients on one side but may produce large values.</p>
+</section>
+<section id="sigmoid" class="level2">
+<h2 class="anchored" data-anchor-id="sigmoid">Sigmoid</h2>
+<p><span class="math display">\[
+\sigma(x)=\frac{1}{1+e^{-x}}.
+\]</span></p>
+<p>Its derivative is</p>
+<p><span class="math display">\[
+\sigma'(x)=\sigma(x)(1-\sigma(x)).
+\]</span></p>
+<p>The derivative is at most <span class="math inline">\(1/4\)</span> and approaches zero for large <span class="math inline">\(|x|\)</span>. Repeated multiplication by these small derivatives can produce vanishing gradients in deep networks.</p>
+<p>Properties:</p>
+<ul>
+<li>range: <span class="math inline">\((0,1)\)</span></li>
+<li>smooth and probabilistically interpretable</li>
+<li>not zero-centered</li>
+<li>saturates at both extremes</li>
+</ul>
+<p>Common use: binary probabilities and gates, rather than hidden activations in deep feed-forward networks.</p>
+</section>
+<section id="tanh" class="level2">
+<h2 class="anchored" data-anchor-id="tanh">Tanh</h2>
+<p><span class="math display">\[
+\tanh(x)=\frac{e^x-e^{-x}}{e^x+e^{-x}},
+\]</span></p>
+<p><span class="math display">\[
+\frac{d}{dx}\tanh(x)=1-\tanh^2(x).
+\]</span></p>
+<p>Tanh is zero-centered and has range <span class="math inline">\((-1,1)\)</span>, but still saturates for large <span class="math inline">\(|x|\)</span>. It remains common inside recurrent-network state updates.</p>
+</section>
+<section id="relu" class="level2">
+<h2 class="anchored" data-anchor-id="relu">ReLU</h2>
+<p><span class="math display">\[
+\operatorname{ReLU}(x)=\max(0,x).
+\]</span></p>
+<p>Its derivative is</p>
+<p><span class="math display">\[
+\operatorname{ReLU}'(x)
+=
+\begin{cases}
+0,&amp;x&lt;0,\\
+1,&amp;x&gt;0.
+\end{cases}
+\]</span></p>
+<p>The derivative at zero is undefined; implementations choose a subgradient, typically zero.</p>
+<p>Advantages:</p>
+<ul>
+<li>cheap to compute</li>
+<li>does not saturate on the positive side</li>
+<li>produces sparse activations</li>
+</ul>
+<p>The <strong>dying ReLU</strong> problem occurs when a neuron stays in the negative region, receives zero gradient, and stops updating. Large learning rates or unfavorable bias shifts can contribute to this.</p>
+<section id="relu-variants" class="level3">
+<h3 class="anchored" data-anchor-id="relu-variants">ReLU variants</h3>
+<p>Leaky ReLU retains a small negative slope:</p>
+<p><span class="math display">\[
+\operatorname{LeakyReLU}(x)
+=
+\begin{cases}
+x,&amp;x\ge0,\\
+\alpha x,&amp;x&lt;0.
+\end{cases}
+\]</span></p>
+<p>Its derivative is</p>
+<p><span class="math display">\[
+\operatorname{LeakyReLU}'(x)
+=
+\begin{cases}
+1,&amp;x&gt;0,\\
+\alpha,&amp;x&lt;0.
+\end{cases}
+\]</span></p>
+<p>As with ReLU, the derivative at zero is undefined and an implementation chooses a subgradient.</p>
+<p>PReLU learns <span class="math inline">\(\alpha\)</span>. ELU and SELU use smooth, saturating negative branches; SELU is designed for self-normalizing networks under specific architectural and initialization assumptions.</p>
+</section>
+</section>
+<section id="gelu" class="level2">
+<h2 class="anchored" data-anchor-id="gelu">GELU</h2>
+<p>The Gaussian Error Linear Unit weights an input by the probability that a standard Gaussian variable is below it:</p>
+<p><span class="math display">\[
+\operatorname{GELU}(x)=x\Phi(x),
+\]</span></p>
+<p>where <span class="math inline">\(\Phi\)</span> is the standard Gaussian CDF. A common approximation is</p>
+<p><span class="math display">\[
+\operatorname{GELU}(x)
+\approx
+\frac{x}{2}
+\left[
+1+\tanh\left(
+\sqrt{\frac{2}{\pi}}
+\left(x+0.044715x^3\right)
+\right)
+\right].
+\]</span></p>
+<p>Using the product rule and</p>
+<p><span class="math display">\[
+\Phi'(x)=\phi(x)
+=
+\frac{1}{\sqrt{2\pi}}e^{-x^2/2},
+\]</span></p>
+<p>the derivative of exact GELU is</p>
+<p><span class="math display">\[
+\boxed{
+\operatorname{GELU}'(x)
+=
+\Phi(x)+x\phi(x)
+=
+\Phi(x)
++
+\frac{x}{\sqrt{2\pi}}e^{-x^2/2}
+}.
+\]</span></p>
+<p>Its derivative behaves like a smooth—but slightly non-monotonic—version of a ReLU derivative:</p>
+<ul>
+<li>as <span class="math inline">\(x\to-\infty\)</span>, <span class="math inline">\(\operatorname{GELU}'(x)\to0\)</span></li>
+<li>at <span class="math inline">\(x=0\)</span>, <span class="math inline">\(\operatorname{GELU}'(0)=1/2\)</span></li>
+<li>as <span class="math inline">\(x\to+\infty\)</span>, <span class="math inline">\(\operatorname{GELU}'(x)\to1\)</span></li>
+<li>it reaches approximately <span class="math inline">\(-0.129\)</span> at <span class="math inline">\(x=-\sqrt 2\)</span></li>
+<li>it reaches approximately <span class="math inline">\(1.129\)</span> at <span class="math inline">\(x=\sqrt 2\)</span></li>
+</ul>
+<p>The small negative-derivative region means exact GELU is not monotonic. It has a shallow minimum near <span class="math inline">\(x\approx-0.752\)</span> instead of simply flattening all negative inputs.</p>
+<p>Unlike ReLU’s hard gate, GELU smoothly scales inputs. It became common in BERT- and early GPT-style Transformers.</p>
+</section>
+<section id="silu-swish" class="level2">
+<h2 class="anchored" data-anchor-id="silu-swish">SiLU / Swish</h2>
+<p><span class="math display">\[
+\operatorname{SiLU}(x)=x\sigma(x).
+\]</span></p>
+<p>Its derivative is</p>
+<p><span class="math display">\[
+\operatorname{SiLU}'(x)
+=
+\sigma(x)+x\sigma(x)(1-\sigma(x)).
+\]</span></p>
+<p>SiLU is smooth and non-monotonic: slightly negative inputs can produce negative outputs, rather than being discarded completely. It is widely used in modern vision models and gated Transformer MLPs.</p>
+</section>
+<section id="sec-gated-activations" class="level2">
+<h2 class="anchored" data-anchor-id="sec-gated-activations">Gated Activations</h2>
+<div class="callout callout-style-simple callout-none no-icon">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-body-container">
+<p><span class="blue">eventually people add <strong>gating</strong> to activations, trading more <em>flexibility</em> over compute. SwiGLU is widely used in modern LLMs.</span></p>
+</div>
+</div>
+</div>
+<p>A gated linear unit splits computation into a content path and a gate:</p>
+<p><span class="math display">\[
+\operatorname{GLU}(x)
+=
+(xW_u)\odot\sigma(xW_g).
+\]</span></p>
+<p>Variants replace sigmoid with another activation. SwiGLU uses SiLU:</p>
+<p><span class="math display">\[
+\operatorname{SwiGLU}(x)
+=
+W_o\left[
+\operatorname{SiLU}(xW_g)\odot(xW_u)
+\right].
+\]</span></p>
+<p>The gate creates multiplicative interactions: one projection controls how much of another projection passes through. The cost is an additional input projection, so hidden width is often adjusted when comparing parameter counts with an ordinary two-layer FFN.</p>
+<p>To see where this operation appears in a decoder block, continue to <a href="../../notes/transformers/transformer.html#sec-transformer-swiglu">SwiGLU in the Transformer feed-forward network</a>.</p>
+<section id="gpt-osss-modified-swiglu" class="level3">
+<h3 class="anchored" data-anchor-id="gpt-osss-modified-swiglu">GPT-OSS’s modified SwiGLU</h3>
+<p>GPT-OSS uses a numerically bounded variant rather than textbook SwiGLU. Let <span class="math inline">\(a=xW_g\)</span> be the gate branch and <span class="math inline">\(b=xW_u\)</span> be the content branch. Its activation can be written as</p>
+<p><span class="math display">\[
+\begin{aligned}
+\bar a &amp;= \min(a, L),\\
+\bar b &amp;= \operatorname{clip}(b,-L,L),\\
+\operatorname{SwiGLU}_{\text{GPT-OSS}}(a,b)
+&amp;=
+\left[\bar a\,\sigma(\alpha\bar a)\right]
+\odot(\bar b+1),
+\end{aligned}
+\]</span></p>
+<p>where GPT-OSS uses <span class="math inline">\(\alpha=1.702\)</span> and <span class="math inline">\(L=7\)</span>. The complete MLP still applies an output projection <span class="math inline">\(W_o\)</span> after this activation.</p>
+<p>Compared with ordinary <span class="math inline">\(\operatorname{SiLU}(a)\odot b\)</span>, this version makes three changes:</p>
+<ul>
+<li><span class="math inline">\(\alpha=1.702\)</span> makes the sigmoid gate sharper than standard SiLU, whose coefficient is <span class="math inline">\(1\)</span>.</li>
+<li>Clamping bounds unusually large intermediate values, which is helpful for stable low-precision expert computation.</li>
+<li>The shift <span class="math inline">\(b+1\)</span> leaves a gate-dependent signal even when the learned content branch is near zero.</li>
+</ul>
+<div id="c3511bf5" class="cell" data-execution_count="1">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> gpt_oss_swiglu(</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    gate: torch.Tensor,</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    content: torch.Tensor,</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    alpha: <span class="bu">float</span> <span class="op">=</span> <span class="fl">1.702</span>,</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    limit: <span class="bu">float</span> <span class="op">=</span> <span class="fl">7.0</span>,</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>) <span class="op">-&gt;</span> torch.Tensor:</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""GPT-OSS activation before the MLP output projection."""</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    gate <span class="op">=</span> gate.clamp(<span class="bu">max</span><span class="op">=</span>limit)</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    content <span class="op">=</span> content.clamp(<span class="bu">min</span><span class="op">=-</span>limit, <span class="bu">max</span><span class="op">=</span>limit)</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    swish_gate <span class="op">=</span> gate <span class="op">*</span> torch.sigmoid(alpha <span class="op">*</span> gate)</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> swish_gate <span class="op">*</span> (content <span class="op">+</span> <span class="fl">1.0</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>It remains a three-projection gated MLP, so its leading parameter count is still <span class="math inline">\(3dm\)</span>. Clamping and shifting change the activation, not the matrix shapes.</p>
+</section>
+<section id="why-the-parameter-matched-width-is-about-2.67d" class="level3">
+<h3 class="anchored" data-anchor-id="why-the-parameter-matched-width-is-about-2.67d">Why the parameter-matched width is about <span class="math inline">\(2.67d\)</span></h3>
+<p>Ignoring biases, a conventional GELU MLP with intermediate width <span class="math inline">\(4d\)</span> has</p>
+<p><span class="math display">\[
+\underbrace{d(4d)}_{W_1}
++
+\underbrace{(4d)d}_{W_2}
+=
+8d^2
+\]</span></p>
+<p>parameters. A SwiGLU MLP with intermediate width <span class="math inline">\(m\)</span> has three projections:</p>
+<p><span class="math display">\[
+\underbrace{dm}_{W_g}
++
+\underbrace{dm}_{W_u}
++
+\underbrace{md}_{W_o}
+=
+3dm.
+\]</span></p>
+<p>Matching their parameter counts gives</p>
+<p><span class="math display">\[
+3dm=8d^2
+\quad\Longrightarrow\quad
+\boxed{m=\frac{8}{3}d\approx2.67d}.
+\]</span></p>
+<p>This is a <strong>budgeting baseline</strong>, not an architectural law. Model designers choose the MLP width jointly with depth, attention dimensions, total parameter budget, training data, and hardware-friendly multiples.</p>
+</section>
+<section id="what-public-llm-configurations-actually-use" class="level3">
+<h3 class="anchored" data-anchor-id="what-public-llm-configurations-actually-use">What public LLM configurations actually use</h3>
+<p>The table below uses representative released checkpoints. For a dense model, the width ratio is <span class="math inline">\(m/d\)</span>. For an MoE model, <span class="math inline">\(m_e\)</span> is the width of <strong>one</strong> expert and <span class="math inline">\(k_{\text{active}}m_e/d\)</span> is a compute-oriented aggregate active-width ratio.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Model</th>
+<th style="text-align: right;">Residual width <span class="math inline">\(d\)</span></th>
+<th style="text-align: right;">SwiGLU width</th>
+<th style="text-align: right;">Width ratio</th>
+<th>Interpretation</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="https://huggingface.co/meta-llama/Meta-Llama-3-8B/blob/main/config.json">Llama 3 8B</a></td>
+<td style="text-align: right;">4096</td>
+<td style="text-align: right;">14336</td>
+<td style="text-align: right;"><span class="math inline">\(3.50d\)</span></td>
+<td>one dense SwiGLU MLP per layer</td>
+</tr>
+<tr class="even">
+<td><a href="https://huggingface.co/Qwen/Qwen3-8B/blob/main/config.json">Qwen3 8B</a></td>
+<td style="text-align: right;">4096</td>
+<td style="text-align: right;">12288</td>
+<td style="text-align: right;"><span class="math inline">\(3.00d\)</span></td>
+<td>one dense SwiGLU MLP per layer</td>
+</tr>
+<tr class="odd">
+<td><a href="https://huggingface.co/Qwen/Qwen3-32B/blob/main/config.json">Qwen3 32B</a></td>
+<td style="text-align: right;">5120</td>
+<td style="text-align: right;">25600</td>
+<td style="text-align: right;"><span class="math inline">\(5.00d\)</span></td>
+<td>one unusually wide dense SwiGLU MLP per layer</td>
+</tr>
+<tr class="even">
+<td><a href="https://huggingface.co/Qwen/Qwen3-235B-A22B/blob/main/config.json">Qwen3 235B-A22B</a></td>
+<td style="text-align: right;">4096</td>
+<td style="text-align: right;">1536 per expert</td>
+<td style="text-align: right;"><span class="math inline">\(0.375d\)</span> per expert; <span class="math inline">\(8\times=3.00d\)</span> active</td>
+<td>8 of 128 routed experts active per token</td>
+</tr>
+<tr class="odd">
+<td><a href="https://huggingface.co/deepseek-ai/DeepSeek-V3/blob/main/config.json">DeepSeek-V3</a></td>
+<td style="text-align: right;">7168</td>
+<td style="text-align: right;">18432 dense; 2048 per expert</td>
+<td style="text-align: right;"><span class="math inline">\(2.57d\)</span> dense; <span class="math inline">\(0.286d\)</span> per expert</td>
+<td>first 3 layers are dense; later layers activate 8 routed + 1 shared expert, giving <span class="math inline">\(9\times2048=18432\approx2.57d\)</span> aggregate active width</td>
+</tr>
+<tr class="even">
+<td><a href="https://github.com/MoonshotAI/Kimi-K2">Kimi K2</a></td>
+<td style="text-align: right;">7168</td>
+<td style="text-align: right;">2048 per expert</td>
+<td style="text-align: right;"><span class="math inline">\(0.286d\)</span> per expert; <span class="math inline">\(9\times=2.57d\)</span> active</td>
+<td>8 of 384 routed experts plus 1 shared expert active per token</td>
+</tr>
+<tr class="odd">
+<td><a href="https://developers.openai.com/api/docs/models/gpt-oss-20b">GPT-OSS 20B</a></td>
+<td style="text-align: right;">2880</td>
+<td style="text-align: right;">2880 per expert</td>
+<td style="text-align: right;"><span class="math inline">\(1.00d\)</span> per expert; <span class="math inline">\(4\times=4.00d\)</span> active</td>
+<td>4 of 32 routed experts active per token; modified SwiGLU</td>
+</tr>
+<tr class="even">
+<td><a href="https://developers.openai.com/api/docs/models/gpt-oss-120b">GPT-OSS 120B</a></td>
+<td style="text-align: right;">2880</td>
+<td style="text-align: right;">2880 per expert</td>
+<td style="text-align: right;"><span class="math inline">\(1.00d\)</span> per expert; <span class="math inline">\(4\times=4.00d\)</span> active</td>
+<td>4 of 128 routed experts active per token; modified SwiGLU</td>
+</tr>
+</tbody>
+</table>
+<section id="how-to-interpret-an-moe-width" class="level4">
+<h4 class="anchored" data-anchor-id="how-to-interpret-an-moe-width">How to interpret an MoE width</h4>
+<p>For <span class="math inline">\(E\)</span> total SwiGLU experts of width <span class="math inline">\(m_e\)</span>, with <span class="math inline">\(k\)</span> routed experts and <span class="math inline">\(s\)</span> shared experts active per token:</p>
+<p><span class="math display">\[
+\text{total expert parameters}
+\approx
+3dEm_e,
+\]</span></p>
+<p>while the per-token expert projection work is approximately</p>
+<p><span class="math display">\[
+\text{active projection work}
+\propto
+3d(k+s)m_e.
+\]</span></p>
+<p>This is why an MoE can use individually narrow experts while having enormous total capacity. The aggregate active width</p>
+<p><span class="math display">\[
+m_{\text{active}}=(k+s)m_e
+\]</span></p>
+<p>is useful for comparing projection FLOPs with a dense MLP.</p>
+<p>However, the active expert outputs are weighted and <strong>summed</strong>, not concatenated into one layer of width <span class="math inline">\(m_{\text{active}}\)</span>. The aggregate width is therefore a compute-accounting analogy, not the literal shape of an intermediate tensor.</p>
+</section>
+<section id="takeaway" class="level4">
+<h4 class="anchored" data-anchor-id="takeaway">Takeaway</h4>
+<ul>
+<li><span class="math inline">\(2.67d\)</span> answers: “How wide should SwiGLU be to match the parameters of a conventional <span class="math inline">\(4d\)</span> GELU MLP?”</li>
+<li>It does not answer: “What width do all modern LLMs use?”</li>
+<li>Dense Qwen3 checkpoints demonstrate that ratios can vary substantially even within one family.</li>
+<li>DeepSeek-V3 and Kimi K2 move capacity into many narrow experts while keeping the active expert compute closer to a dense MLP-sized budget.</li>
+<li>GPT-OSS uses wider individual experts and an aggregate active width of <span class="math inline">\(4d\)</span>; its four active experts cost approximately <span class="math inline">\(3d(4d)=12d^2\)</span> in expert projections per token.</li>
+</ul>
+</section>
+</section>
+</section>
+<section id="comparison" class="level2">
+<h2 class="anchored" data-anchor-id="comparison">Comparison</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Activation</th>
+<th>Range</th>
+<th>Saturates?</th>
+<th>Smooth?</th>
+<th>Common role</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Sigmoid</td>
+<td><span class="math inline">\((0,1)\)</span></td>
+<td>both tails</td>
+<td>yes</td>
+<td>probabilities and gates</td>
+</tr>
+<tr class="even">
+<td>Tanh</td>
+<td><span class="math inline">\((-1,1)\)</span></td>
+<td>both tails</td>
+<td>yes</td>
+<td>recurrent states</td>
+</tr>
+<tr class="odd">
+<td>ReLU</td>
+<td><span class="math inline">\([0,\infty)\)</span></td>
+<td>negative side</td>
+<td>no at 0</td>
+<td>CNNs and MLPs</td>
+</tr>
+<tr class="even">
+<td>Leaky ReLU</td>
+<td><span class="math inline">\((-\infty,\infty)\)</span></td>
+<td>no hard dead side</td>
+<td>no at 0</td>
+<td>ReLU alternative</td>
+</tr>
+<tr class="odd">
+<td>GELU</td>
+<td>approximately <span class="math inline">\((-0.17,\infty)\)</span></td>
+<td>soft negative suppression</td>
+<td>yes</td>
+<td>Transformer MLPs</td>
+</tr>
+<tr class="even">
+<td>SiLU</td>
+<td>approximately <span class="math inline">\((-0.28,\infty)\)</span></td>
+<td>soft negative suppression</td>
+<td>yes</td>
+<td>modern CNNs and LLMs</td>
+</tr>
+<tr class="odd">
+<td>SwiGLU</td>
+<td>unbounded</td>
+<td>depends on gate</td>
+<td>yes</td>
+<td>modern LLM MLPs</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="activation-and-derivative-graphs" class="level2">
+<h2 class="anchored" data-anchor-id="activation-and-derivative-graphs">Activation and Derivative Graphs</h2>
+<p>Each panel overlays a scalar activation <span class="math inline">\(\phi(x)\)</span> and its derivative <span class="math inline">\(\phi'(x)\)</span>. ReLU and Leaky ReLU are not differentiable at zero; the plotted value at exactly zero uses the common subgradient choice <span class="math inline">\(0\)</span> for ReLU and <span class="math inline">\(\alpha\)</span> for Leaky ReLU.</p>
+<div id="cell-fig-activation-derivatives" class="cell" data-fig-height="10" data-fig-width="10" data-execution_count="2">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> math</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>x_plot <span class="op">=</span> torch.linspace(<span class="op">-</span><span class="dv">5</span>, <span class="dv">5</span>, <span class="dv">1001</span>)</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>normal_pdf <span class="op">=</span> torch.exp(<span class="op">-</span><span class="fl">0.5</span> <span class="op">*</span> x_plot.square()) <span class="op">/</span> math.sqrt(<span class="fl">2.0</span> <span class="op">*</span> math.pi)</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>normal_cdf <span class="op">=</span> <span class="fl">0.5</span> <span class="op">*</span> (<span class="fl">1.0</span> <span class="op">+</span> torch.erf(x_plot <span class="op">/</span> math.sqrt(<span class="fl">2.0</span>)))</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>sigmoid_values <span class="op">=</span> torch.sigmoid(x_plot)</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>leaky_slope <span class="op">=</span> <span class="fl">0.1</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>activation_curves <span class="op">=</span> {</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Sigmoid"</span>: (</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>        sigmoid_values,</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>        sigmoid_values <span class="op">*</span> (<span class="fl">1.0</span> <span class="op">-</span> sigmoid_values),</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Tanh"</span>: (</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>        torch.tanh(x_plot),</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>        <span class="fl">1.0</span> <span class="op">-</span> torch.tanh(x_plot).square(),</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>    <span class="st">"ReLU"</span>: (</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>        torch.relu(x_plot),</span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>        (x_plot <span class="op">&gt;</span> <span class="dv">0</span>).to(x_plot.dtype),</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Leaky ReLU"</span>: (</span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>        torch.where(x_plot <span class="op">&gt;=</span> <span class="dv">0</span>, x_plot, leaky_slope <span class="op">*</span> x_plot),</span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>        torch.where(</span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>            x_plot <span class="op">&gt;</span> <span class="dv">0</span>,</span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>            torch.ones_like(x_plot),</span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>            torch.full_like(x_plot, leaky_slope),</span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>        ),</span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>    <span class="st">"GELU"</span>: (</span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>        x_plot <span class="op">*</span> normal_cdf,</span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>        normal_cdf <span class="op">+</span> x_plot <span class="op">*</span> normal_pdf,</span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>    <span class="st">"SiLU / Swish"</span>: (</span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>        x_plot <span class="op">*</span> sigmoid_values,</span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>        sigmoid_values <span class="op">+</span> x_plot <span class="op">*</span> sigmoid_values <span class="op">*</span> (<span class="fl">1.0</span> <span class="op">-</span> sigmoid_values),</span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a>figure, axes <span class="op">=</span> plt.subplots(<span class="dv">3</span>, <span class="dv">2</span>, sharex<span class="op">=</span><span class="va">True</span>, figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="dv">10</span>))</span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> axis, (name, (values, derivatives)) <span class="kw">in</span> <span class="bu">zip</span>(</span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a>    axes.flat, activation_curves.items()</span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a>):</span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a>    axis.plot(x_plot, values, label<span class="op">=</span><span class="vs">r"</span><span class="dv">$</span><span class="er">\</span><span class="vs">phi</span><span class="kw">(</span><span class="vs">x</span><span class="kw">)</span><span class="dv">$</span><span class="vs">"</span>, linewidth<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a>    axis.plot(</span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a>        x_plot,</span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a>        derivatives,</span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a>        label<span class="op">=</span><span class="vs">r"</span><span class="dv">$</span><span class="er">\</span><span class="vs">phi'</span><span class="kw">(</span><span class="vs">x</span><span class="kw">)</span><span class="dv">$</span><span class="vs">"</span>,</span>
+<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a>        linewidth<span class="op">=</span><span class="dv">2</span>,</span>
+<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a>        linestyle<span class="op">=</span><span class="st">"--"</span>,</span>
+<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a>    axis.axhline(<span class="dv">0</span>, color<span class="op">=</span><span class="st">"black"</span>, linewidth<span class="op">=</span><span class="fl">0.6</span>, alpha<span class="op">=</span><span class="fl">0.5</span>)</span>
+<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a>    axis.axvline(<span class="dv">0</span>, color<span class="op">=</span><span class="st">"black"</span>, linewidth<span class="op">=</span><span class="fl">0.6</span>, alpha<span class="op">=</span><span class="fl">0.5</span>)</span>
+<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a>    axis.set_title(name)</span>
+<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a>    axis.grid(alpha<span class="op">=</span><span class="fl">0.2</span>)</span>
+<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a>    axis.legend()</span>
+<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> axis <span class="kw">in</span> axes[<span class="op">-</span><span class="dv">1</span>]:</span>
+<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a>    axis.set_xlabel(<span class="st">"x"</span>)</span>
+<span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a>figure.tight_layout()</span>
+<span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div id="fig-activation-derivatives" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-activation-derivatives-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="activations_files/figure-html/fig-activation-derivatives-output-1.png" width="952" height="950" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-activation-derivatives-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: Common scalar activation functions and their derivatives.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>SwiGLU does not have one scalar activation curve. It combines two learned vector projections through multiplication, so its Jacobian depends on both <span class="math inline">\(W_g\)</span>, <span class="math inline">\(W_u\)</span>, and the input direction. Softmax is likewise a vector-valued function whose derivative is a Jacobian rather than a single curve:</p>
+<p><span class="math display">\[
+\frac{\partial\operatorname{softmax}(z)_i}{\partial z_j}
+=
+p_i(\delta_{ij}-p_j).
+\]</span></p>
+</section>
+<section id="minimal-pytorch-implementations" class="level2">
+<h2 class="anchored" data-anchor-id="minimal-pytorch-implementations">Minimal PyTorch Implementations</h2>
+<div id="862af148" class="cell" data-execution_count="3">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> math</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> sigmoid(x):</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    <span class="co"># PyTorch's primitive is numerically safer than naively computing exp(-x).</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> torch.sigmoid(x)</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> relu(x):</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> torch.maximum(x, torch.zeros_like(x))</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> gelu_exact(x):</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fl">0.5</span> <span class="op">*</span> x <span class="op">*</span> (<span class="fl">1.0</span> <span class="op">+</span> torch.erf(x <span class="op">/</span> math.sqrt(<span class="fl">2.0</span>)))</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> silu(x):</span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> x <span class="op">*</span> torch.sigmoid(x)</span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> torch.linspace(<span class="op">-</span><span class="dv">5</span>, <span class="dv">5</span>, <span class="dv">101</span>, requires_grad<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>torch.testing.assert_close(gelu_exact(x), torch.nn.functional.gelu(x))</span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>torch.testing.assert_close(silu(x), torch.nn.functional.silu(x))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<section id="inspect-the-gradients" class="level3">
+<h3 class="anchored" data-anchor-id="inspect-the-gradients">Inspect the gradients</h3>
+<div id="dddbb656" class="cell" data-execution_count="4">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>inputs <span class="op">=</span> torch.tensor([<span class="op">-</span><span class="fl">10.0</span>, <span class="op">-</span><span class="fl">1.0</span>, <span class="fl">0.0</span>, <span class="fl">1.0</span>, <span class="fl">10.0</span>], requires_grad<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> values_and_gradients(fn, inputs):</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    values <span class="op">=</span> fn(inputs)</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    gradients <span class="op">=</span> torch.autograd.grad(values.<span class="bu">sum</span>(), inputs, retain_graph<span class="op">=</span><span class="va">True</span>)[<span class="dv">0</span>]</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> values.detach(), gradients</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> name, fn <span class="kw">in</span> {</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"sigmoid"</span>: sigmoid,</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">"relu"</span>: relu,</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">"gelu"</span>: gelu_exact,</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>    <span class="st">"silu"</span>: silu,</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>}.items():</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>    values, gradients <span class="op">=</span> values_and_gradients(fn, inputs)</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(name, <span class="st">"values:"</span>, values, <span class="st">"gradients:"</span>, gradients)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>sigmoid values: tensor([4.5398e-05, 2.6894e-01, 5.0000e-01, 7.3106e-01, 9.9995e-01]) gradients: tensor([4.5396e-05, 1.9661e-01, 2.5000e-01, 1.9661e-01, 4.5417e-05])
+relu values: tensor([ 0.,  0.,  0.,  1., 10.]) gradients: tensor([0.0000, 0.0000, 0.5000, 1.0000, 1.0000])
+gelu values: tensor([-0.0000, -0.1587,  0.0000,  0.8413, 10.0000]) gradients: tensor([-7.6946e-22, -8.3315e-02,  5.0000e-01,  1.0833e+00,  1.0000e+00])
+silu values: tensor([-4.5398e-04, -2.6894e-01,  0.0000e+00,  7.3106e-01,  9.9995e+00]) gradients: tensor([-4.0856e-04,  7.2329e-02,  5.0000e-01,  9.2767e-01,  1.0004e+00])</code></pre>
+</div>
+</div>
+<p>For stable output-activation and objective pairings, continue to <a href="../../notes/foundations/losses.html#logits-probabilities-and-numerical-stability">Loss Functions</a>.</p>
+</section>
+</section>
+<section id="initialization-interaction" class="level2">
+<h2 class="anchored" data-anchor-id="initialization-interaction">Initialization Interaction</h2>
+<p>Initialization and activation choice are coupled. A good initialization keeps forward activations and backward gradients at usable scales as they pass through many layers. If either repeatedly grows, training can explode; if either repeatedly shrinks, information and gradients vanish.</p>
+<section id="forward-signal-propagation" class="level3">
+<h3 class="anchored" data-anchor-id="forward-signal-propagation">Forward signal propagation</h3>
+<p>Consider a linear layer with zero-mean, independent inputs and weights:</p>
+<p><span class="math display">\[
+z_j=\sum_{i=1}^{n_{\mathrm{in}}}W_{ji}x_i,
+\qquad
+\mathbb E[W_{ji}]=0,
+\qquad
+\operatorname{Var}(W_{ji})=\sigma_W^2.
+\]</span></p>
+<p>Ignoring correlations,</p>
+<p><span class="math display">\[
+\mathbb E[z_j^2]
+\approx
+n_{\mathrm{in}}\sigma_W^2\mathbb E[x_i^2].
+\]</span></p>
+<p>The activation then changes this second moment:</p>
+<p><span class="math display">\[
+\mathbb E[h_j^2]
+=
+\mathbb E[\phi(z_j)^2].
+\]</span></p>
+<p>The goal is not necessarily to make every layer’s variance exactly one. The goal is to prevent a multiplicative factor much larger or smaller than one from being applied at every layer.</p>
+<p>For a distribution symmetric around zero,</p>
+<p><span class="math display">\[
+\mathbb E[\operatorname{ReLU}(z)^2]
+=
+\frac{1}{2}\mathbb E[z^2].
+\]</span></p>
+<p>ReLU removes the negative half of the signal. Choosing</p>
+<p><span class="math display">\[
+\boxed{\operatorname{Var}(W)=\frac{2}{n_{\mathrm{in}}}}
+\]</span></p>
+<p>compensates for this factor of <span class="math inline">\(1/2\)</span>. This is <strong>He/Kaiming initialization</strong>.</p>
+<p>For Leaky ReLU with negative slope <span class="math inline">\(a\)</span>,</p>
+<p><span class="math display">\[
+\mathbb E[\operatorname{LeakyReLU}(z)^2]
+=
+\frac{1+a^2}{2}\mathbb E[z^2],
+\]</span></p>
+<p>so its corresponding fan-in variance is</p>
+<p><span class="math display">\[
+\boxed{
+\operatorname{Var}(W)
+=
+\frac{2}{(1+a^2)n_{\mathrm{in}}}
+}.
+\]</span></p>
+</section>
+<section id="why-xavier-balances-two-directions" class="level3">
+<h3 class="anchored" data-anchor-id="why-xavier-balances-two-directions">Why Xavier balances two directions</h3>
+<p>For a linear activation, preserving the forward second moment suggests <span class="math inline">\(\operatorname{Var}(W)=1/n_{\mathrm{in}}\)</span>. Preserving the backward gradient scale instead suggests <span class="math inline">\(1/n_{\mathrm{out}}\)</span>. <strong>Xavier/Glorot initialization</strong> uses the compromise</p>
+<p><span class="math display">\[
+\boxed{
+\operatorname{Var}(W)
+\approx
+\frac{2}{n_{\mathrm{in}}+n_{\mathrm{out}}}
+}.
+\]</span></p>
+<p>This is a useful starting point for linear layers and tanh networks. A gain can multiply this base scale to account approximately for an activation. PyTorch, for example, uses gain <span class="math inline">\(1\)</span> for linear or sigmoid, <span class="math inline">\(5/3\)</span> for tanh, <span class="math inline">\(\sqrt{2}\)</span> for ReLU, and <span class="math inline">\(\sqrt{2/(1+a^2)}\)</span> for Leaky ReLU.</p>
+<p>Initialization cannot fully rescue a saturated sigmoid network. Because <span class="math inline">\(0&lt;\sigma'(x)\leq1/4\)</span>, repeatedly multiplying by sigmoid derivatives can still shrink gradients. Keeping initial pre-activations near zero delays saturation, but does not remove the underlying depth problem.</p>
+</section>
+<section id="the-backward-view" class="level3">
+<h3 class="anchored" data-anchor-id="the-backward-view">The backward view</h3>
+<p>For <span class="math inline">\(h=\phi(Wx)\)</span>, backpropagation contains</p>
+<p><span class="math display">\[
+\delta_x
+=
+W^T\left(\delta_h\odot\phi'(z)\right).
+\]</span></p>
+<p>Consequently, gradient scale depends on both the weight variance and <span class="math inline">\(\mathbb E[\phi'(z)^2]\)</span>. Xavier and Kaiming make simplifying assumptions about independence, identical distributions, and the shape of <span class="math inline">\(z\)</span>. Those assumptions are only approximate in a trained network, but they give much better starting scales than choosing an arbitrary standard deviation.</p>
+<p>In Kaiming APIs, <code>mode="fan_in"</code> prioritizes forward activations, while <code>mode="fan_out"</code> prioritizes backward gradients. Forward preservation is the usual default for hidden layers.</p>
+</section>
+<section id="gelu-silu-and-gated-mlps" class="level3">
+<h3 class="anchored" data-anchor-id="gelu-silu-and-gated-mlps">GELU, SiLU, and gated MLPs</h3>
+<p>GELU and SiLU behave somewhat like smooth ReLUs, but their exact moment changes depend on the input distribution. There is no single universal gain that is correct throughout training. Kaiming initialization is a reasonable baseline in some non-residual MLPs, while modern Transformers more commonly use a model-wide initialization recipe calibrated together with normalization, depth, and residual scaling.</p>
+<p>SwiGLU is more complicated because it multiplies two learned branches:</p>
+<p><span class="math display">\[
+h=\operatorname{SiLU}(xW_g)\odot(xW_u).
+\]</span></p>
+<p>Under a rough independence approximation,</p>
+<p><span class="math display">\[
+\mathbb E[h^2]
+\approx
+\mathbb E[\operatorname{SiLU}(xW_g)^2]
+\mathbb E[(xW_u)^2].
+\]</span></p>
+<p>Thus its scale depends on <strong>both</strong> input projections and on the down projection that writes the result back to the residual stream. A gain derived for a one-branch ReLU layer cannot be transferred to SwiGLU without qualification.</p>
+</section>
+<section id="residual-networks-and-transformers" class="level3">
+<h3 class="anchored" data-anchor-id="residual-networks-and-transformers">Residual networks and Transformers</h3>
+<p>Normalization does not make initialization irrelevant. In a pre-norm block, the normalization controls the input to each branch, but the residual stream still accumulates branch outputs:</p>
+<p><span class="math display">\[
+x_{\ell+1}=x_\ell+F_\ell(\operatorname{Norm}(x_\ell)).
+\]</span></p>
+<p>If every <span class="math inline">\(F_\ell\)</span> initially writes a large update, residual magnitude can grow with depth. Deep Transformer recipes therefore often initialize residual-output projections more conservatively or scale them by a depth-dependent factor such as <span class="math inline">\(1/\sqrt{L}\)</span>. With two residual branches per block, <span class="math inline">\(1/\sqrt{2L}\)</span> is a common accounting choice. The exact convention is architecture-specific.</p>
+<p>Other practical rules:</p>
+<ul>
+<li>biases are commonly initialized to zero so they do not shift activation distributions immediately</li>
+<li>embeddings, attention projections, MLP projections, and output heads may use different scales</li>
+<li>a zero initialization is sometimes useful for a <strong>residual output</strong> projection, but initializing every layer to zero prevents hidden units from breaking symmetry</li>
+<li>when reproducing a model, follow its complete initialization recipe rather than mixing isolated defaults from different architectures</li>
+</ul>
+</section>
+<section id="practical-starting-points" class="level3">
+<h3 class="anchored" data-anchor-id="practical-starting-points">Practical starting points</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Activation or block</th>
+<th>Common starting point</th>
+<th>Important caveat</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Linear / identity</td>
+<td>Xavier, gain <span class="math inline">\(1\)</span></td>
+<td>choose fan-in scaling if only forward variance matters</td>
+</tr>
+<tr class="even">
+<td>Tanh</td>
+<td>Xavier, often with tanh gain</td>
+<td>large pre-activations still saturate</td>
+</tr>
+<tr class="odd">
+<td>Sigmoid</td>
+<td>Xavier, gain <span class="math inline">\(1\)</span></td>
+<td>derivatives can vanish even with good initialization</td>
+</tr>
+<tr class="even">
+<td>ReLU</td>
+<td>Kaiming with <span class="math inline">\(a=0\)</span></td>
+<td>assumes roughly symmetric pre-activations</td>
+</tr>
+<tr class="odd">
+<td>Leaky ReLU</td>
+<td>Kaiming using the actual slope <span class="math inline">\(a\)</span></td>
+<td>the slope must match the activation</td>
+</tr>
+<tr class="even">
+<td>GELU / SiLU</td>
+<td>architecture-specific; Xavier or Kaiming may be baselines</td>
+<td>no universally exact gain</td>
+</tr>
+<tr class="odd">
+<td>SwiGLU / MoE expert</td>
+<td>initialize all three projections as one coordinated block</td>
+<td>product statistics and residual depth both matter</td>
+</tr>
+</tbody>
+</table>
+<p>This minimal helper shows conventional PyTorch starting points. It is an educational default, not a reproduction of any particular LLM recipe.</p>
+<div id="38d97016" class="cell" data-execution_count="5">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> math</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch.nn <span class="im">as</span> nn</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> initialize_linear(layer, activation, negative_slope<span class="op">=</span><span class="fl">0.01</span>):</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> <span class="bu">isinstance</span>(layer, nn.Linear):</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">raise</span> <span class="pp">TypeError</span>(<span class="st">"expected nn.Linear"</span>)</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> activation <span class="op">==</span> <span class="st">"relu"</span>:</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>        nn.init.kaiming_normal_(</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>            layer.weight, mode<span class="op">=</span><span class="st">"fan_in"</span>, nonlinearity<span class="op">=</span><span class="st">"relu"</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">elif</span> activation <span class="op">==</span> <span class="st">"leaky_relu"</span>:</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>        nn.init.kaiming_normal_(</span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>            layer.weight,</span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>            a<span class="op">=</span>negative_slope,</span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>            mode<span class="op">=</span><span class="st">"fan_in"</span>,</span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>            nonlinearity<span class="op">=</span><span class="st">"leaky_relu"</span>,</span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>    <span class="cf">elif</span> activation <span class="kw">in</span> {<span class="st">"linear"</span>, <span class="st">"sigmoid"</span>, <span class="st">"tanh"</span>}:</span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>        gain <span class="op">=</span> nn.init.calculate_gain(activation)</span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>        nn.init.xavier_uniform_(layer.weight, gain<span class="op">=</span>gain)</span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>    <span class="cf">elif</span> activation <span class="kw">in</span> {<span class="st">"gelu"</span>, <span class="st">"silu"</span>}:</span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>        <span class="co"># A neutral baseline; use the model's recipe when reproducing it.</span></span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a>        nn.init.xavier_normal_(layer.weight, gain<span class="op">=</span><span class="fl">1.0</span>)</span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span>:</span>
+<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="ss">f"unsupported activation: </span><span class="sc">{</span>activation<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> layer.bias <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
+<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a>        nn.init.zeros_(layer.bias)</span>
+<span id="cb6-32"><a href="#cb6-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-33"><a href="#cb6-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-34"><a href="#cb6-34" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> scale_residual_output_(projection, num_layers, branches_per_layer<span class="op">=</span><span class="dv">2</span>):</span>
+<span id="cb6-35"><a href="#cb6-35" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Apply optional depth scaling after initializing a residual projection."""</span></span>
+<span id="cb6-36"><a href="#cb6-36" aria-hidden="true" tabindex="-1"></a>    scale <span class="op">=</span> <span class="fl">1.0</span> <span class="op">/</span> math.sqrt(branches_per_layer <span class="op">*</span> num_layers)</span>
+<span id="cb6-37"><a href="#cb6-37" aria-hidden="true" tabindex="-1"></a>    <span class="cf">with</span> torch.no_grad():</span>
+<span id="cb6-38"><a href="#cb6-38" aria-hidden="true" tabindex="-1"></a>        projection.weight.mul_(scale)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+</section>
+<section id="interview-questions" class="level2">
+<h2 class="anchored" data-anchor-id="interview-questions">Interview Questions</h2>
+<ul>
+<li>Why does a network of only linear layers collapse to one linear layer?</li>
+<li>Derive the sigmoid and tanh derivatives.</li>
+<li>What causes vanishing gradients and dying ReLUs?</li>
+<li>Why can ReLU train better than sigmoid despite being nondifferentiable at zero?</li>
+<li>Compare GELU and SiLU with ReLU.</li>
+<li>Why do gated MLPs need three projections?</li>
+<li>How should SwiGLU width change for a parameter-matched FFN comparison?</li>
+<li>How do activation choice and weight initialization interact?</li>
+<li>Derive Kaiming initialization for ReLU and Leaky ReLU.</li>
+<li>Why can pre-norm Transformers still need depth-aware residual initialization?</li>
+</ul>
+</section>
+<section id="exercises" class="level2">
+<h2 class="anchored" data-anchor-id="exercises">Exercises</h2>
+<ul class="task-list">
+<li><label><input type="checkbox">Change the plotting interval and Leaky ReLU slope; explain what changes.</label></li>
+<li><label><input type="checkbox">Derive the parameter count of a GELU FFN and a SwiGLU FFN.</label></li>
+<li><label><input type="checkbox">Train a small MLP with sigmoid, ReLU, GELU, and SiLU and compare gradient norms.</label></li>
+<li><label><input type="checkbox">Construct an example of a dead ReLU neuron.</label></li>
+<li><label><input type="checkbox">Measure activation and gradient variance across 50 layers under Xavier, Kaiming, and a deliberately incorrect initialization.</label></li>
+</ul>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/threeeyelidds\.github\.io\/ml-interview-notes\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
