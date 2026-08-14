@@ -1,0 +1,221 @@
+---
+title: "Loss Functions"
+---
+
+## Logits, Probabilities, and Numerical Stability
+
+A **logit** is an unrestricted score produced by a model before an output
+activation. For multiclass classification, logits
+
+$$
+z\in\mathbb{R}^{C}
+$$
+
+become a categorical distribution through softmax. For binary classification,
+a logit $z\in\mathbb{R}$ becomes a Bernoulli probability through sigmoid.
+
+Conceptually, training could perform these steps separately:
+
+1. convert logits to probabilities
+2. take the logarithm of the relevant probability
+3. compute the loss
+
+That direct implementation is fragile. Exponentiating a large positive logit
+can overflow, while a very small probability can round to zero and make
+$\log(0)=-\infty$. Stable loss functions combine the activation and logarithm
+algebraically so those problematic intermediate probabilities never need to be
+materialized.
+
+::: {.callout-important}
+Pass raw logits to `torch.nn.CrossEntropyLoss` and
+`torch.nn.BCEWithLogitsLoss`. Do not apply softmax or sigmoid first.
+:::
+
+At inference time, applying softmax or sigmoid is appropriate when calibrated
+probabilities are actually needed. For an `argmax` prediction, softmax is
+unnecessary because it preserves the ordering of the logits.
+
+## Multiclass Cross-Entropy
+
+For one example with class logits $z_1,\ldots,z_C$ and target class $y$,
+
+$$
+p_j=\frac{e^{z_j}}{\sum_{k=1}^{C}e^{z_k}},
+$$
+
+and the negative log-likelihood is
+
+$$
+\mathcal L_{\mathrm{CE}}
+=
+-\log p_y.
+$$
+
+Substituting softmax into the loss gives
+
+$$
+\mathcal L_{\mathrm{CE}}
+=
+-z_y+\log\sum_{k=1}^{C}e^{z_k}.
+$$
+
+This is the **log-sum-exp** form. If $m=\max_k z_k$, then
+
+$$
+\log\sum_k e^{z_k}
+=
+m+\log\sum_k e^{z_k-m}.
+$$
+
+Every shifted logit satisfies $z_k-m\leq0$, so its exponential cannot overflow.
+The subtraction does not change softmax because adding or subtracting the same
+constant from every logit leaves the distribution unchanged.
+
+For one-hot targets, the gradient has a particularly simple form:
+
+$$
+\frac{\partial\mathcal L_{\mathrm{CE}}}{\partial z_j}
+=p_j-\mathbb{1}[j=y].
+$$
+
+### Minimal stable implementation
+
+```{python}
+import torch
+import torch.nn.functional as F
+
+
+def cross_entropy_from_logits(logits, targets, reduction="mean"):
+    """Cross-entropy for logits [..., classes] and integer targets [...]."""
+    largest = logits.max(dim=-1, keepdim=True).values
+    log_normalizer = largest.squeeze(-1) + torch.log(
+        torch.exp(logits - largest).sum(dim=-1)
+    )
+    target_logits = logits.gather(
+        dim=-1, index=targets.unsqueeze(-1)
+    ).squeeze(-1)
+    losses = log_normalizer - target_logits
+
+    if reduction == "none":
+        return losses
+    if reduction == "sum":
+        return losses.sum()
+    if reduction == "mean":
+        return losses.mean()
+    raise ValueError(f"unknown reduction: {reduction}")
+
+
+logits = torch.tensor([[1000.0, 1001.0, 999.0], [-2.0, 0.5, 3.0]])
+targets = torch.tensor([1, 2])
+
+ours = cross_entropy_from_logits(logits, targets)
+pytorch = F.cross_entropy(logits, targets)
+print(ours, pytorch)
+torch.testing.assert_close(ours, pytorch)
+```
+
+The implementation uses the same stable identity as `logsumexp`. Production
+code should normally use `F.cross_entropy`, which also supports optimized
+kernels, class weights, label smoothing, ignored targets, and additional input
+shapes.
+
+## Binary Cross-Entropy
+
+For binary target $y\in\{0,1\}$ and predicted probability $p$, binary
+cross-entropy is
+
+$$
+\mathcal L_{\mathrm{BCE}}
+=
+-y\log p-(1-y)\log(1-p).
+$$
+
+With $p=\sigma(z)$, directly computing `log(sigmoid(z))` and
+`log(1 - sigmoid(z))` is unstable for extreme logits. Substitution and
+simplification give
+
+$$
+\mathcal L_{\mathrm{BCE}}(z,y)
+=
+\operatorname{softplus}(z)-yz
+=
+\log(1+e^z)-yz.
+$$
+
+Equivalently,
+
+$$
+\mathcal L_{\mathrm{BCE}}(z,y)
+=
+\max(z,0)-yz+\log(1+e^{-|z|}).
+$$
+
+The exponent is now non-positive, preventing overflow. The gradient with
+respect to the logit is
+
+$$
+\frac{\partial\mathcal L_{\mathrm{BCE}}}{\partial z}
+=
+\sigma(z)-y.
+$$
+
+### Minimal stable implementation
+
+```{python}
+def binary_cross_entropy_with_logits(logits, targets, reduction="mean"):
+    """Binary cross-entropy on raw logits; targets have the same shape."""
+    targets = targets.to(dtype=logits.dtype)
+
+    # logaddexp(0, z) is a stable implementation of softplus(z).
+    softplus = torch.logaddexp(torch.zeros_like(logits), logits)
+    losses = softplus - targets * logits
+
+    if reduction == "none":
+        return losses
+    if reduction == "sum":
+        return losses.sum()
+    if reduction == "mean":
+        return losses.mean()
+    raise ValueError(f"unknown reduction: {reduction}")
+
+
+binary_logits = torch.tensor([-1000.0, -2.0, 0.0, 2.0, 1000.0])
+binary_targets = torch.tensor([0.0, 1.0, 1.0, 0.0, 1.0])
+
+ours = binary_cross_entropy_with_logits(binary_logits, binary_targets)
+pytorch = F.binary_cross_entropy_with_logits(binary_logits, binary_targets)
+print(ours, pytorch)
+torch.testing.assert_close(ours, pytorch)
+```
+
+Use one logit and BCE for a binary event or for multiple independent labels.
+Use $C$ logits and multiclass cross-entropy when exactly one of $C$ classes is
+the target. Two-class softmax is mathematically redundant but still valid.
+
+## Common Loss Pairings
+
+| Task | Model output during training | Typical loss |
+|---|---|---|
+| Multiclass classification | $C$ raw logits | cross-entropy |
+| Binary classification | one raw logit | binary cross-entropy with logits |
+| Multilabel classification | one raw logit per independent label | elementwise BCE with logits |
+| Unbounded regression | linear output | MSE, MAE, or a likelihood loss |
+| Positive scalar | unconstrained parameter transformed by softplus or exponential | task-dependent |
+| Bounded scalar | scaled sigmoid or tanh parameterization | task-dependent |
+
+## Interview Questions
+
+- Why is `log(softmax(z))` less stable than `log_softmax(z)`?
+- Derive cross-entropy directly from softmax and negative log-likelihood.
+- Why can subtracting the maximum logit not change softmax?
+- Derive the stable BCE-with-logits expression.
+- What are the gradients of cross-entropy and BCE with respect to their logits?
+- When should a problem use multiclass cross-entropy rather than independent
+  binary cross-entropies?
+
+## Exercises
+
+- [ ] Evaluate the naïve and stable losses on logits $[-1000,0,1000]$.
+- [ ] Extend cross-entropy with label smoothing.
+- [ ] Add class weights to both implementations.
+- [ ] Implement mean squared error and Huber loss, including their gradients.

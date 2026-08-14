@@ -1,0 +1,492 @@
+---
+title: "Tokenization Across Modalities"
+---
+
+## Core Idea
+
+Tokenization converts a large or structured input into a sequence of units that
+a model can process:
+
+$$
+x
+\xrightarrow{\text{segment}}
+(u_1,\ldots,u_T)
+\xrightarrow{\text{encode}}
+(z_1,\ldots,z_T).
+$$
+
+Depending on the method, $z_t$ may be either:
+
+- a **discrete ID** looked up in an embedding table, or
+- a **continuous vector** produced by a linear layer or neural encoder.
+
+This distinction is important. A ViT image patch is commonly called a token,
+but it is usually projected directly into a continuous vector rather than
+assigned a discrete vocabulary ID.
+
+### A shared view across modalities
+
+| Modality | Common unit | Discrete or continuous? | Typical sequence axis |
+|---|---|---|---|
+| Text | byte, character, or subword | Discrete | reading order |
+| Image | patch, region, or VQ code | Either | flattened 2D grid |
+| Audio | frame, spectrogram patch, or codec code | Either | time, sometimes time $\times$ codebook |
+| Video | frame patch, tubelet, or VQ code | Either | time $\times$ 2D grid |
+| Recommendation | item ID or semantic-ID codes | Discrete | user-event order, then code depth |
+
+::: {.callout-note}
+## Tokenization is an information bottleneck
+
+Smaller units preserve fine detail but create longer sequences. Larger units
+shorten the sequence but compress more information into each token. The choice
+affects model compute, vocabulary size, reconstruction quality, robustness, and
+what invariances the model must learn.
+:::
+
+## Text Tokenization
+
+### Common methods
+
+| Method | Unit | Strength | Weakness |
+|---|---|---|---|
+| Word | whole word | short, interpretable sequences | huge vocabulary and out-of-vocabulary words |
+| Character | Unicode character | open vocabulary | long sequences; characters are not equally meaningful across languages |
+| Byte | UTF-8 byte | fixed vocabulary of 256 and no unknown input bytes | longer sequences, especially for some scripts |
+| BPE | frequent pair merges | simple and efficient subwords | greedy merge history is not a probabilistic model |
+| WordPiece | subwords chosen to improve a language-model objective | useful compromise between words and characters | training details differ across implementations |
+| Unigram LM | selects a segmentation from a probabilistic subword vocabulary | supports multiple candidate segmentations and subword regularization | requires vocabulary pruning and segmentation search |
+
+[BPE](https://arxiv.org/abs/1508.07909) repeatedly merges frequent adjacent
+symbols. [SentencePiece](https://arxiv.org/abs/1808.06226) can learn BPE or a
+unigram tokenizer directly from raw text without requiring language-specific
+pre-tokenization.
+
+### Typical pipeline
+
+```text
+raw text
+   ↓
+Unicode normalization
+   ↓
+optional pre-tokenization
+   ↓
+subword or byte segmentation
+   ↓
+special tokens + token IDs
+```
+
+Important design choices:
+
+- vocabulary size
+- byte fallback and unknown-token behavior
+- whitespace representation
+- Unicode normalization
+- special tokens such as BOS, EOS, PAD, and modality separators
+- whether segmentation is deterministic or sampled during training
+
+### Minimal byte tokenizer
+
+This is lossless for valid UTF-8 text and has no learned vocabulary. It is
+educational rather than a complete production tokenizer.
+
+```{python}
+class ByteTokenizer:
+    vocab_size = 256
+
+    def encode(self, text):
+        return list(text.encode("utf-8"))
+
+    def decode(self, token_ids):
+        return bytes(token_ids).decode("utf-8")
+
+
+byte_tokenizer = ByteTokenizer()
+text = "Minimal ML 🤖"
+text_ids = byte_tokenizer.encode(text)
+assert byte_tokenizer.decode(text_ids) == text
+text_ids
+```
+
+### Questions to fill in
+
+- Why does increasing vocabulary size usually reduce sequence length?
+- What is the difference between BPE, WordPiece, and unigram tokenization?
+- Why can tokenization make arithmetic, spelling, and multilingual modeling difficult?
+- What happens when the tokenizer used at inference differs from training?
+- Why might byte fallback be preferable to an unknown token?
+
+## Image Tokenization
+
+### Patch tokens
+
+Given an image
+
+$$
+X \in \mathbb{R}^{C \times H \times W},
+$$
+
+split it into non-overlapping $P\times P$ patches. The token count is
+
+$$
+T = \frac{H}{P}\frac{W}{P},
+$$
+
+and each flattened patch has dimension $CP^2$. A learned projection maps it to
+$d_{\text{model}}$. This is the continuous-token approach used by
+[Vision Transformer](https://arxiv.org/abs/2010.11929).
+
+```{python}
+import torch
+import torch.nn.functional as F
+
+
+def patchify(images, patch_size):
+    """Convert (B, C, H, W) images to (B, num_patches, patch_dim)."""
+    batch_size, channels, height, width = images.shape
+    if height % patch_size or width % patch_size:
+        raise ValueError("height and width must be divisible by patch_size")
+
+    patches = F.unfold(
+        images, kernel_size=patch_size, stride=patch_size
+    )
+    return patches.transpose(1, 2)
+
+
+images = torch.randn(2, 3, 32, 32)
+image_tokens = patchify(images, patch_size=8)
+assert image_tokens.shape == (2, 16, 3 * 8 * 8)
+image_tokens.shape
+```
+
+### Discrete visual tokens
+
+An encoder can first produce a spatial latent grid and then quantize every
+latent vector to its nearest codebook entry:
+
+$$
+z_e(x)_{ij}
+\longrightarrow
+k_{ij}
+=
+\arg\min_k \left\|z_e(x)_{ij}-e_k\right\|_2^2.
+$$
+
+The grid of codebook indices $(k_{ij})$ is a sequence of discrete image tokens.
+A decoder reconstructs pixels from the selected code vectors. This is the key
+idea behind [VQ-VAE](https://arxiv.org/abs/1711.00937).
+
+Common image units:
+
+- pixels: maximum granularity, extremely long sequence
+- fixed patches: simple continuous tokens for understanding tasks
+- learned VQ codes: discrete tokens useful for generation
+- region or object tokens: adaptive units intended to capture semantic objects
+
+> **Learning prompt:** Why might an image tokenizer optimized only for pixel
+> reconstruction preserve texture better than semantic identity?
+
+## Audio Tokenization
+
+Audio is a one-dimensional signal with a high sampling rate, so treating every
+sample as a token produces very long sequences.
+
+### Common methods
+
+1. **Waveform chunks:** group raw samples into fixed-length frames and project them.
+2. **Spectrogram patches:** transform the waveform into time-frequency features, then patch them like an image.
+3. **Neural codec tokens:** encode audio into a lower-rate latent sequence and quantize it with one or more codebooks.
+4. **Semantic speech tokens:** cluster hidden representations from a pretrained speech encoder; these emphasize linguistic content more than exact waveform reconstruction.
+
+For sample rate $f_s$, frame size $W$, and hop size $H_s$, the approximate
+number of frames in an $L$-sample waveform is
+
+$$
+T = 1 + \left\lfloor\frac{L-W}{H_s}\right\rfloor.
+$$
+
+```{python}
+def frame_audio(waveforms, frame_size, hop_size):
+    """Convert (B, samples) waveforms to (B, frames, frame_size)."""
+    if waveforms.shape[-1] < frame_size:
+        raise ValueError("waveform is shorter than one frame")
+    return waveforms.unfold(-1, frame_size, hop_size)
+
+
+waveforms = torch.randn(2, 16_000)  # one second at 16 kHz
+audio_frames = frame_audio(waveforms, frame_size=400, hop_size=160)
+assert audio_frames.shape == (2, 98, 400)
+audio_frames.shape
+```
+
+Neural codecs such as
+[SoundStream](https://arxiv.org/abs/2107.03312) use residual vector
+quantization: multiple codebooks progressively encode the residual error. At
+each time step, this creates several parallel discrete codes.
+
+If the codec emits $n_q$ codebook IDs per frame at frame rate $f$, its token
+rate is
+
+$$
+n_q f \quad \text{tokens per second}.
+$$
+
+Important tradeoffs:
+
+- semantic content versus acoustic detail
+- bitrate versus reconstruction quality
+- causal/streamable encoding versus bidirectional encoding
+- robustness to speakers, noise, and recording conditions
+
+## Video Tokenization
+
+A video introduces a temporal dimension:
+
+$$
+X \in \mathbb{R}^{C \times T \times H \times W}.
+$$
+
+### Common methods
+
+- **Frame tokens:** encode each frame into one vector; cheap but discards spatial detail.
+- **Per-frame patches:** patchify every frame; preserves detail but creates long sequences.
+- **Tubelets:** split a video into 3D blocks spanning time and space.
+- **Discrete video codes:** quantize a learned spatiotemporal latent grid.
+- **Adaptive tokens:** pool tracks, objects, or events into content-dependent units.
+
+For tubelet size $P_t\times P_h\times P_w$, the number of tokens is
+
+$$
+N
+=
+\frac{T}{P_t}
+\frac{H}{P_h}
+\frac{W}{P_w}.
+$$
+
+```{python}
+import torch.nn as nn
+
+
+class TubeletTokenizer(nn.Module):
+    def __init__(self, in_channels, d_model, tubelet_size, patch_size):
+        super().__init__()
+        kernel = (tubelet_size, patch_size, patch_size)
+        self.projection = nn.Conv3d(
+            in_channels,
+            d_model,
+            kernel_size=kernel,
+            stride=kernel,
+        )
+
+    def forward(self, videos):
+        # (B, C, T, H, W) -> (B, D, T', H', W')
+        tokens = self.projection(videos)
+        # Preserve a conventional time-major raster order.
+        return tokens.flatten(2).transpose(1, 2)
+
+
+videos = torch.randn(2, 3, 8, 32, 32)
+video_tokenizer = TubeletTokenizer(
+    in_channels=3, d_model=64, tubelet_size=2, patch_size=8
+)
+video_tokens = video_tokenizer(videos)
+assert video_tokens.shape == (2, 4 * 4 * 4, 64)
+video_tokens.shape
+```
+
+Video sequence length grows across three axes. Tokenization therefore controls
+not only information loss but also the quadratic cost of dense attention.
+
+### Questions to fill in
+
+- What temporal information is lost when every frame is tokenized independently?
+- How does tubelet size affect motion resolution and sequence length?
+- When should spatial and temporal attention be factorized?
+- How should variable frame rates and video durations be handled?
+
+## Semantic IDs in Recommendation Systems
+
+Traditional recommenders often assign every item an arbitrary atomic ID:
+
+$$
+\text{item} \longrightarrow i.
+$$
+
+The ID uniquely identifies the item but says nothing about its content or its
+relationship to other items. A **semantic ID** instead maps an item embedding to
+a short sequence of learned discrete codes:
+
+$$
+\text{item}
+\xrightarrow{\text{encoder}}
+z
+\xrightarrow{\text{quantizer}}
+(c_1,c_2,\ldots,c_M).
+$$
+
+Generative recommenders can then predict the next item's semantic ID
+autoregressively. [TIGER](https://papers.neurips.cc/paper_files/paper/2023/file/20dcab0f14046a5c6b02b61da9f13229-Paper-Conference.pdf)
+is a representative example using residual-quantized semantic IDs for
+generative retrieval.
+
+### Residual quantization
+
+Starting with item embedding $z$ and residual $r_0=z$, codebook level $m$
+selects
+
+$$
+c_m
+=
+\arg\min_k
+\left\|r_{m-1}-e_k^{(m)}\right\|_2^2,
+$$
+
+then updates
+
+$$
+r_m = r_{m-1}-e_{c_m}^{(m)}.
+$$
+
+The quantized approximation is
+
+$$
+\widehat z
+=
+\sum_{m=1}^{M}e_{c_m}^{(m)}.
+$$
+
+Early codes capture coarse structure; later codes refine the residual. Shared
+prefixes may therefore reflect semantic similarity, although this is an
+optimization outcome rather than an unconditional guarantee.
+
+### Minimal residual quantizer
+
+```{python}
+def residual_quantize(vectors, codebooks):
+    """
+    Args:
+        vectors: (N, D)
+        codebooks: (M, K, D), one K-entry codebook per level
+
+    Returns:
+        semantic_ids: (N, M)
+        quantized: (N, D)
+    """
+    residual = vectors
+    quantized = torch.zeros_like(vectors)
+    all_ids = []
+
+    for codebook in codebooks:
+        distances = torch.cdist(residual.float(), codebook.float())
+        code_ids = distances.argmin(dim=-1)
+        selected = codebook[code_ids]
+
+        all_ids.append(code_ids)
+        quantized = quantized + selected
+        residual = residual - selected
+
+    return torch.stack(all_ids, dim=-1), quantized
+
+
+torch.manual_seed(0)
+item_embeddings = torch.randn(6, 8)
+codebooks = torch.randn(3, 16, 8)
+semantic_ids, reconstructed = residual_quantize(
+    item_embeddings, codebooks
+)
+assert semantic_ids.shape == (6, 3)
+semantic_ids
+```
+
+This function performs only nearest-code assignment. Training an RQ-VAE also
+requires an encoder, decoder, reconstruction objective, codebook/commitment
+losses, and a strategy for updating codebooks.
+
+### Why semantic IDs can help
+
+- replace a massive item embedding table with shared code embeddings
+- expose similarity through shared codes or prefixes
+- let a sequence model generate and retrieve items token by token
+- transfer information to rare or new items when their content embeddings can be encoded
+
+### What can go wrong
+
+- **Collisions:** multiple items may receive the same complete semantic ID.
+- **Invalid generations:** a predicted code sequence may not correspond to any catalog item.
+- **Quantization loss:** nearby or distinct item embeddings may be distorted by codebook boundaries.
+- **Catalog drift:** new items and changing item semantics can require re-tokenization.
+- **Popularity leakage:** content-derived similarity may not capture collaborative preference signals.
+- **Longer decoding:** one recommendation now requires predicting several tokens.
+
+Practical systems may add a disambiguation token for collisions and use a
+catalog trie or constrained beam search so every generated prefix can lead to a
+valid item.
+
+### Atomic IDs versus semantic IDs
+
+| Property | Atomic item ID | Semantic ID |
+|---|---|---|
+| Tokens per item | 1 | $M$ |
+| Meaning of token | arbitrary identity | learned code or cluster |
+| Similar items share parameters | indirectly | explicitly through codes |
+| Collision-free | yes by construction | requires handling |
+| New-item support | requires a new embedding | can encode item features, subject to model design |
+| Generative retrieval | one huge vocabulary | smaller vocabulary over multiple decoding steps |
+
+### Interview questions
+
+- How are semantic IDs different from hashing item IDs?
+- Why use multiple residual codebooks rather than one enormous codebook?
+- Do shared semantic-ID prefixes guarantee similar user preference?
+- How would you prevent the decoder from generating nonexistent items?
+- How do collisions affect training targets and retrieval?
+- When should the item encoder use content, collaborative signals, or both?
+- How do codebook size and depth affect capacity and decoding latency?
+
+## One Framework for All Modalities
+
+Many learned tokenizers can be summarized as
+
+$$
+x
+\xrightarrow{E}
+z_{1:T}
+\xrightarrow{Q}
+c_{1:T}
+\xrightarrow{D}
+\widehat x,
+$$
+
+where:
+
+- $E$ segments and encodes the input,
+- $Q$ optionally quantizes continuous latents into discrete IDs,
+- a sequence model processes or predicts the tokens,
+- $D$ is needed when reconstructing the original modality.
+
+| Goal | Tokenizer should preserve |
+|---|---|
+| Classification/retrieval | task-relevant semantics |
+| Autoregressive generation | enough detail for faithful reconstruction |
+| Streaming | causal, low-latency state |
+| Multimodal modeling | manageable token rate and alignment across modalities |
+| Recommendation | item identity, useful similarity, and valid catalog structure |
+
+## General Interview Questions
+
+- What makes a good tokenization?
+- When must tokens be discrete, and when can they remain continuous?
+- How does token rate affect Transformer compute and memory?
+- What is the tradeoff between semantic abstraction and reconstruction fidelity?
+- Why is token ordering obvious for text but a design choice for images and video?
+- How would you combine several modality vocabularies in one autoregressive model?
+- Which tokenizer components are trained jointly with the downstream model?
+
+## References
+
+- [BPE for neural machine translation](https://arxiv.org/abs/1508.07909)
+- [SentencePiece](https://arxiv.org/abs/1808.06226)
+- [Vision Transformer](https://arxiv.org/abs/2010.11929)
+- [VQ-VAE](https://arxiv.org/abs/1711.00937)
+- [SoundStream](https://arxiv.org/abs/2107.03312)
+- [TIGER: Recommender Systems with Generative Retrieval](https://papers.neurips.cc/paper_files/paper/2023/file/20dcab0f14046a5c6b02b61da9f13229-Paper-Conference.pdf)

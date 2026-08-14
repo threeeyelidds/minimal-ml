@@ -1,0 +1,115 @@
+---
+title: "Positional Encoding"
+---
+
+## Why Position Information Is Necessary
+
+Self-attention alone is permutation-equivariant: permuting the input tokens
+permutes the outputs in the same way. The attention score $q_i^T k_j$ contains
+content similarity, but it does not inherently say whether token $j$ comes
+before or after token $i$, or how far apart they are.
+
+Position information can be introduced by:
+
+- adding a position-dependent vector to each token representation
+- modifying attention scores with a position-dependent bias
+- transforming queries and keys as a function of their positions
+
+> **Learning prompt:** Precisely distinguish permutation equivariance from
+> permutation invariance. Which one describes self-attention?
+
+## Absolute Positional Encodings
+
+### Sinusoidal encoding
+
+TODO:
+
+- Write the sine/cosine equations.
+- Explain why every position has a deterministic representation.
+- Show how relative offsets can be expressed through linear transformations.
+- Discuss extrapolation beyond the training sequence length.
+
+### Learned position embeddings
+
+A learned position table is added to the token embeddings:
+
+$$
+x_t = E_{\text{token}}[w_t] + E_{\text{position}}[t].
+$$
+
+TODO:
+
+- Compare learned and sinusoidal absolute embeddings.
+- Explain the fixed maximum-length limitation of a learned table.
+- Identify where the position embedding enters a decoder-only Transformer.
+
+See the learned-position integration in the
+[Transformer implementation](transformer.qmd#minimal-pytorch-implementation).
+
+## Relative Position Bias
+
+Instead of modifying the input representation, add a position-dependent term
+to the attention logits:
+
+$$
+S_{ij}
+=
+\frac{q_i^T k_j}{\sqrt{d_h}} + b(i,j).
+$$
+
+TODO:
+
+- When does $b(i,j)$ depend only on $i-j$?
+- How are relative distances bucketed in T5-style biases?
+- How does ALiBi bias attention as distance grows?
+
+## Rotary Position Embeddings (RoPE)
+
+RoPE applies a position-dependent rotation to pairs of query and key
+dimensions:
+
+$$
+q_t' = R_t q_t,
+\qquad
+k_s' = R_s k_s.
+$$
+
+Because rotation matrices are orthogonal,
+
+$$
+(q_t')^T k_s'
+=
+q_t^T R_t^T R_s k_s
+=
+q_t^T R_{s-t}k_s.
+$$
+
+Thus the attention score depends on the relative displacement $s-t$, even
+though each query and key is rotated using its absolute position.
+
+TODO:
+
+- Derive the two-dimensional rotation applied to each feature pair.
+- Explain how the rotation frequencies vary across dimensions.
+- Implement RoPE for tensors shaped $(B,h,T,d_h)$.
+- Explain why RoPE is applied to Q and K but not V.
+- Compare RoPE with additive absolute embeddings and relative biases.
+
+## Context-Length Extension
+
+TODO:
+
+- Why can RoPE performance degrade beyond its training context length?
+- Position interpolation
+- Frequency-aware or NTK-aware scaling
+- YaRN and related approaches
+- Tradeoffs between extrapolation quality and short-context behavior
+
+## Interview Questions
+
+- Why does self-attention require position information?
+- Does the causal mask by itself fully encode token positions?
+- What is the difference between absolute and relative position information?
+- How does RoPE make attention scores depend on relative displacement?
+- Why must the RoPE head dimension be arranged in pairs?
+- What makes context-length extension difficult?

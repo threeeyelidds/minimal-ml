@@ -40,6 +40,7 @@ $$
 ### What is the residual stream?
 
 TODO:
+
 - Interpret $X$ as the shared communication channel across layers.
 - Attention and MLP blocks write updates into this stream.
 - Why residual connections make deep Transformers easier to optimize.
@@ -165,7 +166,7 @@ $$
 d_{\text{ff}} > d_{\text{model}}.
 $$
 
-### SwiGLU
+### SwiGLU {#sec-transformer-swiglu}
 
 Modern LLMs often use gated MLPs:
 
@@ -179,6 +180,10 @@ W_o
 (W_ux)
 \right].
 $$
+
+For the gating intuition, parameter-count derivation, model-width comparisons,
+and GPT-OSS variant, see
+[Gated Activations](../foundations/activations.qmd#sec-gated-activations).
 
 TODO:
 - Why gating helps
@@ -210,45 +215,7 @@ This is a useful way to think about a Transformer as alternating
 
 ---
 
-## 6. Positional Information
-
-Self-attention alone is permutation-equivariant, so positional information must be introduced separately.
-
-### Absolute positional embeddings
-
-TODO
-
-### RoPE
-
-TODO:
-- Rotate Q/K by position-dependent angles
-- Relative-position interpretation
-- Why RoPE is common in modern LLMs
-
-$$
-q_t' = R_t q_t,
-\qquad
-k_s' = R_s k_s.
-$$
-
-Then
-
-$$
-(q_t')^\top k_s'
-=
-q_t^\top R_{s-t}k_s.
-$$
-
-### Context-length extensions
-
-TODO:
-- RoPE scaling
-- NTK-aware scaling
-- YaRN / related approaches
-
----
-
-## 7. Full Decoder-Only Transformer
+## 6. Full Decoder-Only Transformer
 
 Pipeline:
 
@@ -287,9 +254,192 @@ TODO:
 - Final normalization
 - Autoregressive next-token objective
 
+Self-attention does not inherently encode token order. The implementation below
+uses learned absolute position embeddings; see
+[Positional Encoding](positional_encoding.qmd) for the alternatives and their
+derivations.
+
+### Minimal PyTorch implementation
+
+This is a small, readable decoder-only Transformer rather than a
+production-optimized implementation. It uses:
+
+- pre-norm residual blocks
+- causal multi-head self-attention
+- RMSNorm
+- a SwiGLU MLP
+- learned absolute position embeddings
+- a weight-tied language-model head
+
+```{python}
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+
+class RMSNorm(nn.Module):
+    def __init__(self, d_model, eps=1e-6):
+        super().__init__()
+        self.eps = eps
+        self.weight = nn.Parameter(torch.ones(d_model))
+
+    def forward(self, x):
+        # Compute the normalization statistic in FP32 for stability.
+        rms = x.float().pow(2).mean(dim=-1, keepdim=True)
+        normalized = x.float() * torch.rsqrt(rms + self.eps)
+        return (normalized * self.weight.float()).to(x.dtype)
+
+
+class CausalSelfAttention(nn.Module):
+    def __init__(self, d_model, num_heads, dropout=0.0):
+        super().__init__()
+        assert d_model % num_heads == 0
+
+        self.num_heads = num_heads
+        self.d_head = d_model // num_heads
+        self.dropout = dropout
+        self.qkv_proj = nn.Linear(d_model, 3 * d_model, bias=False)
+        self.out_proj = nn.Linear(d_model, d_model, bias=False)
+
+    def forward(self, x):
+        batch_size, seq_len, d_model = x.shape
+        q, k, v = self.qkv_proj(x).chunk(3, dim=-1)
+
+        def split_heads(tensor):
+            return tensor.view(
+                batch_size, seq_len, self.num_heads, self.d_head
+            ).transpose(1, 2)
+
+        q, k, v = map(split_heads, (q, k, v))
+
+        # PyTorch chooses an available SDPA kernel and applies the causal mask.
+        output = F.scaled_dot_product_attention(
+            q,
+            k,
+            v,
+            dropout_p=self.dropout if self.training else 0.0,
+            is_causal=True,
+        )
+
+        output = output.transpose(1, 2).contiguous().view(
+            batch_size, seq_len, d_model
+        )
+        return self.out_proj(output)
+
+
+class SwiGLU(nn.Module):
+    def __init__(self, d_model, d_ff):
+        super().__init__()
+        self.gate_proj = nn.Linear(d_model, d_ff, bias=False)
+        self.up_proj = nn.Linear(d_model, d_ff, bias=False)
+        self.down_proj = nn.Linear(d_ff, d_model, bias=False)
+
+    def forward(self, x):
+        return self.down_proj(F.silu(self.gate_proj(x)) * self.up_proj(x))
+
+
+class TransformerBlock(nn.Module):
+    def __init__(self, d_model, num_heads, d_ff, dropout=0.0):
+        super().__init__()
+        self.attn_norm = RMSNorm(d_model)
+        self.attention = CausalSelfAttention(d_model, num_heads, dropout)
+        self.mlp_norm = RMSNorm(d_model)
+        self.mlp = SwiGLU(d_model, d_ff)
+        self.residual_dropout = nn.Dropout(dropout)
+
+    def forward(self, x):
+        x = x + self.residual_dropout(self.attention(self.attn_norm(x)))
+        x = x + self.residual_dropout(self.mlp(self.mlp_norm(x)))
+        return x
+
+
+class DecoderOnlyTransformer(nn.Module):
+    def __init__(
+        self,
+        vocab_size,
+        max_seq_len,
+        d_model,
+        num_heads,
+        num_layers,
+        d_ff,
+        dropout=0.0,
+    ):
+        super().__init__()
+        self.max_seq_len = max_seq_len
+        self.token_embedding = nn.Embedding(vocab_size, d_model)
+        self.position_embedding = nn.Embedding(max_seq_len, d_model)
+        self.embedding_dropout = nn.Dropout(dropout)
+        self.blocks = nn.ModuleList(
+            [
+                TransformerBlock(d_model, num_heads, d_ff, dropout)
+                for _ in range(num_layers)
+            ]
+        )
+        self.final_norm = RMSNorm(d_model)
+        self.lm_head = nn.Linear(d_model, vocab_size, bias=False)
+
+        # The input embedding and output classifier share one weight matrix.
+        self.lm_head.weight = self.token_embedding.weight
+
+    def forward(self, token_ids):
+        _, seq_len = token_ids.shape
+        if seq_len > self.max_seq_len:
+            raise ValueError(
+                f"sequence length {seq_len} exceeds {self.max_seq_len}"
+            )
+
+        positions = torch.arange(seq_len, device=token_ids.device)
+        x = self.token_embedding(token_ids)
+        x = x + self.position_embedding(positions)[None, :, :]
+        x = self.embedding_dropout(x)
+
+        for block in self.blocks:
+            x = block(x)
+
+        return self.lm_head(self.final_norm(x))
+```
+
+```{python}
+torch.manual_seed(0)
+
+model = DecoderOnlyTransformer(
+    vocab_size=100,
+    max_seq_len=32,
+    d_model=64,
+    num_heads=4,
+    num_layers=2,
+    d_ff=128,
+)
+
+token_ids = torch.randint(0, 100, (2, 12))
+logits = model(token_ids)
+assert logits.shape == (2, 12, 100)
+logits.shape
+```
+
+For next-token training, shift the labels by one position:
+
+```{python}
+loss = F.cross_entropy(
+    logits[:, :-1].reshape(-1, logits.size(-1)),
+    token_ids[:, 1:].reshape(-1),
+)
+loss
+```
+
+### Trace the tensor shapes
+
+| Stage | Shape |
+|---|---|
+| Token IDs | $(B,T)$ |
+| Token + position embeddings | $(B,T,d)$ |
+| Q, K, V after splitting heads | $(B,h,T,d_h)$ |
+| Each block's output | $(B,T,d)$ |
+| LM logits | $(B,T,V)$ |
+
 ---
 
-## 8. Encoder vs Decoder vs Encoder–Decoder
+## 7. Encoder vs Decoder vs Encoder–Decoder
 
 ### Encoder-only
 
@@ -318,7 +468,7 @@ TODO:
 
 ---
 
-## 9. Compute and Memory
+## 8. Compute and Memory
 
 For sequence length $T$ and hidden dimension $d$:
 
@@ -342,36 +492,128 @@ TODO:
 
 ---
 
-## 10. Modern LLM Block
+## 9. Modern LLM Block
 
-A typical modern decoder block looks roughly like:
+The original 2017 Transformer used post-norm blocks, LayerNorm, sinusoidal
+positions, dense feed-forward layers, and standard multi-head attention.
+Modern LLMs retain the residual attention-plus-MLP skeleton, but change nearly
+every component around it for training stability and inference efficiency.
+
+### Major architectural changes
+
+| Change | Replaces | Why it is used |
+|---|---|---|
+| Pre-norm + RMSNorm | post-norm + LayerNorm | more stable gradient flow at large depth; cheaper normalization |
+| SwiGLU / gated MLP | ReLU FFN | improves the expressiveness and quality of the token-wise MLP |
+| RoPE | additive sinusoidal positions | injects relative-position structure directly into Q and K |
+| GQA or MQA | one KV head per query head | reduces KV-cache size and decode-time memory bandwidth |
+| MLA | directly cached per-head K/V | compresses attention state into a lower-dimensional latent cache |
+| Sparse MoE FFN | one dense FFN for every token | increases total parameter capacity without activating all parameters per token |
+| Local/global attention patterns | full attention in every layer | reduces long-context attention cost while retaining occasional global communication |
+| QK-Norm and logit control | unconstrained Q/K scale | prevents attention logits from becoming unstable as models scale |
+| Multi-token prediction | next-token-only training head | adds training signals for several future tokens and can support faster decoding |
+
+These are a menu, not a single standard block. Different model families choose
+different combinations.
+
+### Representative model families
+
+The entries below refer to specific publicly documented generations; a family
+name alone is not a stable architectural specification.
+
+| Family / example | Dense or MoE? | Attention and position | FFN / other distinguishing choices |
+|---|---|---|---|
+| [Llama 3 / 3.1](https://arxiv.org/abs/2407.21783) | Dense | GQA, RoPE, full causal attention | pre-norm RMSNorm and SwiGLU; a useful modern dense baseline |
+| [Qwen3](https://arxiv.org/abs/2505.09388) | Dense **and** sparse-MoE variants | GQA, RoPE, and QK-Norm; removes the earlier QKV biases | SwiGLU; MoE variants route each token to a subset of fine-grained experts; one model can be post-trained for thinking and non-thinking modes |
+| [DeepSeek-V3 / R1](https://arxiv.org/abs/2412.19437) | DeepSeekMoE | MLA replaces a conventional per-head KV cache with compressed latent state; RoPE is applied to a decoupled positional component | fine-grained routed experts plus shared experts, auxiliary-loss-free load balancing, and a multi-token-prediction training objective; R1 changes post-training rather than the V3 base architecture |
+| [Kimi K2](https://github.com/MoonshotAI/Kimi-K2) | Ultra-sparse MoE | MLA for KV-cache efficiency | about 1T total parameters but 32B active per token; MuonClip is a notable optimizer/training change, not a block component |
+| [GPT-OSS 120B / 20B](https://developers.openai.com/api/docs/models/gpt-oss-120b) | Sparse MoE | alternating full-context and sliding-window causal attention, GQA, RoPE, and learned attention sinks | four routed experts active per token; MoE weights are distributed in MXFP4; 120B has 117B total but 5.1B active parameters |
+
+### Dense FFN versus sparse MoE
+
+In a dense Transformer, every token passes through the same FFN:
+
+$$
+y = \operatorname{FFN}(x).
+$$
+
+In a sparse mixture-of-experts layer, a router selects a small subset of $E$
+experts:
+
+$$
+y
+=
+\sum_{e \in \operatorname{TopK}(r(x))}
+g_e(x)\operatorname{FFN}_e(x).
+$$
+
+This separates:
+
+- **total parameters**, which determine model capacity and memory footprint, from
+- **active parameters per token**, which more closely determine per-token FFN compute.
+
+MoE does not make scaling free. It introduces routing, expert load balancing,
+all-to-all communication, and a large weight-memory footprint.
+
+### Attention evolution
 
 ```text
-x
-│
-├── RMSNorm
-│
-├── Attention
-│
-└── + residual
-    │
-    ├── RMSNorm
-    │
-    ├── SwiGLU MLP
-    │
-    └── + residual
+MHA
+ ├── GQA / MQA: share K and V across query heads
+ ├── MLA: cache a compressed latent representation
+ └── local/global patterns: change which token pairs interact
 ```
 
-Common modern choices:
+These address different bottlenecks:
 
-- decoder-only architecture
-- pre-norm
-- RMSNorm
-- RoPE
-- SwiGLU
-- GQA
-- FlashAttention
-- KV cache
+- GQA/MQA primarily shrink the KV cache.
+- MLA learns a low-rank compression of the cached attention state.
+- Sliding-window attention reduces the number of attended positions.
+- QK-Norm and attention-logit soft caps target numerical stability.
+- Attention sinks provide learned positions that all tokens can attend to,
+  helping stabilize windowed or streaming attention.
+
+See [Advanced Attention Techniques](../advanced/advanced_attention.qmd) for
+derivations, comparisons, and reference implementations.
+
+### Architecture versus training and systems
+
+Several important “modern LLM” advances do **not** change the basic Transformer
+block:
+
+| Category | Examples |
+|---|---|
+| Training objective | multi-token prediction, instruction tuning, preference optimization, reasoning RL |
+| Optimizer / precision | MuonClip, FP8 training, MXFP4 weight storage |
+| Attention kernel | FlashAttention |
+| Inference state | KV caching, paged attention, prefix caching |
+| Decoding | speculative decoding, constrained decoding, reasoning budgets |
+| Product system | model routing, tools, retrieval, memory, multimodal encoders |
+
+For example, DeepSeek-R1 largely inherits the DeepSeek-V3 model architecture
+and changes the post-training recipe. Similarly, ChatGPT capabilities cannot be
+read as direct evidence of a particular attention or MoE design because the
+product includes models and system-level components whose block-level details
+are not publicly specified.
+
+### Interview checkpoints
+
+- Why can an MoE model have many total parameters but much lower per-token compute?
+- Compare GQA and MLA: what exactly is stored in their KV caches?
+- Which changes reduce arithmetic, and which mainly reduce memory bandwidth?
+- Why are expert load balancing and all-to-all communication difficult?
+- Is multi-token prediction an architectural change, a training-objective change, or both?
+- Why is it incorrect to infer ChatGPT's architecture from GPT-OSS?
+
+### Primary references
+
+- [The Llama 3 Herd of Models](https://arxiv.org/abs/2407.21783)
+- [Qwen3 Technical Report](https://arxiv.org/abs/2505.09388)
+- [DeepSeek-V3 Technical Report](https://arxiv.org/abs/2412.19437)
+- [Kimi K2 repository and technical report](https://github.com/MoonshotAI/Kimi-K2)
+- [GPT-OSS model documentation](https://developers.openai.com/api/docs/models/gpt-oss-120b)
+- [Verifying GPT-OSS implementations](https://developers.openai.com/cookbook/articles/gpt-oss/verifying-implementations)
+- [ChatGPT's current Instant-model alias](https://developers.openai.com/api/docs/models/chat-latest)
 
 ---
 

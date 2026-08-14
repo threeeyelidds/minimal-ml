@@ -1,0 +1,441 @@
+---
+title: "Advanced Attention Techniques"
+---
+
+## Why Attention Keeps Changing
+
+Standard causal multi-head attention is simple and expressive, but it creates
+three scaling problems:
+
+1. **Quadratic work:** a sequence of length $T$ has $O(T^2)$ query-key pairs.
+2. **KV-cache growth:** autoregressive decoding stores keys and values for every
+   layer and previous token.
+3. **Unstable logits:** large query/key norms can saturate softmax or destabilize
+   training.
+
+Modern attention techniques attack different bottlenecks. They should not be
+treated as interchangeable.
+
+| Technique | Main target | Exact dense attention? | Main tradeoff |
+|---|---|---:|---|
+| GQA / MQA | KV-cache size and bandwidth | Yes | fewer independent KV representations |
+| MLA | KV-cache size and bandwidth | Yes | more complicated projections and kernels |
+| Sliding-window attention | quadratic arithmetic and cache length | No | direct access is limited to nearby tokens |
+| Hybrid local/global layers | long-context arithmetic | No | layer schedule becomes an architectural choice |
+| QK-Norm | logit stability | Yes, after redefining Q/K | constrains magnitude information |
+| Logit soft-capping | logit stability | No | deliberately compresses extreme scores |
+| Attention sinks | streaming/window stability | No | some probability mass or cache space is reserved for sinks |
+| FlashAttention | HBM traffic and activation memory | Yes | specialized fused kernel required |
+
+“Exact” above means exact relative to ordinary attention with the same projected
+$Q,K,V$ and mask. FlashAttention changes the execution algorithm; sliding
+windows change the attention function itself.
+
+## KV-Cache Compression
+
+### MHA, GQA, and MQA
+
+Let $h_q$ be the number of query heads and $h_{kv}$ the number of key/value
+heads:
+
+$$
+Q \in \mathbb{R}^{B\times h_q\times T\times d_h},
+\qquad
+K,V \in \mathbb{R}^{B\times h_{kv}\times T\times d_h}.
+$$
+
+The variants differ only in $h_{kv}$:
+
+$$
+\begin{array}{c|c}
+\text{MHA} & h_{kv}=h_q \\
+\text{GQA} & 1<h_{kv}<h_q \\
+\text{MQA} & h_{kv}=1.
+\end{array}
+$$
+
+For $L$ layers, sequence length $T$, and $s$ bytes per scalar, the cache is
+
+$$
+\text{KV bytes}=2LBTh_{kv}d_hs.
+$$
+
+GQA therefore reduces cache memory linearly with the number of KV heads, while
+leaving the number of query heads unchanged. See the full derivation and
+implementation in [Attention](../transformers/attention.qmd#multi-query-attention-mqa-and-grouped-query-attention-gqa).
+
+### Multi-head Latent Attention (MLA)
+
+GQA compresses the cache by sharing complete KV heads. MLA instead learns a
+low-dimensional latent representation from which keys and values are produced.
+This is used by model families such as
+[DeepSeek-V2/V3](https://arxiv.org/abs/2412.19437) and
+[Kimi K2](https://github.com/MoonshotAI/Kimi-K2).
+
+For hidden state $h_t$, first down-project to a compressed KV latent:
+
+$$
+c_t^{KV}=W^{DKV}h_t,
+\qquad
+c_t^{KV}\in\mathbb{R}^{d_c},
+\qquad d_c \ll h_{kv}d_h.
+$$
+
+Up-projections construct the content parts of the keys and values:
+
+$$
+k_t^C=W^{UK}c_t^{KV},
+\qquad
+v_t^C=W^{UV}c_t^{KV}.
+$$
+
+RoPE cannot generally be absorbed into these low-rank projections because its
+rotation depends on position. MLA therefore separates a small positional key:
+
+$$
+k_t^R=\operatorname{RoPE}(W^{KR}h_t,t).
+$$
+
+The attention key and query are split into content and positional parts:
+
+$$
+k_t=[k_t^C;k_t^R],
+\qquad
+q_t=[q_t^C;q_t^R].
+$$
+
+Instead of caching the fully expanded $k_t^C$ and $v_t^C$ for every head, an
+optimized decoder caches
+
+$$
+\boxed{c_t^{KV}\text{ and }k_t^R}.
+$$
+
+#### Why expansion need not be materialized
+
+For the content-key score,
+
+$$
+(q_t^C)^T k_s^C
+=
+(q_t^C)^T W^{UK}c_s^{KV}
+=
+\left((W^{UK})^Tq_t^C\right)^Tc_s^{KV}.
+$$
+
+The key up-projection can therefore be absorbed into the query side. Similarly,
+the value up-projection can be combined with the attention output projection.
+This **weight absorption** lets inference operate directly on cached latent
+vectors rather than reconstructing all full K/V heads.
+
+#### Cache comparison
+
+Ignoring batch and scalar byte size, the per-layer, per-token cache is roughly:
+
+| Method | Cached scalars per token |
+|---|---:|
+| MHA | $2h_qd_h$ |
+| GQA | $2h_{kv}d_h$ |
+| MQA | $2d_h$ |
+| MLA | $d_c+d_R$ |
+
+Here $d_R$ is the dimension of the decoupled positional key. MLA is not simply
+“GQA with fewer heads”: it compresses K and V through a learned low-rank latent
+space.
+
+### Interview checkpoint: GQA versus MLA
+
+- GQA shares full K/V heads across groups of query heads.
+- MLA caches a learned latent and reconstructs—or algebraically absorbs—the
+  content key/value projections.
+- Both target memory bandwidth, but they impose different parameterizations and
+  need different inference kernels.
+
+## Sparse and Local Attention
+
+### Sliding-window attention
+
+With causal full attention, query position $i$ may attend to every $j\le i$.
+With causal window size $W$:
+
+$$
+M_{ij}
+=
+\begin{cases}
+0, & \max(0,i-W+1)\le j\le i,\\
+-\infty, & \text{otherwise}.
+\end{cases}
+$$
+
+The number of query-key pairs falls from $O(T^2)$ to $O(TW)$. During decoding,
+only the most recent $W$ ordinary KV positions need to remain in a strictly
+windowed layer.
+
+```{python}
+import torch
+
+
+def sliding_causal_mask(query_len, key_len, window_size, device=None):
+    """True where a causal query may attend within its trailing window."""
+    # Handles self-attention and decoding where key_len >= query_len.
+    query_offset = key_len - query_len
+    q_pos = torch.arange(query_len, device=device) + query_offset
+    k_pos = torch.arange(key_len, device=device)
+
+    causal = k_pos[None, :] <= q_pos[:, None]
+    local = k_pos[None, :] > q_pos[:, None] - window_size
+    return causal & local
+
+
+mask = sliding_causal_mask(6, 6, window_size=3)
+expected = torch.tensor(
+    [
+        [1, 0, 0, 0, 0, 0],
+        [1, 1, 0, 0, 0, 0],
+        [1, 1, 1, 0, 0, 0],
+        [0, 1, 1, 1, 0, 0],
+        [0, 0, 1, 1, 1, 0],
+        [0, 0, 0, 1, 1, 1],
+    ],
+    dtype=torch.bool,
+)
+assert torch.equal(mask, expected)
+mask
+```
+
+Local attention does not mean old information disappears immediately. After
+stacking layers, information can propagate through intermediate tokens, so the
+effective receptive field grows with depth. However, it cannot reproduce
+single-layer direct access to every old token.
+
+### Hybrid local/global schedules
+
+A common compromise alternates local and global layers:
+
+```text
+layer 1: local window
+layer 2: local window
+layer 3: global attention
+layer 4: local window
+layer 5: local window
+layer 6: global attention
+```
+
+Local layers reduce average cost; global layers periodically mix information
+across the full context. Other sparse layouts include dilated, block-sparse,
+landmark, and routing-based patterns.
+
+[Mistral 7B](https://arxiv.org/abs/2310.06825) is a classic sliding-window
+example. [Gemma 2](https://arxiv.org/abs/2408.00118) alternates local and global
+attention. GPT-OSS also uses an alternating full/sliding pattern.
+
+### Complexity is schedule-dependent
+
+If a fraction $p$ of layers uses global attention and the remainder uses window
+$W$, the attention-score work is approximately
+
+$$
+O\left(L\left[pT^2+(1-p)TW\right]d_h\right).
+$$
+
+If $p$ stays constant as $T$ grows, the architecture remains asymptotically
+quadratic, even though its constant factor can be much smaller.
+
+## Stabilizing Attention Logits
+
+### QK-Norm
+
+QK-Norm normalizes each query and key vector before their dot product:
+
+$$
+\widehat q_i=\operatorname{Norm}(q_i),
+\qquad
+\widehat k_j=\operatorname{Norm}(k_j),
+$$
+
+$$
+S_{ij}=\frac{\widehat q_i^T\widehat k_j}{\sqrt{d_h}}.
+$$
+
+The norm is commonly RMSNorm or LayerNorm, often with learned scale parameters.
+This prevents uncontrolled Q/K norms from directly inflating attention logits.
+Qwen3 is one publicly documented example using QK-Norm.
+
+```{python}
+import torch.nn as nn
+
+
+class QKNorm(nn.Module):
+    def __init__(self, d_head, eps=1e-6):
+        super().__init__()
+        self.q_scale = nn.Parameter(torch.ones(d_head))
+        self.k_scale = nn.Parameter(torch.ones(d_head))
+        self.eps = eps
+
+    def _rms_norm(self, x, scale):
+        variance = x.float().pow(2).mean(dim=-1, keepdim=True)
+        normalized = x.float() * torch.rsqrt(variance + self.eps)
+        return (normalized * scale.float()).to(x.dtype)
+
+    def forward(self, q, k):
+        return self._rms_norm(q, self.q_scale), self._rms_norm(k, self.k_scale)
+
+
+q = torch.randn(2, 4, 8, 16)
+k = torch.randn(2, 4, 8, 16)
+q_norm, k_norm = QKNorm(16)(q, k)
+assert q_norm.shape == q.shape and k_norm.shape == k.shape
+```
+
+QK-Norm differs from cosine attention because learned scale parameters can
+restore dimension-wise magnitude, and the surrounding attention formulation
+may retain the usual $1/\sqrt{d_h}$ scale.
+
+### Attention-logit soft-capping
+
+Another strategy bounds scores smoothly before softmax:
+
+$$
+\widetilde S
+=
+c\tanh\left(\frac{S}{c}\right).
+$$
+
+For $|S|\ll c$, the function is approximately the identity. Extreme logits
+approach $\pm c$, limiting softmax saturation without a hard, nondifferentiable
+clip. Gemma 2 is a documented example of attention-logit soft-capping.
+
+```{python}
+def soft_cap(scores, cap):
+    return cap * torch.tanh(scores / cap)
+
+
+scores = torch.tensor([-100.0, -1.0, 0.0, 1.0, 100.0])
+capped = soft_cap(scores, cap=10.0)
+assert torch.all(capped.abs() <= 10.0)
+capped
+```
+
+QK-Norm acts on the vectors that create a score; soft-capping acts directly on
+the completed score. They can therefore be combined.
+
+## Attention Sinks
+
+Softmax forces every row to distribute total probability mass of one. Some
+heads may not want to retrieve information from any ordinary token, yet they
+cannot assign zero probability everywhere. A sink supplies a harmless target
+for this excess probability.
+
+Two related ideas are often called “attention sinks”:
+
+1. **Sink tokens:** retain a few initial tokens permanently while evicting old
+   ordinary tokens from a streaming KV cache. The
+   [StreamingLLM](https://arxiv.org/abs/2309.17453) observation is that those
+   early positions often collect disproportionate attention mass.
+2. **Learned sink logits:** add learned per-head logits to the softmax
+   denominator. GPT-OSS uses learned attention sinks. If the sink has no value
+   contribution, attending to it scales down retrieval from ordinary values.
+
+For a learned zero-valued sink with logit $a_h$ for head $h$:
+
+$$
+o_i
+=
+\frac{\sum_j e^{S_{ij}}v_j}
+{e^{a_h}+\sum_j e^{S_{ij}}}.
+$$
+
+```{python}
+def attention_with_sink(q, k, v, sink_logits, mask=None):
+    """Educational learned zero-valued sink; q/k/v are (B, H, T, D)."""
+    scale = q.shape[-1] ** -0.5
+    scores = (q @ k.transpose(-2, -1)) * scale
+    if mask is not None:
+        scores = scores.masked_fill(~mask, -torch.inf)
+
+    # Append one learned logit per head. Its implicit value vector is zero.
+    sink = sink_logits[None, :, None, None].expand(
+        scores.shape[0], -1, scores.shape[-2], 1
+    )
+    logits = torch.cat([scores, sink], dim=-1)
+    weights = torch.softmax(logits, dim=-1)
+    return weights[..., :-1] @ v
+
+
+q = torch.randn(2, 4, 6, 8)
+k = torch.randn(2, 4, 6, 8)
+v = torch.randn(2, 4, 6, 8)
+sink_logits = torch.zeros(4)
+sink_output = attention_with_sink(q, k, v, sink_logits)
+assert sink_output.shape == q.shape
+```
+
+Sink tokens and learned zero-valued sinks are not identical: the former have
+ordinary K/V representations and remain in the cache; the latter can be
+implemented as extra normalization mass without a retrieved value.
+
+## How the Techniques Compose
+
+A single model may combine several techniques because they operate at different
+points:
+
+```text
+hidden states
+   ↓ projection
+Q, K, V or latent KV          ← GQA / MLA changes this representation
+   ↓ optional normalization
+normalized Q, K               ← QK-Norm
+   ↓ dot products + mask
+attention logits              ← local/global pattern changes allowed pairs
+   ↓ optional transformation
+stabilized logits             ← soft-capping
+   ↓ softmax normalization
+attention weights             ← sink adds a normalization target
+   ↓ weighted value sum
+output                         ← FlashAttention can fuse this execution
+```
+
+Examples:
+
+- GQA + RoPE + sliding windows reduces both KV-cache width and attended length.
+- QK-Norm + soft-capping controls logits at two different stages.
+- FlashAttention can execute causal, local, or GQA attention, provided the
+  kernel supports that layout.
+- MLA needs specialized kernels to realize the memory benefit without expanding
+  full keys and values.
+
+## What Each Technique Does *Not* Solve
+
+| Technique | Does not by itself solve |
+|---|---|
+| GQA / MQA | quadratic prefill arithmetic |
+| MLA | quadratic dense attention arithmetic |
+| Sliding window | direct retrieval of arbitrary old tokens |
+| Hybrid attention | quadratic complexity if a constant fraction of layers stays global |
+| QK-Norm | KV-cache memory |
+| Soft-capping | long-context arithmetic or cache growth |
+| Attention sink | factual recall from evicted tokens |
+| FlashAttention | quadratic dense-attention FLOPs |
+
+## Interview Questions
+
+- Compare GQA, MQA, and MLA in terms of what is cached.
+- Derive why a causal sliding window costs $O(TW)$ rather than $O(T^2)$.
+- Does stacking windowed layers make them equivalent to full attention?
+- Why does a hybrid model with periodically global layers remain quadratic?
+- At what stage do QK-Norm and logit soft-capping operate?
+- Why might a learned zero-valued sink be useful?
+- What is the difference between sink tokens and learned sink logits?
+- Which techniques change the mathematical attention pattern, and which only
+  change its implementation?
+
+## Primary References
+
+- [GQA: Training Generalized Multi-Query Transformer Models](https://arxiv.org/abs/2305.13245)
+- [DeepSeek-V3 Technical Report](https://arxiv.org/abs/2412.19437)
+- [Kimi K2](https://github.com/MoonshotAI/Kimi-K2)
+- [Mistral 7B](https://arxiv.org/abs/2310.06825)
+- [Gemma 2](https://arxiv.org/abs/2408.00118)
+- [StreamingLLM](https://arxiv.org/abs/2309.17453)
+- [GPT-OSS model documentation](https://developers.openai.com/api/docs/models/gpt-oss-120b)
+- [FlashAttention](https://arxiv.org/abs/2205.14135)

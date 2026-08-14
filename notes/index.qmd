@@ -2,10 +2,23 @@
 title: "Notes"
 ---
 
+## Foundations
+
+- [Activation Functions](foundations/activations.qmd)
+- [Loss Functions](foundations/losses.qmd)
+- [First- and Second-Order Optimization](foundations/optimizers.qmd)
+- [RNNs and LSTMs](foundations/rnn_lstm.qmd)
+
 ## Transformers
 
+- [Tokenization Across Modalities](tokenization.qmd)
 - [Attention](transformers/attention.qmd)
 - [Transformers](transformers/transformer.qmd)
+- [Positional Encoding](transformers/positional_encoding.qmd)
+
+## Advanced
+
+- [Advanced Attention Techniques](advanced/advanced_attention.qmd)
 
 ## Coming next
 

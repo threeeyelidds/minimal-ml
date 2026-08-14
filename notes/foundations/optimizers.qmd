@@ -1,0 +1,640 @@
+---
+title: "First- and Second-Order Optimization"
+---
+
+## Optimization Setup
+
+Training seeks parameters $\theta$ that minimize an empirical objective:
+
+$$
+\min_\theta
+L(\theta)
+=
+\frac{1}{N}\sum_{i=1}^{N}\ell(f_\theta(x_i),y_i).
+$$
+
+A mini-batch provides a stochastic gradient
+
+$$
+g_t=\nabla_\theta L_{\mathcal B_t}(\theta_t),
+$$
+
+which is an estimate of the full-dataset gradient. An optimizer converts the
+current gradient and its accumulated state into a parameter update.
+
+Optimization quality depends on more than the optimizer name:
+
+- learning rate and schedule
+- batch size and gradient noise
+- initialization and normalization
+- gradient clipping
+- regularization and weight decay
+- numerical precision
+
+## Stochastic Gradient Descent
+
+Vanilla SGD updates
+
+$$
+\theta_{t+1}=\theta_t-\eta g_t,
+$$
+
+where $\eta$ is the learning rate.
+
+Full-batch gradient descent uses the entire dataset per step. SGD historically
+means one example per step; in deep learning, “SGD” commonly means mini-batch
+SGD.
+
+### Why stochasticity can help
+
+- mini-batches make each update cheaper
+- gradient noise can help leave saddle points or narrow regions
+- many updates can be made before one full pass through the data
+
+But noisy gradients may oscillate, especially in directions of high curvature.
+
+## Momentum
+
+Momentum maintains an exponential moving average of gradients:
+
+$$
+v_t=\beta v_{t-1}+g_t,
+$$
+
+$$
+\theta_{t+1}=\theta_t-\eta v_t.
+$$
+
+Some texts instead define $v_t=\beta v_{t-1}-\eta g_t$ and then add $v_t$ to
+$\theta$. Always inspect the convention before comparing equations.
+
+Momentum:
+
+- accelerates movement along consistently aligned gradients
+- damps oscillation when gradients repeatedly change sign
+- introduces one state scalar per parameter
+
+### Nesterov momentum
+
+Nesterov accelerated gradient evaluates the gradient at an approximate
+look-ahead position:
+
+$$
+g_t=\nabla L(\theta_t-\eta\beta v_{t-1}).
+$$
+
+The exact update form depends on the momentum convention and framework.
+
+## Per-Parameter Adaptive Learning Rates
+
+### AdaGrad
+
+AdaGrad accumulates squared gradients:
+
+$$
+s_t=s_{t-1}+g_t^2,
+$$
+
+$$
+\theta_{t+1}
+=
+\theta_t-\eta\frac{g_t}{\sqrt{s_t}+\epsilon}.
+$$
+
+Parameters with frequent large gradients receive smaller effective learning
+rates. This can work well for sparse features, but $s_t$ only grows, so the
+learning rate may decay too aggressively.
+
+### RMSProp
+
+RMSProp replaces the sum with an exponential moving average:
+
+$$
+s_t=\beta_2s_{t-1}+(1-\beta_2)g_t^2,
+$$
+
+$$
+\theta_{t+1}
+=
+\theta_t-eta\frac{g_t}{\sqrt{s_t}+\epsilon}.
+$$
+
+Old squared gradients decay, preventing the denominator from growing forever.
+
+## Adam
+
+Adam combines a first-moment estimate with an RMSProp-like second moment:
+
+$$
+m_t=\beta_1m_{t-1}+(1-\beta_1)g_t,
+$$
+
+$$
+v_t=\beta_2v_{t-1}+(1-\beta_2)g_t^2.
+$$
+
+Because both moving averages start at zero, early estimates are biased toward
+zero. Adam corrects this:
+
+$$
+\widehat m_t=\frac{m_t}{1-\beta_1^t},
+\qquad
+\widehat v_t=\frac{v_t}{1-\beta_2^t}.
+$$
+
+The update is
+
+$$
+\theta_{t+1}
+=
+\theta_t
+-
+\eta
+\frac{\widehat m_t}{\sqrt{\widehat v_t}+\epsilon}.
+$$
+
+Adam stores two state values per parameter, in addition to gradients and
+parameters. Optimizer state is therefore a major training-memory cost.
+
+### Why bias correction matters
+
+If $m_0=0$ and the expected gradient is constant $\mu$, then
+
+$$
+\mathbb E[m_t]=(1-\beta_1^t)\mu.
+$$
+
+Dividing by $1-\beta_1^t$ recovers an unbiased first-moment estimate under this
+simplified assumption. The same argument applies to $v_t$.
+
+## AdamW and Weight Decay
+
+### L2 regularization
+
+Adding an L2 penalty changes the loss:
+
+$$
+L_{\text{reg}}(\theta)
+=
+L(\theta)+\frac{\lambda}{2}\|\theta\|_2^2,
+$$
+
+so the gradient becomes
+
+$$
+g_t^{\text{reg}}=g_t+\lambda\theta_t.
+$$
+
+### Decoupled weight decay
+
+AdamW applies parameter shrinkage separately from the adaptive gradient update:
+
+$$
+\theta_{t+1}
+=
+(1-\eta\lambda)\theta_t
+-
+\eta
+\frac{\widehat m_t}{\sqrt{\widehat v_t}+\epsilon}.
+$$
+
+With ordinary SGD, L2 regularization and weight decay can be equivalent under a
+matching convention. With Adam, adding $\lambda\theta$ to the gradient causes
+the penalty to be rescaled by the adaptive denominator, so it is not equivalent
+to uniform parameter decay. AdamW restores the decoupled interpretation.
+
+Common practice excludes biases and normalization scale parameters from weight
+decay, though this remains a modeling choice rather than a mathematical law.
+
+## First Order, Second Order, and Preconditioning
+
+The terminology is easy to blur:
+
+- A **first-order** method uses gradients $g=\nabla L(\theta)$.
+- A classical **second-order** method uses the Hessian
+  $H=\nabla^2L(\theta)$ or an approximation to its curvature.
+- A **preconditioned** method transforms the gradient with a matrix chosen to
+  improve the optimization geometry.
+
+Newton's method uses
+
+$$
+\Delta\theta=-H^{-1}g.
+$$
+
+The Hessian rescales directions according to local curvature, which can correct
+ill-conditioning. For a model with $P$ parameters, however, a dense Hessian has
+$P^2$ entries and solving the Newton system is generally impractical.
+
+Modern methods therefore use structured approximations. Shampoo constructs
+preconditioners from gradient covariance matrices and is commonly grouped with
+second-order or second-order-inspired optimizers. Muon is also sometimes called
+second-order-inspired, but it does **not** estimate the loss Hessian: it
+orthogonalizes matrix momentum using the parameter's matrix geometry.
+
+## Shampoo
+
+[Shampoo](https://arxiv.org/abs/1802.09568) preserves the tensor structure of a
+parameter instead of flattening every dimension into one vector. For a matrix
+parameter $W\in\mathbb R^{m\times n}$ with gradient $G_t$, it accumulates
+
+$$
+L_t=\epsilon I_m+\sum_{s=1}^{t}G_sG_s^T,
+$$
+
+$$
+R_t=\epsilon I_n+\sum_{s=1}^{t}G_s^TG_s.
+$$
+
+The preconditioned direction is
+
+$$
+\widetilde G_t
+=
+L_t^{-1/4}G_tR_t^{-1/4}.
+$$
+
+### Why the exponent is $-1/4$
+
+Vector AdaGrad applies the inverse square root of one second-moment matrix. A
+matrix parameter has a left and right preconditioner. Giving each side a
+$-1/4$ power makes their combined action analogous to an inverse square root.
+
+For an order-$k$ tensor, Shampoo maintains one preconditioner per tensor axis;
+the corresponding exponent is $-1/(2k)$.
+
+### Why Shampoo is more structured than Adam
+
+Adam keeps an element-wise second moment:
+
+$$
+v_{ij}\approx\mathbb E[G_{ij}^2].
+$$
+
+Shampoo's $L$ and $R$ retain correlations between rows and between columns.
+This can produce a better-conditioned update, but matrix inverse roots cost more
+than element-wise division.
+
+### Minimal matrix Shampoo direction
+
+```{python}
+import torch
+
+
+def symmetric_matrix_power(matrix, power, eps=1e-12):
+    """Apply a scalar power to a symmetric positive-definite matrix."""
+    eigenvalues, eigenvectors = torch.linalg.eigh(matrix.float())
+    powered = eigenvalues.clamp_min(eps).pow(power)
+    return (eigenvectors * powered.unsqueeze(0)) @ eigenvectors.T
+
+
+def shampoo_direction(gradient, left_state, right_state, eps=1e-4):
+    """One educational Shampoo update for a 2D parameter gradient."""
+    rows, columns = gradient.shape
+    g = gradient.float()
+
+    left_state.add_(g @ g.T)
+    right_state.add_(g.T @ g)
+
+    left = left_state + eps * torch.eye(rows, device=g.device)
+    right = right_state + eps * torch.eye(columns, device=g.device)
+
+    left_root = symmetric_matrix_power(left, -0.25)
+    right_root = symmetric_matrix_power(right, -0.25)
+    return left_root @ g @ right_root
+
+
+gradient = torch.randn(8, 4)
+left_state = torch.zeros(8, 8)
+right_state = torch.zeros(4, 4)
+direction = shampoo_direction(gradient, left_state, right_state)
+assert direction.shape == gradient.shape
+assert torch.isfinite(direction).all()
+```
+
+Production Shampoo implementations typically add momentum, weight decay,
+blocking for large dimensions, distributed state, infrequent inverse-root
+updates, and **grafting**. Grafting borrows the update magnitude from a simpler
+optimizer such as SGD or AdaGrad while using Shampoo's matrix direction.
+
+### Shampoo costs
+
+For an $m\times n$ parameter, Shampoo stores $m^2+n^2$ preconditioner scalars,
+not $m^2n^2$. This is far smaller than a full preconditioner over all $mn$
+parameters, but can still be expensive for very wide matrices. Matrix inverse
+roots are also substantially more expensive than Adam's element-wise update.
+
+## Muon
+
+Muon stands for **MomentUm Orthogonalized by Newton--Schulz**. For a 2D weight
+matrix, first form momentum
+
+$$
+M_t=\beta M_{t-1}+(1-\beta)G_t,
+$$
+
+then replace its singular values by approximately one:
+
+$$
+M_t=U\Sigma V^T
+\quad\Longrightarrow\quad
+\operatorname{orth}(M_t)=UV^T.
+$$
+
+Equivalently, for the appropriate full-rank case,
+
+$$
+\operatorname{orth}(M)
+=
+M(M^TM)^{-1/2}.
+$$
+
+Muon then steps in this orthogonalized direction, with implementation-specific
+scaling and weight decay:
+
+$$
+W_{t+1}=W_t-\eta\,s(W_t)\operatorname{orth}(M_t).
+$$
+
+The polar factor prevents a few large singular directions in the raw momentum
+matrix from dominating the update. It can also be interpreted as a steepest-
+descent direction under a matrix spectral-norm geometry.
+
+### Newton--Schulz orthogonalization
+
+Computing an SVD for every matrix at every step is expensive. Muon instead uses
+a small number of matrix-multiplication iterations. A simple Newton--Schulz
+polar iteration is
+
+$$
+X_{k+1}
+=
+\frac{3}{2}X_k
+-
+\frac{1}{2}X_kX_k^TX_k,
+$$
+
+after scaling $X_0$ so its singular values lie in the convergence region. Each
+singular value approximately follows
+
+$$
+\sigma_{k+1}
+=
+\frac{3}{2}\sigma_k-\frac{1}{2}\sigma_k^3,
+$$
+
+which drives nonzero singular values toward one.
+
+```{python}
+def newton_schulz_orthogonalize(matrix, num_steps=10, eps=1e-7):
+    """Educational polar-factor approximation for a 2D matrix."""
+    x = matrix.float()
+    x = x / (x.norm() + eps)
+
+    for _ in range(num_steps):
+        x = 1.5 * x - 0.5 * (x @ x.T) @ x
+
+    return x.to(matrix.dtype)
+
+
+momentum = torch.randn(8, 4)
+orthogonal_momentum = newton_schulz_orthogonalize(momentum)
+
+# For a tall full-rank matrix, columns of the polar factor are orthonormal.
+gram = orthogonal_momentum.T @ orthogonal_momentum
+torch.testing.assert_close(gram, torch.eye(4), atol=2e-3, rtol=2e-3)
+```
+
+The code shows the mathematical idea, not a production Muon kernel. Practical
+implementations often use tuned higher-order Newton--Schulz polynomials, lower-
+precision matrix multiplies, Nesterov-style momentum, explicit update scaling,
+and distributed communication strategies.
+
+### Which parameters use Muon?
+
+Muon is designed for matrix-structured hidden weights such as attention and MLP
+projections. A common recipe uses AdamW for:
+
+- embedding tables
+- the output language-model head
+- biases and scalar parameters
+- normalization scales
+- other parameters that are not suitable 2D hidden-weight matrices
+
+Thus “training with Muon” commonly means a hybrid Muon + AdamW optimizer setup.
+
+### Is Muon a second-order optimizer?
+
+There are two conventions:
+
+- In a broad geometry-aware sense, Muon is often described as second-order or
+  Shampoo-like because it applies a matrix inverse-square-root-style transform.
+- In the classical optimization sense, it is **not Hessian-based**: the
+  Newton--Schulz name refers to the numerical method used to compute a polar
+  factor, not Newton's method on the loss.
+
+For interviews, state which definition you are using rather than simply calling
+Muon “Newton's method.”
+
+### Shampoo versus Muon
+
+| Property | Shampoo | Muon |
+|---|---|---|
+| Input state | gradient second moments | momentum matrix |
+| Matrix operation | left/right inverse roots | polar-factor orthogonalization |
+| Tracks row/column covariance over time | yes | no explicit covariance matrices |
+| State for an $m\times n$ matrix | typically $m^2+n^2$ before blocking | typically one $mn$ momentum buffer |
+| Typical expensive operation | eigendecomposition or inverse root | repeated matrix multiplications |
+| Parameter coverage | general tensors, with practical restrictions | mainly 2D hidden weights |
+| Hessian estimate | no explicit Hessian | no |
+
+## Optimizer Comparison
+
+| Optimizer | State per parameter | Main idea | Common weakness |
+|---|---:|---|---|
+| SGD | 0 | follow current gradient | sensitive to conditioning and learning rate |
+| SGD + momentum | 1 | average gradient direction | still uses one global learning-rate scale |
+| AdaGrad | 1 | cumulative squared-gradient scaling | effective rate can vanish |
+| RMSProp | 1 | EMA of squared gradients | no first-moment estimate in basic form |
+| Adam | 2 | first and second moments | coupled L2 is not uniform weight decay |
+| AdamW | 2 | Adam + decoupled decay | high optimizer-state memory |
+| Shampoo | structured matrices | row/column covariance preconditioning | inverse roots and matrix state are expensive |
+| Muon | 1 for selected matrices | orthogonalize momentum | special parameter routing and matrix multiplies |
+
+## Minimal AdamW Implementation
+
+The implementation below is educational and omits parameter groups, sparse
+gradients, fused kernels, capturable state, and mixed-precision concerns.
+
+```{python}
+import math
+import torch
+
+
+class MinimalAdamW:
+    def __init__(
+        self,
+        parameters,
+        lr=1e-3,
+        betas=(0.9, 0.999),
+        eps=1e-8,
+        weight_decay=0.0,
+    ):
+        self.parameters = list(parameters)
+        self.lr = lr
+        self.beta1, self.beta2 = betas
+        self.eps = eps
+        self.weight_decay = weight_decay
+        self.step_count = 0
+        self.first_moments = [torch.zeros_like(p) for p in self.parameters]
+        self.second_moments = [torch.zeros_like(p) for p in self.parameters]
+
+    @torch.no_grad()
+    def step(self):
+        self.step_count += 1
+        correction1 = 1.0 - self.beta1 ** self.step_count
+        correction2 = 1.0 - self.beta2 ** self.step_count
+
+        for parameter, first, second in zip(
+            self.parameters, self.first_moments, self.second_moments
+        ):
+            if parameter.grad is None:
+                continue
+
+            gradient = parameter.grad
+
+            # Decoupled weight decay.
+            parameter.mul_(1.0 - self.lr * self.weight_decay)
+
+            first.mul_(self.beta1).add_(gradient, alpha=1.0 - self.beta1)
+            second.mul_(self.beta2).addcmul_(
+                gradient, gradient, value=1.0 - self.beta2
+            )
+
+            first_hat = first / correction1
+            second_hat = second / correction2
+            parameter.addcdiv_(
+                first_hat,
+                second_hat.sqrt().add_(self.eps),
+                value=-self.lr,
+            )
+
+    def zero_grad(self):
+        for parameter in self.parameters:
+            parameter.grad = None
+```
+
+```{python}
+parameter = torch.nn.Parameter(torch.tensor([3.0, -4.0]))
+optimizer = MinimalAdamW([parameter], lr=0.1, weight_decay=0.01)
+initial_norm = parameter.detach().norm()
+
+for _ in range(100):
+    loss = parameter.square().sum()
+    loss.backward()
+    optimizer.step()
+    optimizer.zero_grad()
+
+assert parameter.norm() < 0.02 * initial_norm
+parameter
+```
+
+## Learning-Rate Schedules
+
+The learning-rate schedule can matter as much as the optimizer.
+
+### Warmup
+
+Early gradients and optimizer moments can be poorly calibrated. Linear warmup
+increases the learning rate from zero to a peak over $T_w$ steps:
+
+$$
+\eta_t=\eta_{\max}\frac{t}{T_w},
+\qquad t\le T_w.
+$$
+
+### Cosine decay
+
+After warmup, cosine decay commonly uses
+
+$$
+\eta_t
+=
+\eta_{\min}
++
+\frac{1}{2}(\eta_{\max}-\eta_{\min})
+\left[
+1+\cos\left(\pi\frac{t-T_w}{T-T_w}\right)
+\right].
+$$
+
+Other choices include constant-with-warmup, linear decay, inverse-square-root
+decay, one-cycle schedules, and loss- or validation-triggered schedules.
+
+## Gradient Clipping
+
+Global-norm clipping rescales all gradients together when their norm exceeds
+$c$:
+
+$$
+g
+\leftarrow
+g\min\left(1,\frac{c}{\|g\|_2+\epsilon}\right).
+$$
+
+This preserves the joint gradient direction while bounding its magnitude.
+Element-wise value clipping changes the direction and is a different operation.
+
+Clipping can contain rare gradient spikes, but persistent clipping may indicate
+an excessive learning rate or a deeper stability problem.
+
+## Large-Scale Training Considerations
+
+- **Mixed precision:** optimizer moments are often maintained in higher
+  precision than forward weights or activations.
+- **Loss scaling:** prevents small FP16 gradients from underflowing before the
+  optimizer sees them.
+- **Gradient accumulation:** simulates a larger batch but changes the number of
+  optimizer steps per token unless the schedule is adjusted.
+- **State sharding:** ZeRO/FSDP-style methods distribute parameters, gradients,
+  and optimizer states across devices.
+- **Fused optimizers:** combine many small element-wise operations to reduce
+  kernel launches and memory traffic.
+- **Adafactor and low-rank state methods:** reduce second-moment memory by
+  factorizing or approximating optimizer state.
+
+## Interview Questions
+
+- Why can mini-batch gradients be useful despite being noisy?
+- How does momentum reduce oscillation?
+- Why does AdaGrad's effective learning rate continually shrink?
+- Derive Adam's bias-correction terms.
+- Why are L2 regularization and weight decay different for Adam?
+- How much optimizer-state memory does Adam require?
+- Why do large Transformer runs use learning-rate warmup?
+- Compare global-norm clipping with element-wise clipping.
+- How does gradient accumulation affect optimization and scheduling?
+- Why might SGD generalize differently from AdamW?
+- How does Shampoo preserve matrix or tensor structure that Adam discards?
+- Why does matrix Shampoo use $-1/4$ powers on both sides?
+- What does Muon's Newton--Schulz iteration compute, and why is it not Newton's
+  method on the training loss?
+- Why is Muon commonly paired with AdamW for the remaining parameters?
+- Compare the optimizer-state and computation costs of AdamW, Shampoo, and Muon.
+
+## Exercises
+
+- [ ] Implement SGD with momentum using both common sign conventions.
+- [ ] Compare `MinimalAdamW` with `torch.optim.AdamW` for several deterministic steps.
+- [ ] Plot the effective per-parameter learning rates in Adam.
+- [ ] Derive training-memory usage for parameters, gradients, and Adam states.
+- [ ] Implement linear warmup followed by cosine decay.
+- [ ] Compare Shampoo's direction with an element-wise AdaGrad direction.
+- [ ] Compare the Newton--Schulz polar factor against `torch.linalg.svd`.
+- [ ] Route 2D hidden weights to Muon and all other parameters to AdamW.
+
+## Primary References
+
+- [Shampoo: Preconditioned Stochastic Tensor Optimization](https://arxiv.org/abs/1802.09568)
+- [Muon Is Scalable for LLM Training](https://arxiv.org/abs/2502.16982)
+- [Practical Efficiency of Muon for Pretraining](https://arxiv.org/abs/2505.02222)

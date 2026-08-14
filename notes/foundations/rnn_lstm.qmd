@@ -1,0 +1,446 @@
+---
+title: "RNNs and LSTMs"
+---
+
+## Why Sequence Models Need State
+
+An ordinary feed-forward network maps each input independently:
+
+$$
+y_t=f(x_t).
+$$
+
+A recurrent neural network maintains a hidden state that summarizes the prefix:
+
+$$
+h_t=f(x_t,h_{t-1}),
+\qquad
+y_t=g(h_t).
+$$
+
+The same parameters are reused at every time step. This gives an RNN:
+
+- a variable-length input interface
+- parameter sharing across positions
+- an inductive bias toward sequential processing
+- a fixed-size state through which past information must flow
+
+## Vanilla RNN
+
+The standard tanh RNN is
+
+$$
+a_t=W_{xh}x_t+W_{hh}h_{t-1}+b_h,
+$$
+
+$$
+h_t=\tanh(a_t),
+$$
+
+$$
+y_t=W_{hy}h_t+b_y.
+$$
+
+The initial state $h_0$ may be zero, learned, or provided by another encoder.
+
+### Model structure
+
+```{mermaid}
+flowchart LR
+    X1[Input x₁] --> C1[RNN cell]
+    H0[Initial state h₀] --> C1
+    C1 --> H1[Hidden state h₁]
+    H1 --> C2[RNN cell]
+    X2[Input x₂] --> C2
+    C2 --> H2[Hidden state h₂]
+    H2 --> C3[RNN cell]
+    X3[Input x₃] --> C3
+    C3 --> H3[Hidden state h₃]
+
+    H1 --> Y1[Output y₁]
+    H2 --> Y2[Output y₂]
+    H3 --> Y3[Output y₃]
+
+    classDef state fill:#e8f0fe,stroke:#4c78a8,color:#222;
+    classDef cell fill:#f3e8ff,stroke:#8b5cf6,color:#222;
+    classDef input fill:#e8f8ee,stroke:#3a8f5c,color:#222;
+    class H0,H1,H2,H3 state;
+    class C1,C2,C3 cell;
+    class X1,X2,X3 input;
+```
+
+The three cells above are copies of the **same computation with shared
+parameters**, not three independently learned layers. Drawing the recurrence
+across time is called **unrolling** the RNN.
+
+### Tensor shapes
+
+For batch size $B$, sequence length $T$, input size $d_x$, hidden size $d_h$,
+and output size $d_y$:
+
+| Tensor | Shape |
+|---|---:|
+| Input sequence $X$ | $(B,T,d_x)$ |
+| Hidden state $h_t$ | $(B,d_h)$ |
+| Input weight $W_{xh}$ | $(d_h,d_x)$ |
+| Recurrent weight $W_{hh}$ | $(d_h,d_h)$ |
+| Output sequence $Y$ | $(B,T,d_y)$ |
+
+### Minimal PyTorch implementation
+
+```{python}
+import torch
+import torch.nn as nn
+
+
+class SimpleRNNCell(nn.Module):
+    def __init__(self, input_size, hidden_size):
+        super().__init__()
+        self.hidden_size = hidden_size
+        self.input_proj = nn.Linear(input_size, hidden_size, bias=True)
+        self.hidden_proj = nn.Linear(hidden_size, hidden_size, bias=False)
+
+    def forward(self, x_t, h_previous):
+        return torch.tanh(
+            self.input_proj(x_t) + self.hidden_proj(h_previous)
+        )
+
+
+class SimpleRNN(nn.Module):
+    def __init__(self, input_size, hidden_size):
+        super().__init__()
+        self.hidden_size = hidden_size
+        self.cell = SimpleRNNCell(input_size, hidden_size)
+
+    def forward(self, inputs, initial_state=None):
+        batch_size, _, _ = inputs.shape
+        if initial_state is None:
+            hidden = inputs.new_zeros(batch_size, self.hidden_size)
+        else:
+            hidden = initial_state
+
+        outputs = []
+        for x_t in inputs.unbind(dim=1):
+            hidden = self.cell(x_t, hidden)
+            outputs.append(hidden)
+
+        return torch.stack(outputs, dim=1), hidden
+
+
+torch.manual_seed(0)
+sequence = torch.randn(2, 5, 3)
+rnn = SimpleRNN(input_size=3, hidden_size=7)
+all_hidden_states, final_hidden_state = rnn(sequence)
+
+assert all_hidden_states.shape == (2, 5, 7)
+assert final_hidden_state.shape == (2, 7)
+```
+
+## Backpropagation Through Time
+
+Unrolling converts recurrence into a deep computation graph whose depth grows
+with sequence length. Training differentiates through this graph, which is
+called **backpropagation through time** (BPTT).
+
+For the vanilla RNN,
+
+$$
+\frac{\partial h_t}{\partial h_{t-1}}
+=
+\operatorname{diag}\left(1-\tanh^2(a_t)\right)W_{hh}.
+$$
+
+A gradient traveling from time $T$ to time $t$ contains a product of Jacobians:
+
+$$
+\frac{\partial h_T}{\partial h_t}
+=
+\prod_{k=t+1}^{T}
+\frac{\partial h_k}{\partial h_{k-1}}.
+$$
+
+Repeated multiplication causes:
+
+- **vanishing gradients** when the relevant singular values are mostly below 1
+- **exploding gradients** when they are mostly above 1
+
+Tanh saturation further shrinks gradients because
+$1-\tanh^2(a_t)\approx0$ for large $|a_t|$.
+
+### Practical mitigations
+
+- gradient clipping for exploding gradients
+- orthogonal or carefully scaled recurrent initialization
+- truncated BPTT to limit graph length and memory
+- gated cells such as LSTMs and GRUs
+- skip connections and normalization in recurrent architectures
+
+Truncated BPTT bounds training cost, but it also prevents gradients from
+directly assigning credit across truncation boundaries.
+
+## Long Short-Term Memory
+
+An LSTM introduces a cell state $c_t$ with an additive update path. Three gates
+control what to forget, write, and expose.
+
+For concatenated input
+
+$$
+z_t=[x_t;h_{t-1}],
+$$
+
+the gates and candidate memory are
+
+$$
+f_t=\sigma(W_fz_t+b_f)
+\qquad\text{forget gate},
+$$
+
+$$
+i_t=\sigma(W_iz_t+b_i)
+\qquad\text{input gate},
+$$
+
+$$
+o_t=\sigma(W_oz_t+b_o)
+\qquad\text{output gate},
+$$
+
+$$
+\widetilde c_t=\tanh(W_cz_t+b_c)
+\qquad\text{candidate memory}.
+$$
+
+The cell and hidden states update as
+
+$$
+\boxed{c_t=f_t\odot c_{t-1}+i_t\odot\widetilde c_t},
+$$
+
+$$
+\boxed{h_t=o_t\odot\tanh(c_t)}.
+$$
+
+### LSTM cell structure
+
+```{mermaid}
+flowchart LR
+    C0[Previous cell cₜ₋₁] --> MULF((×))
+    XH[Input xₜ and hidden hₜ₋₁] --> F[Forget gate fₜ = sigmoid]
+    XH --> I[Input gate iₜ = sigmoid]
+    XH --> G[Candidate c̃ₜ = tanh]
+    XH --> O[Output gate oₜ = sigmoid]
+
+    F --> MULF
+    I --> MULI((×))
+    G --> MULI
+    MULF --> ADD((+))
+    MULI --> ADD
+    ADD --> C1[New cell state cₜ]
+
+    C1 --> TANH[tanh]
+    TANH --> MULO((×))
+    O --> MULO
+    MULO --> H1[New hidden state hₜ]
+
+    classDef state fill:#e8f0fe,stroke:#4c78a8,color:#222;
+    classDef gate fill:#fff2cc,stroke:#c49a00,color:#222;
+    classDef candidate fill:#e8f8ee,stroke:#3a8f5c,color:#222;
+    classDef op fill:#f3e8ff,stroke:#8b5cf6,color:#222;
+    class C0,C1,H1 state;
+    class F,I,O gate;
+    class G,TANH candidate;
+    class MULF,MULI,MULO,ADD op;
+```
+
+The upper cell-state path is the key difference from a vanilla RNN. It combines
+old memory and new content **additively**, while sigmoid gates provide
+element-wise control.
+
+### Why the LSTM helps gradient flow
+
+Holding the gates fixed for intuition,
+
+$$
+\frac{\partial c_t}{\partial c_{t-1}}=f_t.
+$$
+
+Across several steps,
+
+$$
+\frac{\partial c_T}{\partial c_t}
+\approx
+\prod_{k=t+1}^{T} f_k.
+$$
+
+When forget gates remain near one, the cell provides a nearly linear path for
+information and gradients. This avoids repeatedly passing the main memory
+through a saturating tanh transformation at every time step.
+
+LSTMs mitigate vanishing gradients; they do not eliminate them. Products of
+forget gates below one still decay, and the full gradient includes additional
+paths through gate dependencies.
+
+## Minimal LSTM Implementation
+
+Efficient implementations fuse all four affine transformations into one matrix
+multiplication:
+
+$$
+[f_t,i_t,\widetilde c_t,o_t]
+=
+W[x_t;h_{t-1}]+b.
+$$
+
+```{python}
+class MinimalLSTMCell(nn.Module):
+    def __init__(self, input_size, hidden_size):
+        super().__init__()
+        self.hidden_size = hidden_size
+        self.gates = nn.Linear(input_size + hidden_size, 4 * hidden_size)
+
+    def forward(self, x_t, state):
+        hidden_previous, cell_previous = state
+        combined = torch.cat([x_t, hidden_previous], dim=-1)
+        forget_raw, input_raw, candidate_raw, output_raw = self.gates(
+            combined
+        ).chunk(4, dim=-1)
+
+        forget_gate = torch.sigmoid(forget_raw)
+        input_gate = torch.sigmoid(input_raw)
+        candidate = torch.tanh(candidate_raw)
+        output_gate = torch.sigmoid(output_raw)
+
+        cell = forget_gate * cell_previous + input_gate * candidate
+        hidden = output_gate * torch.tanh(cell)
+        return hidden, cell
+
+
+class MinimalLSTM(nn.Module):
+    def __init__(self, input_size, hidden_size):
+        super().__init__()
+        self.hidden_size = hidden_size
+        self.cell = MinimalLSTMCell(input_size, hidden_size)
+
+    def forward(self, inputs, initial_state=None):
+        batch_size, _, _ = inputs.shape
+        if initial_state is None:
+            hidden = inputs.new_zeros(batch_size, self.hidden_size)
+            cell = inputs.new_zeros(batch_size, self.hidden_size)
+        else:
+            hidden, cell = initial_state
+
+        outputs = []
+        for x_t in inputs.unbind(dim=1):
+            hidden, cell = self.cell(x_t, (hidden, cell))
+            outputs.append(hidden)
+
+        return torch.stack(outputs, dim=1), (hidden, cell)
+
+
+lstm = MinimalLSTM(input_size=3, hidden_size=7)
+lstm_outputs, (final_hidden, final_cell) = lstm(sequence)
+
+assert lstm_outputs.shape == (2, 5, 7)
+assert final_hidden.shape == (2, 7)
+assert final_cell.shape == (2, 7)
+```
+
+### Parameter count
+
+For input size $d_x$ and hidden size $d_h$, the fused LSTM affine layer has
+
+$$
+4d_h(d_x+d_h)+4d_h
+$$
+
+parameters. A comparable vanilla RNN has
+
+$$
+d_h(d_x+d_h)+d_h.
+$$
+
+An LSTM cell therefore has roughly four times the recurrent-cell parameters and
+affine compute of a vanilla RNN with the same dimensions.
+
+## Understanding the Gates
+
+| Gate | Range | Multiplies | Interpretation |
+|---|---:|---|---|
+| Forget $f_t$ | $(0,1)$ | old cell $c_{t-1}$ | retain or erase old memory |
+| Input $i_t$ | $(0,1)$ | candidate $\widetilde c_t$ | write new memory |
+| Output $o_t$ | $(0,1)$ | exposed $\tanh(c_t)$ | reveal cell information as hidden state |
+
+The cell state is not constrained to $(-1,1)$ because it is an additive
+accumulator. The hidden state is bounded by the output gate and tanh.
+
+### Connection to SwiGLU
+
+Both LSTMs and SwiGLU use multiplicative, input-dependent modulation:
+
+$$
+\text{content}\odot\text{gate}.
+$$
+
+But their roles differ:
+
+| SwiGLU | LSTM |
+|---|---|
+| gates features within one feed-forward evaluation | gates state flow across time |
+| no persistent cell state | maintains $c_t$ across sequence positions |
+| SiLU gate can exceed one or become slightly negative | sigmoid gates remain between zero and one |
+| increases feature interactions | controls remembering, writing, and reading |
+
+See [Activation Functions](activations.qmd#gated-activations) for the SwiGLU
+derivation.
+
+## RNN, LSTM, and Transformer Comparison
+
+| Property | Vanilla RNN | LSTM | Causal Transformer |
+|---|---|---|---|
+| Sequence computation | sequential | sequential | parallel during training/prefill |
+| Persistent state | $h_t$ | $h_t$ and $c_t$ | KV cache during decoding |
+| Direct path to distant token | through every intermediate state | gated cell path | attention edge |
+| Training path length across distance $T$ | $O(T)$ | $O(T)$ | often $O(1)$ per layer with full attention |
+| Per-layer sequence cost | $O(T)$ recurrent steps | $O(T)$ recurrent steps | $O(T^2)$ dense attention |
+| Streaming memory | fixed state | fixed state | growing cache unless attention is bounded |
+
+RNNs and LSTMs remain attractive for streaming and bounded-state settings.
+Transformers dominate many large-scale sequence tasks because training can be
+parallelized across positions and attention provides short paths between distant
+tokens.
+
+## Common Variants
+
+- **Bidirectional RNN/LSTM:** runs separate recurrences forward and backward;
+  useful when the entire sequence is available, but not causal.
+- **Stacked RNN/LSTM:** feeds one recurrent layer's sequence into another.
+- **GRU:** combines LSTM-style control into reset and update gates with no
+  separate cell state.
+- **Peephole LSTM:** gates also inspect the cell state.
+- **Encoder-decoder recurrence:** encodes one sequence and autoregressively
+  generates another, often with attention.
+
+## Interview Questions
+
+- Why are shared parameters across time important in an RNN?
+- Derive the recurrent Jacobian product that causes vanishing gradients.
+- Why can gradient clipping help explosion but not vanishing?
+- What is the difference between an LSTM's cell state and hidden state?
+- Explain the forget, input, and output gates without using their names.
+- Why does an additive cell update improve gradient flow?
+- Does an LSTM eliminate vanishing gradients?
+- Derive the LSTM parameter count.
+- What does truncated BPTT change mathematically?
+- Why are RNNs difficult to parallelize across sequence positions?
+- When might an LSTM be preferable to a Transformer?
+- Compare an LSTM gate with a SwiGLU gate.
+
+## Exercises
+
+- [ ] Annotate every tensor shape in `MinimalLSTMCell`.
+- [ ] Initialize the forget-gate bias to a positive value and explain why this
+  encourages longer memory early in training.
+- [ ] Implement a GRU cell and compare its parameter count with an LSTM.
+- [ ] Plot gradient norm versus sequence distance for a vanilla RNN and LSTM.
+- [ ] Extend `MinimalLSTM` to multiple layers and variable-length sequences.
