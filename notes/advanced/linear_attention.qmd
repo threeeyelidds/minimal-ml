@@ -1,0 +1,275 @@
+---
+title: "Linear Attention"
+---
+
+## Motivation
+
+Standard attention for one head is
+
+$$
+\operatorname{Attention}(Q,K,V)
+=
+\operatorname{softmax}(QK^T)V.
+$$
+
+For sequence length $T$, forming the score matrix requires $O(T^2)$ pairwise
+interactions and $O(T^2)$ attention storage in a straightforward
+implementation. FlashAttention avoids materializing this matrix in high-bandwidth
+memory, but it does not change the quadratic arithmetic of dense attention.
+
+**Linear attention** changes the attention function so computation can be
+reassociated. Its cost becomes linear in sequence length when the feature
+dimension is treated as fixed.
+
+## Why Softmax Attention Cannot Simply Be Reordered
+
+Matrix multiplication is associative:
+
+$$
+(QK^T)V=Q(K^TV).
+$$
+
+But row-wise softmax sits between the two products:
+
+$$
+\operatorname{softmax}(QK^T)V
+\neq
+Q\operatorname{softmax}(K^TV).
+$$
+
+The softmax normalization for query $q_i$ depends on all of its scores against
+the keys. Moving parentheses alone therefore does not produce linear softmax
+attention.
+
+## Kernel Factorization
+
+Generalized attention can use a non-negative similarity function:
+
+$$
+o_i
+=
+\frac{
+\sum_{j=1}^{T}\operatorname{sim}(q_i,k_j)v_j
+}{
+\sum_{j=1}^{T}\operatorname{sim}(q_i,k_j)
+}.
+$$
+
+Suppose the similarity factorizes through a feature map
+$\phi:\mathbb R^{d_h}\rightarrow\mathbb R^r$:
+
+$$
+\operatorname{sim}(q,k)=\phi(q)^T\phi(k).
+$$
+
+Then the numerator can be reassociated:
+
+$$
+\begin{aligned}
+\sum_j \left[\phi(q_i)^T\phi(k_j)\right]v_j
+&=
+\phi(q_i)^T
+\left(\sum_j\phi(k_j)v_j^T\right).
+\end{aligned}
+$$
+
+Define the sequence summaries
+
+$$
+S=\sum_j\phi(k_j)v_j^T
+\in\mathbb R^{r\times d_v},
+\qquad
+z=\sum_j\phi(k_j)
+\in\mathbb R^r.
+$$
+
+The output is
+
+$$
+\boxed{
+o_i
+=
+\frac{\phi(q_i)^TS}{\phi(q_i)^Tz}
+}.
+$$
+
+No $T\times T$ matrix is required.
+
+## Causal Linear Attention as a Recurrence
+
+For causal attention, query position $i$ may use only keys and values at
+$j\leq i$. Replace the full summaries with prefix states:
+
+$$
+S_i=S_{i-1}+\phi(k_i)v_i^T,
+$$
+
+$$
+z_i=z_{i-1}+\phi(k_i),
+$$
+
+$$
+o_i
+=
+\frac{\phi(q_i)^TS_i}{\phi(q_i)^Tz_i+\varepsilon}.
+$$
+
+The causal mask is enforced by the update order, not by constructing a mask
+matrix. During autoregressive decoding, $(S_i,z_i)$ is a fixed-size recurrent
+state. This makes the connection to an RNN explicit: the sequence history is
+compressed into state rather than retained as a growing KV cache.
+
+::: {.callout-note}
+## Inclusive versus exclusive recurrence
+
+The equations update the state with $(k_i,v_i)$ before reading it, so token $i$
+can attend to itself. Reading before updating would implement a strictly
+previous-token convention.
+:::
+
+## Complexity
+
+Let query/key feature width be $r$ and value width be $d_v$.
+
+| Method | Sequence work per head | Attention state |
+|---|---:|---:|
+| Dense softmax attention | $O(T^2(d_h+d_v))$ | $O(T^2)$ naïvely; tiled by FlashAttention |
+| Linear attention | $O(Trd_v)$ | $O(rd_v+r)$ |
+
+Linear dependence on $T$ is not automatically faster. If $r d_v$ is large,
+sequences are short, or the implementation uses a slow sequential loop, dense
+attention with optimized kernels may win in wall-clock time.
+
+## Minimal Causal Implementation
+
+The positive feature map
+
+$$
+\phi(x)=\operatorname{ELU}(x)+1
+$$
+
+makes every kernel score non-negative. This is a pedagogical kernel attention
+implementation, not an approximation of ordinary softmax attention.
+
+```{python}
+import torch
+import torch.nn.functional as F
+
+
+def positive_feature_map(x):
+    return F.elu(x) + 1.0
+
+
+def causal_linear_attention(q, k, v, eps=1e-6):
+    """
+    q, k: [batch, heads, time, feature_dim]
+    v:    [batch, heads, time, value_dim]
+    """
+    q_features = positive_feature_map(q)
+    k_features = positive_feature_map(k)
+
+    batch, heads, time, feature_dim = q_features.shape
+    value_dim = v.shape[-1]
+    state = q.new_zeros(batch, heads, feature_dim, value_dim)
+    normalizer_state = q.new_zeros(batch, heads, feature_dim)
+    outputs = []
+
+    for index in range(time):
+        k_t = k_features[:, :, index]
+        v_t = v[:, :, index]
+        q_t = q_features[:, :, index]
+
+        state = state + torch.einsum("bhr,bhd->bhrd", k_t, v_t)
+        normalizer_state = normalizer_state + k_t
+
+        numerator = torch.einsum("bhr,bhrd->bhd", q_t, state)
+        denominator = torch.einsum(
+            "bhr,bhr->bh", q_t, normalizer_state
+        ).unsqueeze(-1)
+        outputs.append(numerator / denominator.clamp_min(eps))
+
+    return torch.stack(outputs, dim=2)
+```
+
+Verify the recurrence against a quadratic implementation of the **same
+kernel**, not against softmax attention:
+
+```{python}
+torch.manual_seed(0)
+q = torch.randn(2, 3, 5, 4)
+k = torch.randn(2, 3, 5, 4)
+v = torch.randn(2, 3, 5, 6)
+
+q_features = positive_feature_map(q)
+k_features = positive_feature_map(k)
+scores = torch.einsum("bhir,bhjr->bhij", q_features, k_features)
+causal = torch.ones(5, 5, dtype=torch.bool).tril()
+scores = scores.masked_fill(~causal, 0.0)
+
+expected = torch.einsum("bhij,bhjd->bhid", scores, v)
+expected = expected / scores.sum(dim=-1, keepdim=True).clamp_min(1e-6)
+actual = causal_linear_attention(q, k, v)
+torch.testing.assert_close(actual, expected)
+```
+
+The Python loop makes the recurrence easy to see but prevents efficient
+parallel training. Production implementations use chunking, prefix scans, or
+specialized recurrent kernels.
+
+## Choosing the Feature Map
+
+The feature map defines the attention kernel.
+
+- Simple positive maps such as `ELU(x) + 1` are cheap but define a different
+  similarity from softmax.
+- Random-feature methods approximate the exponential softmax kernel. Increasing
+  feature width can improve the approximation but increases compute and state.
+- Learned features can adapt the kernel but add parameters and training
+  dynamics.
+- Gated or decayed variants control how old information contributes to the
+  fixed-size state.
+
+The denominator matters. Omitting it produces unnormalized aggregation whose
+magnitude can grow with sequence length. Non-negative features make the
+normalizer interpretable and reduce the risk of cancellation near zero.
+
+## What Is Gained and Lost?
+
+### Advantages
+
+- linear sequence scaling for fixed $r$ and $d_v$
+- constant-size decoding state instead of a KV cache that grows with context
+- natural recurrent, streaming interpretation
+- causal masking is implicit in the state update
+
+### Limitations
+
+- most feature maps do not reproduce exact softmax attention
+- a fixed-size state can overwrite or entangle information from many tokens
+- prefix sums can accumulate numerical error over long sequences
+- efficient parallel training needs more than the simple recurrent loop
+- positional information, locality, forgetting, and state capacity require
+  explicit architectural choices
+
+FlashAttention and linear attention therefore solve different problems:
+FlashAttention computes ordinary dense attention with better memory movement;
+linear attention changes the operator to avoid quadratic pairwise computation.
+
+## Interview Questions
+
+- Why can $(QK^T)V$ be reassociated while $\operatorname{softmax}(QK^T)V$
+  cannot?
+- Derive the $S_i$ and $z_i$ causal recurrences.
+- In what sense is causal linear attention an RNN?
+- Why must a quadratic reference use the same kernel for a correctness test?
+- How does feature width trade approximation quality for state and compute?
+- Compare the decoding state of softmax attention, linear attention, and an RNN.
+- Why might FlashAttention outperform linear attention at moderate lengths?
+
+## Exercises
+
+- [ ] Implement the non-causal vectorized form without a Python loop.
+- [ ] Change the code to read state before updating it and explain the mask.
+- [ ] Compare outputs from the ELU kernel and softmax attention.
+- [ ] Add an exponential decay to the recurrent state.
+- [ ] Measure runtime and memory as sequence length grows.

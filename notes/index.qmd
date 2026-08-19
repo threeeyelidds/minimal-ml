@@ -19,6 +19,12 @@ title: "Notes"
 ## Advanced
 
 - [Advanced Attention Techniques](advanced/advanced_attention.qmd)
+- [Linear Attention](advanced/linear_attention.qmd)
+
+## Applied ML
+
+- [Agentic Search](applied_ml/agentic_search.qmd)
+- [Agent Harness](applied_ml/harness.qmd)
 
 ## Coming next
 

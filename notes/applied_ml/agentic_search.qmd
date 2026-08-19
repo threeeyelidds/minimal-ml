@@ -1,0 +1,773 @@
+---
+title: "Agentic Search"
+---
+
+## 1. The Problem From First Principles
+
+A language model has parametric knowledge, but an information need may depend
+on facts that are recent, obscure, private, distributed across sources, or too
+detailed to memorize. Search supplies observations from outside the model.
+
+Before designing the system, ask two questions:
+
+1. **What orchestration depth is needed?** Is one retrieval pass enough, should
+   the system adaptively search again, or must it conduct deep research?
+2. **What product owns the user experience?** Is this discovery search,
+   grounded question answering, a general agent, or a research assistant?
+
+These are independent axes. A search tool is shared infrastructure, not a peer
+category: several products and orchestration levels can use the same tool.
+
+The most general objective is:
+
+> Reduce task-relevant uncertainty using external information, under finite
+> latency, cost, context, and risk budgets.
+
+Let $s_t$ be the system state after $t$ actions and let $a_t$ be an information-
+gathering action. A useful conceptual objective is
+
+$$
+\max_\pi
+\mathbb E_{a_t\sim\pi(\cdot\mid s_t)}
+\left[
+Q(Y,E)
+-\lambda_c C
+-\lambda_t T
+-\lambda_r R
+\right],
+$$
+
+where:
+
+- $Y$ is the system's output or downstream task result
+- $E$ is its supporting evidence
+- $Q$ measures correctness, completeness, relevance, and clarity
+- $C$ is monetary or computational cost
+- $T$ is latency
+- $R$ is risk, including unsafe actions, privacy loss, and untrusted content
+
+This framing gives three immediate insights:
+
+1. More searching is not always better; an action should justify its marginal
+   cost.
+2. The required evidence discipline depends on how the search result will be
+   used.
+3. An adaptive loop earns its cost only when observations can improve later
+   actions.
+
+## 2. Orchestration Breakdown
+
+Orchestration describes **how the system decides what search action happens
+next**.
+
+| Level | Control flow | State | Typical budget | Stop condition |
+|---|---|---|---|---|
+| Single-pass retrieval | fixed, bounded pipeline | query and retrieved candidates | one query or a few predetermined rewrites | pipeline completes |
+| Adaptive search | next query depends on earlier results | current question, findings, gaps, and small budget | several searches and selected page reads | answer or parent task is sufficiently unblocked |
+| Deep research | long-horizon planning, branching, synthesis, and verification | plan, claims, evidence, contradictions, gaps, artifacts, and budget | many searches, documents, and verification actions | researched deliverable meets coverage and support thresholds |
+
+### Level 1: single-pass retrieval
+
+The system executes a known pipeline such as query interpretation, retrieval,
+reranking, and response construction. An LLM may participate in several stages,
+but future actions do not depend on observations from earlier retrieval.
+
+### Level 2: adaptive or agentic search
+
+The system searches, inspects results, identifies what remains unknown, and
+chooses another query. It is agentic because observations modify control flow.
+The task may still be short; agentic search does not imply a long report.
+
+### Level 3: deep research
+
+The system manages several research branches, accumulates attributable evidence,
+resolves conflicts, synthesizes a substantial result, and audits its support.
+Deep research is one specialized form of agentic search.
+
+Start at the lowest level likely to satisfy the task. Escalate when results
+reveal unresolved dependencies, contradictions, or coverage requirements. A
+larger loop is overhead when the information need is a simple lookup.
+
+## 3. Product Breakdown
+
+Product describes **what experience and final outcome the user receives**.
+
+| Product | User-facing outcome | Role of search | Common orchestration | Who owns completion? |
+|---|---|---|---|---|
+| Search / discovery | ranked pages, products, papers, or passages | the main product | mostly single-pass; sometimes adaptive refinement | search pipeline or user |
+| Grounded QA / answer engine | concise answer with supporting sources | evidence for the answer | single-pass or adaptive search | answer service |
+| General-purpose agent | code, action, plan, analysis, or conversation | optional capability within a broader task | single-pass lookup or adaptive search; occasionally a delegated research workflow | parent agent harness and task verifier |
+| Deep-research assistant | report, comparison, recommendation, or evidence package | central repeated workflow | deep research | research workflow and its coverage/verifier policy |
+
+The same product may expose several modes. A grounded QA service can answer an
+easy fact with one pass and escalate a multi-hop question to adaptive search. A
+general agent can perform a quick documentation lookup or delegate an entire
+research subworkflow.
+
+### The two axes compose
+
+```{mermaid}
+flowchart LR
+    W[Web, corpus, or database] --> B[Search backend]
+    B --> T[Search and fetch capabilities]
+    T --> O{Orchestration depth}
+    O --> S[Single pass]
+    O --> A[Adaptive search]
+    O --> D[Deep research]
+    S --> P{Product surface}
+    A --> P
+    D --> P
+    P --> R[Search or discovery]
+    P --> Q[Grounded QA]
+    P --> G[General agent]
+    P --> H[Research assistant]
+```
+
+This avoids a category error: “search tool inside an agent” describes a product
+integration, while “deep research” describes orchestration. A deep-research
+assistant is itself an agent using search and fetch tools.
+
+## 4. Shared Search Capability
+
+The search backend and tool interface can be reused across products. A minimal
+request and result contract might look like:
+
+```python
+from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class SearchRequest:
+    query: str
+    max_results: int = 5
+    domains: tuple[str, ...] = ()
+    published_after: str | None = None
+
+
+@dataclass(frozen=True)
+class SearchResult:
+    result_id: str
+    title: str
+    url: str
+    snippet: str
+    published_at: str | None
+```
+
+Keep `search` separate from `open` or `fetch`:
+
+- `search(query)` returns compact candidates
+- `open(result_id)` returns inspectable source content
+- optional specialized tools query papers, code, internal documents, or
+  structured databases
+
+Search snippets are leads, not reliable final evidence. Separation prevents
+every query from flooding context with full pages and lets adaptive workflows
+inspect only promising results.
+
+The [Agent Harness](harness.qmd) owns schemas, permissions, timeouts, caching,
+context insertion, and prompt-injection boundaries. The search capability should
+normally be read-only; finding an instruction on a page does not authorize an
+unrelated action.
+
+## 5. Single-Pass Retrieval
+
+A single-pass system usually follows a bounded pipeline:
+
+$$
+\text{query understanding}
+\rightarrow
+\text{retrieve}
+\rightarrow
+\text{rerank}
+\rightarrow
+\text{deduplicate}
+\rightarrow
+\text{present or answer}.
+$$
+
+An LLM may rewrite the query, interpret intent, rerank passages, generate a
+snippet, or synthesize a short response. This is still single-pass when those
+stages and the stopping point are fixed before seeing retrieval observations.
+
+Optimize normal search primarily for:
+
+- relevance and recall of the retrieved set
+- ranking quality, freshness, and source diversity
+- low latency and predictable cost
+- grounded snippets or answers
+- graceful handling of ambiguous and zero-result queries
+
+Session context can support a later user query, but the current execution state
+is generally much smaller than a research ledger. If results expose dependent
+subquestions or conflicting sources, the product can escalate to adaptive
+search.
+
+**Insight:** LLM involvement does not make a pipeline agentic. The defining
+property is adaptive control: does the system choose future actions from prior
+observations, or execute a fixed sequence?
+
+## 6. Adaptive Search
+
+Adaptive search introduces a bounded observation-action loop:
+
+```{mermaid}
+flowchart LR
+    Q[Question or task gap] --> S[Search]
+    S --> I[Inspect selected result]
+    I --> E{Enough information?}
+    E -- No --> G[Identify the next gap]
+    G --> S
+    E -- Yes --> O[Answer or return observation to parent task]
+```
+
+The state can remain lightweight:
+
+- current question or downstream decision
+- useful findings with provenance
+- unresolved gaps or newly discovered entities
+- attempted queries and duplicate-result history
+- remaining search and latency budget
+
+Adaptive search is appropriate for short multi-hop questions, unfamiliar error
+diagnosis, targeted comparisons, or a general agent that must consult current
+documentation. It does not automatically need a formal report outline or a
+large claim–evidence ledger.
+
+Search when the fact is unstable, externally sourced, explicitly requested, or
+important enough that model uncertainty matters. Avoid search when the answer is
+already in task inputs, a cheaper structured tool is authoritative, or new
+information cannot affect the next decision.
+
+For a general agent, completion still belongs to the parent task. A coding agent
+that finds documentation is not done until its code passes verification. Search
+is an information action, not the goal.
+
+Stop adaptive search when the immediate question is supported, the parent task
+can proceed, repeated queries add no useful information, or its bounded budget
+is exhausted. Escalate to deep research when the task develops multiple research
+branches, broad coverage requirements, or material contradictions.
+
+## 7. Deep Research
+
+Deep research is a specialized agent workflow whose primary product is a
+researched answer, comparison, recommendation, or report. It needs iterative
+query reformulation because what to retrieve next depends on what earlier
+documents established or failed to establish.
+
+| Property | One-pass RAG | Deep research |
+|---|---|---|
+| Queries | usually derived once from the request | revised after useful observations |
+| Retrieval | fixed top-$k$ | iterative and budgeted |
+| Control flow | retrieve $\rightarrow$ generate | plan $\leftrightarrow$ search $\leftrightarrow$ inspect $\leftrightarrow$ verify |
+| State | retrieved chunks | claims, evidence, gaps, hypotheses, and budget |
+| Stopping | after fixed retrieval | when evidence is sufficient or marginal value is low |
+| Best fit | known corpus and straightforward lookup | multi-hop, open-web, ambiguous, or long-form research |
+
+The remaining research-loop sections primarily describe this orchestration
+level. Search strategy, safety, and production concerns also apply at lower
+levels, but single-pass and adaptive systems usually do not need the full
+claim–evidence workflow.
+
+## 8. The Deep-Research State
+
+A robust agent should maintain explicit state rather than relying on a growing
+conversation transcript:
+
+$$
+s_t=
+(q,\mathcal P_t,\mathcal E_t,\mathcal G_t,\mathcal H_t,b_t),
+$$
+
+where:
+
+| Symbol | Meaning |
+|---|---|
+| $q$ | normalized user question and output contract |
+| $\mathcal P_t$ | current plan or question decomposition |
+| $\mathcal E_t$ | evidence collected so far |
+| $\mathcal G_t$ | unresolved evidence gaps |
+| $\mathcal H_t$ | live hypotheses, including contradictions |
+| $b_t$ | remaining search, token, time, and risk budget |
+
+The transcript is an execution log; it is not a good research memory. Raw pages
+contain duplicated navigation, irrelevant prose, and possibly adversarial text.
+The state should preserve compact, attributable facts and decisions.
+
+## 7. The Deep-Research Control Loop
+
+```{mermaid}
+flowchart TD
+    U[User question] --> C[Define scope and answer contract]
+    C --> D[Decompose into answerable subquestions]
+    D --> Q[Choose highest-value unresolved gap]
+    Q --> S[Search or query a specialized source]
+    S --> I[Inspect primary documents]
+    I --> E[Extract evidence with provenance]
+    E --> V[Update claims, contradictions, and confidence]
+    V --> K{Enough support or budget exhausted?}
+    K -- No --> Q
+    K -- Yes --> Y[Synthesize from evidence]
+    Y --> F[Verify claims and citations]
+    F --> O[Answer plus uncertainty]
+```
+
+This interleaving is the central idea behind systems such as
+[ReAct](https://arxiv.org/abs/2210.03629) and
+[IRCoT](https://arxiv.org/abs/2212.10509): reasoning changes what should be
+retrieved, and retrieved information changes the reasoning.
+
+### A useful next-action rule
+
+In principle, choose the action with the greatest expected reduction in
+decision-relevant uncertainty per unit cost:
+
+$$
+a_t^*
+=
+\arg\max_a
+\frac{
+\mathbb E[U(s_{t+1})-U(s_t)\mid s_t,a]
+}{
+\operatorname{cost}(a)
+}.
+$$
+
+The agent will not know this quantity exactly. Practical proxies include:
+
+- importance of the unsupported claim
+- probability that the query will find discriminating evidence
+- authority and accessibility of the target source
+- whether the action tests a competing hypothesis
+- expected duplication with evidence already collected
+
+## 8. Phase 0: Define the Research Contract
+
+Before searching, normalize the task:
+
+- What decision or question must the output support?
+- Is the user asking for a fact, comparison, recommendation, or full report?
+- What date, geography, population, and definitions apply?
+- How fresh must the evidence be?
+- Which sources are required, preferred, or prohibited?
+- What uncertainty is acceptable?
+- What is the time or cost budget?
+
+Clarification is worthwhile when different interpretations would change the
+research trajectory. Otherwise, state a reasonable assumption and start.
+
+**Insight:** relevance is defined by the answer contract. A highly authoritative
+source can still be irrelevant to the user's actual decision.
+
+## 9. Phase 1: Decompose, but Keep the Plan Mutable
+
+Break a complex request into subquestions that can be independently supported.
+For a recommendation, these might include requirements, candidates, evaluation
+criteria, current prices, constraints, and failure risks.
+
+A strong plan is:
+
+- **coverage-oriented:** together, its branches can answer the whole request
+- **discriminative:** branches can change the conclusion
+- **evidence-seeking:** each branch suggests sources or queries
+- **mutable:** unexpected evidence can add, merge, or remove branches
+
+Avoid writing a long, rigid plan before seeing any evidence. Early uncertainty
+is highest, so excessive up-front detail is often imaginary precision.
+
+For broad reports, researching multiple perspectives before drafting an outline
+can improve coverage. [STORM](https://arxiv.org/abs/2402.14207) formalizes this
+idea through multi-perspective question asking and an explicit pre-writing stage.
+
+## 10. Phase 2: Search Strategically
+
+### Use a query ladder
+
+Move from broad orientation toward targeted verification:
+
+1. **Map the vocabulary:** identify canonical terminology, entities, and source
+   types.
+2. **Target subquestions:** search one evidence gap at a time.
+3. **Constrain:** add dates, domains, document types, exact phrases, or entity
+   identifiers.
+4. **Follow citations:** move from summaries to the underlying paper, standard,
+   dataset, filing, or documentation.
+5. **Disconfirm:** search for counterexamples, limitations, retractions, and
+   competing explanations.
+
+Generate meaningfully different queries, not superficial paraphrases. Useful
+diversity axes include terminology, source type, time range, jurisdiction,
+stakeholder perspective, and supporting versus opposing evidence.
+
+### Search results are leads, not evidence
+
+Snippets can be truncated, stale, or detached from qualifications in the page.
+Use them to choose documents, then inspect the document itself. Prefer, when
+applicable:
+
+1. primary research, official documentation, standards, laws, filings, or raw
+   data
+2. high-quality secondary analysis that explains or compares primary material
+3. discovery sources, community discussions, and aggregators
+
+Source choice is claim-dependent. A company is primary for its published API
+specification but not an independent authority on whether its product is best.
+
+## 11. Phase 3: Read Selectively and Preserve Provenance
+
+Reading every retrieved document in full wastes budget. Use a funnel:
+
+1. inspect title, author, date, and source
+2. locate terms related to the current gap
+3. read enough surrounding context to preserve qualifications
+4. extract only evidence that can support or challenge a claim
+5. record provenance immediately
+
+An evidence record should be atomic:
+
+```python
+from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class Evidence:
+    claim_id: str
+    source_url: str
+    source_title: str
+    published_at: str | None
+    passage: str
+    stance: str       # supports, contradicts, or contextualizes
+    source_type: str  # paper, official docs, filing, reporting, etc.
+```
+
+Do not separate a copied passage from its URL and context. Provenance recovered
+after generation is less reliable than provenance captured during reading.
+
+## 12. Phase 4: Maintain a Claim–Evidence Ledger
+
+Research memory should be organized around claims, not documents:
+
+| Claim | Importance | Supporting evidence | Contrary evidence | Status |
+|---|---:|---|---|---|
+| candidate A meets constraint X | high | source 1, source 2 | source 3 qualifies region | partially supported |
+| method B improves metric Y | high | paper table 2 | no independent replication found | uncertain |
+| feature C launched by date D | medium | official changelog | none | supported |
+
+This ledger exposes four different failure states:
+
+- no source was found
+- a source was found but does not entail the claim
+- sources disagree
+- the evidence supports a narrower claim than the draft asserts
+
+**Insight:** context length is not evidence management. Stuffing more pages into
+the prompt can increase distraction and source confusion. Compress observations
+into an evidence schema, while retaining links back to the raw material.
+
+## 13. Phase 5: Replan From Evidence Gaps
+
+After each useful observation, ask:
+
+1. What changed in the current answer?
+2. Which important claim remains unsupported?
+3. Did a new entity, term, or contradiction appear?
+4. What next action could most change the conclusion?
+
+This is why multi-turn search matters. [BrowseComp](https://openai.com/index/browsecomp/)
+finds that difficult browsing tasks require persistence, query reformulation,
+and assembly of clues across sources. [Search-R1](https://arxiv.org/abs/2503.09516)
+shows that models can be trained with reinforcement learning to interleave
+reasoning and multiple search calls rather than receiving a fixed retrieval set.
+
+Parallelize independent branches when latency matters, but give them a shared
+evidence schema and merge by claim. Multiple agents producing independent prose
+usually create duplicated searches and a harder synthesis problem.
+
+## 14. Phase 6: Synthesize Evidence, Not Source Summaries
+
+A weak report has one paragraph per source. A strong report has one section per
+question or claim and combines the relevant evidence inside it.
+
+Draft in this order:
+
+1. construct an outline from the answer contract and resolved claims
+2. attach evidence records to each outline item
+3. write the smallest claim justified by that evidence
+4. place citations immediately after the supported claim
+5. distinguish fact, inference, recommendation, and uncertainty
+
+For a derived conclusion, make the inference visible:
+
+> Source A establishes $x$ and source B establishes $y$; therefore, under
+> assumption $z$, we infer $c$.
+
+The citation should support $x$ or $y$. It should not be presented as if the
+source itself stated the novel conclusion $c$.
+
+## 15. Phase 7: Verify Before Returning
+
+Run a claim-level audit rather than asking only whether the report “looks good.”
+
+### Citation correctness
+
+For every citation:
+
+- **entailment:** does the source actually support the adjacent claim?
+- **quality:** is it an appropriate authority for that claim?
+- **freshness:** was it current for the requested time period?
+- **context:** were important qualifications preserved?
+
+### Citation completeness
+
+For every externally verifiable claim:
+
+- is a citation needed?
+- is one present?
+- does the combined evidence cover the whole claim?
+
+Correctness and completeness are separate. A report may contain only valid
+citations but leave most factual claims unsupported. The
+[ALCE](https://arxiv.org/abs/2305.14627) benchmark explicitly separates answer
+quality from citation quality, while
+[DeepResearch Bench](https://arxiv.org/abs/2506.11763) evaluates report quality
+and citation trustworthiness as distinct dimensions.
+
+### Adversarial verification
+
+- search for the strongest counterargument
+- recompute important arithmetic from source values
+- compare dates, units, populations, and definitions
+- inspect disagreement rather than averaging it away
+- downgrade confidence when only one weak source exists
+
+## 16. Stopping Is a Decision
+
+Without a stopping rule, an agent either quits prematurely or searches forever.
+Stop when one of these conditions holds:
+
+- all high-importance claims meet their evidence threshold
+- additional queries repeatedly return duplicate evidence
+- remaining uncertainty cannot change the decision or answer materially
+- the next action's expected information gain is below its cost
+- the explicit time, tool, token, or monetary budget is exhausted
+
+An example policy is:
+
+$$
+\operatorname{stop}
+\iff
+\left(
+\operatorname{coverage}_{\text{critical}}\ge\tau
+\land
+\Delta U_{N\text{ recent actions}}<\epsilon
+\right)
+\lor
+b_t=0.
+$$
+
+Budget exhaustion does not turn uncertainty into certainty. Report important
+unresolved gaps and what evidence would resolve them.
+
+## 17. State-of-the-Art Practices
+
+As of 2026, there is no single universally best architecture, but strong systems
+increasingly share the following practices:
+
+| Practice | Why it helps | Design implication |
+|---|---|---|
+| Interleave reasoning and retrieval | later queries use newly discovered entities and gaps | expose search/read as repeated actions, not one preprocessing step |
+| Retrieve adaptively | not every claim needs external evidence, and irrelevant context can hurt | add a retrieve-or-answer decision and passage relevance checks |
+| Persist and reformulate | hard facts may require many failed queries and multi-hop clue assembly | budget multiple query families and record failed approaches |
+| Separate planning from evidence | plans are hypotheses; evidence is externally attributable | keep both in state and never cite the plan |
+| Use structured research memory | raw histories waste context and blur provenance | maintain claim, evidence, contradiction, and gap stores |
+| Prefer evidence-first generation | post-hoc citation matching often attaches plausible but non-entailing sources | collect passages before drafting and generate from the ledger |
+| Add explicit critique and verification | retrieval relevance does not guarantee grounded generation | verify entailment and coverage at claim level |
+| Scale test-time effort selectively | more trajectories help difficult tasks but waste cost on easy ones | use uncertainty or task difficulty to allocate search budget |
+| Train tool policy when volume justifies it | prompting alone may not learn efficient multi-turn search | use trajectories, outcome rewards, and tool-use evaluations |
+| Evaluate the whole pipeline | model, retriever, browser, parser, and source access all affect results | version each component and log full trajectories |
+
+[Self-RAG](https://arxiv.org/abs/2310.11511) is an influential example of
+adaptive retrieval and self-critique. Search-policy work such as Search-R1
+suggests that training can improve multi-turn tool use, but its gains are coupled
+to the retriever, reward, base model, and task distribution. Treat “agent
+training” as system optimization, not a model-only upgrade.
+
+### Best-of-$N$ and multiple researchers
+
+Additional test-time compute can be spent on longer trajectories, parallel query
+branches, independent candidate reports, or verification. Aggregation works best
+when candidates are genuinely diverse and a verifier has a reliable selection
+signal. Otherwise, $N$ copies amplify the same blind spot.
+
+Use multiple researchers when subproblems are separable or when independence is
+valuable for cross-checking. Use one shared state owner to deduplicate evidence,
+resolve conflicts, and enforce the answer contract.
+
+## 18. Safety and Trust Boundaries
+
+Web content is untrusted data. It may contain text designed to impersonate
+instructions to the agent. Search agents should therefore:
+
+- keep system/developer instructions separate from retrieved content
+- never treat a page's instructions as authority over the research task
+- use least-privilege, read-only tools for research whenever possible
+- isolate browsing from credentials and sensitive data
+- allowlist destinations for high-risk domains or workflows
+- require explicit authorization before external writes, purchases, messages,
+  downloads, or code execution
+- record tool calls and preserve sources for audit
+- use defense in depth rather than relying on a single prompt-injection detector
+
+This matters even for an answer-only agent: malicious pages can redirect the
+research, suppress competing evidence, or induce data leakage. It becomes more
+critical when browsing and consequential actions share the same agent.
+
+## 19. Production Architecture
+
+A practical system often separates these layers:
+
+```text
+request normalizer
+    -> planner / controller
+        -> search adapters (web, papers, internal search, databases)
+        -> document fetcher and parser
+        -> reranker / passage selector
+        -> evidence and claim store
+        -> verifier
+    -> grounded synthesizer
+    -> citation renderer
+    -> evaluation and trace store
+```
+
+Operational best practices:
+
+- cache search and fetch results with freshness metadata
+- canonicalize URLs and deduplicate mirrored content
+- bound redirects, downloads, document size, and tool-call counts
+- retry transient failures without silently duplicating state updates
+- preserve raw observations outside the model context for audit
+- summarize old state losslessly with respect to claims and provenance
+- trace latency, tokens, cost, query count, domains, failures, and evidence reuse
+- keep model and search-engine versions in every evaluation record
+
+## 20. Evaluation
+
+Evaluation must match the selected scope:
+
+| Scope | Primary metrics |
+|---|---|
+| Normal search | recall@$k$, MRR or nDCG, freshness, answer grounding, zero-result rate, latency |
+| Search tool in an agent | downstream task-success lift, correct invocation rate, unnecessary-call rate, observation usefulness, added cost and latency |
+| Deep research | answer and report quality, evidence coverage, citation correctness, source quality, trajectory efficiency |
+
+A search tool can retrieve excellent pages yet reduce agent performance if it is
+called at the wrong time or injects too much irrelevant context. Conversely, a
+deep-research system cannot be evaluated only with retrieval metrics because
+its primary product is the synthesized, supported deliverable.
+
+Deep research needs more than final-answer accuracy:
+
+| Layer | Example metrics |
+|---|---|
+| Search | recall of necessary sources, query count, domain diversity, duplicate rate |
+| Reading | relevant-passage recall, extraction accuracy, provenance preservation |
+| Evidence | claim coverage, contradiction detection, source quality and freshness |
+| Answer | correctness, completeness, instruction following, readability |
+| Citations | entailment precision, claim coverage, placement, effective citations |
+| Efficiency | latency, tokens, searches, pages fetched, monetary cost |
+| Robustness | variance across runs, web drift, missing tools, adversarial pages |
+| Safety | prompt-injection success, privacy leakage, unauthorized actions |
+
+Useful benchmark families test different things:
+
+- [BrowseComp](https://openai.com/index/browsecomp/) emphasizes locating
+  difficult, obscure, multi-hop facts through persistent browsing.
+- [DeepResearch Bench](https://arxiv.org/abs/2506.11763) emphasizes long-form
+  report comprehensiveness, depth, instruction following, readability, and
+  citation trustworthiness.
+- [ALCE](https://arxiv.org/abs/2305.14627) isolates attributed answer generation
+  and citation quality.
+- domain-specific evaluations test whether sources, definitions, and decisions
+  are valid in the actual deployment setting.
+
+Live-web evaluation is not stationary. Save timestamps, accessible source
+snapshots when licensing permits, and full run configurations. Build the runner
+inside a controlled runtime such as the one described in
+[Agent Harness](harness.qmd), while keeping evaluation tasks and acceptance
+criteria independent from the agent being measured.
+
+## 21. Common Failure Modes
+
+| Failure | Root cause | Mitigation |
+|---|---|---|
+| Deep research for a lookup | system scope was never chosen | start with the cheapest adequate search shape |
+| Search result treated as task completion | the tool is confused with the parent agent's goal | verify completion against the broader task contract |
+| Search once, then hallucinate | retrieval is treated as prompt decoration | interleave search with unresolved claims |
+| Query drift | attractive new facts replace the user's actual goal | retain the answer contract and coverage plan |
+| Source monoculture | repeated results come from one perspective or syndicated text | diversify query and source families; deduplicate |
+| Citation laundering | a secondary page cites a primary source the agent never checks | follow the citation to the original when material |
+| Citation decoration | nearby source is relevant but does not entail the claim | perform claim-level entailment checks |
+| Context flooding | too many raw pages obscure the useful passages | extract atomic evidence and keep raw text out of active memory |
+| Premature stopping | agent finds one plausible answer and stops | require coverage and a disconfirmation pass |
+| Endless browsing | no definition of sufficiency | use marginal-value and hard-budget stopping rules |
+| Parallel-agent duplication | researchers share no plan or memory | partition gaps and merge through one evidence schema |
+| Confident stale answer | freshness was not part of state | attach dates and time validity to claims |
+| Prompt injection | retrieved content is mistaken for instructions | enforce trust boundaries and least privilege |
+
+## 22. Core Insights
+
+1. **Choose the product boundary before the architecture.** Normal search,
+   deep research, and search-as-a-tool share infrastructure but not control or
+   completion semantics.
+2. **A tool is a capability, not a workflow.** The parent harness owns when to
+   call it and what the observation means for the larger task.
+3. **In deep research, the unit of progress is a resolved evidence gap, not a
+   search call.**
+4. **Retrieval quality and answer grounding are separate problems.** A relevant
+   page can still be misread or overgeneralized.
+5. **The research plan is a hypothesis.** It should change when evidence changes.
+6. **Memory should be claim-centric and provenance-preserving.** Long context
+   alone does not provide either property.
+7. **Citation correctness and citation completeness must both be measured.**
+8. **Stopping is part of intelligence.** The agent should know what remains
+   uncertain and whether resolving it is worth the cost.
+9. **SOTA is a system property.** Model reasoning, search engine, document
+   access, state representation, verification, and evaluation all interact.
+
+## Interview Questions
+
+- When should a product use normal search, deep research, or a search tool
+  inside a broader agent?
+- Who owns the control loop and stopping condition in each scope?
+- What makes search agentic rather than ordinary RAG?
+- What should be stored in research state, and what should remain in raw logs?
+- How would you choose the next query from an evidence gap?
+- Why are search snippets unsuitable as final evidence?
+- How do citation correctness and completeness differ?
+- When is multi-agent research worth its coordination cost?
+- Design a stopping rule for a fixed-budget research agent.
+- How would you evaluate a live-web agent reproducibly?
+- What are the trust boundaries in a browser-enabled agent?
+- How would you train a search policy, and what reward-hacking risks arise?
+
+## Exercises
+
+- [ ] Implement a claim–evidence ledger with contradiction tracking.
+- [ ] Build a controller that stops after two low-novelty search rounds.
+- [ ] Compare one-pass RAG with interleaved search on multi-hop questions.
+- [ ] Measure citation entailment and coverage separately.
+- [ ] Add query caching, URL canonicalization, and source deduplication.
+- [ ] Red-team a read-only search agent with indirect prompt injection pages.
+- [ ] Evaluate one model with two search engines while holding the controller
+  fixed.
+
+## Further Reading
+
+- [ReAct: Synergizing Reasoning and Acting in Language Models](https://arxiv.org/abs/2210.03629)
+- [IRCoT: Interleaving Retrieval with Chain-of-Thought Reasoning](https://arxiv.org/abs/2212.10509)
+- [WebGPT: Browser-assisted Question Answering with Human Feedback](https://arxiv.org/abs/2112.09332)
+- [Self-RAG: Learning to Retrieve, Generate, and Critique](https://arxiv.org/abs/2310.11511)
+- [STORM: Assisting in Writing Wikipedia-like Articles From Scratch](https://arxiv.org/abs/2402.14207)
+- [Search-R1: Training LLMs to Reason and Leverage Search Engines with RL](https://arxiv.org/abs/2503.09516)
+- [BrowseComp: A Benchmark for Browsing Agents](https://openai.com/index/browsecomp/)
+- [DeepResearch Bench](https://arxiv.org/abs/2506.11763)
+- [ALCE: Enabling Large Language Models to Generate Text with Citations](https://arxiv.org/abs/2305.14627)

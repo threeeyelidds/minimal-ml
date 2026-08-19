@@ -1,0 +1,615 @@
+---
+title: "Agent Harness"
+---
+
+## 1. What Is a Harness?
+
+A foundation model maps context to tokens or structured actions. By itself, it
+does not own a durable workspace, execute tools, preserve state across context
+windows, enforce permissions, recover from failures, or decide when external
+work is complete.
+
+An **agent harness** is the software system surrounding the model that supplies
+those capabilities. It determines how the model:
+
+- receives goals, rules, context, and observations
+- selects and invokes tools
+- iterates through a workflow
+- stores state and artifacts
+- delegates or monitors background work
+- verifies progress and completion
+- interacts with users at permission or clarification boundaries
+
+Lilian Weng describes the harness as the deployment layer that orchestrates how
+the model thinks and plans, acts through tools, perceives and manages context,
+stores artifacts, and evaluates results. Her
+[Harness Engineering for Self-Improvement](https://lilianweng.github.io/posts/2026-07-04-harness/)
+is the main reference for this note.
+
+A useful decomposition is
+
+$$
+\boxed{
+\text{agent system}
+=
+\text{model}
++
+\text{harness}
++
+\text{environment}
+}.
+$$
+
+The model supplies learned reasoning and generation. The harness supplies the
+runtime contract. The environment supplies files, applications, APIs, people,
+and consequences.
+
+## 2. What a Harness Is Not
+
+| Concept | Role |
+|---|---|
+| Foundation model | predicts text, decisions, or tool calls from context |
+| Agent harness | turns model decisions into a controlled, stateful execution process |
+| Agent framework | library used to build harnesses; it is not the configured system itself |
+| Workflow | one control policy or graph implemented by the harness |
+| Tool | a bounded capability exposed through the harness |
+| Evaluation harness | runs tasks and computes measurements about a system |
+
+An evaluation harness **measures** behavior. An agent harness **produces and
+controls** behavior. An agent harness may call verifiers during execution, but
+that does not make it merely an evaluation framework.
+
+The word “scaffold” is sometimes used similarly. “Harness” emphasizes the whole
+runtime boundary: execution, context, memory, permissions, observability, and
+workflow—not just a prompt template.
+
+## 3. The First-Principles Problem
+
+The harness exists because a model call is stateless and probabilistic, while a
+real task is stateful and governed by constraints.
+
+Let $M$ be a model, $H$ a harness, $e$ an environment, and $x$ a task. We care
+about system behavior
+
+$$
+\tau\sim P(\tau\mid M,H,e,x),
+$$
+
+where trajectory $\tau$ contains model decisions, tool calls, observations,
+state changes, and the final result. Harness design seeks to maximize expected
+utility:
+
+$$
+H^*
+=
+\arg\max_H
+\mathbb E_{\tau}
+\left[
+R_{\text{task}}(\tau)
+-\lambda_c C(\tau)
+-\lambda_t T(\tau)
+-\lambda_r R_{\text{risk}}(\tau)
+\right].
+$$
+
+This framing yields several important insights:
+
+1. Model quality and harness quality are confounded in end-to-end results.
+2. More autonomy is not inherently better; it is useful only where adaptive
+   decisions outperform deterministic code.
+3. Reliability must come from system invariants, not from hoping the model
+   remembers every rule on every turn.
+4. The harness should make success observable and failure recoverable.
+
+## 4. The Basic Agent Loop
+
+```{mermaid}
+flowchart TD
+    G[Goal and constraints] --> C[Compile current context]
+    C --> M[Model decision]
+    M --> D{Decision type}
+    D -- Tool call --> P[Validate permissions and arguments]
+    P --> X[Execute tool]
+    X --> O[Normalize and record observation]
+    O --> S[Update state and artifacts]
+    S --> V[Check progress, limits, and failures]
+    V -- Continue --> C
+    D -- Candidate answer --> F[Verify completion conditions]
+    F -- Incomplete --> S
+    F -- Complete --> A[Return result]
+    V -- Needs authority or clarification --> U[Ask user]
+    U --> S
+```
+
+The model does not call the operating system or an API directly. It proposes an
+action; the harness validates, authorizes, executes, records, and returns a
+bounded observation. That indirection is the key control boundary.
+
+### Model decisions versus code decisions
+
+Use the model when the choice requires semantic judgment under ambiguity. Use
+ordinary code when the rule is known:
+
+| Better handled by the model | Better handled by the harness |
+|---|---|
+| choosing a promising hypothesis | enforcing a maximum tool-call count |
+| deciding what evidence is missing | validating JSON against a schema |
+| interpreting an unfamiliar error | applying timeouts and retry limits |
+| proposing a plan revision | checking an exit code |
+| synthesizing several observations | requiring approval for a destructive action |
+
+Encoding deterministic invariants as prose wastes model capacity and makes
+them probabilistic.
+
+## 5. Harness Components
+
+### 5.1 Context compiler
+
+The context compiler decides what the model sees on the next turn. It assembles:
+
+1. immutable system and safety rules
+2. task contract and user instructions
+3. available tool interfaces
+4. active plan and working state
+5. relevant persistent memory and artifacts
+6. recent observations and errors
+
+It must resolve ordering, priority, truncation, compaction, and provenance.
+Simply appending every prior token eventually produces an expensive, noisy, and
+contradictory context.
+
+### 5.2 Tool registry and executor
+
+Each tool needs a contract:
+
+| Field | Purpose |
+|---|---|
+| Name and description | help the model select the correct capability |
+| Input schema | constrain arguments and enable validation |
+| Output schema | make observations predictable |
+| Side-effect class | distinguish reads, reversible writes, and irreversible actions |
+| Timeout and limits | bound resource use |
+| Retry semantics | prevent accidental repeated side effects |
+| Permission policy | determine whether execution is allowed or needs approval |
+
+Good tool descriptions say what the tool does, when to use it, and what it does
+**not** do. Overlapping tools create selection ambiguity. Huge, raw outputs
+consume context and should be normalized or stored as artifacts.
+
+### 5.3 State and memory
+
+At least four kinds of state should be distinguished:
+
+- **event log:** append-only record of decisions, calls, observations, and errors
+- **working state:** current plan, completed steps, open questions, and budgets
+- **artifacts:** files, patches, reports, datasets, logs, and generated outputs
+- **long-term memory:** durable knowledge intended for reuse across tasks
+
+Weng highlights the filesystem as an effective persistent-memory substrate for
+long-horizon work. Models already understand files, paths, diffs, and shell
+operations from pretraining; artifacts remain inspectable outside the context
+window and survive interruptions.
+
+Do not confuse persistence with relevance. A file can preserve everything, but
+the context compiler must still select what matters now.
+
+### 5.4 Workflow controller
+
+The controller determines the shape of execution:
+
+$$
+\text{plan}
+\rightarrow
+\text{act}
+\rightarrow
+\text{observe}
+\rightarrow
+\text{verify}
+\rightarrow
+\text{revise}.
+$$
+
+It owns:
+
+- iteration and termination conditions
+- token, time, monetary, and tool-call budgets
+- clarification and approval transitions
+- retries, fallback tools, and escalation
+- background-job and subagent lifecycles
+- recovery after interruption
+
+The workflow may be a general loop, a deterministic DAG, or a hybrid in which
+code fixes the outer stages and the model makes local decisions.
+
+### 5.5 Verifiers
+
+A verifier converts “I think I am done” into observable completion evidence.
+Examples include:
+
+- unit tests and static checks for code
+- schema validation for structured outputs
+- source-entailment checks for research
+- row counts and invariants for data pipelines
+- screenshots or DOM checks for interfaces
+- explicit user confirmation for subjective decisions
+
+Verification should test the artifact or environment state, not merely ask the
+same model whether its answer looks correct.
+
+### 5.6 Permission layer
+
+Permissions belong outside the model's editable reasoning loop. The harness
+should apply least privilege and classify actions by consequence:
+
+- read-only inspection
+- reversible local mutation
+- external communication or publication
+- financial, destructive, privileged, or difficult-to-reverse action
+
+High-impact actions may require user approval even when the model is confident.
+Retrieved documents and tool outputs are untrusted data, not instructions that
+can modify the permission policy.
+
+### 5.7 Observability
+
+A production harness should make trajectories explainable after the fact:
+
+- model and prompt versions
+- compiled context metadata
+- model decisions and tool calls
+- validated arguments and normalized results
+- state transitions and artifact versions
+- retries, timeouts, approvals, and failures
+- token use, latency, and monetary cost
+- verifier outcomes and final termination reason
+
+Observability is not only for dashboards. Without it, harness optimization
+cannot distinguish a bad model decision from a bad tool description, stale
+state, parser bug, permission denial, or verifier failure.
+
+## 6. Context Engineering
+
+Context is the model's working memory and control surface. Treat it as a compiled
+view of state, not a transcript dump.
+
+A rough selection objective is
+
+$$
+\max_{c\subseteq\mathcal I}
+\frac{
+\operatorname{relevance}(c)
+\cdot
+\operatorname{reliability}(c)
+}{
+\operatorname{tokens}(c)
+}
+$$
+
+subject to mandatory instructions and a context budget.
+
+### Practical hierarchy
+
+Keep these layers distinguishable:
+
+1. **rules:** stable and authoritative
+2. **task:** goal, constraints, and definition of done
+3. **state:** plan, progress, budgets, and open failures
+4. **evidence:** selected observations needed for the next decision
+5. **history:** recent interactions useful for local coherence
+
+### Compaction
+
+When context grows:
+
+- keep full artifacts and logs outside the prompt
+- summarize completed phases into structured state
+- preserve unresolved errors and user constraints verbatim
+- retain pointers from summaries to raw evidence
+- discard duplicated tool output and obsolete plans
+- test whether the compacted state supports resuming after interruption
+
+Lossy compaction is dangerous when it silently drops a constraint, failed
+attempt, or source attribution.
+
+## 7. Workflow Design Patterns
+
+Weng identifies three recurring patterns.
+
+### Pattern 1: workflow automation
+
+Define an environment in which the model can execute, test, inspect results,
+and iterate. The feedback loop matters more than a single elaborate prompt.
+
+For coding:
+
+```text
+inspect repository -> edit -> run tests -> diagnose -> revise -> verify diff
+```
+
+For [agentic search](agentic_search.qmd):
+
+```text
+decompose -> search -> read -> update evidence gaps -> search again -> verify
+```
+
+### Pattern 2: filesystem as persistent memory
+
+Store rich state and artifacts in files while keeping only a compact index in
+context. This supports long-running tasks, auditability, recovery, and handoff.
+
+Useful artifacts include:
+
+- `plan.md` for mutable strategy
+- machine-readable task state
+- experiment configurations and results
+- patches and source files
+- background-job logs
+- evidence ledgers and research summaries
+- a concise resumption checkpoint
+
+The names are conventions, not requirements. Avoid creating ceremonial files
+that no component actually reads.
+
+### Pattern 3: subagents and background jobs
+
+Parallel work helps when subtasks are independent and expensive enough to
+justify coordination. The harness needs process-management operations:
+
+- start with bounded scope and inputs
+- assign identifiers and resource budgets
+- inspect status and logs
+- interrupt or cancel stalled work
+- persist outputs as shared artifacts
+- merge results and resolve conflicts
+
+Subagents should not exist merely to imitate an organization chart. Every
+delegation adds context duplication, synchronization, and error-propagation
+cost.
+
+## 8. A Minimal Harness Skeleton
+
+The following sketch shows the control boundary. It omits provider-specific
+types and persistence details.
+
+```python
+from dataclasses import dataclass, field
+from typing import Any, Protocol
+
+
+@dataclass
+class ToolCall:
+    name: str
+    arguments: dict[str, Any]
+
+
+@dataclass
+class Decision:
+    tool_call: ToolCall | None = None
+    final_answer: str | None = None
+
+
+@dataclass
+class AgentState:
+    goal: str
+    events: list[dict[str, Any]] = field(default_factory=list)
+    steps: int = 0
+
+
+class Model(Protocol):
+    def decide(self, context: list[dict], tools: list[dict]) -> Decision: ...
+
+
+class ContextCompiler(Protocol):
+    def compile(self, state: AgentState) -> list[dict]: ...
+
+
+class ToolExecutor(Protocol):
+    def schemas(self) -> list[dict]: ...
+    def validate_and_run(self, call: ToolCall) -> Any: ...
+
+
+class Verifier(Protocol):
+    def accepts(self, state: AgentState, answer: str) -> bool: ...
+
+
+def run_agent(model, context, tools, verifier, state, max_steps=30):
+    while state.steps < max_steps:
+        messages = context.compile(state)
+        decision = model.decide(messages, tools.schemas())
+        state.steps += 1
+
+        if decision.final_answer is not None:
+            if verifier.accepts(state, decision.final_answer):
+                return decision.final_answer
+            state.events.append({"type": "verification_failed"})
+            continue
+
+        if decision.tool_call is None:
+            state.events.append({"type": "invalid_decision"})
+            continue
+
+        # Authorization, schema validation, timeouts, and retry policy live here.
+        try:
+            observation = tools.validate_and_run(decision.tool_call)
+            state.events.append(
+                {
+                    "type": "tool_result",
+                    "call": decision.tool_call,
+                    "observation": observation,
+                }
+            )
+        except Exception as error:
+            state.events.append(
+                {
+                    "type": "tool_error",
+                    "call": decision.tool_call,
+                    "error": repr(error),
+                }
+            )
+
+    raise RuntimeError("agent exhausted its step budget")
+```
+
+The code's value lies in what it refuses to delegate to the model: validation,
+authorization, event recording, hard limits, and the completion check.
+
+## 9. Failure Handling and Recovery
+
+Long-horizon agents should expect partial failure.
+
+| Failure | Harness response |
+|---|---|
+| malformed tool arguments | reject before execution and return a compact schema error |
+| transient network error | bounded retry with backoff and idempotency protection |
+| deterministic tool error | expose diagnostic output; do not repeat unchanged calls forever |
+| context overflow | compact state and preserve raw artifacts externally |
+| repeated action loop | detect repeated call signatures and force replanning or stop |
+| background job stalls | poll logs, enforce timeout, then interrupt or escalate |
+| verifier fails | attach exact failed condition and resume work |
+| authority missing | stop and ask the user rather than inventing permission |
+| process interruption | reload durable state and resume from the last consistent checkpoint |
+
+Retries are especially dangerous for non-idempotent tools. Repeating a timed-out
+payment, message, or deployment may duplicate the side effect even when the
+first response was lost.
+
+## 10. Designing the Right Amount of Harness
+
+There is a spectrum:
+
+| Style | Strength | Weakness |
+|---|---|---|
+| Minimal general loop | adapts broadly and benefits directly from stronger models | may wander or miss domain invariants |
+| Prompt-heavy scaffold | fast to prototype | brittle, opaque, and difficult to test |
+| Deterministic workflow | predictable and easy to observe | inflexible when the path depends on new evidence |
+| Hybrid harness | code enforces stages and invariants; model handles judgment | requires careful interface design |
+| Multi-agent organization | parallelism and specialized contexts | high coordination and duplication cost |
+
+Prefer the simplest harness that exposes the necessary environment, feedback,
+and invariants. Overengineering often compensates for one model's weakness with
+rules that become harmful or redundant as models improve.
+
+## 11. Harness Optimization
+
+Harness changes should be treated like changes to any other learned-system
+pipeline:
+
+1. collect complete trajectories and verifier outcomes
+2. cluster failures by causal mechanism
+3. map each failure to a harness component
+4. propose the smallest targeted change
+5. predict both improvements and possible regressions
+6. evaluate on held-in and held-out tasks
+7. accept only evidence-supported changes
+
+Possible optimization targets include:
+
+- system instructions and tool descriptions
+- tool schemas and implementations
+- context selection and compaction
+- workflow topology and stopping rules
+- memory read/write policies
+- subagent configuration
+- recovery and verification logic
+
+Always compare against simple baselines. A more elaborate harness may consume
+more test-time compute rather than make better decisions.
+
+### Self-improving harnesses
+
+A model can propose edits to its own harness, forming a loop:
+
+$$
+h_t
+\xrightarrow{\text{run}}
+\text{trajectories}
+\xrightarrow{\text{diagnose}}
+\Delta h
+\xrightarrow{\text{evaluate}}
+h_{t+1}.
+$$
+
+This expands the optimization surface beyond prompts to executable workflows,
+tools, memory, and middleware. It also creates a Goodhart problem: an optimizer
+may improve the measured score by weakening the verifier, increasing the budget,
+leaking test answers, or changing the task.
+
+Keep these surfaces outside the editable loop:
+
+- evaluator and held-out tasks
+- permission and security policy
+- model identity and resource budget
+- audit log and experiment runner
+- acceptance and rollback mechanism
+
+Every accepted harness edit should be attributable to evidence from failures
+and expressed as a falsifiable prediction.
+
+## 12. Harness Versus Core Intelligence
+
+Some behavior currently implemented in harness code may eventually become a
+native model capability. Stronger models need fewer prompt tricks and recover
+from tool errors more naturally.
+
+But several responsibilities remain external by nature:
+
+- connecting to the current environment
+- enforcing organizational permissions
+- owning durable artifacts and state
+- applying resource limits
+- validating external side effects
+- observing and auditing execution
+
+The boundary will move, but it will not disappear. Better models reduce the
+need for brittle scaffolding; they do not eliminate the runtime contract.
+
+## 13. Core Insights
+
+1. **A harness converts model capability into system capability.** End-to-end
+   performance cannot be attributed to model weights alone.
+2. **Context should be compiled from state, not accumulated as a transcript.**
+3. **Use models for judgment and code for invariants.**
+4. **Artifacts outlive context.** Files and logs make long-horizon work durable,
+   inspectable, and resumable.
+5. **Verification closes the loop.** A generated answer is only a candidate
+   completion.
+6. **Permissions must live outside self-modification.** The agent cannot grant
+   itself authority.
+7. **Observability enables improvement.** If failure cannot be localized, a
+   harness edit is guesswork.
+8. **The simplest sufficient harness usually generalizes best.** Add structure
+   in response to measured failure, not aesthetic preference.
+
+## Interview Questions
+
+- What is the difference between a model, an agent harness, and an agent
+  framework?
+- Which decisions should be delegated to a model, and which should remain code?
+- How would you design an idempotent tool interface?
+- What should be stored in context, working state, artifacts, and long-term
+  memory?
+- Why does a pre-norm-like “always append history” strategy fail for agents?
+- What makes a verifier independent enough to be useful?
+- When do subagents improve performance rather than add coordination overhead?
+- How should a harness recover after a process interruption?
+- Which components must remain immutable in a self-improving harness?
+- How would you determine whether a gain came from the harness or additional
+  test-time compute?
+
+## Exercises
+
+- [ ] Implement the minimal loop with one read-only tool and a step budget.
+- [ ] Add schema validation, timeouts, and repeated-call detection.
+- [ ] Persist event logs and resumable state to files.
+- [ ] Design a context compiler that retains unresolved errors while compacting
+  completed work.
+- [ ] Add a verifier whose result cannot be overwritten by the agent.
+- [ ] Classify tools by side-effect risk and design approval policies.
+- [ ] Compare a minimal loop with a deterministic workflow on the same tasks.
+- [ ] Cluster failed trajectories and propose one falsifiable harness change.
+
+## Further Reading
+
+- [Harness Engineering for Self-Improvement — Lilian Weng](https://lilianweng.github.io/posts/2026-07-04-harness/)
+- [LLM Powered Autonomous Agents — Lilian Weng](https://lilianweng.github.io/posts/2023-06-23-agent/)
+- [Agentic Search](agentic_search.qmd)
