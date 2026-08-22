@@ -1,0 +1,746 @@
+---
+title: "Representation Learning from First Principles"
+---
+
+## The Problem
+
+Raw observations are rarely presented in the coordinates that make a useful
+decision easy. An image is an array of pixels, a sentence is a sequence of token
+IDs, and a user history is a sequence of sparse item IDs. A representation
+learner constructs
+
+$$
+z=f_\theta(x),
+$$
+
+so that another model can solve useful tasks from $z$ more easily than from the
+raw input $x$.
+
+A representation is therefore not merely a smaller input. It is a choice of
+what information to preserve, what variation to ignore, and which relationships
+should become simple in the new space.
+
+::: {.callout-important}
+## There is no universally best representation
+
+Without a task, environment, or structural assumption, every invertible
+transformation of $x$ preserves the same information. Representation learning
+becomes meaningful only after specifying which distinctions matter and which
+transformations should not matter.
+:::
+
+For a family of downstream tasks $\mathcal T$, one operational objective is
+
+$$
+\min_f\;
+\mathbb E_{T\sim\mathcal T}
+\left[
+\min_{h\in\mathcal H_{	ext{simple}}}
+R_T(h\circ f)
+\right].
+$$
+
+The readout class $\mathcal H_{	ext{simple}}$ is deliberately restricted—for
+example, to linear models or shallow networks. If an arbitrarily powerful
+readout is allowed, it can relearn the structure that the representation failed
+to expose.
+
+### What should a useful representation provide?
+
+| Property | Desired behavior | Why it helps | Failure mode |
+|---|---|---|---|
+| Sufficiency | retain information needed for the task | accurate downstream prediction | useful signal is discarded |
+| Invariance | ignore specified nuisance transformations | sample efficiency and robustness | a meaningful distinction is erased |
+| Equivariance | transform predictably when the input transforms | preserves pose, location, time, or order | spatial structure disappears |
+| Smoothness | nearby or related inputs have nearby representations | interpolation and simple decision boundaries | shortcuts define the neighborhood |
+| Non-collapse | use multiple examples and dimensions | preserves diversity | every input or dimension becomes identical |
+| Compression | discard irrelevant detail | regularization and efficiency | excessive compression loses task signal |
+| Accessibility | make useful factors easy for a simple readout to recover | few labels and cheap adaptation | information exists but is entangled |
+
+These properties compete. Classification benefits from invariance to object
+position, while detection needs position to remain recoverable. A global image
+embedding may transfer well to classification but poorly to dense prediction.
+
+## A Generative View: Signal and Nuisance
+
+Suppose an observation is generated from semantic factors $s$ and nuisance
+factors $n$:
+
+$$
+x=g(s,n).
+$$
+
+If downstream targets depend on $s$ but not $n$, we want $z$ to retain $s$ and
+discard $n$. This simple statement exposes the central difficulty: without
+labels or prior knowledge, the learner does not know which factor is semantic.
+
+We inject that knowledge through a **learning signal**:
+
+- labels declare which examples should share a decision
+- augmentations declare which transformations preserve identity
+- temporal or spatial context declares what should be predictable
+- reconstruction declares which parts of the input must be retained
+- paired modalities declare that two observations describe shared content
+- an architecture encodes locality, order, symmetry, or capacity constraints
+
+Representation learning is therefore the design of an information bottleneck
+and the supervision that shapes it—not just the choice of encoder.
+
+## Three First-Principles Objectives
+
+Most representation-learning methods combine three pressures.
+
+### Preserve task-relevant information
+
+For a known target $Y$, sufficiency asks that
+
+$$
+P(Y\mid Z)=P(Y\mid X),
+$$
+
+or equivalently, in information-theoretic language,
+
+$$
+I(Z;Y)=I(X;Y).
+$$
+
+Supervised cross-entropy directly encourages this property for one label space.
+It may discard information useful to other tasks.
+
+### Remove nuisance information
+
+If $t$ is a transformation known to preserve semantics, invariance asks for
+
+$$
+f(t(x))\approx f(x).
+$$
+
+For transformations whose effect matters, equivariance is more appropriate:
+
+$$
+f(t(x))\approx \rho(t)f(x),
+$$
+
+where $\rho(t)$ is the corresponding transformation in representation space.
+The distinction is crucial: color jitter might be a safe invariance for shape
+recognition, while spatial translation should remain equivariant for
+localization.
+
+### Keep the representation non-degenerate
+
+The invariance objective alone has the trivial optimum $f(x)=c$. A useful
+objective therefore needs a counterforce that preserves diversity, such as:
+
+- reconstructing or predicting held-out information
+- separating unrelated examples with negatives
+- maintaining variance across examples
+- decorrelating dimensions
+- using an asymmetric teacher--student optimization path
+
+Modern self-supervised methods differ substantially in how they supply this
+counterforce.
+
+## Geometry First: Graph and Spectral Representations
+
+The supplied *Representation Learning* course notes begin from a useful
+non-neural perspective: define which observations are related, then find
+coordinates that vary slowly across those relationships.
+
+Given samples $x_1,\ldots,x_n$, construct a symmetric similarity matrix $W$.
+For example,
+
+$$
+W_{ij}
+=
+\begin{cases}
+\exp\left(-\dfrac{\lVert x_i-x_j\rVert^2}{2\sigma^2}\right), & i\ne j,\\
+0, & i=j.
+\end{cases}
+$$
+
+Let $D_{ii}=\sum_j W_{ij}$ and define the unnormalized graph Laplacian
+$L=D-W$. For any scalar feature vector $v\in\mathbb R^n$,
+
+$$
+v^TLv
+=
+\frac12
+\sum_{i,j}W_{ij}(v_i-v_j)^2.
+$$
+
+Minimizing this energy makes strongly connected examples receive similar
+coordinates. Constant vectors minimize it trivially, so Laplacian eigenmaps add
+normalization and orthogonality constraints. One common formulation is
+
+$$
+\min_Z \operatorname{tr}(Z^TLZ)
+\quad\text{subject to}\quad
+Z^TDZ=I,
+\qquad Z^TD\mathbf 1=0.
+$$
+
+The solution is given by the nontrivial generalized eigenvectors
+
+$$
+Lv=\lambda Dv.
+$$
+
+This is representation learning by an explicitly chosen geometry. Spectral
+clustering uses the embedding to expose clusters; Laplacian eigenmaps interpret
+the same low-frequency eigenvectors as smooth coordinates on an underlying
+manifold.
+
+### What the derivation teaches
+
+- A distance metric or similarity graph is already an inductive bias.
+- The bandwidth and neighborhood rule decide which local relationships exist.
+- Eigenvectors are identifiable only up to sign, and a repeated eigenspace is
+  identifiable only up to a rotation.
+- Local geometry can reveal structure that Euclidean coordinates obscure, but
+  constructing an $n\times n$ graph does not scale naively.
+
+## Reconstruction: PCA to Autoencoders
+
+Another principle is to encode $x$ so that it can be reconstructed. Let centered
+$x\in\mathbb R^d$ be encoded into $k<d$ dimensions by
+
+$$
+z=W^Tx,
+\qquad W^TW=I,
+$$
+
+and reconstructed as $\hat x=Wz$. PCA solves
+
+$$
+\min_W
+\mathbb E\lVert x-WW^Tx\rVert_2^2.
+$$
+
+Expanding the square shows that this is equivalent to maximizing retained
+variance:
+
+$$
+\max_{W^TW=I}
+\operatorname{tr}(W^T\Sigma W).
+$$
+
+Thus the columns of $W$ are the top eigenvectors of the covariance matrix
+$\Sigma$. The minimum reconstruction error is the sum of discarded eigenvalues:
+
+$$
+R(k)=\sum_{j=k+1}^{d}\lambda_j.
+$$
+
+A linear autoencoder with squared-error loss learns the same principal subspace
+as PCA, although its coordinates can differ by an invertible change of basis.
+
+```{python}
+import torch
+
+
+def fit_pca(x, num_components):
+    """Return the mean, principal directions, and low-dimensional codes."""
+    mean = x.mean(dim=0, keepdim=True)
+    centered = x - mean
+    _, _, right_vectors = torch.linalg.svd(centered, full_matrices=False)
+    directions = right_vectors[:num_components].T
+    codes = centered @ directions
+    return mean, directions, codes
+
+
+torch.manual_seed(0)
+latent = torch.randn(512, 2)
+mixing = torch.randn(2, 8)
+samples = latent @ mixing + 0.02 * torch.randn(512, 8)
+
+mean, directions, codes = fit_pca(samples, num_components=2)
+reconstruction = codes @ directions.T + mean
+relative_error = (samples - reconstruction).norm() / samples.norm()
+assert relative_error < 0.03
+```
+
+### Nonlinear autoencoders
+
+A nonlinear encoder $f_\theta$ and decoder $g_\phi$ minimize
+
+$$
+\mathcal L_{\text{AE}}
+=
+\mathbb E_x
+\left[
+d\bigl(x,g_\phi(f_\theta(x))\bigr)
+\right].
+$$
+
+The reconstruction metric $d$ determines what “information” means. Pixel MSE
+rewards exact texture and color; a likelihood models a full observation
+distribution; a perceptual or latent target emphasizes different structure.
+
+Flexible autoencoders reveal two limitations:
+
+1. With enough capacity, they can learn an identity map without discovering a
+   useful abstraction.
+2. For any invertible $h$, the pair $h\circ f$ and $g\circ h^{-1}$ reconstructs
+   equally well. The latent coordinates are therefore not identifiable from
+   reconstruction alone.
+
+Bottlenecks, noise, sparsity, masking, quantization, and probabilistic priors
+change what information is economical to retain.
+
+## Information Is Not the Same as Usefulness
+
+One might try to maximize $I(X;Z)$. But a deterministic invertible encoder can
+retain all information while producing coordinates that are awkward for every
+simple downstream model. Conversely, an invariant representation intentionally
+throws information away.
+
+The information-bottleneck ideal makes the trade-off explicit:
+
+$$
+\max_f
+I(Z;Y)-\beta I(Z;X).
+$$
+
+The first term seeks target sufficiency; the second penalizes unnecessary input
+information. This is a conceptual guide rather than a complete recipe: mutual
+information is hard to estimate in high dimensions, and the correct target $Y$
+may be unavailable during pretraining.
+
+The more operational question is:
+
+> Which information becomes recoverable by a simple learner, with few labels,
+> under the distribution shifts we care about?
+
+## Where Does the Learning Signal Come From?
+
+| Signal | Positive relation supplied by data | Typical objective | What it tends to preserve |
+|---|---|---|---|
+| Labels | examples with the same target | cross-entropy, supervised contrastive loss | label-predictive factors |
+| Reconstruction | input and its missing/corrupted content | autoencoding, masked modeling | information needed for the chosen target |
+| Augmented views | two transformations of one instance | contrastive or joint embedding | augmentation-invariant identity |
+| Context | past/context and future/hidden region | predictive coding, JEPA | predictable structure |
+| Paired modalities | image--text, audio--text, user--item | cross-modal contrastive loss | shared semantics |
+| Interaction | state, action, next state, reward | dynamics or control prediction | decision-relevant state |
+
+### The same abstraction across fields
+
+[Tokenization](../tokenization.qmd) chooses the discrete or continuous units an
+encoder consumes; representation learning chooses the geometry and information
+carried by their contextual states. The same principles then recur across
+domains:
+
+| Domain | Observation | Useful equivalence or prediction | Typical representation |
+|---|---|---|---|
+| Language | token sequence | masked/next token, paraphrase, document--query relevance | contextual token states or pooled text embedding |
+| Vision | patches or pixels | augmented views, masked regions, image--caption pairing | global image vector plus local patch features |
+| Audio/video | waveform, frames, or codes | masked spans, temporal continuation, synchronized modalities | time-indexed features and pooled clip embedding |
+| Recommendation | sparse user/item IDs and event sequence | click/purchase pairs, next item, co-consumption | user and item vectors in a retrieval space |
+| Graphs | nodes, edges, and attributes | neighborhoods, masked nodes/edges, graph identity | node, edge, or whole-graph embedding |
+| Control | state/action trajectory | next state, reward, reachability, behavioral similarity | compact decision-relevant state |
+
+The equivalence relation must match the product. In a two-tower recommender,
+dot-product geometry is chosen because approximate nearest-neighbor retrieval
+must cheaply recover relevant items. In control, two observations that look
+different may deserve the same state representation if they imply the same
+rewards and transition behavior.
+
+### Supervised representations
+
+If $z=f_\theta(x)$ feeds a classifier $p_\phi(y\mid z)$, minimizing
+
+$$
+-\mathbb E\log p_\phi(y\mid f_\theta(x))
+$$
+
+encourages $z$ to make the training labels predictable. The labels define the
+equivalence classes. This is powerful but narrow: two dog breeds are encouraged
+to separate even when another task only needs “dog,” and variations within one
+class can disappear even when they matter elsewhere.
+
+Metric-learning losses instead directly specify local geometry. A triplet loss,
+for example, requires an anchor $a$ to be closer to a positive $p$ than a
+negative $n$ by a margin $m$:
+
+$$
+\mathcal L_{\text{triplet}}
+=
+\left[
+d(z_a,z_p)-d(z_a,z_n)+m
+\right]_+.
+$$
+
+The sampling policy often matters as much as the formula because easy negatives
+provide little signal and false negatives teach the wrong geometry.
+
+## Contrastive Learning
+
+Let $z_i$ and $z_i^+$ be embeddings of two views declared equivalent, and let
+the other examples in a batch act as negatives. An InfoNCE loss is
+
+$$
+\mathcal L_i
+=
+-\log
+\frac{\exp(\operatorname{sim}(z_i,z_i^+)/\tau)}
+{\sum_j\exp(\operatorname{sim}(z_i,z_j)/\tau)}.
+$$
+
+It combines:
+
+- **alignment:** positive views should be close
+- **uniformity/separation:** the population should not collapse to one point
+
+Under its sampling assumptions, InfoNCE also gives the mutual-information lower
+bound $I\ge \log N-\mathcal L_{\text{NCE}}$, where $N$ is the number of
+candidates. This interpretation is useful but incomplete: downstream quality
+depends on the view construction and representation geometry, not just on making
+the bound large.
+
+```{python}
+import torch.nn.functional as F
+
+
+def symmetric_info_nce(view_a, view_b, temperature=0.1):
+    """Minimal in-batch contrastive loss for paired representations."""
+    view_a = F.normalize(view_a, dim=-1)
+    view_b = F.normalize(view_b, dim=-1)
+    logits = view_a @ view_b.T / temperature
+    labels = torch.arange(logits.shape[0], device=logits.device)
+    return 0.5 * (
+        F.cross_entropy(logits, labels)
+        + F.cross_entropy(logits.T, labels)
+    )
+
+
+base = F.normalize(torch.randn(16, 32), dim=-1)
+matching = base + 0.01 * torch.randn_like(base)
+shuffled = matching[torch.randperm(matching.shape[0])]
+assert symmetric_info_nce(base, matching) < symmetric_info_nce(base, shuffled)
+```
+
+### Augmentations define semantics
+
+SimCLR made this especially visible: augmentation composition is not incidental
+regularization; it defines the pretext task. If cropping removes the object or
+if color is label-relevant, forcing invariance creates a false positive. If two
+different instances share semantics, treating all other batch items as
+negatives creates false negatives.
+
+The correct positive-pair policy is an assumption about the world.
+
+## Learning Without Negatives
+
+If two views are merely pulled together, the constant representation is a
+global optimum. Negative-free methods prevent collapse in different ways:
+
+- **BYOL:** an online network predicts a stop-gradient target generated by a
+  slowly moving teacher; predictor and update asymmetry are essential parts of
+  the system.
+- **Barlow Twins:** makes the cross-correlation of two views approach the
+  identity, combining invariance with redundancy reduction.
+- **VICReg:** explicitly combines view invariance, per-dimension variance, and
+  covariance regularization.
+- **DINO-style self-distillation:** centers and sharpens teacher distributions
+  while using a momentum teacher and multi-crop views.
+
+For a batch representation $Z\in\mathbb R^{B\times d}$, VICReg can be summarized
+as
+
+$$
+\mathcal L
+=
+\lambda\mathcal L_{\text{inv}}
++\mu\mathcal L_{\text{var}}
++\nu\mathcal L_{\text{cov}}.
+$$
+
+The terms respectively align paired views, keep each dimension's batch standard
+deviation above a threshold, and penalize off-diagonal covariance.
+
+```{python}
+def off_diagonal(matrix):
+    size = matrix.shape[0]
+    return matrix.flatten()[:-1].view(size - 1, size + 1)[:, 1:].flatten()
+
+
+def vicreg_loss(view_a, view_b, variance_target=1.0, eps=1e-4):
+    """Compact VICReg objective with equal weights for exposition."""
+    invariance = F.mse_loss(view_a, view_b)
+
+    std_a = torch.sqrt(view_a.var(dim=0) + eps)
+    std_b = torch.sqrt(view_b.var(dim=0) + eps)
+    variance = F.relu(variance_target - std_a).mean()
+    variance += F.relu(variance_target - std_b).mean()
+
+    centered_a = view_a - view_a.mean(dim=0)
+    centered_b = view_b - view_b.mean(dim=0)
+    covariance_a = centered_a.T @ centered_a / (view_a.shape[0] - 1)
+    covariance_b = centered_b.T @ centered_b / (view_b.shape[0] - 1)
+    covariance = off_diagonal(covariance_a).square().mean()
+    covariance += off_diagonal(covariance_b).square().mean()
+
+    return invariance + variance + covariance
+
+
+noncollapsed = torch.randn(64, 16)
+constant = torch.zeros_like(noncollapsed)
+assert vicreg_loss(constant, constant) > vicreg_loss(
+    noncollapsed, noncollapsed + 0.01 * torch.randn_like(noncollapsed)
+)
+```
+
+::: {.callout-note}
+## Collapse has more than one form
+
+**Complete collapse** maps every example to the same vector. **Dimensional
+collapse** uses only a low-rank subspace. A representation can also avoid both
+while learning a shortcut that transfers poorly. Batch variance alone therefore
+does not prove semantic quality.
+:::
+
+## Masked and Predictive Representations
+
+Reconstruction becomes a stronger abstraction pressure when the model sees only
+partial context.
+
+### Masked observation prediction
+
+BERT predicts masked tokens from bidirectional context. MAE masks a high fraction
+of image patches, encodes only visible patches, and uses a lightweight decoder to
+reconstruct missing pixels. In general,
+
+$$
+\mathcal L_{\text{mask}}
+=
+\sum_{i\in\mathcal M}
+d\left(y_i,
+g_\phi(f_\theta(x_{\setminus\mathcal M}),i)
+\right).
+$$
+
+The target $y_i$ matters. Pixels emphasize appearance; discrete tokens depend on
+the tokenizer; learned latent targets can emphasize more predictable semantic
+structure. Mask ratio and mask shape determine how much context must be
+integrated rather than copied.
+
+### Predict in representation space
+
+Joint-embedding predictive architectures avoid reconstructing every observation
+detail. I-JEPA encodes a context region and predicts the teacher representation
+of masked target blocks:
+
+$$
+\mathcal L_{\text{JEPA}}
+=
+\sum_{j}
+d\left(
+p_\psi(f_\theta(x_{\text{context}}),m_j),
+\operatorname{sg}\left[f_{\bar\theta}(x_{\text{target},j})\right]
+\right).
+$$
+
+Predicting in latent space says that unpredictable pixel-level detail need not
+be modeled. The masking strategy still defines the abstraction: large target
+blocks and spatially distributed context encourage semantic, nonlocal features.
+
+### Autoregressive prediction
+
+Next-token prediction is also representation learning. Hidden states must encode
+information that helps predict the continuation:
+
+$$
+\mathcal L_{\text{NTP}}
+=
+-\sum_t\log p(x_t\mid x_{<t}).
+$$
+
+Its great advantage is a universal training signal over raw sequences. Its
+representation is shaped by tokenization, causal direction, and the demands of
+generation; the last layer is not automatically the best frozen embedding for
+every downstream task.
+
+## Cross-Modal Alignment
+
+Paired modalities provide supervision about shared latent causes. CLIP learns
+image and text encoders by identifying matching pairs in a batch. This replaces
+a fixed class vocabulary with concepts expressible through language and enables
+zero-shot classification and retrieval.
+
+SigLIP replaces batch-normalized softmax competition with an independent binary
+classification loss for each image--text pair:
+
+$$
+\mathcal L_{\text{sigmoid}}
+=
+\sum_{i,j}
+\log\left(
+1+\exp[-y_{ij}(t\,z_i^Tv_j+b)]
+\right),
+$$
+
+where $y_{ij}=1$ for a matched pair and $-1$ otherwise. This removes the need for
+a global softmax over all pairs.
+
+Cross-modal alignment preserves the intersection of what the modalities make
+predictable. Caption supervision gives strong semantics, but captions may omit
+precise geometry, texture, or unmentioned objects. Recent systems therefore mix
+objectives rather than expect one loss to provide every property.
+
+## The Modern View: Objective Mixtures and Data
+
+The field has moved from searching for one universal self-supervised loss toward
+assembling complementary learning signals.
+
+| Method family | Core pressure | Anti-collapse / information mechanism | Characteristic bias |
+|---|---|---|---|
+| SimCLR / CPC | distinguish a positive from negatives | negative examples | augmentation- or context-defined invariance |
+| BYOL / DINO | match a teacher across views | optimization asymmetry and teacher dynamics | global semantic similarity |
+| VICReg / Barlow Twins | align views | explicit variance and decorrelation | nonredundant batch features |
+| MAE | reconstruct masked observations | reconstruction target | retains information useful for filling gaps |
+| I-JEPA | predict masked latent targets | teacher targets and context prediction | predictable semantic structure |
+| CLIP / SigLIP | align paired modalities | cross-example or pairwise discrimination | shared language--vision semantics |
+| DINOv2 | scaled self-distillation and masked objectives | teacher--student recipe plus curated data | general global and dense visual features |
+| SigLIP 2 | image--text alignment plus captioning, self-distillation, and masked prediction | complementary objectives and online curation | multilingual, semantic, and localized features |
+
+Two current lessons are easy to miss:
+
+1. **The dataset defines the representation.** DINOv2 emphasizes a diverse,
+   curated image pipeline; modern contrastive systems increasingly treat
+   filtering, deduplication, and mixture design as part of the learning method.
+2. **Global and local features need different pressure.** Classification,
+   retrieval, localization, and dense prediction do not reward identical
+   invariances. DINOv2 and SigLIP 2 explicitly target broader transfer than a
+   single global benchmark.
+
+### Representation capacity is also a systems choice
+
+A fixed embedding dimension forces every downstream application to pay the same
+storage, communication, and retrieval cost. Matryoshka Representation Learning
+trains multiple nested prefixes of one vector to be useful:
+
+$$
+\mathcal L_{\text{MRL}}
+=
+\sum_{m\in\mathcal M}
+\alpha_m
+\mathcal L\bigl(z_{1:m}\bigr).
+$$
+
+The first dimensions learn a coarse representation, while longer prefixes add
+detail. One model can therefore trade accuracy for latency or index size at
+deployment without training an independent encoder for every dimension. This is
+a modern example of designing a representation jointly with its downstream
+systems constraints.
+
+## Identifiability and What the Coordinates Mean
+
+If an objective uses only a decoder $g(f(x))$, an invertible transformation of
+the latent may leave the objective unchanged. Contrastive objectives based on
+dot products have their own rotational symmetries. Consequently:
+
+- a latent dimension is not automatically a human concept
+- two independently trained models can encode similar structure in different
+  bases
+- probing a coordinate does not establish a causal or disentangled factor
+- high downstream accuracy does not prove that nuisance information is absent
+
+Disentanglement cannot generally be recovered from observational data without
+inductive biases or supervision. Interpretability claims must state which
+equivalences the training objective leaves unresolved.
+
+## How to Evaluate a Representation
+
+No single score establishes representation quality.
+
+| Evaluation | What is held fixed? | What it tests | Caveat |
+|---|---|---|---|
+| Linear probe | encoder | linear accessibility | sensitive to optimization and feature normalization |
+| $k$-NN | encoder and nearly all learning capacity | local geometry | distance metric and $k$ matter |
+| Few-shot probe | encoder | label efficiency | high variance across task samples |
+| Full fine-tuning | little | initialization and adaptability | can hide weak frozen features |
+| Retrieval | encoder | cross-example or cross-modal geometry | benchmark negatives may be unrepresentative |
+| Dense prediction | often encoder initially | local spatial information | global embeddings may look deceptively strong elsewhere |
+| Shift/robustness tests | training distribution | stability of claimed invariances | shifts must reflect the deployment setting |
+
+Also inspect the representation itself:
+
+- per-dimension variance and covariance
+- singular-value spectrum and effective rank
+- positive-pair alignment and population spread
+- nearest neighbors and failure cases
+- sensitivity to transformations that should be invariant or equivariant
+- leakage of nuisance or protected attributes
+
+The best evaluation is a matrix of tasks, data regimes, and adaptation budgets
+that matches the intended use.
+
+## A Design Checklist
+
+Before choosing an objective, answer:
+
+1. **What future decisions should $z$ support?** This defines sufficiency.
+2. **Which transformations preserve meaning?** These define invariances.
+3. **Which transformations must remain observable?** These call for
+   equivariance or local features.
+4. **Where do positive relations come from?** Labels, views, context, time, or
+   paired modalities each encode different assumptions.
+5. **What prevents collapse or trivial copying?** Negatives, bottlenecks,
+   prediction, variance, or teacher asymmetry must do real work.
+6. **Which target is predicted?** Pixels, tokens, latent codes, and future states
+   preserve different information.
+7. **How will transfer be measured?** Use the same adaptation and distribution
+   conditions expected downstream.
+
+## Interview Questions
+
+- Why is an invertible encoding not automatically a useful representation?
+- Derive the graph-Laplacian smoothness identity $v^TLv$.
+- How do spectral embeddings turn a similarity assumption into coordinates?
+- Show why linear squared-error autoencoders recover the PCA subspace.
+- Why are nonlinear autoencoder latents non-identifiable?
+- Contrast invariance and equivariance with an example where invariance is
+  harmful.
+- Why does positive-pair alignment alone collapse?
+- How do InfoNCE, BYOL, and VICReg prevent collapse differently?
+- What assumptions are required to interpret InfoNCE as a mutual-information
+  lower bound?
+- Why are augmentations a form of supervision?
+- Compare reconstructing pixels with predicting latent targets.
+- Why might an image--text model underperform a vision-only model on dense
+  localization despite stronger semantic alignment?
+- What does a linear probe measure, and what does it fail to measure?
+- Why can two equally useful representations disagree coordinate by coordinate?
+
+## Exercises
+
+- [ ] Derive PCA from both reconstruction error and maximum retained variance.
+- [ ] Build a nearest-neighbor graph for two concentric circles and visualize
+  its first nontrivial Laplacian eigenvectors.
+- [ ] Train a small autoencoder with and without a bottleneck and inspect whether
+  reconstruction quality predicts linear-probe quality.
+- [ ] Vary InfoNCE temperature and batch size; inspect alignment, effective
+  rank, and retrieval accuracy separately.
+- [ ] Construct a harmful augmentation that erases the downstream label.
+- [ ] Remove each VICReg term and diagnose complete or dimensional collapse.
+- [ ] Compare pixel reconstruction, masked-token prediction, and latent
+  prediction using the same encoder and downstream protocol.
+
+## Primary References
+
+- Pradeep Ravikumar, *Representation Learning*, 10-716 Advanced Machine Learning
+  course notes (the supplied `Representation_Learning.pdf`)
+- [A Tutorial on Spectral Clustering](https://arxiv.org/abs/0711.0189)
+- [Representation Learning with Contrastive Predictive Coding](https://arxiv.org/abs/1807.03748)
+- [BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding](https://arxiv.org/abs/1810.04805)
+- [A Simple Framework for Contrastive Learning of Visual Representations](https://arxiv.org/abs/2002.05709)
+- [Bootstrap Your Own Latent](https://arxiv.org/abs/2006.07733)
+- [Learning Transferable Visual Models From Natural Language Supervision](https://arxiv.org/abs/2103.00020)
+- [Barlow Twins: Self-Supervised Learning via Redundancy Reduction](https://arxiv.org/abs/2103.03230)
+- [VICReg](https://arxiv.org/abs/2105.04906)
+- [Masked Autoencoders Are Scalable Vision Learners](https://arxiv.org/abs/2111.06377)
+- [Matryoshka Representation Learning](https://arxiv.org/abs/2205.13147)
+- [Text Embeddings by Weakly-Supervised Contrastive Pre-training](https://arxiv.org/abs/2212.03533)
+- [Self-Supervised Learning from Images with a Joint-Embedding Predictive Architecture](https://arxiv.org/abs/2301.08243)
+- [Sigmoid Loss for Language Image Pre-Training](https://arxiv.org/abs/2303.15343)
+- [DINOv2: Learning Robust Visual Features without Supervision](https://arxiv.org/abs/2304.07193)
+- [SigLIP 2](https://arxiv.org/abs/2502.14786)

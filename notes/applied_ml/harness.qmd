@@ -101,6 +101,50 @@ This framing yields several important insights:
    remembers every rule on every turn.
 4. The harness should make success observable and failure recoverable.
 
+### From predictor to closed-loop decision system
+
+A model call is an open-loop predictor: it maps its current context to a proposed
+continuation or action. A harness turns repeated calls into feedback control:
+
+$$
+s_t
+\xrightarrow{\text{predict and decide}}
+a_t
+\xrightarrow{\text{environment}}
+o_{t+1}
+\xrightarrow{\text{compare}}
+\delta_t
+\xrightarrow{\text{update}}
+s_{t+1},
+$$
+
+where $s_t$ is the harness's current state estimate, $o_{t+1}$ is an external
+observation, and $\delta_t$ is the mismatch between expected and observed
+consequences. This is more precise than simply saying that an LLM “becomes an
+agent”:
+
+$$
+\boxed{\text{open-loop predictor}\rightarrow\text{closed-loop decision system}}.
+$$
+
+Most harness mechanisms can be located within this loop:
+
+| Decision-loop problem | Harness mechanism | Control role |
+|---|---|---|
+| What is currently true? | context, retrieval, memory, task state | state estimation |
+| What might happen? | reasoning, planning, candidate generation | consequence prediction |
+| What should happen next? | controller, routing, skills | action selection and abstraction |
+| How can the system intervene or learn? | tools | actuation and sensing |
+| Did reality disagree? | tests, verifiers, critics | surprise generation |
+| Which assumption failed? | diagnosis and reflection | error attribution |
+| What must survive? | artifacts, checkpoints, persistent memory | state update |
+| Where may the agent go? | permissions and guardrails | reachable-state constraints |
+| How does the system improve? | traces, evaluations, failure analysis | outer-loop learning |
+
+This view asks what information closes the loop. Adding more internal reasoning
+cannot correct a false belief as reliably as an environmental observation that
+distinguishes competing hypotheses.
+
 ## 4. The Basic Agent Loop
 
 ```{mermaid}
@@ -141,7 +185,7 @@ ordinary code when the rule is known:
 Encoding deterministic invariants as prose wastes model capacity and makes
 them probabilistic.
 
-## 5. Harness Components
+## 5. Harness Components {#sec-harness-components}
 
 ### 5.1 Context compiler
 
@@ -157,6 +201,25 @@ The context compiler decides what the model sees on the next turn. It assembles:
 It must resolve ordering, priority, truncation, compaction, and provenance.
 Simply appending every prior token eventually produces an expensive, noisy, and
 contradictory context.
+
+In control terms, context and memory perform **state estimation**. From the full
+history
+
+$$
+h_t=(o_1,a_1,\ldots,o_t),
+$$
+
+the harness constructs a compact state $s_t=\phi(h_t)$ that should preserve the
+information needed for future decisions:
+
+$$
+p(o_{t+1}\mid h_t,a)
+\approx
+p(o_{t+1}\mid s_t,a).
+$$
+
+The goal is not maximum context. It is the smallest state for which additional
+history would not materially change the next good action.
 
 ### 5.2 Tool registry and executor
 
@@ -175,6 +238,25 @@ Each tool needs a contract:
 Good tool descriptions say what the tool does, when to use it, and what it does
 **not** do. Overlapping tools create selection ambiguity. Huge, raw outputs
 consume context and should be normalized or stored as artifacts.
+
+Tools are both **actuators** and **sensors**. An edit, deployment, or message
+changes the environment; a search, test, schema inspection, or diagnostic read
+primarily reduces uncertainty. A useful epistemic action may have little direct
+task reward but high information value:
+
+$$
+a^*
+=
+\arg\max_a
+\left[
+\mathbb E[V(a)]
++\beta I(o_{t+1};z\mid s_t,a)
+\right],
+$$
+
+where $z$ is an unknown fact relevant to the decision. This explains why
+running a cheap test often beats spending many more tokens predicting whether
+the code will work.
 
 ### 5.3 State and memory
 
@@ -221,6 +303,24 @@ It owns:
 The workflow may be a general loop, a deterministic DAG, or a hybrid in which
 code fixes the outer stages and the model makes local decisions.
 
+For uncertain environments, prefer a receding-horizon pattern:
+
+$$
+\text{plan}
+\rightarrow
+\text{act briefly}
+\rightarrow
+\text{observe}
+\rightarrow
+\text{replan}.
+$$
+
+This resembles model predictive control. A long fixed plan assumes that distant
+future states are predictable; short execution bursts allow observations to
+correct the plan. The controller should also allocate compute between internal
+simulation and acting. When an action is cheap, reversible, and informative,
+act-and-observe is often preferable to extended reasoning.
+
 ### 5.5 Verifiers
 
 A verifier converts “I think I am done” into observable completion evidence.
@@ -236,6 +336,20 @@ Examples include:
 Verification should test the artifact or environment state, not merely ask the
 same model whether its answer looks correct.
 
+More generally, verifiers perform **surprise engineering**:
+
+$$
+\delta_t
+=
+\operatorname{Compare}
+(\text{expected consequence},\text{observed consequence}).
+$$
+
+A good environment makes wrong beliefs produce cheap, specific, actionable
+observations. Coding agents benefit from unusually dense signals—compiler
+errors, test failures, types, linters, and diffs—while research and open-ended
+work require more deliberate verifiers for coverage and correctness.
+
 ### 5.6 Permission layer
 
 Permissions belong outside the model's editable reasoning loop. The harness
@@ -249,6 +363,16 @@ should apply least privilege and classify actions by consequence:
 High-impact actions may require user approval even when the model is confident.
 Retrieved documents and tool outputs are untrusted data, not instructions that
 can modify the permission policy.
+
+Formally, the permission layer enforces
+
+$$
+a_t\in\mathcal A_{\text{allowed}}(s_t).
+$$
+
+This constrains the states the system can reach. Strong boundaries can enable
+greater autonomy inside the safe action set because catastrophic trajectories
+are excluded by code rather than discouraged only through prompting.
 
 ### 5.7 Observability
 
@@ -266,6 +390,20 @@ A production harness should make trajectories explainable after the fact:
 Observability is not only for dashboards. Without it, harness optimization
 cannot distinguish a bad model decision from a bad tool description, stale
 state, parser bug, permission denial, or verifier failure.
+
+Tracing creates an outer feedback loop around the agent's inner loop:
+
+$$
+\underbrace{s_t\rightarrow a_t\rightarrow o_{t+1}\rightarrow s_{t+1}}
+_{\text{agent loop}},
+\qquad
+\underbrace{\text{trajectories}\rightarrow\text{failure analysis}
+\rightarrow\text{harness change}\rightarrow\text{new trajectories}}
+_{\text{development loop}}.
+$$
+
+A final success score says whether a run failed, but the trajectory is needed to
+attribute why it failed.
 
 ## 6. Context Engineering
 
@@ -365,6 +503,12 @@ justify coordination. The harness needs process-management operations:
 Subagents should not exist merely to imitate an organization chart. Every
 delegation adds context duplication, synchronization, and error-propagation
 cost.
+
+Mechanistically, multi-agent execution is conditional computation, context
+partitioning, and sometimes parallel search. It helps when specialists can work
+with mostly independent state. If their subtasks depend on heavily shared hidden
+context, decomposition can discard information and cost more than one coherent
+trajectory.
 
 ## 8. A Minimal Harness Skeleton
 
@@ -473,6 +617,28 @@ Retries are especially dangerous for non-idempotent tools. Repeating a timed-out
 payment, message, or deployment may duplicate the side effect even when the
 first response was lost.
 
+### Reflection should follow evidence
+
+Asking the same model to “reflect” without a new observation may provide useful
+extra inference, but it does not change the evidence. The stronger loop is
+
+$$
+a_t
+\rightarrow
+o_{t+1}
+\rightarrow
+\delta_t
+\rightarrow
+\text{root-cause attribution}
+\rightarrow
+s_{t+1}.
+$$
+
+Reflection should identify which assumption, plan step, tool interpretation, or
+completion criterion the observation falsified. Without this attribution, an
+agent may respond to a failed test by making unrelated changes or repeating the
+same action in different words.
+
 ## 10. Designing the Right Amount of Harness
 
 There is a spectrum:
@@ -502,6 +668,11 @@ pipeline:
 6. evaluate on held-in and held-out tasks
 7. accept only evidence-supported changes
 
+Useful failure labels follow the closed-loop decomposition: state-estimation,
+prediction, planning, tool, verification, permission, and state-update failure.
+This provides better credit assignment than treating every unsuccessful
+trajectory as a generic model failure.
+
 Possible optimization targets include:
 
 - system instructions and tool descriptions
@@ -514,6 +685,15 @@ Possible optimization targets include:
 
 Always compare against simple baselines. A more elaborate harness may consume
 more test-time compute rather than make better decisions.
+
+Harness configuration can also be part of the model's training distribution.
+For example, Kimi K3 varies tools, system prompts, context strategies, skills,
+memory, and subagent configurations during agentic RL instead of optimizing for
+one fixed scaffold. This teaches robustness across runtimes, but does not remove
+the need for task-specific environments and verifiers. See
+[How SOTA systems train deep research](agentic_search.qmd#sec-deep-research-training)
+for the relationship between harness variation, specialist policies, and a
+consolidated research/coding/general-agent model.
 
 ### Self-improving harnesses
 
@@ -579,6 +759,12 @@ need for brittle scaffolding; they do not eliminate the runtime contract.
    harness edit is guesswork.
 8. **The simplest sufficient harness usually generalizes best.** Add structure
    in response to measured failure, not aesthetic preference.
+9. **Tools are sensors as well as actuators.** Information-gathering actions can
+   be more valuable than premature execution.
+10. **Useful reflection begins with surprise.** New external evidence enables
+    belief revision; repeated introspection alone does not.
+11. **Planning should remain feedback-sensitive.** Plan, act briefly, observe,
+    and replan when the environment is uncertain.
 
 ## Interview Questions
 
@@ -595,6 +781,14 @@ need for brittle scaffolding; they do not eliminate the runtime contract.
 - Which components must remain immutable in a self-improving harness?
 - How would you determine whether a gain came from the harness or additional
   test-time compute?
+- Why are tools both actuators and sensors? Give an example of an epistemic tool
+  action.
+- What makes a verifier produce useful surprise rather than merely another
+  model opinion?
+- When is receding-horizon planning preferable to committing to a complete
+  plan?
+- Why is reflection after a failed test more useful than reflection with no new
+  evidence?
 
 ## Exercises
 
@@ -613,3 +807,4 @@ need for brittle scaffolding; they do not eliminate the runtime contract.
 - [Harness Engineering for Self-Improvement — Lilian Weng](https://lilianweng.github.io/posts/2026-07-04-harness/)
 - [LLM Powered Autonomous Agents — Lilian Weng](https://lilianweng.github.io/posts/2023-06-23-agent/)
 - [Agentic Search](agentic_search.qmd)
+- [From Test-Time Training to Continual Intelligence](../advanced/continual_intelligence_ttt.qmd)

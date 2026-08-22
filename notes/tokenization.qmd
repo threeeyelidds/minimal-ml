@@ -24,6 +24,116 @@ This distinction is important. A ViT image patch is commonly called a token,
 but it is usually projected directly into a continuous vector rather than
 assigned a discrete vocabulary ID.
 
+### Why tokenization is needed beyond language
+
+A neural network does not directly consume a word, photograph, sound, video, or
+catalog item. Its kernels consume finite tensors with known dimensions. The raw
+domains, however, have very different structure:
+
+- text is variable-length and drawn from an effectively open symbol space
+- images are dense two-dimensional arrays with millions of correlated values
+- audio and video are high-rate signals that would produce enormous sequences
+- recommendation catalogs contain millions or billions of sparse categorical
+  IDs with little inherent geometry
+
+Tokenization is the interface that reconciles this mismatch. In its broadest
+sense, it **compiles a domain object into a bounded sequence of model-facing
+units**:
+
+$$
+\tau(x)
+=
+\big((z_1,p_1,m_1),\ldots,(z_T,p_T,m_T)\big),
+$$
+
+where $z_t$ is a discrete ID or continuous feature, $p_t$ describes position or
+structure, and $m_t$ can identify the modality or token type. A general sequence
+model then operates on this interface rather than on the original representation.
+
+```{mermaid}
+flowchart LR
+    L[Text] --> TL[Subwords or bytes]
+    I[Images] --> TI[Patches or VQ codes]
+    A[Audio] --> TA[Frames or codec codes]
+    V[Video] --> TV[Tubelets or video codes]
+    R[Catalog items] --> TR[Atomic or semantic IDs]
+
+    TL --> E[Token embeddings + structure]
+    TI --> E
+    TA --> E
+    TV --> E
+    TR --> E
+
+    E --> M[General sequence model]
+    M --> O[Prediction, retrieval, generation, or control]
+```
+
+This is why tokenization is not intrinsically an LLM component. It is an
+**abstraction boundary** between domain-specific perception or identity and a
+model that expects a sequence of vectors. The same Transformer can process
+different fields once their tokenizers produce compatible shapes and attach the
+right positional and modality information.
+
+### What the tokenizer decides
+
+The tokenizer does more than change a data type. It makes several modeling
+decisions before the backbone sees the input:
+
+| Decision | Question | Consequence |
+|---|---|---|
+| Units | What should count as one token? | determines the primitive patterns the model can combine |
+| Compression | How much raw information enters each token? | trades sequence length and compute against lost detail |
+| Parameter sharing | Which observations reuse an ID, code, or encoder? | determines how statistical strength transfers between examples |
+| Structure | How are space, time, hierarchy, and modality represented? | supplies ordering and neighborhood information absent from token values |
+| Reversibility | Must the original input be reconstructed? | separates semantic representations from generation-quality codecs |
+
+The token sequence is therefore an information and compute budget. For dense
+attention with $T$ tokens, the attention-score matrix costs
+$O(T^2)$. Reducing image patch size, audio hop size, or video tubelet size may
+preserve more detail, but can make the backbone dramatically more expensive.
+
+Tokenization also defines inductive bias. Subwords encourage reuse across
+related words; image patches encode locality; codec tokens favor
+reconstructability; semantic item IDs encourage related items to share code
+embeddings. A downstream model cannot reliably recover information that its
+tokenizer discarded.
+
+### Why large sparse IDs are a tokenization problem
+
+An atomic recommendation ID is already a discrete token, but it is an arbitrary
+name. With $N$ items and embedding dimension $d$, a direct item table requires
+$O(Nd)$ parameters, and two similar items share no representation unless the
+training data teaches their embeddings to be similar.
+
+A semantic tokenizer can replace one huge categorical space with a composition
+of $M$ codes drawn from codebooks of size $K$:
+
+$$
+i
+\longrightarrow
+(c_1,\ldots,c_M),
+\qquad c_m\in\{1,\ldots,K\}.
+$$
+
+The code embeddings require roughly $O(MKd)$ parameters while the code tuples
+can represent up to $K^M$ combinations. More importantly, rare or new items can
+reuse codes learned by related items. This is analogous to representing a rare
+word with reusable subwords, although recommendation systems must additionally
+preserve exact item identity and prevent invalid or colliding code sequences.
+
+### When tokenization is not necessary
+
+Tokenization is most valuable for inputs that are variable-sized,
+high-dimensional, high-rate, sparse categorical, or intended to share a
+sequence backbone. A small, fixed-length dense feature vector can usually be fed
+directly to an MLP; calling every numeric feature a token adds no inherent value.
+
+The useful first-principles question is therefore not “How do I tokenize this
+modality?” but:
+
+> What representation exposes the task-relevant structure at a token rate and
+> parameter cost the model can afford?
+
 ### A shared view across modalities
 
 | Modality | Common unit | Discrete or continuous? | Typical sequence axis |

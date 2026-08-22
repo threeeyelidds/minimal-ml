@@ -1,5 +1,5 @@
 ---
-title: "First- and Second-Order Optimization"
+title: "Zeroth-, First-, and Second-Order Optimization"
 ---
 
 ## Optimization Setup
@@ -13,14 +13,17 @@ L(\theta)
 \frac{1}{N}\sum_{i=1}^{N}\ell(f_\theta(x_i),y_i).
 $$
 
-A mini-batch provides a stochastic gradient
+Most deep-learning optimizers use a stochastic gradient from a mini-batch:
 
 $$
 g_t=\nabla_\theta L_{\mathcal B_t}(\theta_t),
 $$
 
-which is an estimate of the full-dataset gradient. An optimizer converts the
-current gradient and its accumulated state into a parameter update.
+This is an estimate of the full-dataset gradient. A first-order optimizer
+converts that gradient and its accumulated state into a parameter update.
+Zeroth-order methods receive only evaluations of $L(\theta)$. Some estimate a
+gradient-like direction; others compare candidate points, move a simplex, fit a
+surrogate, or evolve a population without constructing any gradient estimate.
 
 Optimization quality depends on more than the optimizer name:
 
@@ -31,7 +34,285 @@ Optimization quality depends on more than the optimizer name:
 - regularization and weight decay
 - numerical precision
 
-## Stochastic Gradient Descent
+The “order” of an optimizer refers to the highest derivative of the objective
+available to it:
+
+| Order | Oracle information | Examples |
+|---|---|---|
+| Zeroth | function values $L(\theta)$ | pattern search, Nelder–Mead, Powell, CMA-ES, Bayesian optimization, finite differences |
+| First | gradients $\nabla L(\theta)$ | SGD, AdamW, AdaGrad, linearized FTRL-Proximal |
+| Second | Hessian or curvature information | Newton, quasi-Newton, Hessian-free methods |
+
+Preconditioning and regularization are separate axes. A method can transform a
+first-order gradient using matrix geometry, and weight decay can be attached to
+an optimizer without changing its derivative order.
+
+Derivative order is only one taxonomy. The **learning protocol** asks a
+different question:
+
+| Protocol | Objective or evaluation | Meaning of the example index |
+|---|---|---|
+| Static empirical risk | minimize one fixed dataset average | examples are usually treated as exchangeable |
+| Stochastic optimization | estimate the static objective from sampled mini-batches | sampled order is mainly an optimization device |
+| Online learning | predict, reveal the next loss, then update | $t$ is a causal decision round |
+
+SGD and FTRL can both use first-order information while solving differently
+organized problems. This distinction becomes important below.
+
+## Zeroth-Order and Derivative-Free Optimization
+
+A **zeroth-order oracle** returns function values but no derivatives. The broader
+term **derivative-free optimization** emphasizes algorithms designed to work
+without gradients. These algorithms are useful for black-box APIs,
+nondifferentiable simulators, physical experiments, hyperparameter tuning,
+mixed/discrete decisions, and objectives whose implementation cannot be
+differentiated.
+
+Two families should be distinguished:
+
+1. **Direct/model-based search:** choose candidates from comparisons, geometric
+   rules, populations, or a fitted response surface. No gradient is estimated.
+2. **Zeroth-order gradient estimation:** use function differences to construct a
+   gradient-like vector, then apply an SGD-style update.
+
+The first family is the traditional meaning of “optimization without
+derivatives.”
+
+### Family 1: direct and model-based search
+
+| Method | State and move | Best fit | Main limitation |
+|---|---|---|---|
+| Grid/random search | evaluate independent candidate points | baselines, discrete spaces, embarrassingly parallel search | ignores information from earlier evaluations |
+| Coordinate/pattern search | test a finite set of directions; accept improvements and shrink step size | low-dimensional local optimization, nonsmooth objectives | evaluations grow with dimension and coordinate alignment can be poor |
+| Nelder–Mead | transform a simplex of $d+1$ points by reflection, expansion, contraction, and shrinkage | small, deterministic continuous problems | weak scaling and limited convergence guarantees in general dimensions |
+| Powell direction-set | repeated one-dimensional line searches; update the direction set | smooth low-dimensional continuous problems | line searches can be expensive and noise-sensitive |
+| Simulated annealing | sometimes accept worse moves with a temperature-dependent probability | multimodal or combinatorial search | slow schedules and many evaluations |
+| Evolution strategies / CMA-ES | sample a population and update its search distribution | nonconvex, rugged continuous objectives | population evaluations and covariance state are expensive |
+| Bayesian optimization | fit a probabilistic surrogate and optimize an acquisition function | very expensive objectives with modest dimension | surrogate/acquisition overhead and poor high-dimensional scaling |
+
+#### Coordinate and pattern search
+
+At point $x_t$ with step size $\Delta_t$, a coordinate search evaluates
+
+$$
+x_t\pm\Delta_t e_i,
+\qquad i=1,\ldots,d.
+$$
+
+It moves to an improving candidate. If none improves the objective, it shrinks
+$\Delta_t$. More general pattern-search methods use a set of directions that
+positively spans the space. Their convergence arguments come from ensuring that
+failure to improve at progressively smaller scales implies a local stationarity
+condition—not from approximating a gradient.
+
+```{python}
+import torch
+
+
+@torch.no_grad()
+def coordinate_pattern_search(
+    objective,
+    initial_point,
+    initial_step=1.0,
+    shrink=0.5,
+    tolerance=1e-5,
+    max_sweeps=200,
+):
+    """Greedy coordinate search using function comparisons only."""
+    point = initial_point.clone()
+    value = float(objective(point))
+    step = initial_step
+
+    for _ in range(max_sweeps):
+        improved = False
+
+        for index in range(point.numel()):
+            for sign in (-1.0, 1.0):
+                candidate = point.clone()
+                candidate[index] += sign * step
+                candidate_value = float(objective(candidate))
+
+                if candidate_value < value:
+                    point, value = candidate, candidate_value
+                    improved = True
+
+        if not improved:
+            step *= shrink
+            if step < tolerance:
+                break
+
+    return point, value
+
+
+target = torch.tensor([0.5, -1.0, 2.0])
+solution, value = coordinate_pattern_search(
+    lambda x: (x - target).square().sum(),
+    initial_point=torch.tensor([4.0, 3.0, -2.0]),
+)
+torch.testing.assert_close(solution, target, atol=2e-5, rtol=0.0)
+```
+
+#### Nelder–Mead and Powell
+
+Nelder–Mead maintains a simplex rather than a direction estimate. It reflects
+the worst vertex through the centroid of the others, then may expand, contract,
+or shrink based only on function comparisons. Do not confuse this geometric
+simplex with the simplex algorithm for linear programming.
+
+Powell's method performs derivative-free one-dimensional minimizations along a
+set of directions and periodically replaces a direction using the net movement
+over a cycle. It can learn useful conjugate-like directions on smooth quadratic
+problems without evaluating derivatives.
+
+Both are valuable classical local methods for modest dimension. Neither is a
+good default for optimizing billions of neural-network parameters.
+
+#### Simulated annealing and evolutionary search
+
+For a proposed move with objective change $\Delta=L(x')-L(x)$, simulated
+annealing accepts improvements and may accept a worse move with probability
+
+$$
+P(\text{accept})
+=
+\exp\left(-\frac{\Delta}{T}\right),
+\qquad \Delta>0.
+$$
+
+High temperature $T$ encourages exploration; cooling gradually makes the search
+greedy. The method targets global exploration rather than local gradient
+reconstruction.
+
+CMA-ES samples a population from a Gaussian search distribution and adapts its
+mean, overall scale, and covariance from ranked candidates. It learns the shape
+of successful search directions statistically, but does not approximate the
+objective gradient by finite differences.
+
+#### Bayesian optimization
+
+When each evaluation takes minutes, hours, or a physical experiment, evaluation
+count matters more than optimizer arithmetic. Bayesian optimization fits a
+surrogate distribution over the objective and chooses the next point by an
+acquisition function:
+
+$$
+x_{t+1}
+=
+\arg\max_x
+a(x\mid\mathcal D_t),
+$$
+
+where $a$ may be expected improvement, probability of improvement, an upper
+confidence bound, or an information-gain criterion. It explicitly trades off
+promising predictions against uncertainty. Classical Gaussian-process BO is
+most natural in relatively low-dimensional continuous spaces.
+
+### Family 2: estimate a gradient from function values
+
+This is only one branch of zeroth-order optimization, but it connects most
+directly to neural-network training. For $d$ parameters, sample a random unit
+direction $u$ and evaluate the loss on both sides of the current point:
+
+$$
+\widehat g(\theta;u)
+=
+\frac{d}{2\mu}
+\left[
+L(\theta+\mu u)-L(\theta-\mu u)
+\right]u.
+$$
+
+Although $\widehat g$ looks like a gradient, it was constructed only from two
+function values. It estimates the gradient of a smoothed objective. The update
+can then reuse a familiar first-order rule:
+
+$$
+\theta_{t+1}=\theta_t-\eta\widehat g_t.
+$$
+
+The smoothing radius $\mu$ has a numerical tradeoff. A large value introduces
+bias because it averages over a wider neighborhood; a very small value makes
+the loss difference vulnerable to evaluation noise and floating-point error.
+
+### Why zeroth-order methods are expensive in high dimensions
+
+One random direction contains little information about a $d$-dimensional
+gradient, so the estimator can have high variance that worsens with dimension.
+Using $q$ directions requires $2q$ loss evaluations per update. Backpropagation,
+by contrast, computes all parameter partial derivatives in roughly a small
+constant multiple of one forward-pass cost.
+
+This is why zeroth-order optimization is usually a fallback for black-box or
+nondifferentiable problems rather than the default way to train a large neural
+network. Structure helps: coordinate sampling, antithetic evaluations, shared
+randomness, low-dimensional subspaces, and variance reduction can lower the
+query cost.
+
+### Minimal two-point implementation
+
+This educational implementation optimizes one tensor without calling
+`backward()` or reading `.grad`:
+
+```{python}
+import torch
+
+
+@torch.no_grad()
+def two_point_zo_step(
+    parameter,
+    loss_fn,
+    lr=0.05,
+    smoothing=1e-2,
+    num_directions=16,
+):
+    estimate = torch.zeros_like(parameter)
+    dimension = parameter.numel()
+
+    for _ in range(num_directions):
+        direction = torch.randn_like(parameter)
+        direction.div_(direction.norm().clamp_min(1e-12))
+
+        parameter.add_(direction, alpha=smoothing)
+        loss_plus = float(loss_fn())
+
+        parameter.add_(direction, alpha=-2.0 * smoothing)
+        loss_minus = float(loss_fn())
+
+        # Restore the original point before accumulating the estimate.
+        parameter.add_(direction, alpha=smoothing)
+        estimate.add_(
+            direction,
+            alpha=dimension * (loss_plus - loss_minus) / (2.0 * smoothing),
+        )
+
+    estimate.div_(num_directions)
+    parameter.add_(estimate, alpha=-lr)
+
+
+torch.manual_seed(0)
+point = torch.tensor([3.0, -2.0, 1.0, 4.0])
+target = torch.tensor([0.5, 0.5, 0.5, 0.5])
+
+
+def black_box_loss():
+    return (point - target).square().sum()
+
+
+initial_loss = black_box_loss().item()
+for _ in range(120):
+    two_point_zo_step(point, black_box_loss)
+
+assert black_box_loss() < 1e-3 * initial_loss
+point
+```
+
+## Local Stochastic First-Order Methods
+
+These methods start from the current parameter, current stochastic gradient, and
+a compact optimizer state. They do not explicitly re-solve an objective over
+the entire observed prefix.
+
+### Stochastic Gradient Descent
 
 Vanilla SGD updates
 
@@ -45,7 +326,7 @@ Full-batch gradient descent uses the entire dataset per step. SGD historically
 means one example per step; in deep learning, “SGD” commonly means mini-batch
 SGD.
 
-### Why stochasticity can help
+#### Why stochasticity can help
 
 - mini-batches make each update cheaper
 - gradient noise can help leave saddle points or narrow regions
@@ -53,7 +334,7 @@ SGD.
 
 But noisy gradients may oscillate, especially in directions of high curvature.
 
-## Momentum
+### Momentum
 
 Momentum maintains an exponential moving average of gradients:
 
@@ -74,7 +355,7 @@ Momentum:
 - damps oscillation when gradients repeatedly change sign
 - introduces one state scalar per parameter
 
-### Nesterov momentum
+#### Nesterov momentum
 
 Nesterov accelerated gradient evaluates the gradient at an approximate
 look-ahead position:
@@ -85,9 +366,9 @@ $$
 
 The exact update form depends on the momentum convention and framework.
 
-## Per-Parameter Adaptive Learning Rates
+### Per-Parameter Adaptive Learning Rates
 
-### AdaGrad
+#### AdaGrad
 
 AdaGrad accumulates squared gradients:
 
@@ -105,7 +386,7 @@ Parameters with frequent large gradients receive smaller effective learning
 rates. This can work well for sparse features, but $s_t$ only grows, so the
 learning rate may decay too aggressively.
 
-### RMSProp
+#### RMSProp
 
 RMSProp replaces the sum with an exponential moving average:
 
@@ -116,12 +397,377 @@ $$
 $$
 \theta_{t+1}
 =
-\theta_t-eta\frac{g_t}{\sqrt{s_t}+\epsilon}.
+\theta_t-\eta\frac{g_t}{\sqrt{s_t}+\epsilon}.
 $$
 
 Old squared gradients decay, preventing the denominator from growing forever.
 
-## Adam
+## Online and Cumulative Optimization
+
+Online optimization makes the prediction/update boundary part of the problem.
+The central object is not a shuffled approximation to one fixed batch objective,
+but the sequence of losses revealed after successive decisions.
+
+### FTRL: Online and Proximal First-Order Optimization
+
+#### Start with native Follow the Leader
+
+Online learning changes the order of events. At round $t$:
+
+1. choose parameters $w_t$ using only rounds $1,\ldots,t-1$
+2. make the current prediction
+3. observe the outcome and incur the revealed loss $\ell_t(w_t)$
+4. use $\ell_t(\cdot)$ to choose $w_{t+1}$
+
+**Follow the Leader (FTL)** chooses the parameter that would have performed best
+on all previous rounds:
+
+$$
+w_{t+1}
+=
+\arg\min_w
+\sum_{s=1}^{t}\ell_s(w).
+$$
+
+This is the native idea: follow the leader of the cumulative **actual losses**.
+It does not begin with gradients, proximal terms, or a special “FTRL loss.” If a
+finite dataset is replayed, FTL resembles refitting empirical risk minimization
+after every new example.
+
+For online logistic regression,
+
+$$
+p_t(w)=\sigma(w^Tx_t),
+$$
+
+$$
+\ell_t(w)
+=
+-y_t\log p_t(w)
+-(1-y_t)\log[1-p_t(w)].
+$$
+
+Native FTL would minimize the accumulated logistic losses after every example.
+That gives the clean conceptual starting point, but repeatedly solving a growing
+nonlinear problem can be expensive.
+
+#### What FTRL preserves about the data axis
+
+The important insight is that FTRL preserves the **causal prefix structure** of
+the data. The model $w_t$ can depend only on losses revealed before round $t$.
+Its natural evaluation is therefore regret:
+
+$$
+\operatorname{Regret}_T
+=
+\sum_{t=1}^{T}\ell_t(w_t)
+-
+\min_w\sum_{t=1}^{T}\ell_t(w).
+$$
+
+The first term evaluates the decisions that were actually made through time.
+The second asks how well the best single fixed parameter would have performed
+in hindsight.
+
+This differs from the usual static empirical-risk objective
+
+$$
+L(w)=\frac1N\sum_{i=1}^{N}\ell_i(w).
+$$
+
+In ordinary shuffled training, the example index $i$ is assumed to be
+exchangeable. SGD samples a mini-batch to estimate $\nabla L(w)$ cheaply:
+
+$$
+g_t
+\approx
+\nabla L(w_t).
+$$
+
+Random shuffling deliberately treats the observed ordering as a nuisance rather
+than as part of the statistical problem.
+
+| Property | Shuffled SGD/Adam | Online FTRL |
+|---|---|---|
+| Information available at step $t$ | sampled examples from a fixed dataset | only the revealed prefix $1{:}t-1$ |
+| Meaning of order | usually randomized to reduce sampling bias | causal prediction order |
+| Main target | minimize static empirical risk | minimize cumulative online loss or regret |
+| History state | current parameters and optimizer moments | cumulative loss/gradient statistics and regularizer |
+| Standard assumption | data are often treated as IID or exchangeable | sequence need not be IID |
+
+::: {.callout-important}
+## FTRL does not store the whole time axis
+
+FTRL preserves **when a decision must be made relative to the revealed data**,
+not every historical example or its timestamp. Practical FTRL-Proximal
+compresses the prefix into statistics such as
+
+$$
+z_t,
+\qquad
+n_t=\sum_{s=1}^{t}g_s^2.
+$$
+
+Within a fixed prefix, these accumulators do not reveal when each contribution
+arrived. Temporal meaning comes from the predict--reveal--update protocol and
+from evaluating every decision $w_t$.
+:::
+
+SGD and Adam are also path-dependent: changing mini-batch order changes the
+parameters encountered, and Adam's exponential moments weight recent gradients
+more heavily. The difference is conceptual intent. Shuffled batch training tries
+to make order an irrelevant Monte Carlo detail; online learning makes the
+information boundary at each round explicit.
+
+Finally, cumulative FTRL does not automatically forget old evidence. Under
+concept drift, one may need discounted losses, sliding windows, restarts, or
+time-decayed statistics. This connects online optimization to
+[continual adaptation](../advanced/continual_intelligence_ttt.qmd), but respecting
+causal order alone is not enough to track a changing environment.
+
+#### A solvable native example
+
+Suppose each round reveals a scalar target $y_t$ and uses squared loss
+
+$$
+\ell_t(w)=\frac12(w-y_t)^2.
+$$
+
+Plain FTL chooses
+
+$$
+w_{t+1}
+=
+\arg\min_w
+\frac12\sum_{s=1}^{t}(w-y_s)^2
+=
+\frac1t\sum_{s=1}^{t}y_s.
+$$
+
+The current leader is simply the empirical mean. Adding the quadratic
+regularizer $R(w)=\lambda w^2/2$ gives native FTRL:
+
+$$
+w_{t+1}
+=
+\arg\min_w
+\left[
+\frac12\sum_{s=1}^{t}(w-y_s)^2
++\frac{\lambda}{2}w^2
+\right]
+=
+\frac{\sum_{s=1}^{t}y_s}{t+\lambda}.
+$$
+
+This example contains no loss linearization. Regularization shrinks an uncertain
+early estimate toward zero; the data gradually dominates as $t$ grows.
+
+#### Why plain FTL can be unstable
+
+FTL assumes the current cumulative winner is a safe next decision. If a small
+change in history changes the winner, it can jump sharply between parameters.
+An adversarial sequence can exploit those jumps and cause linear regret.
+
+The first repair is **Follow the Regularized Leader**:
+
+$$
+w_{t+1}
+=
+\arg\min_w
+\left[
+\sum_{s=1}^{t}\ell_s(w)+R_t(w)
+\right].
+$$
+
+For example, $R_t(w)=\lVert w\rVert_2^2/(2\eta)$ makes extreme leaders costly.
+The regularizer is not the predictive loss: it controls stability, geometry,
+and possibly sparsity.
+
+#### From actual losses to linearized losses
+
+Even regularized FTL may require solving a nonlinear problem each round. For a
+differentiable convex loss, construct its tangent surrogate at the point that
+was actually played:
+
+$$
+\widetilde\ell_s(w)
+=
+\ell_s(w_s)+g_s^T(w-w_s),
+\qquad
+g_s=\nabla\ell_s(w_s).
+$$
+
+Terms independent of candidate $w$ disappear inside the argmin:
+
+$$
+w_{t+1}
+=
+\arg\min_w
+\left[
+\left(\sum_{s=1}^{t}g_s\right)^Tw+R_t(w)
+\right].
+$$
+
+This is FTRL applied to **linearized surrogate losses**. The previous note
+started at this equation and therefore hid the native follow-the-leader idea.
+
+| Method | Objective used to choose $w_{t+1}$ | What changed? |
+|---|---|---|
+| FTL | $\sum_{s\le t}\ell_s(w)$ | cumulative actual losses |
+| Regularized FTL | $\sum_{s\le t}\ell_s(w)+R_t(w)$ | stabilize the leader |
+| Linearized FTRL | $\sum_{s\le t}g_s^Tw+R_t(w)$ | replace each loss by its tangent surrogate |
+| FTRL-Proximal | linearized losses plus proximal, L1, and L2 terms | efficient adaptive updates and exact sparsity |
+
+With $R_t(w)=\lVert w\rVert_2^2/(2\eta)$, the minimizer is
+
+$$
+w_{t+1}
+=
+-\eta\sum_{s=1}^{t}g_s.
+$$
+
+For a constant learning rate and $w_1=0$, this is exactly the sequence produced
+by online gradient descent:
+
+$$
+w_{t+1}=w_t-\eta g_t.
+$$
+
+One form recomputes an argmin over cumulative gradients; the other writes the
+same change incrementally.
+
+#### FTRL-Proximal
+
+FTRL-Proximal combines gradient-descent-like behavior with effective L1
+sparsity by centering quadratic penalties at parameters used on past rounds:
+
+$$
+w_{t+1}
+=
+\arg\min_w
+\left[
+g_{1:t}^Tw
++\frac{A_0}{2}\lVert w\rVert_2^2
++\frac12\sum_{s=1}^{t}\sigma_s\lVert w-w_s\rVert_2^2
++\lambda_1\lVert w\rVert_1
++\frac{\lambda_2}{2}\lVert w\rVert_2^2
+\right],
+$$
+
+where $g_{1:t}=\sum_{s=1}^{t}g_s$. The nonnegative $\sigma_s$ encode
+increases in the inverse learning rate. Expanding the quadratic terms for
+coordinate $i$ gives, up to constants,
+
+$$
+z_{t,i}w_i
++\frac12(A_{t,i}+\lambda_2)w_i^2
++\lambda_1|w_i|,
+$$
+
+where
+
+$$
+A_{t,i}=A_{0,i}+\sum_{s=1}^{t}\sigma_{s,i},
+\qquad
+z_{t,i}
+=
+g_{1:t,i}-\sum_{s=1}^{t}\sigma_{s,i}w_{s,i}.
+$$
+
+This one-dimensional convex objective has the soft-thresholded solution
+
+$$
+w_{t+1,i}
+=
+\begin{cases}
+0, & |z_{t,i}|\le\lambda_1,\\[4pt]
+-\dfrac{z_{t,i}-\operatorname{sign}(z_{t,i})\lambda_1}
+{A_{t,i}+\lambda_2},
+& |z_{t,i}|>\lambda_1.
+\end{cases}
+$$
+
+The zero is the exact minimizer whenever accumulated evidence
+$|z_{t,i}|$ has not crossed the L1 threshold. This is why FTRL-Proximal creates
+exact sparsity while merely adding an L1 subgradient to SGD almost never lands
+exactly at zero.
+
+#### Adaptive per-coordinate FTRL
+
+Large-scale click-through-rate data is extremely sparse: each event touches only
+a tiny subset of a huge feature space. A common schedule accumulates
+
+$$
+n_{t,i}=\sum_{s=1}^{t}g_{s,i}^2
+$$
+
+and chooses
+
+$$
+\eta_{t,i}
+=
+\frac{\alpha}{\beta+\sqrt{n_{t,i}}}.
+$$
+
+A frequently updated coordinate becomes conservative, while a rare coordinate
+retains a larger step. Setting
+
+$$
+A_{t,i}=\frac{1}{\eta_{t,i}}
+=
+\frac{\beta+\sqrt{n_{t,i}}}{\alpha}
+$$
+
+amounts to choosing $A_{0,i}=\beta/\alpha$ and the increments below. It yields
+the familiar implementation:
+
+$$
+w_{t+1,i}
+=
+\begin{cases}
+0, & |z_{t,i}|\le\lambda_1,\\[4pt]
+-\dfrac{z_{t,i}-\operatorname{sign}(z_{t,i})\lambda_1}
+{(\beta+\sqrt{n_{t,i}})/\alpha+\lambda_2},
+& |z_{t,i}|>\lambda_1.
+\end{cases}
+$$
+
+After observing $g_{t,i}$, update the two stored statistics:
+
+$$
+\sigma_{t,i}
+=
+\frac{\sqrt{n_{t-1,i}+g_{t,i}^2}-\sqrt{n_{t-1,i}}}{\alpha},
+$$
+
+$$
+z_{t,i}
+=
+z_{t-1,i}+g_{t,i}-\sigma_{t,i}w_{t,i},
+\qquad
+n_{t,i}=n_{t-1,i}+g_{t,i}^2.
+$$
+
+Only active coordinates need to be touched. Here $\lambda_1$ controls exact
+sparsity, $\lambda_2$ supplies smooth shrinkage, and $\alpha,\beta$ control the
+adaptive learning rate.
+
+::: {.callout-note}
+## Is FTRL inherently first-order?
+
+Native FTRL is an online decision template: minimize past revealed losses plus
+a regularizer. It is not inherently classified by a derivative oracle.
+The practical FTRL-Proximal algorithm derived here replaces each loss with a
+gradient-based linear surrogate, so **that algorithm is first-order**.
+:::
+
+## Adam and Decoupled Regularization
+
+Adam combines the local-update view of SGD with exponentially weighted
+per-parameter state. AdamW then separates parameter shrinkage from that adaptive
+gradient transformation.
+
+### Adam
 
 Adam combines a first-moment estimate with an RMSProp-like second moment:
 
@@ -156,7 +802,7 @@ $$
 Adam stores two state values per parameter, in addition to gradients and
 parameters. Optimizer state is therefore a major training-memory cost.
 
-### Why bias correction matters
+#### Why bias correction matters
 
 If $m_0=0$ and the expected gradient is constant $\mu$, then
 
@@ -167,9 +813,9 @@ $$
 Dividing by $1-\beta_1^t$ recovers an unbiased first-moment estimate under this
 simplified assumption. The same argument applies to $v_t$.
 
-## AdamW and Weight Decay
+### AdamW and Weight Decay
 
-### L2 regularization
+#### L2 regularization
 
 Adding an L2 penalty changes the loss:
 
@@ -185,7 +831,7 @@ $$
 g_t^{\text{reg}}=g_t+\lambda\theta_t.
 $$
 
-### Decoupled weight decay
+#### Decoupled weight decay
 
 AdamW applies parameter shrinkage separately from the adaptive gradient update:
 
@@ -206,10 +852,20 @@ to uniform parameter decay. AdamW restores the decoupled interpretation.
 Common practice excludes biases and normalization scale parameters from weight
 decay, though this remains a modeling choice rather than a mathematical law.
 
-## First Order, Second Order, and Preconditioning
+::: {.callout-important}
+## Weight decay is not a zeroth-order optimizer
+
+The shrinkage term $(1-\eta\lambda)\theta_t$ does not require a new gradient
+evaluation, but AdamW still uses $\nabla L$ to optimize the data loss. Weight
+decay is a regularization/update mechanism, so it does not determine whether the
+underlying optimizer is zeroth-, first-, or second-order.
+:::
+
+## Matrix Geometry and Curvature-Aware Methods
 
 The terminology is easy to blur:
 
+- A **zeroth-order** method receives objective values but no derivatives.
 - A **first-order** method uses gradients $g=\nabla L(\theta)$.
 - A classical **second-order** method uses the Hessian
   $H=\nabla^2L(\theta)$ or an approximation to its curvature.
@@ -232,7 +888,11 @@ second-order or second-order-inspired optimizers. Muon is also sometimes called
 second-order-inspired, but it does **not** estimate the loss Hessian: it
 orthogonalizes matrix momentum using the parameter's matrix geometry.
 
-## Shampoo
+Linearized FTRL-Proximal is first-order because it accumulates gradients. AdamW
+also remains first-order after decoupled weight decay. Neither classification is
+changed by the presence of a proximal regularizer or direct parameter shrinkage.
+
+### Shampoo
 
 [Shampoo](https://arxiv.org/abs/1802.09568) preserves the tensor structure of a
 parameter instead of flattening every dimension into one vector. For a matrix
@@ -254,7 +914,7 @@ $$
 L_t^{-1/4}G_tR_t^{-1/4}.
 $$
 
-### Why the exponent is $-1/4$
+#### Why the exponent is $-1/4$
 
 Vector AdaGrad applies the inverse square root of one second-moment matrix. A
 matrix parameter has a left and right preconditioner. Giving each side a
@@ -263,7 +923,7 @@ $-1/4$ power makes their combined action analogous to an inverse square root.
 For an order-$k$ tensor, Shampoo maintains one preconditioner per tensor axis;
 the corresponding exponent is $-1/(2k)$.
 
-### Why Shampoo is more structured than Adam
+#### Why Shampoo is more structured than Adam
 
 Adam keeps an element-wise second moment:
 
@@ -275,7 +935,7 @@ Shampoo's $L$ and $R$ retain correlations between rows and between columns.
 This can produce a better-conditioned update, but matrix inverse roots cost more
 than element-wise division.
 
-### Minimal matrix Shampoo direction
+#### Minimal matrix Shampoo direction
 
 ```{python}
 import torch
@@ -317,14 +977,14 @@ blocking for large dimensions, distributed state, infrequent inverse-root
 updates, and **grafting**. Grafting borrows the update magnitude from a simpler
 optimizer such as SGD or AdaGrad while using Shampoo's matrix direction.
 
-### Shampoo costs
+#### Shampoo costs
 
 For an $m\times n$ parameter, Shampoo stores $m^2+n^2$ preconditioner scalars,
 not $m^2n^2$. This is far smaller than a full preconditioner over all $mn$
 parameters, but can still be expensive for very wide matrices. Matrix inverse
 roots are also substantially more expensive than Adam's element-wise update.
 
-## Muon
+### Muon
 
 Muon stands for **MomentUm Orthogonalized by Newton--Schulz**. For a 2D weight
 matrix, first form momentum
@@ -360,7 +1020,7 @@ The polar factor prevents a few large singular directions in the raw momentum
 matrix from dominating the update. It can also be interpreted as a steepest-
 descent direction under a matrix spectral-norm geometry.
 
-### Newton--Schulz orthogonalization
+#### Newton--Schulz orthogonalization
 
 Computing an SVD for every matrix at every step is expensive. Muon instead uses
 a small number of matrix-multiplication iterations. A simple Newton--Schulz
@@ -410,7 +1070,7 @@ implementations often use tuned higher-order Newton--Schulz polynomials, lower-
 precision matrix multiplies, Nesterov-style momentum, explicit update scaling,
 and distributed communication strategies.
 
-### Which parameters use Muon?
+#### Which parameters use Muon?
 
 Muon is designed for matrix-structured hidden weights such as attention and MLP
 projections. A common recipe uses AdamW for:
@@ -423,7 +1083,7 @@ projections. A common recipe uses AdamW for:
 
 Thus “training with Muon” commonly means a hybrid Muon + AdamW optimizer setup.
 
-### Is Muon a second-order optimizer?
+#### Is Muon a second-order optimizer?
 
 There are two conventions:
 
@@ -436,7 +1096,7 @@ There are two conventions:
 For interviews, state which definition you are using rather than simply calling
 Muon “Newton's method.”
 
-### Shampoo versus Muon
+#### Shampoo versus Muon
 
 | Property | Shampoo | Muon |
 |---|---|---|
@@ -450,16 +1110,45 @@ Muon “Newton's method.”
 
 ## Optimizer Comparison
 
-| Optimizer | State per parameter | Main idea | Common weakness |
+Derivative-free methods are better compared by objective evaluations and
+search state than by optimizer-state bytes per parameter:
+
+| Optimizer | Search state / evaluations | Main idea | Common weakness |
+|---|---|---|---|
+| Coordinate/pattern search | point, step size; up to $2d$ tests per sweep | accept improving directions | query cost grows with dimension |
+| Nelder–Mead | $d+1$ vertices | geometrically transform a simplex | poor scaling in high dimension |
+| CMA-ES | population, mean, scale, covariance | evolve a ranked search distribution | many evaluations and potentially $O(d^2)$ covariance state |
+| Bayesian optimization | evaluation history and surrogate | optimize an exploration--exploitation acquisition rule | surrogate methods struggle in high dimension |
+| Two-point ZO | two evaluations per sampled direction | estimate a direction from loss differences | high variance in high dimension |
+
+### Local stochastic methods
+
+| Optimizer | State per parameter | How history is summarized | Common weakness |
 |---|---:|---|---|
-| SGD | 0 | follow current gradient | sensitive to conditioning and learning rate |
-| SGD + momentum | 1 | average gradient direction | still uses one global learning-rate scale |
-| AdaGrad | 1 | cumulative squared-gradient scaling | effective rate can vanish |
+| SGD | 0 | only the current mini-batch gradient | sensitive to conditioning and learning rate |
+| SGD + momentum | 1 | EMA of gradient direction | still uses one global learning-rate scale |
+| AdaGrad | 1 | cumulative squared gradients | effective rate can vanish |
 | RMSProp | 1 | EMA of squared gradients | no first-moment estimate in basic form |
-| Adam | 2 | first and second moments | coupled L2 is not uniform weight decay |
-| AdamW | 2 | Adam + decoupled decay | high optimizer-state memory |
-| Shampoo | structured matrices | row/column covariance preconditioning | inverse roots and matrix state are expensive |
-| Muon | 1 for selected matrices | orthogonalize momentum | special parameter routing and matrix multiplies |
+| Adam | 2 | EMAs of gradients and squared gradients | coupled L2 is not uniform weight decay |
+| AdamW | 2 | Adam moments plus decoupled shrinkage | high optimizer-state memory |
+
+### Online cumulative methods
+
+| Optimizer | State per parameter | How history is summarized | Common weakness |
+|---|---:|---|---|
+| FTRL-Proximal | typically 2 for sparse coordinates | cumulative prefix statistics plus proximal regularization | old evidence is not forgotten automatically |
+
+### Matrix-geometry methods
+
+| Optimizer | State | How history is summarized | Common weakness |
+|---|---|---|---|
+| Shampoo | structured matrices | cumulative row/column gradient covariances | inverse roots and matrix state are expensive |
+| Muon | one buffer for selected matrices | EMA-like momentum followed by orthogonalization | special parameter routing and matrix multiplies |
+
+Persistent memory alone does not identify the learning protocol. AdaGrad and
+FTRL both accumulate squared gradients, while Adam explicitly emphasizes recent
+gradients, but only online FTRL makes the predict--reveal boundary part of its
+objective and regret analysis.
 
 ## Minimal AdamW Implementation
 
@@ -606,6 +1295,25 @@ an excessive learning rate or a deeper stability problem.
 ## Interview Questions
 
 - Why can mini-batch gradients be useful despite being noisy?
+- What information does a zeroth-order oracle expose?
+- Contrast direct search with zeroth-order gradient estimation. Which classical
+  methods never construct a gradient-like vector?
+- When would you choose Nelder--Mead, CMA-ES, or Bayesian optimization?
+- Why is Bayesian optimization evaluation-efficient but usually difficult to
+  scale to a neural network's parameter dimension?
+- Why does derivative-free query cost tend to worsen with dimension?
+- How do the smoothing radius and number of sampled directions affect a
+  two-point gradient estimator?
+- Contrast FTL over actual losses with FTRL over linearized losses.
+- Derive the regularized running-mean solution for squared-loss FTRL.
+- In what sense does FTRL preserve the causal data prefix, and in what sense
+  does it compress or discard the time axis?
+- If SGD and Adam are path-dependent, why do we still say shuffled training
+  treats example order as a nuisance?
+- Why does cumulative FTRL need modification under concept drift?
+- Why is FTRL-Proximal first-order even though its update is written as a
+  regularized argmin?
+- Why is weight decay orthogonal to the derivative-order taxonomy?
 - How does momentum reduce oscillation?
 - Why does AdaGrad's effective learning rate continually shrink?
 - Derive Adam's bias-correction terms.
@@ -625,6 +1333,18 @@ an excessive learning rate or a deeper stability problem.
 ## Exercises
 
 - [ ] Implement SGD with momentum using both common sign conventions.
+- [ ] Compare coordinate pattern search and a two-point gradient estimate on a
+  smooth quadratic and a nonsmooth objective.
+- [ ] Use simulated annealing to escape a local minimum of a multimodal
+  one-dimensional function.
+- [ ] Compare a two-point zeroth-order estimate with the exact gradient as
+  dimension increases.
+- [ ] Implement native squared-loss FTL and verify that its prediction is the
+  running mean of all observed targets.
+- [ ] Compare cumulative, sliding-window, and exponentially discounted FTRL on
+  a stream whose target mean changes halfway through.
+- [ ] Implement sparse FTRL-Proximal and verify that L1 regularization creates
+  exact zeros.
 - [ ] Compare `MinimalAdamW` with `torch.optim.AdamW` for several deterministic steps.
 - [ ] Plot the effective per-parameter learning rates in Adam.
 - [ ] Derive training-memory usage for parameters, gradients, and Adam states.
@@ -635,6 +1355,12 @@ an excessive learning rate or a deeper stability problem.
 
 ## Primary References
 
+- [A Simplex Method for Function Minimization](https://doi.org/10.1093/comjnl/7.4.308)
+- [An Efficient Method for Finding the Minimum of a Function of Several Variables Without Calculating Derivatives](https://doi.org/10.1093/comjnl/7.2.155)
+- [The CMA Evolution Strategy: A Tutorial](https://arxiv.org/abs/1604.00772)
+- [A Tutorial on Bayesian Optimization](https://arxiv.org/abs/1807.02811)
+- [Random Gradient-Free Minimization of Convex Functions](https://link.springer.com/article/10.1007/s10208-015-9296-2)
+- [Ad Click Prediction: A View from the Trenches](https://research.google.com/pubs/archive/41159.pdf)
 - [Shampoo: Preconditioned Stochastic Tensor Optimization](https://arxiv.org/abs/1802.09568)
 - [Muon Is Scalable for LLM Training](https://arxiv.org/abs/2502.16982)
 - [Practical Efficiency of Muon for Pretraining](https://arxiv.org/abs/2505.02222)

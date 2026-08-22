@@ -255,6 +255,10 @@ FlashAttention and linear attention therefore solve different problems:
 FlashAttention computes ordinary dense attention with better memory movement;
 linear attention changes the operator to avoid quadratic pairwise computation.
 
+[From Test-Time Training to Continual Intelligence](continual_intelligence_ttt.qmd)
+develops the related view that learned fast-weight updates can implement a
+linear-attention-like recurrent state rather than literal key-value regression.
+
 ## Interview Questions
 
 - Why can $(QK^T)V$ be reassociated while $\operatorname{softmax}(QK^T)V$

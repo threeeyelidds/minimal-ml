@@ -1,84 +1,128 @@
 ---
-title: "Loss Functions"
+title: "Discriminative Losses from First Principles"
 ---
 
-## Logits, Probabilities, and Numerical Stability
+## 1. A Loss Encodes a Statistical Decision
 
-A **logit** is an unrestricted score produced by a model before an output
-activation. For multiclass classification, logits
+A loss is the interface between:
+
+1. **statistical knowledge:** what uncertainty generated the target?
+2. **problem abstraction:** must the model estimate a probability, value,
+   boundary, order, or representation?
+3. **optimization:** what differentiable signal is aligned with the real metric?
+
+Let $(X,Y)\sim p^*$, let $a_\theta(X)$ be a prediction, and let $C(a,Y)$ be the
+real cost. The ideal Bayes decision is
 
 $$
-z\in\mathbb{R}^{C}
+a^*(x)
+=
+\arg\min_a
+\mathbb E_{Y\sim p^*(\cdot\mid x)}[C(a,Y)].
 $$
 
-become a categorical distribution through softmax. For binary classification,
-a logit $z\in\mathbb{R}$ becomes a Bernoulli probability through sigmoid.
+Training replaces the unknown population expectation with empirical risk and
+usually replaces the real cost with a tractable surrogate:
 
-Conceptually, training could perform these steps separately:
+$$
+\widehat R(\theta)
+=
+\frac1N\sum_{i=1}^{N}
+\ell(a_\theta(x_i),y_i).
+$$
 
-1. convert logits to probabilities
-2. take the logarithm of the relevant probability
-3. compute the loss
+The first-principles question is:
 
-That direct implementation is fragile. Exponentiating a large positive logit
-can overflow, while a very small probability can round to zero and make
-$\log(0)=-\infty$. Stable loss functions combine the activation and logarithm
-algebraically so those problematic intermediate probabilities never need to be
-materialized.
+> Which surrogate has an optimum and gradient geometry aligned with the
+> decision we actually care about?
+
+For latent-variable and data-generation objectives, see
+[Generative Losses from First Principles](generative_losses.qmd).
+
+### A design checklist
+
+Before choosing a formula, ask:
+
+1. What is the target: categorical, binary, continuous, count, ordinal, or a
+   pairwise preference?
+2. Do calibrated probabilities matter, or only the final boundary/ranking?
+3. What support and noise model should predictions respect?
+4. Are examples genuinely unequal in cost, or merely unequal in frequency?
+5. What is the evaluation metric, and is the loss a consistent surrogate?
+6. What sampling and reduction define the effective training population?
 
 ::: {.callout-important}
-Pass raw logits to `torch.nn.CrossEntropyLoss` and
-`torch.nn.BCEWithLogitsLoss`. Do not apply softmax or sigmoid first.
+## Loss and metric are different
+
+Accuracy, F1, recall, and ranking metrics can be nondifferentiable or
+nondecomposable. A loss is a surrogate. Lower loss matters only insofar as it
+improves the target decision or gives useful probability estimates.
 :::
 
-At inference time, applying softmax or sigmoid is appropriate when calibrated
-probabilities are actually needed. For an `argmax` prediction, softmax is
-unnecessary because it preserves the ordering of the logits.
+## 2. Likelihood Turns Statistical Assumptions into Losses
 
-## Multiclass Cross-Entropy
-
-For one example with class logits $z_1,\ldots,z_C$ and target class $y$,
+If the model defines $p_\theta(y\mid x)$, maximum likelihood minimizes
 
 $$
-p_j=\frac{e^{z_j}}{\sum_{k=1}^{C}e^{z_k}},
+\mathcal L_{\mathrm{NLL}}
+=
+-\mathbb E_{(x,y)\sim p^*}
+\log p_\theta(y\mid x).
 $$
 
-and the negative log-likelihood is
+For fixed $x$,
 
 $$
+\mathbb E_{y\sim p^*}[-\log p_\theta(y\mid x)]
+=
+H(p^*)+\mathrm{KL}(p^*\|p_\theta).
+$$
+
+The entropy term is constant in $\theta$, so the population optimum is the true
+conditional distribution. Log loss is therefore a **proper scoring rule**.
+
+Many standard losses are simply NLL under different observation models:
+
+| Assumption for $Y\mid X$ | Output | NLL, ignoring constants |
+|---|---|---|
+| Categorical | class logits | cross-entropy |
+| Bernoulli | one logit | binary cross-entropy |
+| Gaussian, fixed variance | mean | squared error |
+| Gaussian, learned variance | mean and log variance | scaled MSE + log variance |
+| Laplace | location | absolute error |
+| Poisson count | log-rate | $e^\eta-y\eta$ |
+
+The clever step is not memorizing the last column. It is choosing a distribution
+whose support, sufficient statistics, and noise assumptions fit the task.
+
+## 3. Classification as Probability Estimation
+
+### 3.1 Multiclass cross-entropy
+
+For one of $C$ mutually exclusive classes with logits $z$,
+
+$$
+p_j=\frac{e^{z_j}}{\sum_k e^{z_k}},
+\qquad
 \mathcal L_{\mathrm{CE}}
 =
--\log p_y.
-$$
-
-Substituting softmax into the loss gives
-
-$$
-\mathcal L_{\mathrm{CE}}
+-\log p_y
 =
--z_y+\log\sum_{k=1}^{C}e^{z_k}.
+-z_y+\log\sum_k e^{z_k}.
 $$
 
-This is the **log-sum-exp** form. If $m=\max_k z_k$, then
-
-$$
-\log\sum_k e^{z_k}
-=
-m+\log\sum_k e^{z_k-m}.
-$$
-
-Every shifted logit satisfies $z_k-m\leq0$, so its exponential cannot overflow.
-The subtraction does not change softmax because adding or subtracting the same
-constant from every logit leaves the distribution unchanged.
-
-For one-hot targets, the gradient has a particularly simple form:
+Its logit gradient is especially interpretable:
 
 $$
 \frac{\partial\mathcal L_{\mathrm{CE}}}{\partial z_j}
-=p_j-\mathbb{1}[j=y].
+=
+p_j-\mathbb 1[j=y].
 $$
 
-### Minimal stable implementation
+The target logit rises; competing logits fall in proportion to their predicted
+probability.
+
+#### Minimal stable implementation
 
 ```{python}
 import torch
@@ -86,13 +130,9 @@ import torch.nn.functional as F
 
 
 def cross_entropy_from_logits(logits, targets, reduction="mean"):
-    """Cross-entropy for logits [..., classes] and integer targets [...]."""
-    largest = logits.max(dim=-1, keepdim=True).values
-    log_normalizer = largest.squeeze(-1) + torch.log(
-        torch.exp(logits - largest).sum(dim=-1)
-    )
+    log_normalizer = torch.logsumexp(logits, dim=-1)
     target_logits = logits.gather(
-        dim=-1, index=targets.unsqueeze(-1)
+        -1, targets.unsqueeze(-1)
     ).squeeze(-1)
     losses = log_normalizer - target_logits
 
@@ -107,22 +147,15 @@ def cross_entropy_from_logits(logits, targets, reduction="mean"):
 
 logits = torch.tensor([[1000.0, 1001.0, 999.0], [-2.0, 0.5, 3.0]])
 targets = torch.tensor([1, 2])
-
-ours = cross_entropy_from_logits(logits, targets)
-pytorch = F.cross_entropy(logits, targets)
-print(ours, pytorch)
-torch.testing.assert_close(ours, pytorch)
+torch.testing.assert_close(
+    cross_entropy_from_logits(logits, targets),
+    F.cross_entropy(logits, targets),
+)
 ```
 
-The implementation uses the same stable identity as `logsumexp`. Production
-code should normally use `F.cross_entropy`, which also supports optimized
-kernels, class weights, label smoothing, ignored targets, and additional input
-shapes.
+### 3.2 Binary and multilabel cross-entropy
 
-## Binary Cross-Entropy
-
-For binary target $y\in\{0,1\}$ and predicted probability $p$, binary
-cross-entropy is
+For $y\in\{0,1\}$ and $p=\sigma(z)$,
 
 $$
 \mathcal L_{\mathrm{BCE}}
@@ -130,45 +163,20 @@ $$
 -y\log p-(1-y)\log(1-p).
 $$
 
-With $p=\sigma(z)$, directly computing `log(sigmoid(z))` and
-`log(1 - sigmoid(z))` is unstable for extreme logits. Substitution and
-simplification give
+The stable logits form is
 
 $$
 \mathcal L_{\mathrm{BCE}}(z,y)
 =
-\operatorname{softplus}(z)-yz
-=
-\log(1+e^z)-yz.
+\max(z,0)-yz+\log(1+e^{-|z|}),
 $$
 
-Equivalently,
-
-$$
-\mathcal L_{\mathrm{BCE}}(z,y)
-=
-\max(z,0)-yz+\log(1+e^{-|z|}).
-$$
-
-The exponent is now non-positive, preventing overflow. The gradient with
-respect to the logit is
-
-$$
-\frac{\partial\mathcal L_{\mathrm{BCE}}}{\partial z}
-=
-\sigma(z)-y.
-$$
-
-### Minimal stable implementation
+with derivative $\sigma(z)-y$.
 
 ```{python}
 def binary_cross_entropy_with_logits(logits, targets, reduction="mean"):
-    """Binary cross-entropy on raw logits; targets have the same shape."""
-    targets = targets.to(dtype=logits.dtype)
-
-    # logaddexp(0, z) is a stable implementation of softplus(z).
-    softplus = torch.logaddexp(torch.zeros_like(logits), logits)
-    losses = softplus - targets * logits
+    targets = targets.to(logits.dtype)
+    losses = torch.logaddexp(torch.zeros_like(logits), logits) - targets * logits
 
     if reduction == "none":
         return losses
@@ -181,41 +189,322 @@ def binary_cross_entropy_with_logits(logits, targets, reduction="mean"):
 
 binary_logits = torch.tensor([-1000.0, -2.0, 0.0, 2.0, 1000.0])
 binary_targets = torch.tensor([0.0, 1.0, 1.0, 0.0, 1.0])
-
-ours = binary_cross_entropy_with_logits(binary_logits, binary_targets)
-pytorch = F.binary_cross_entropy_with_logits(binary_logits, binary_targets)
-print(ours, pytorch)
-torch.testing.assert_close(ours, pytorch)
+torch.testing.assert_close(
+    binary_cross_entropy_with_logits(binary_logits, binary_targets),
+    F.binary_cross_entropy_with_logits(binary_logits, binary_targets),
+)
 ```
 
-Use one logit and BCE for a binary event or for multiple independent labels.
-Use $C$ logits and multiclass cross-entropy when exactly one of $C$ classes is
-the target. Two-class softmax is mathematically redundant but still valid.
+Use independent BCE logits for multilabel outcomes. Use softmax CE when exactly
+one class must occur. Independent BCE does not enforce probabilities summing to
+one.
 
-## Common Loss Pairings
+### 3.3 Label smoothing
 
-| Task | Model output during training | Typical loss |
-|---|---|---|
-| Multiclass classification | $C$ raw logits | cross-entropy |
-| Binary classification | one raw logit | binary cross-entropy with logits |
-| Multilabel classification | one raw logit per independent label | elementwise BCE with logits |
-| Unbounded regression | linear output | MSE, MAE, or a likelihood loss |
-| Positive scalar | unconstrained parameter transformed by softplus or exponential | task-dependent |
-| Bounded scalar | scaled sigmoid or tanh parameterization | task-dependent |
+Replace a one-hot target by
+
+$$
+q_j
+=
+(1-\varepsilon)\mathbb 1[j=y]+\frac{\varepsilon}{C}
+$$
+
+and minimize $-\sum_jq_j\log p_j$. This regularizes extreme confidence but also
+changes the population target. It is a prior about target uncertainty, not a
+universal fix for mislabeled data.
+
+## 4. Class Imbalance, Cost, and Focal Loss
+
+Three problems are often conflated:
+
+| Problem | Appropriate intervention |
+|---|---|
+| unequal real-world error costs | cost-sensitive loss or decision threshold |
+| minority examples rarely sampled | resampling or importance weighting |
+| easy examples dominate total gradient | hard-example mining or focal modulation |
+
+Weighted BCE, for example,
+
+$$
+\mathcal L
+=
+-w_+y\log p-w_-(1-y)\log(1-p),
+$$
+
+changes the risk being optimized. If the deployment population is unchanged,
+the resulting probabilities may need recalibration.
+
+[Focal loss](https://arxiv.org/abs/1708.02002) starts from cross-entropy and
+downweights already-correct examples. Define
+
+$$
+p_t=
+\begin{cases}
+p,&y=1,\\
+1-p,&y=0,
+\end{cases}
+$$
+
+then
+
+$$
+\mathcal L_{\mathrm{focal}}
+=
+-\alpha_t(1-p_t)^\gamma\log p_t.
+$$
+
+At $\gamma=0$ it becomes weighted CE. For $\gamma>0$, the vast population of
+easy examples contributes less gradient. This helped dense detection where easy
+background anchors overwhelmed rare foreground examples. It can hurt
+probability calibration, so use it for gradient allocation—not merely because a
+dataset is imbalanced.
+
+```{python}
+def binary_focal_loss(logits, targets, gamma=2.0, alpha=None):
+    targets = targets.to(logits.dtype)
+    bce = F.binary_cross_entropy_with_logits(logits, targets, reduction="none")
+    p_t = torch.exp(-bce)
+    weights = (1.0 - p_t).pow(gamma)
+
+    if alpha is not None:
+        alpha_t = alpha * targets + (1.0 - alpha) * (1.0 - targets)
+        weights = weights * alpha_t
+
+    return (weights * bce).mean()
+```
+
+## 5. Margin Losses: Learn a Boundary, Not a Distribution
+
+If only the decision boundary matters, calibrated probabilities may be excess
+structure. For $y\in\{-1,+1\}$ and score $f_\theta(x)$, hinge loss is
+
+$$
+\mathcal L_{\mathrm{hinge}}
+=
+\max(0,1-yf_\theta(x)).
+$$
+
+Correct examples receive a gradient until they lie beyond margin one, then
+contribute zero. Cross-entropy continues increasing confidence. This is a choice
+between **separation geometry** and **probability estimation**.
+
+For multiclass scores, one structured hinge form is
+
+$$
+\mathcal L
+=
+\max_{j\ne y}
+\left[0,m+z_j-z_y\right].
+$$
+
+The margin $m$ defines how much score separation counts as sufficient; score
+scale and regularization determine what that statement means geometrically.
+
+## 6. Ranking and Metric Learning
+
+When supervision says “$i$ should rank above $j$,” predicting absolute labels
+solves a harder and possibly ill-posed problem. Use a pairwise abstraction:
+
+$$
+\mathcal L_{\mathrm{pairwise\ hinge}}
+=
+\max(0,m-s_i+s_j),
+$$
+
+or the smooth BPR/logistic loss
+
+$$
+\mathcal L_{\mathrm{BPR}}
+=
+-\log\sigma(s_i-s_j).
+$$
+
+Triplet loss applies the same idea to embeddings:
+
+$$
+\mathcal L_{\mathrm{triplet}}
+=
+\max\left(
+0,
+d(e_a,e_p)-d(e_a,e_n)+m
+\right).
+$$
+
+Negative sampling is part of the objective. Easy negatives provide no margin
+signal; false or excessively hard negatives can teach incorrect geometry. The
+sampling distribution should match which confusions matter at retrieval time.
+
+## 7. Regression Losses from Noise Models
+
+### 7.1 MSE and the conditional mean
+
+If
+
+$$
+Y\mid X=x\sim\mathcal N(\mu_\theta(x),\sigma^2)
+$$
+
+with fixed variance, NLL reduces to scaled squared error. More generally,
+
+$$
+\arg\min_f\mathbb E[(Y-f(X))^2\mid X=x]
+=
+\mathbb E[Y\mid X=x].
+$$
+
+MSE targets the conditional mean. Its residual gradient grows linearly, so
+outliers can dominate.
+
+### 7.2 MAE and the conditional median
+
+A Laplace likelihood produces
+
+$$
+\mathcal L_{\mathrm{MAE}}=|y-\widehat y|.
+$$
+
+MAE targets a conditional median and has bounded residual-gradient magnitude.
+It is robust to large errors but nonsmooth at zero.
+
+### 7.3 Huber loss
+
+For residual $r=y-\widehat y$,
+
+$$
+\mathcal L_\delta(r)
+=
+\begin{cases}
+\frac12r^2,&|r|\le\delta,\\
+\delta\left(|r|-\frac12\delta\right),&|r|>\delta.
+\end{cases}
+$$
+
+Huber is quadratic for small residuals and linear in the tails. The threshold
+$\delta$ states what residual scale counts as an outlier, so it must be chosen
+relative to target normalization.
+
+### 7.4 Heteroscedastic uncertainty
+
+If noise varies with $x$, predict mean $\mu_\theta(x)$ and log variance
+$s_\theta(x)=\log\sigma_\theta^2(x)$:
+
+$$
+\mathcal L
+=
+\frac12
+\left[
+e^{-s_\theta(x)}(y-\mu_\theta(x))^2+s_\theta(x)
+\right].
+$$
+
+The first term discounts uncertain examples; the second prevents infinite
+variance. A seemingly clever learned weight follows directly from a normalized
+Gaussian likelihood.
+
+### 7.5 Quantiles and counts
+
+Conditional quantile $q_\tau(x)$ is elicited by pinball loss
+
+$$
+\rho_\tau(r)
+=
+\begin{cases}
+\tau r,&r\ge0,\\
+(\tau-1)r,&r<0,
+\end{cases}
+\qquad r=y-q_\tau(x).
+$$
+
+For nonnegative counts, a Poisson model with log-rate $\eta$ gives
+
+$$
+\mathcal L_{\mathrm{Poisson}}
+=
+e^\eta-y\eta+\log(y!).
+$$
+
+Unlike Gaussian regression, the likelihood respects count support and ties
+variance to the mean. If real counts are overdispersed, a negative-binomial
+model may be more appropriate.
+
+## 8. Numerical Stability and Reduction
+
+Pass raw logits to `CrossEntropyLoss` and `BCEWithLogitsLoss`. Do not materialize
+softmax/sigmoid probabilities and then take logs.
+
+For CE, use
+
+$$
+\log\sum_k e^{z_k}
+=
+m+\log\sum_k e^{z_k-m},
+\qquad m=\max_k z_k.
+$$
+
+Also inspect the reduction:
+
+- mean over examples versus sum
+- mean over valid labels versus all padded positions
+- mean per group versus mean over a population with unequal group size
+- interaction between sample weights and the denominator
+
+The denominator silently defines which population receives equal importance.
+
+## 9. Design Examples
+
+### Rare-event classification
+
+Start with Bernoulli NLL. If false negatives have higher decision cost, adjust
+the loss or threshold using that cost. If easy negatives dominate gradient
+compute, consider focal loss. If probabilities drive downstream decisions,
+measure and repair calibration.
+
+### Regression with corrupt targets
+
+Inspect residual tails. MSE is efficient for clean, light-tailed noise; Huber or
+Laplace NLL is more robust. If uncertainty varies by example, predict a
+distribution rather than only a robust point.
+
+### Retrieval
+
+If evaluation depends only on order, a pairwise or contrastive abstraction is
+more direct than absolute regression. Design negative sampling around realistic
+retrieval confusions and audit for false negatives.
+
+## 10. Common Failure Modes
+
+| Failure | Diagnostic question |
+|---|---|
+| optimizing the wrong population | What sampling and weights define this expectation? |
+| surrogate mismatch | Is this loss calibrated/consistent for the target decision? |
+| shortcut learning | Can an unintended feature satisfy the target? |
+| gradient domination | Which class, task, or group supplies most gradient norm? |
+| bad noise model | Does the likelihood have the right support and tail behavior? |
+| reduction bug | What exactly is divided by what? |
+| numerical failure | Can the objective be computed directly in logits or log space? |
 
 ## Interview Questions
 
-- Why is `log(softmax(z))` less stable than `log_softmax(z)`?
-- Derive cross-entropy directly from softmax and negative log-likelihood.
-- Why can subtracting the maximum logit not change softmax?
-- Derive the stable BCE-with-logits expression.
-- What are the gradients of cross-entropy and BCE with respect to their logits?
-- When should a problem use multiclass cross-entropy rather than independent
-  binary cross-entropies?
+- Derive CE, BCE, MSE, MAE, and Poisson loss from likelihood assumptions.
+- Why is log loss a proper scoring rule?
+- When should imbalance change the loss, sampling, or only the threshold?
+- How does focal loss allocate gradients, and why can it affect calibration?
+- Compare cross-entropy and hinge loss.
+- Why is negative sampling part of a ranking objective?
+- Which statistics do MSE, MAE, and quantile loss estimate?
+- Derive heteroscedastic Gaussian NLL and explain both terms.
+- How can reduction change the effective data distribution?
 
 ## Exercises
 
-- [ ] Evaluate the naïve and stable losses on logits $[-1000,0,1000]$.
-- [ ] Extend cross-entropy with label smoothing.
-- [ ] Add class weights to both implementations.
-- [ ] Implement mean squared error and Huber loss, including their gradients.
+- [ ] Plot CE, focal, and hinge losses and their logit derivatives.
+- [ ] Compare weighted BCE and threshold adjustment on an imbalanced dataset.
+- [ ] Fit MSE, MAE, Huber, and heteroscedastic models to contaminated data.
+- [ ] Compare random, hard, and false-negative sampling for a ranking loss.
+- [ ] Audit a weighted loss by computing each example's effective coefficient.
+
+## Primary References
+
+- [Focal Loss for Dense Object Detection](https://arxiv.org/abs/1708.02002)
+- [Support Vector Networks](https://link.springer.com/article/10.1007/BF00994018)
+- [BPR: Bayesian Personalized Ranking from Implicit Feedback](https://arxiv.org/abs/1205.2618)

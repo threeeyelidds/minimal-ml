@@ -4,6 +4,7 @@ listing:
   contents: "*.qmd"
   sort: "date desc"
   type: default
+  fields: [date, title, subtitle, author]
 ---
 
 Longer notes worth polishing and sharing publicly.

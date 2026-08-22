@@ -10,13 +10,13 @@ detailed to memorize. Search supplies observations from outside the model.
 
 Before designing the system, ask two questions:
 
-1. **What orchestration depth is needed?** Is one retrieval pass enough, should
-   the system adaptively search again, or must it conduct deep research?
-2. **What product owns the user experience?** Is this discovery search,
-   grounded question answering, a general agent, or a research assistant?
+1. **Is search the product, or is it one capability inside another product?**
+2. **Does the user want documents, a short grounded answer, or a researched
+   deliverable?**
 
-These are independent axes. A search tool is shared infrastructure, not a peer
-category: several products and orchestration levels can use the same tool.
+Those answers distinguish normal search, deep research, and search as a tool
+inside an agent. They share retrieval infrastructure but require different
+control loops, state, latency, and verification.
 
 The most general objective is:
 
@@ -55,82 +55,107 @@ This framing gives three immediate insights:
 3. An adaptive loop earns its cost only when observations can improve later
    actions.
 
-## 2. Orchestration Breakdown
+## 2. Scope: Three Different Problems
 
-Orchestration describes **how the system decides what search action happens
-next**.
+The most useful product-level breakdown is:
 
-| Level | Control flow | State | Typical budget | Stop condition |
-|---|---|---|---|---|
-| Single-pass retrieval | fixed, bounded pipeline | query and retrieved candidates | one query or a few predetermined rewrites | pipeline completes |
-| Adaptive search | next query depends on earlier results | current question, findings, gaps, and small budget | several searches and selected page reads | answer or parent task is sufficiently unblocked |
-| Deep research | long-horizon planning, branching, synthesis, and verification | plan, claims, evidence, contradictions, gaps, artifacts, and budget | many searches, documents, and verification actions | researched deliverable meets coverage and support thresholds |
+| | Normal search | Deep research | Search inside an agent |
+|---|---|---|---|
+| Primary goal | satisfy an information query | produce a defensible synthesis or decision | help a broader agent complete its task |
+| Search is | the user-facing product | the central repeated workflow | one optional capability |
+| Typical controller | retrieval and ranking pipeline | long-horizon research agent | parent agent's harness |
+| Typical state | query and short session history | plan, claims, evidence, contradictions, gaps, and budget | broader task state plus selected search observations |
+| Output | ranked results, snippets, or short grounded answer | report, comparison, recommendation, or evidence package | intermediate information; final output may be code, an action, a plan, or prose |
+| Time scale | milliseconds to seconds | minutes to hours | on demand within the parent task |
+| Search budget | usually one query or a few rewrites | many adaptive searches and document reads | bounded by expected value to the parent task |
+| Verification | relevance, ranking, freshness, and answer grounding | claim support, coverage, source quality, and contradictions | sufficient grounding for the downstream decision and task verifier |
 
-### Level 1: single-pass retrieval
-
-The system executes a known pipeline such as query interpretation, retrieval,
-reranking, and response construction. An LLM may participate in several stages,
-but future actions do not depend on observations from earlier retrieval.
-
-### Level 2: adaptive or agentic search
-
-The system searches, inspects results, identifies what remains unknown, and
-chooses another query. It is agentic because observations modify control flow.
-The task may still be short; agentic search does not imply a long report.
-
-### Level 3: deep research
-
-The system manages several research branches, accumulates attributable evidence,
-resolves conflicts, synthesizes a substantial result, and audits its support.
-Deep research is one specialized form of agentic search.
-
-Start at the lowest level likely to satisfy the task. Escalate when results
-reveal unresolved dependencies, contradictions, or coverage requirements. A
-larger loop is overhead when the information need is a simple lookup.
-
-## 3. Product Breakdown
-
-Product describes **what experience and final outcome the user receives**.
-
-| Product | User-facing outcome | Role of search | Common orchestration | Who owns completion? |
-|---|---|---|---|---|
-| Search / discovery | ranked pages, products, papers, or passages | the main product | mostly single-pass; sometimes adaptive refinement | search pipeline or user |
-| Grounded QA / answer engine | concise answer with supporting sources | evidence for the answer | single-pass or adaptive search | answer service |
-| General-purpose agent | code, action, plan, analysis, or conversation | optional capability within a broader task | single-pass lookup or adaptive search; occasionally a delegated research workflow | parent agent harness and task verifier |
-| Deep-research assistant | report, comparison, recommendation, or evidence package | central repeated workflow | deep research | research workflow and its coverage/verifier policy |
-
-The same product may expose several modes. A grounded QA service can answer an
-easy fact with one pass and escalate a multi-hop question to adaptive search. A
-general agent can perform a quick documentation lookup or delegate an entire
-research subworkflow.
-
-### The two axes compose
+### They share layers
 
 ```{mermaid}
 flowchart LR
     W[Web, corpus, or database] --> B[Search backend]
-    B --> T[Search and fetch capabilities]
-    T --> O{Orchestration depth}
-    O --> S[Single pass]
-    O --> A[Adaptive search]
-    O --> D[Deep research]
-    S --> P{Product surface}
-    A --> P
-    D --> P
-    P --> R[Search or discovery]
-    P --> Q[Grounded QA]
-    P --> G[General agent]
-    P --> H[Research assistant]
+    B --> N[Normal search product]
+    B --> T[Search and fetch tools]
+    T --> G[General-purpose agent]
+    T --> D[Deep-research agent]
+    G --> X[Code, action, plan, or answer]
+    D --> R[Evidence-rich research output]
 ```
 
-This avoids a category error: “search tool inside an agent” describes a product
-integration, while “deep research” describes orchestration. A deep-research
-assistant is itself an agent using search and fetch tools.
+A deep-research system normally uses a search tool, and that tool may call the
+same backend as a normal search product. The three-problem breakdown is about
+the **job search performs in the system**, not three mutually exclusive software
+components:
 
-## 4. Shared Search Capability
+- the **search backend** retrieves and ranks candidates
+- a **normal search product** exposes retrieval directly to the user
+- a **search tool** packages retrieval for use by an agent harness
+- a **deep-research workflow** repeatedly uses search and fetch tools to build a
+  researched deliverable
 
-The search backend and tool interface can be reused across products. A minimal
-request and result contract might look like:
+### Scope decision
+
+Use **normal search** when the user wants a page, entity, fact, or small set of
+relevant results and one bounded retrieval pipeline can probably satisfy the
+request.
+
+Use **deep research** when the output requires decomposition, multiple sources,
+conflict resolution, broad coverage, or a defensible long-form synthesis.
+
+Add **search inside an agent** when the agent's main job is something else but
+occasionally depends on external knowledge—for example, a coding agent checking
+current library documentation or a planning agent checking a schedule.
+
+Start with the cheapest adequate problem formulation. Escalate only when the
+current one cannot close the important uncertainty.
+
+## 3. Normal Search
+
+A normal search product usually follows a bounded pipeline:
+
+$$
+\text{query understanding}
+\rightarrow
+\text{retrieve}
+\rightarrow
+\text{rerank}
+\rightarrow
+\text{deduplicate}
+\rightarrow
+\text{present or answer}.
+$$
+
+An LLM may rewrite the query, interpret intent, rerank passages, generate a
+snippet, or synthesize a short response. This does not require a long-running
+agent if the stages and stopping point are known in advance.
+
+Optimize normal search primarily for:
+
+- relevance and recall of the retrieved set
+- ranking quality, freshness, and source diversity
+- low latency and predictable cost
+- grounded snippets or answers
+- graceful handling of ambiguous and zero-result queries
+
+Session context can support follow-up queries, but the state is generally much
+smaller than a research ledger. If the query reveals several dependent
+subquestions or conflicting sources, the system can offer or trigger a
+deep-research path.
+
+**Insight:** LLM involvement does not make a pipeline agentic. The defining
+property is adaptive control: does the system choose future actions from prior
+observations, or execute a fixed sequence?
+
+## 4. Search Inside an Agent
+
+Here search is an environment capability exposed to a parent agent. The agent's
+goal may be to modify code, diagnose an incident, plan travel, analyze data, or
+take some other action. Search matters only insofar as it advances that goal.
+
+### Tool boundary
+
+A minimal request and result contract might look like:
 
 ```python
 from dataclasses import dataclass
@@ -161,93 +186,40 @@ Keep `search` separate from `open` or `fetch`:
   structured databases
 
 Search snippets are leads, not reliable final evidence. Separation prevents
-every query from flooding context with full pages and lets adaptive workflows
-inspect only promising results.
+every query from flooding context with full pages and lets the agent inspect
+only promising results.
+
+### When should the agent call search?
+
+Search when:
+
+- the needed fact is temporally unstable
+- the user asks for sources or verification
+- model uncertainty matters for an important decision
+- an error refers to unfamiliar software, behavior, or documentation
+- the task depends on external or private information unavailable in weights
+
+Do not search when the answer is already available in task inputs, a cheaper
+structured tool is authoritative, or retrieval cannot affect the next decision.
 
 The [Agent Harness](harness.qmd) owns schemas, permissions, timeouts, caching,
-context insertion, and prompt-injection boundaries. The search capability should
-normally be read-only; finding an instruction on a page does not authorize an
-unrelated action.
+context insertion, and prompt-injection boundaries. The model chooses whether
+search is useful and interprets the observation. The search tool should normally
+be read-only; finding an instruction on a page does not authorize an unrelated
+action.
 
-## 5. Single-Pass Retrieval
+### Completion belongs to the parent task
 
-A single-pass system usually follows a bounded pipeline:
+A coding agent that searches an API change is not finished when it finds the
+documentation. It is finished when the code change passes its verifier. A
+shopping agent is not finished when it finds a product page; it must still apply
+the user's constraints and respect purchase permissions.
 
-$$
-\text{query understanding}
-\rightarrow
-\text{retrieve}
-\rightarrow
-\text{rerank}
-\rightarrow
-\text{deduplicate}
-\rightarrow
-\text{present or answer}.
-$$
+Search inside an agent may be single-pass or adaptive. That is an implementation
+choice inside this product problem; it does not turn every search-enabled agent
+into a deep-research system.
 
-An LLM may rewrite the query, interpret intent, rerank passages, generate a
-snippet, or synthesize a short response. This is still single-pass when those
-stages and the stopping point are fixed before seeing retrieval observations.
-
-Optimize normal search primarily for:
-
-- relevance and recall of the retrieved set
-- ranking quality, freshness, and source diversity
-- low latency and predictable cost
-- grounded snippets or answers
-- graceful handling of ambiguous and zero-result queries
-
-Session context can support a later user query, but the current execution state
-is generally much smaller than a research ledger. If results expose dependent
-subquestions or conflicting sources, the product can escalate to adaptive
-search.
-
-**Insight:** LLM involvement does not make a pipeline agentic. The defining
-property is adaptive control: does the system choose future actions from prior
-observations, or execute a fixed sequence?
-
-## 6. Adaptive Search
-
-Adaptive search introduces a bounded observation-action loop:
-
-```{mermaid}
-flowchart LR
-    Q[Question or task gap] --> S[Search]
-    S --> I[Inspect selected result]
-    I --> E{Enough information?}
-    E -- No --> G[Identify the next gap]
-    G --> S
-    E -- Yes --> O[Answer or return observation to parent task]
-```
-
-The state can remain lightweight:
-
-- current question or downstream decision
-- useful findings with provenance
-- unresolved gaps or newly discovered entities
-- attempted queries and duplicate-result history
-- remaining search and latency budget
-
-Adaptive search is appropriate for short multi-hop questions, unfamiliar error
-diagnosis, targeted comparisons, or a general agent that must consult current
-documentation. It does not automatically need a formal report outline or a
-large claim–evidence ledger.
-
-Search when the fact is unstable, externally sourced, explicitly requested, or
-important enough that model uncertainty matters. Avoid search when the answer is
-already in task inputs, a cheaper structured tool is authoritative, or new
-information cannot affect the next decision.
-
-For a general agent, completion still belongs to the parent task. A coding agent
-that finds documentation is not done until its code passes verification. Search
-is an information action, not the goal.
-
-Stop adaptive search when the immediate question is supported, the parent task
-can proceed, repeated queries add no useful information, or its bounded budget
-is exhausted. Escalate to deep research when the task develops multiple research
-branches, broad coverage requirements, or material contradictions.
-
-## 7. Deep Research
+## 5. Deep Research
 
 Deep research is a specialized agent workflow whose primary product is a
 researched answer, comparison, recommendation, or report. It needs iterative
@@ -263,12 +235,12 @@ documents established or failed to establish.
 | Stopping | after fixed retrieval | when evidence is sufficient or marginal value is low |
 | Best fit | known corpus and straightforward lookup | multi-hop, open-web, ambiguous, or long-form research |
 
-The remaining research-loop sections primarily describe this orchestration
-level. Search strategy, safety, and production concerns also apply at lower
-levels, but single-pass and adaptive systems usually do not need the full
-claim–evidence workflow.
+The remaining research-loop sections primarily describe this problem. Search
+strategy, safety, and production concerns also apply to search-enabled agents,
+but a general-purpose agent usually does not need the full claim–evidence
+workflow for every task.
 
-## 8. The Deep-Research State
+## 6. The Deep-Research State
 
 A robust agent should maintain explicit state rather than relying on a growing
 conversation transcript:
@@ -591,6 +563,86 @@ suggests that training can improve multi-turn tool use, but its gains are couple
 to the retriever, reward, base model, and task distribution. Treat “agent
 training” as system optimization, not a model-only upgrade.
 
+### How SOTA systems train deep research {#sec-deep-research-training}
+
+Deep research does **not** need to be a permanently separate model. Publicly
+described systems occupy a spectrum from research specialists to one policy
+that serves research, coding, and other agentic tasks:
+
+| System | Training recipe | What is trained together? | Resulting policy |
+|---|---|---|---|
+| [Search-R1](https://arxiv.org/abs/2503.09516) | outcome-reward RL for interleaved reasoning and retrieval | search-based question answering | search specialist |
+| [Tongyi DeepResearch](https://arxiv.org/abs/2510.24701) | agentic continued pretraining, SFT, then RL | long-horizon information seeking | research specialist |
+| [Step-DeepResearch](https://arxiv.org/abs/2512.20491) | agentic mid-training, SFT, then RL | planning, information seeking, and report writing | research specialist |
+| [QUEST](https://osu-nlp-group.github.io/QUEST/) | mid-training for evidence processing, trajectory SFT, then RL with rubric and citation rewards | fact seeking, report synthesis, and citation grounding | research specialist |
+| [Kimi-Researcher](https://moonshotai.github.io/Kimi-Researcher/) | end-to-end agentic RL after long-context initialization | hard search plus math/code reasoning; search, browser, and code tools | research-focused multi-tool policy |
+| [Kimi K3](https://arxiv.org/abs/2607.24653) | broad SFT, domain- and effort-specific RL, then multi-teacher on-policy distillation | general reasoning/search, general agents including deep research, and coding agents | one consolidated general policy |
+| [OpenAI deep research](https://openai.com/index/deep-research-system-card/) | an early o3 model optimized for web browsing, file reading, and Python use | exact post-training mixture is not public | insufficient public detail to classify |
+
+These examples imply three useful training patterns:
+
+1. **Shared base, specialist post-training.** Tongyi DeepResearch, Step-
+   DeepResearch, QUEST, and Search-R1 devote the later training stages to a
+   research-shaped distribution. This simplifies reward design and maximizes
+   specialization, but produces another model to serve and maintain.
+2. **Research training with a mixed capability distribution.** Kimi-Researcher
+   mixes hard-search tasks with math/code reasoning and exposes a code execution
+   tool. The policy is still research-focused, but it learns supporting
+   capabilities in the same agentic RL stage.
+3. **Specialize first, consolidate later.** Kimi K3 trains experts across three
+   domains---general tasks, general agents, and coding agents---and three
+   reasoning-effort levels. Deep research belongs to the general-agent domain;
+   search also appears in the general-task domain. The nine expert policies are
+   then consolidated into one model through multi-teacher on-policy
+   distillation:
+
+$$
+\left\{\pi^{(d,e)}:\ d\in\mathcal D,\ e\in\mathcal E\right\}
+\xrightarrow{\text{multi-teacher on-policy distillation}}
+\pi_{\text{unified}}.
+$$
+
+This third pattern is different from naively mixing every sample into one RL
+batch. Specialization gives each domain an appropriate environment and reward;
+distillation then transfers those policies into a common checkpoint.
+
+#### What should be shared, and what should stay task-specific?
+
+The first-principles boundary is not “research model versus coding model.” It is
+the boundary between reusable control skills and task-specific feedback:
+
+| Usually shareable | Usually task-specific |
+|---|---|
+| pretrained base model and broad instruction following | task and trajectory distribution |
+| tool-call syntax and the reason–act–observe loop | available tools and environment dynamics |
+| planning, error recovery, context use, and stopping priors | verifier, reward scale, and success criteria |
+| general SFT data and possibly the final checkpoint | reasoning budget and sampling weight |
+
+Coding often has crisp execution or unit-test rewards. Research quality is
+multi-objective: factual correctness, coverage, source quality, citation
+entailment, writing quality, and efficiency can disagree. A joint policy is
+therefore plausible, but it still needs domain-conditioned environments,
+verifiers, balanced sampling, and checks for negative transfer. QUEST's
+ablations illustrate the risk even within research: SFT, mid-training, and RL
+improve different task families and can trade off open-ended report quality
+against short, objectively scored tasks.
+
+The runtime is also part of the training distribution. Kimi K3 represents its
+white-box [agent harness](harness.qmd#sec-harness-components) as configurable
+tool interfaces, system prompts, context strategies, skills, memories, and
+subagents, and varies harness configurations during RL. This reduces dependence
+on one exact scaffold. Training a policy with one harness and deploying it in a
+substantially different one creates distribution shift even when the model
+weights are unchanged.
+
+**Practical conclusion:** start with shared base/SFT capabilities and separate
+task environments plus rewards. Train a dedicated research policy when maximum
+specialization or fast iteration matters. If one serving checkpoint is a hard
+product constraint, use balanced joint training or domain experts followed by
+distillation, and measure both cross-domain transfer and regressions. Public
+work demonstrates that co-training is possible; it does not establish one
+universally optimal mixture.
+
 ### Best-of-$N$ and multiple researchers
 
 Additional test-time compute can be spent on longer trajectories, parallel query
@@ -623,7 +675,7 @@ critical when browsing and consequential actions share the same agent.
 
 ## 19. Production Architecture
 
-A practical system often separates these layers:
+A practical deep-research system often separates these layers:
 
 ```text
 request normalizer
@@ -638,6 +690,10 @@ request normalizer
     -> evaluation and trace store
 ```
 
+Normal search can use a smaller fixed pipeline, while search inside a general
+agent reuses the parent [Agent Harness](harness.qmd) rather than creating a
+separate research runtime for every lookup.
+
 Operational best practices:
 
 - cache search and fetch results with freshness metadata
@@ -651,13 +707,13 @@ Operational best practices:
 
 ## 20. Evaluation
 
-Evaluation must match the selected scope:
+Evaluation must match the selected problem:
 
-| Scope | Primary metrics |
+| Problem | Primary metrics |
 |---|---|
-| Normal search | recall@$k$, MRR or nDCG, freshness, answer grounding, zero-result rate, latency |
-| Search tool in an agent | downstream task-success lift, correct invocation rate, unnecessary-call rate, observation usefulness, added cost and latency |
-| Deep research | answer and report quality, evidence coverage, citation correctness, source quality, trajectory efficiency |
+| Normal search | recall@$k$, MRR or nDCG, freshness, answer grounding, zero-result rate, and latency |
+| Search inside an agent | downstream task-success lift, correct invocation rate, unnecessary-call rate, observation usefulness, added cost, and latency |
+| Deep research | report quality, evidence coverage, citation correctness, source quality, and trajectory efficiency |
 
 A search tool can retrieve excellent pages yet reduce agent performance if it is
 called at the wrong time or injects too much irrelevant context. Conversely, a
@@ -715,9 +771,9 @@ criteria independent from the agent being measured.
 
 ## 22. Core Insights
 
-1. **Choose the product boundary before the architecture.** Normal search,
-   deep research, and search-as-a-tool share infrastructure but not control or
-   completion semantics.
+1. **Choose the problem boundary before the architecture.** Normal search, deep
+   research, and search inside an agent share infrastructure but have different
+   control and completion semantics.
 2. **A tool is a capability, not a workflow.** The parent harness owns when to
    call it and what the observation means for the larger task.
 3. **In deep research, the unit of progress is a resolved evidence gap, not a
@@ -735,9 +791,9 @@ criteria independent from the agent being measured.
 
 ## Interview Questions
 
-- When should a product use normal search, deep research, or a search tool
-  inside a broader agent?
-- Who owns the control loop and stopping condition in each scope?
+- When should a system use normal search, deep research, or search inside a
+  broader agent?
+- Who owns the control loop and stopping condition in each problem?
 - What makes search agentic rather than ordinary RAG?
 - What should be stored in research state, and what should remain in raw logs?
 - How would you choose the next query from an evidence gap?
@@ -748,6 +804,11 @@ criteria independent from the agent being measured.
 - How would you evaluate a live-web agent reproducibly?
 - What are the trust boundaries in a browser-enabled agent?
 - How would you train a search policy, and what reward-hacking risks arise?
+- Does deep research require a specialist model? Compare joint RL with
+  specialist RL followed by policy consolidation.
+- Which research capabilities should transfer to coding agents, and which
+  rewards must remain domain-specific?
+- Why can changing the harness between training and deployment hurt an agent?
 
 ## Exercises
 
@@ -768,6 +829,11 @@ criteria independent from the agent being measured.
 - [Self-RAG: Learning to Retrieve, Generate, and Critique](https://arxiv.org/abs/2310.11511)
 - [STORM: Assisting in Writing Wikipedia-like Articles From Scratch](https://arxiv.org/abs/2402.14207)
 - [Search-R1: Training LLMs to Reason and Leverage Search Engines with RL](https://arxiv.org/abs/2503.09516)
+- [Tongyi DeepResearch Technical Report](https://arxiv.org/abs/2510.24701)
+- [Step-DeepResearch Technical Report](https://arxiv.org/abs/2512.20491)
+- [QUEST: Stable Training of Long-Horizon Web Agents](https://osu-nlp-group.github.io/QUEST/)
+- [Kimi-Researcher: End-to-End RL Training for Emerging Agentic Capabilities](https://moonshotai.github.io/Kimi-Researcher/)
+- [Kimi K3 Technical Report](https://arxiv.org/abs/2607.24653)
 - [BrowseComp: A Benchmark for Browsing Agents](https://openai.com/index/browsecomp/)
 - [DeepResearch Bench](https://arxiv.org/abs/2506.11763)
 - [ALCE: Enabling Large Language Models to Generate Text with Citations](https://arxiv.org/abs/2305.14627)

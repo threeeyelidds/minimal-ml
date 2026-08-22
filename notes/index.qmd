@@ -5,13 +5,15 @@ title: "Notes"
 ## Foundations
 
 - [Activation Functions](foundations/activations.qmd)
-- [Loss Functions](foundations/losses.qmd)
-- [First- and Second-Order Optimization](foundations/optimizers.qmd)
+- [Discriminative Losses from First Principles](foundations/losses.qmd)
+- [Generative Losses from First Principles](foundations/generative_losses.qmd)
+- [Representation Learning from First Principles](foundations/representation_learning.qmd)
+- [Zeroth-, First-, and Second-Order Optimization](foundations/optimizers.qmd)
 - [RNNs and LSTMs](foundations/rnn_lstm.qmd)
 
 ## Transformers
 
-- [Tokenization Across Modalities](tokenization.qmd)
+- [Tokenization Across Modalities: language, vision, item IDs](tokenization.qmd)
 - [Attention](transformers/attention.qmd)
 - [Transformers](transformers/transformer.qmd)
 - [Positional Encoding](transformers/positional_encoding.qmd)
@@ -20,11 +22,12 @@ title: "Notes"
 
 - [Advanced Attention Techniques](advanced/advanced_attention.qmd)
 - [Linear Attention](advanced/linear_attention.qmd)
+- [From Test-Time Training to Continual Intelligence](advanced/continual_intelligence_ttt.qmd)
 
 ## Applied ML
 
-- [Agentic Search](applied_ml/agentic_search.qmd)
-- [Agent Harness](applied_ml/harness.qmd)
+- [Agentic Search: is it a fake problem](applied_ml/agentic_search.qmd)
+- [Agent Harness: turning prediction into decision](applied_ml/harness.qmd)
 
 ## Coming next
 

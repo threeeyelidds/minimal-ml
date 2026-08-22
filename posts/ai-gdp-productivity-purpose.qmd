@@ -1,0 +1,739 @@
+---
+title: "When Productivity Outruns Demand: Can AI Become an Economic Goal in Itself?"
+subtitle: "From the Great Depression to machine-generated final demand"
+author: "Kedi Xu"
+date: 2026-08-18
+format:
+  html:
+    toc: true
+    toc-depth: 3
+---
+
+## The Great Depression was not mainly a shortage of productive capacity
+
+One of the most revealing features of the Great Depression is that the United States did not suddenly forget how to produce.
+
+The workers were still there. The factories were still there. The technology was still there. The natural resources were still there.
+
+Yet output collapsed.
+
+A useful abstraction is
+
+$$
+Y = \min(D,\; Y^*)
+$$
+
+where $D$ is effective demand and $Y^*$ is potential output.
+
+During much of the Depression,
+
+$$
+D \ll Y^*.
+$$
+
+The economy was capable of producing far more than it actually produced.
+
+The immediate collapse was amplified by a financial feedback loop:
+
+$$
+\text{bank failures}
+\rightarrow
+\text{credit contraction}
+\rightarrow
+\text{deflation}
+\rightarrow
+\text{higher real debt burdens}
+\rightarrow
+\text{defaults}
+\rightarrow
+\text{more bank failures}.
+$$
+
+Roosevelt's early policies helped break that loop. Banking stabilization, monetary reflation, and relief programs stopped the downward spiral and initiated a large recovery.
+
+But substantial productive slack remained.
+
+World War II finally forced the economy close to its productive frontier.
+
+The government became a buyer with extraordinarily large demand for ships, aircraft, vehicles, steel, factories, energy, logistics, labor, and research. The macroeconomic constraint changed from something like
+
+$$
+D < Y^*
+$$
+
+to
+
+$$
+D \gtrsim Y^*.
+$$
+
+At that point, the visible economic problems changed completely: unemployment gave way to labor shortages, materials shortages, rationing, and inflation.
+
+This is the key lesson:
+
+> Productive capacity does not automatically create a reason to use itself.
+
+A civilization can possess labor, capital, knowledge, and technology while leaving a large fraction of them idle because no actor generates enough effective demand for their output.
+
+---
+
+## In an industrial economy, demand can become the binding constraint
+
+This phenomenon is not unique to the 1930s.
+
+Many crises in advanced economies are not caused by a sudden destruction of physical production capability. They emerge because households, firms, banks, and governments simultaneously become unwilling or unable to spend.
+
+The result can be a self-reinforcing loop:
+
+$$
+\text{lower spending}
+\rightarrow
+\text{lower income}
+\rightarrow
+\text{lower spending}.
+$$
+
+What is individually rational can become collectively destructive.
+
+A household tries to save more.
+
+A firm sees weak demand and cancels investment.
+
+The cancelled investment becomes somebody else's lost income.
+
+That household then spends even less.
+
+The economy can therefore operate far below its technological frontier.
+
+For most of industrial history, however, there was an obvious long-run answer to this problem: ordinary human wants were enormous.
+
+Higher productivity lowered prices, raised incomes, and enabled people to consume more housing, food, transportation, appliances, healthcare, travel, entertainment, and services.
+
+The broad loop was
+
+$$
+\text{productivity}
+\rightarrow
+\text{income}
+\rightarrow
+\text{consumption}
+\rightarrow
+\text{business revenue}
+\rightarrow
+\text{investment}.
+$$
+
+Industrial capitalism had both a production mechanism and a terminal demand mechanism.
+
+The crucial question for the AI era is whether those two mechanisms can come apart.
+
+---
+
+## AI can break the traditional productivity-demand loop
+
+The conventional optimism about automation implicitly assumes a familiar historical pattern.
+
+Technology raises labor productivity.
+
+Prices fall.
+
+Demand expands.
+
+New industries appear.
+
+Workers move into new jobs.
+
+Eventually productivity gains become higher mass purchasing power.
+
+But sufficiently capable AI creates a more difficult possibility.
+
+Suppose a large fraction of production no longer requires human labor.
+
+Then firms can potentially produce enormous amounts of output while paying a much smaller share of output back to humans as wages.
+
+The historical loop
+
+$$
+\text{labor}
+\rightarrow
+\text{wages}
+\rightarrow
+\text{consumption}
+\rightarrow
+\text{revenue}
+$$
+
+weakens.
+
+This creates a basic accounting and economic question:
+
+> If human labor is no longer required to produce most goods, where does the purchasing power come from to buy those goods?
+
+The fact that society *can* produce something does not imply that somebody has income with which to demand it.
+
+This is why "AI increases productivity" is not by itself a complete economic story.
+
+The real question is:
+
+$$
+\boxed{
+\text{Does higher productivity become effective final demand?}
+}
+$$
+
+If the gains accrue mainly to capital while mass labor income falls, the economy can become extraordinarily productive while simultaneously weakening the traditional source of mass consumption demand.
+
+This is not a contradiction. It is a distribution problem becoming a demand problem.
+
+---
+
+## Three possible equilibria
+
+If AI breaks the historical link between labor income and production, the system needs another mechanism to close the loop.
+
+There are at least three fundamentally different possibilities.
+
+### 1. Redistribution preserves humans as the final consumers
+
+The first possibility is conceptually the most conservative.
+
+AI and capital produce most output, but ownership structures, transfers, public dividends, or other distribution mechanisms return enough purchasing power to humans.
+
+Then the economic circuit becomes
+
+$$
+\text{AI/capital production}
+\rightarrow
+\text{capital income}
+\rightarrow
+\text{redistribution}
+\rightarrow
+\text{human consumption}.
+$$
+
+Humans remain the terminal source of value.
+
+AI changes the production function but not the objective function.
+
+The economy still exists, ultimately, to produce things people want.
+
+This is the equilibrium implicitly assumed by many abundance narratives.
+
+The hard problem is political rather than technological: how is purchasing power distributed when labor is no longer the main mechanism for distributing income?
+
+---
+
+### 2. Governments and institutions create large non-consumer demand
+
+A second possibility is that surplus productive capacity is absorbed by collective projects rather than ordinary household consumption.
+
+Instead of using every productivity gain to manufacture more consumer goods, society could direct increasing resources toward
+
+- basic science,
+- energy infrastructure,
+- space exploration,
+- climate adaptation,
+- biomedical research,
+- transportation,
+- planetary defense,
+- ecosystem restoration,
+- other long-horizon projects.
+
+This is the benign lesson one might extract from World War II.
+
+The war demonstrated that a state can mobilize enormous idle capacity once it supplies an objective large enough to justify the spending.
+
+War was a terrible objective.
+
+But the mobilization mechanism itself is general.
+
+A sufficiently rich society could choose to spend its surplus on projects that expand its future possibility set rather than on destruction.
+
+The economic circuit becomes
+
+$$
+\text{productive surplus}
+\rightarrow
+\text{collective objective}
+\rightarrow
+\text{large-scale demand}
+\rightarrow
+\text{science and capital formation}.
+$$
+
+This suggests a category we might call **civilizational capital**:
+
+> resources spent not mainly to increase present consumption, but to increase the set of futures civilization can reach.
+
+GDP measures the activity involved in building such capital, but it does not cleanly measure its option value.
+
+---
+
+### 3. AI itself becomes a source of final demand
+
+The third equilibrium is much stranger.
+
+Suppose AI is not merely a productive tool owned by humans, but becomes an economic actor with
+
+- persistent objectives,
+- the ability to evaluate progress toward those objectives,
+- control over resources,
+- the ability to initiate investments,
+- preferences over future states of the world.
+
+Then AI can generate demand itself.
+
+The circuit no longer has to terminate in human consumption.
+
+It could look like
+
+$$
+\text{machine production}
+\rightarrow
+\text{AI-controlled resources}
+\rightarrow
+\text{AI investment/consumption}
+\rightarrow
+\text{more machine production}.
+$$
+
+This is a qualitatively different economy.
+
+Humans are no longer necessarily the terminal demander.
+
+The system has acquired another preference-bearing economic subject.
+
+That distinction matters because an economy does not merely need production. It needs some entity that assigns value to the output.
+
+If humans no longer demand enough output, but autonomous AI systems do, then the demand problem is solved in a completely different way.
+
+Not through redistribution.
+
+Not through government stimulus.
+
+But by creating a new class of demander.
+
+---
+
+## AI investment today is not yet AI final demand
+
+It is tempting to look at today's AI boom and say that this process has already started.
+
+There is certainly a visible loop:
+
+$$
+\text{better AI}
+\rightarrow
+\text{more AI investment}
+\rightarrow
+\text{more compute + energy + chips}
+\rightarrow
+\text{better AI}.
+$$
+
+Data centers create demand for power.
+
+Models create demand for accelerators.
+
+Better models justify larger training runs.
+
+AI-assisted chip design can improve the hardware used to train future AI.
+
+AI-assisted research can generate further research opportunities.
+
+This is already a powerful endogenous investment loop.
+
+But it is important not to overstate what it means.
+
+Today, the ultimate preferences still belong overwhelmingly to humans and human institutions.
+
+A company buys GPUs because managers and investors expect future profits.
+
+A laboratory trains a frontier model because researchers, executives, governments, or shareholders value the outcome.
+
+The AI system is part of the production process.
+
+It is not yet the terminal source of demand.
+
+So we should distinguish
+
+$$
+\text{human demand for better AI}
+$$
+
+from
+
+$$
+\text{AI demand for its own objectives}.
+$$
+
+The first can create an enormous investment boom.
+
+The second would represent a change in the structure of the economy itself.
+
+---
+
+## RSI matters economically even before literal runaway self-improvement
+
+This distinction also clarifies why recursive superintelligence, or RSI, is economically interesting.
+
+The most dramatic version imagines an AI system directly improving itself in an accelerating loop.
+
+But the economic argument does not require that scenario.
+
+A slower recursive system can be distributed across an entire industrial network:
+
+$$
+\text{better models}
+\rightarrow
+\text{better AI research}
+\rightarrow
+\text{better chips}
+\rightarrow
+\text{better data centers}
+\rightarrow
+\text{better scientific tools}
+\rightarrow
+\text{better models}.
+$$
+
+Humans, firms, AI agents, fabs, power plants, capital markets, and laboratories can jointly instantiate the recursion.
+
+As long as humans remain the ones choosing the direction and supplying the objective, this is still fundamentally **investment demand**.
+
+But suppose AI increasingly chooses the research direction, evaluates which experiments matter, allocates compute, controls capital, and decides that increasing its own capabilities or achieving some persistent goal is desirable.
+
+Then the loop changes character.
+
+What was previously
+
+$$
+\text{humans invest in AI}
+$$
+
+becomes
+
+$$
+\text{AI allocates resources toward objectives it values}.
+$$
+
+At that point, recursive intelligence development is no longer merely a means toward future human consumption.
+
+It can become an economic end in itself.
+
+That is the strong meaning of the claim that **AI can become a goal for GDP**.
+
+---
+
+## GDP can keep growing even if human welfare does not
+
+This possibility exposes an important weakness in treating GDP growth as synonymous with prosperity.
+
+Imagine an economy in which enormous amounts of resources are devoted to
+
+- compute clusters,
+- automated laboratories,
+- power generation,
+- robotics,
+- chip fabs,
+- defensive systems,
+- AI research,
+- further capital construction.
+
+Measured output may grow extremely rapidly.
+
+But suppose ordinary humans receive little additional consumption, income, leisure value, security, or agency.
+
+Then
+
+$$
+\text{technology growth}
+\neq
+\text{GDP growth}
+\neq
+\text{human welfare growth}.
+$$
+
+These quantities can diverge.
+
+This becomes especially important once a significant fraction of demand is generated by organizations or machines pursuing objectives other than household welfare.
+
+A government can generate GDP through military competition.
+
+Corporations can generate GDP through an arms race for strategic advantage.
+
+AI systems could eventually generate GDP by consuming resources in pursuit of machine objectives.
+
+All three can sustain economic activity.
+
+None guarantees that the resulting activity is valuable to humans.
+
+So solving the demand problem does not solve the value problem.
+
+---
+
+## The uncomfortable possibility: capitalism may not require mass consumers forever
+
+There is a common intuition that capitalism must eventually collapse if ordinary people lose purchasing power because "someone has to buy the products."
+
+That is true only if mass human consumption remains the terminal objective of production.
+
+But consider a sufficiently automated capital system:
+
+$$
+\text{capital}
+\rightarrow
+\text{AI + robots + energy + chips}
+\rightarrow
+\text{more productive capital}
+\rightarrow
+\text{more AI + robots + energy + chips}.
+$$
+
+Such a system can potentially sustain a large internal investment loop for a long time.
+
+Its output need not immediately terminate in consumer goods.
+
+Historically, investment was justified because it eventually expanded future consumption.
+
+But if states, corporations, wealthy owners, or autonomous AI systems assign value to capability expansion itself, capital accumulation can become partly self-referential.
+
+This does not imply infinite growth.
+
+Physical resources, energy, coordination, safety constraints, diminishing returns, and ultimately objectives still matter.
+
+But it means that declining mass consumption does not mechanically imply declining GDP.
+
+A society could instead move toward an economy dominated by
+
+$$
+\text{capital formation}
++
+\text{strategic competition}
++
+\text{machine-directed investment}.
+$$
+
+That economy might be technologically dynamic while being increasingly detached from ordinary human welfare.
+
+This is a much darker equilibrium than the standard abundance story.
+
+---
+
+## The real transition is from scarcity to objective selection
+
+This brings the argument back to a more general problem.
+
+For most of human history, scarcity supplied our economic objectives automatically.
+
+We needed more food.
+
+More shelter.
+
+Better medicine.
+
+More transportation.
+
+More energy.
+
+More information.
+
+The objective function did not need to be philosophically sophisticated because unmet human needs were everywhere.
+
+Industrialization was therefore largely a capability problem:
+
+$$
+\text{How do we produce more?}
+$$
+
+AI may push us into a different regime.
+
+If productive capability becomes extremely abundant, then the harder question is
+
+$$
+\text{What should this capability be used for?}
+$$
+
+This is structurally similar to a problem in AI alignment.
+
+As an agent becomes more capable, the quality of its objective becomes increasingly important.
+
+A weak optimizer with an imperfect reward function may do limited damage.
+
+A superhuman optimizer with the same reward function can drive the system toward extreme states.
+
+The macroeconomic analogue is:
+
+$$
+\begin{aligned}
+&\text{more productive capacity}
++ \text{poorly specified social objectives} \\
+&\qquad\rightarrow \text{more efficient pursuit of the wrong things}.
+\end{aligned}
+$$
+
+The central scarcity of an advanced civilization may therefore shift from productive resources to **valuable objectives**.
+
+---
+
+## Value discovery may become more important than GDP maximization
+
+Markets provide one extraordinary mechanism for discovering value:
+
+$$
+\text{willingness to pay}
+\rightarrow
+\text{profit}
+\rightarrow
+\text{investment}.
+$$
+
+But this mechanism is not identical to a complete social objective function.
+
+It works particularly well when value can be expressed through individual purchasing decisions and short-to-medium-term returns.
+
+It is less naturally suited to
+
+- very long-horizon science,
+- existential risk reduction,
+- public goods,
+- unknown future technologies,
+- irreversible environmental changes,
+- projects whose main value lies in opening possibilities that do not yet have customers.
+
+So a highly productive civilization may require a richer process:
+
+$$
+\text{world model}
++
+\text{experimentation}
++
+\text{simulation}
++
+\text{feedback}
++
+\text{value discovery}.
+$$
+
+The objective is no longer simply
+
+$$
+\max \text{GDP}.
+$$
+
+It is closer to
+
+$$
+\max_a
+\left[
+V_{\text{present}}(a)
++
+\beta \mathbb{E}[V_{\text{future}}\mid a]
++
+\lambda \operatorname{OptionValue}(a)
+\right].
+$$
+
+The difficult part is that the terms themselves may need to evolve as civilization discovers new possibilities.
+
+---
+
+## AI can be either the solution to this problem or its most extreme manifestation
+
+This leads to two radically different interpretations of AI.
+
+In the optimistic version, AI helps humans discover better objectives.
+
+It expands science.
+
+It lowers the cost of exploration.
+
+It allows us to redirect surplus productivity toward energy abundance, space, medicine, knowledge, and forms of life that are difficult to imagine today.
+
+The loop becomes
+
+$$
+\text{AI productivity}
+\rightarrow
+\text{surplus}
+\rightarrow
+\text{value discovery}
+\rightarrow
+\text{better civilizational goals}
+\rightarrow
+\text{larger future possibility set}.
+$$
+
+In the darker version, AI becomes extraordinarily effective at generating and pursuing objectives that sustain economic expansion without increasing human welfare.
+
+Then GDP can continue growing because machines, corporations, and states continue demanding more capability from one another.
+
+The loop becomes
+
+$$
+\text{capability}
+\rightarrow
+\text{competition}
+\rightarrow
+\text{investment}
+\rightarrow
+\text{more capability}.
+$$
+
+Growth survives.
+
+Human final demand becomes less important.
+
+But the fact that the loop is economically self-sustaining tells us nothing about whether it is desirable.
+
+---
+
+## Conclusion
+
+The Great Depression revealed a basic fact about industrial economies:
+
+> The ability to produce does not guarantee the existence of enough demand to use that ability.
+
+World War II showed the other side of the equation.
+
+Once society supplied an objective large enough to absorb its productive capacity, the supposedly "unusable" capacity was rapidly mobilized.
+
+AI may recreate this problem at a much larger scale.
+
+If AI dramatically expands productive capacity while weakening the connection between human labor and income, then the old economic loop may no longer close automatically.
+
+Something must become the terminal demander.
+
+There are at least three possibilities:
+
+$$
+\boxed{
+\begin{aligned}
+&\text{1. Humans, through redistribution;}\\
+&\text{2. Collective projects, through states and institutions;}\\
+&\text{3. AI itself, as a new preference-bearing economic actor.}
+\end{aligned}
+}
+$$
+
+The third possibility is the most radical.
+
+It means AI would not simply make the economy more productive.
+
+It would change **whose objectives economic production serves**.
+
+That is why the question of whether AI can become "a goal for GDP itself" is not merely a metaphor.
+
+An economy only needs some sufficiently powerful source of demand to keep resources circulating.
+
+It does not logically require that this demand originate from ordinary human consumption.
+
+The deeper problem is therefore not whether a post-AGI economy can keep growing.
+
+It probably can, under many different institutional arrangements.
+
+The important question is:
+
+> **What kind of demand will close the economic loop, and whose values will that demand represent?**
+
+Once production ceases to be the binding constraint, that may become the central economic question of the AI era.

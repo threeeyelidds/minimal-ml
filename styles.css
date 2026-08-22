@@ -1,3 +1,311 @@
+:root {
+  --minimal-bg: #fcfcfb;
+  --minimal-surface: #ffffff;
+  --minimal-ink: #242629;
+  --minimal-muted: #74777d;
+  --minimal-line: #e6e7e8;
+  --minimal-accent: #3f63a8;
+  --minimal-accent-soft: #f2f5fb;
+}
+
+html {
+  font-size: 14px;
+  scroll-padding-top: 5rem;
+}
+
+body {
+  background: var(--minimal-bg);
+  color: var(--minimal-ink);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial,
+    sans-serif;
+  font-size: 1rem;
+  line-height: 1.68;
+  letter-spacing: -0.006em;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--minimal-accent);
+  text-underline-offset: 0.16em;
+  text-decoration-thickness: 0.06em;
+}
+
+a:hover {
+  color: #294d8d;
+}
+
+/* Navigation */
+
+.navbar {
+  min-height: 3.7rem;
+  background: color-mix(in srgb, var(--minimal-bg) 94%, transparent) !important;
+  border-bottom: 1px solid var(--minimal-line);
+  box-shadow: none;
+  backdrop-filter: blur(12px);
+}
+
+.navbar .container-fluid {
+  max-width: 1180px;
+  padding-inline: 1.5rem;
+}
+
+.navbar-brand {
+  color: var(--minimal-ink) !important;
+  font-size: 1.02rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+.navbar-nav .nav-link {
+  color: #60636a !important;
+  font-size: 0.88rem;
+  font-weight: 500;
+  padding-inline: 0.8rem !important;
+}
+
+.navbar-nav .nav-link.active,
+.navbar-nav .nav-link:hover {
+  color: var(--minimal-ink) !important;
+}
+
+/* Reading layout */
+
+#quarto-document-content {
+  padding-top: 1.25rem;
+  padding-bottom: 5rem;
+}
+
+main.content {
+  max-width: 790px;
+}
+
+.quarto-title-block {
+  margin-bottom: 2.6rem;
+}
+
+.quarto-title h1.title {
+  max-width: 760px;
+  margin-bottom: 0.7rem;
+  color: #1d1f22;
+  font-size: clamp(1.8rem, 3vw, 2.25rem);
+  font-weight: 680;
+  line-height: 1.1;
+  letter-spacing: -0.04em;
+}
+
+.quarto-title .subtitle {
+  max-width: 660px;
+  margin-bottom: 1.4rem;
+  color: var(--minimal-muted);
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.quarto-title-meta {
+  display: flex;
+  gap: 2.5rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--minimal-line);
+  color: var(--minimal-muted);
+  font-size: 0.78rem;
+}
+
+.quarto-title-meta-heading {
+  margin-bottom: 0.05rem;
+  color: #9a9ca1;
+  font-size: 0.67rem;
+  font-weight: 650;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.quarto-title-meta-contents p {
+  margin: 0;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  color: #202226;
+  font-weight: 650;
+  letter-spacing: -0.025em;
+}
+
+h2 {
+  margin-top: 3rem;
+  margin-bottom: 0.9rem;
+  padding-bottom: 0.45rem;
+  border-bottom: 1px solid var(--minimal-line);
+  font-size: 1.32rem;
+  line-height: 1.3;
+}
+
+h3 {
+  margin-top: 2.2rem;
+  margin-bottom: 0.65rem;
+  font-size: 1.08rem;
+  line-height: 1.4;
+}
+
+h4 {
+  margin-top: 1.75rem;
+  font-size: 1rem;
+}
+
+p,
+ul,
+ol {
+  margin-bottom: 1rem;
+}
+
+hr {
+  margin: 2.8rem 0;
+  border: 0;
+  border-top: 1px solid var(--minimal-line);
+  opacity: 1;
+}
+
+blockquote {
+  margin: 1.8rem 0;
+  padding: 0.15rem 1.1rem;
+  border-left: 3px solid #9cafcf;
+  color: #4b5058;
+  font-size: 1.02rem;
+}
+
+blockquote p:last-child {
+  margin-bottom: 0;
+}
+
+table {
+  font-size: 0.88rem;
+}
+
+.table > :not(caption) > * > * {
+  padding: 0.58rem 0.7rem;
+  border-bottom-color: var(--minimal-line);
+}
+
+pre,
+code {
+  font-size: 0.88em;
+}
+
+div.sourceCode {
+  border: 1px solid var(--minimal-line);
+  border-radius: 6px;
+}
+
+/* Keep intrinsically wide MathJax equations inside the article grid. */
+
+.math.display {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-block: 0.3rem;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+
+.math.display > mjx-container[display="true"] {
+  min-width: max-content;
+  max-width: none;
+}
+
+/* Table of contents */
+
+#TOC {
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+#TOC .sidebar-title {
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.sidebar nav[role="doc-toc"] ul > li > a {
+  color: #85888e !important;
+  border-left-color: transparent;
+}
+
+.sidebar nav[role="doc-toc"] ul > li > a.active,
+.sidebar nav[role="doc-toc"] ul > li > a:hover {
+  color: var(--minimal-accent) !important;
+}
+
+/* Blog index */
+
+.quarto-listing-container-default {
+  margin-top: 2.2rem;
+}
+
+.quarto-listing-default .quarto-post {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2rem;
+  align-items: start;
+  padding: 1.35rem 0;
+  border-top: 1px solid var(--minimal-line);
+}
+
+.quarto-listing-default .quarto-post:last-child {
+  border-bottom: 1px solid var(--minimal-line);
+}
+
+.quarto-listing-default .thumbnail,
+.quarto-listing-default .listing-description,
+.quarto-listing-default .quarto-category {
+  display: none;
+}
+
+.quarto-listing-default .body {
+  min-width: 0;
+}
+
+.quarto-listing-default .listing-title {
+  margin: 0 0 0.25rem;
+  font-size: 1.08rem;
+  font-weight: 630;
+  line-height: 1.4;
+}
+
+.quarto-listing-default .listing-title a {
+  color: var(--minimal-ink);
+  text-decoration: none;
+}
+
+.quarto-listing-default .listing-title a:hover {
+  color: var(--minimal-accent);
+}
+
+.quarto-listing-default .listing-subtitle {
+  color: var(--minimal-muted);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.quarto-listing-default .metadata {
+  min-width: 7rem;
+  color: var(--minimal-muted);
+  font-size: 0.76rem;
+  text-align: right;
+}
+
+.quarto-listing-default .metadata a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.quarto-listing-default .listing-author {
+  margin-top: 0.15rem;
+}
+
 .bold {
   font-weight: 700;
 }
@@ -9,4 +317,31 @@
   border-radius: 8px;
   padding: 1rem 1.1rem;
   margin: 1rem 0;
+}
+
+@media (max-width: 767px) {
+  html {
+    font-size: 14px;
+  }
+
+  .navbar .container-fluid {
+    padding-inline: 1rem;
+  }
+
+  #quarto-document-content {
+    padding-top: 0.8rem;
+  }
+
+  .quarto-title h1.title {
+    font-size: 1.85rem;
+  }
+
+  .quarto-listing-default .quarto-post {
+    grid-template-columns: 1fr;
+    gap: 0.55rem;
+  }
+
+  .quarto-listing-default .metadata {
+    text-align: left;
+  }
 }
