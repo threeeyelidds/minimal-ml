@@ -196,12 +196,20 @@ window.Quarto = {
   <li><a href="#classification-as-probability-estimation" id="toc-classification-as-probability-estimation" class="nav-link" data-scroll-target="#classification-as-probability-estimation">3. Classification as Probability Estimation</a>
   <ul class="collapse">
   <li><a href="#multiclass-cross-entropy" id="toc-multiclass-cross-entropy" class="nav-link" data-scroll-target="#multiclass-cross-entropy">3.1 Multiclass cross-entropy</a></li>
-  <li><a href="#binary-and-multilabel-cross-entropy" id="toc-binary-and-multilabel-cross-entropy" class="nav-link" data-scroll-target="#binary-and-multilabel-cross-entropy">3.2 Binary and multilabel cross-entropy</a></li>
+  <li><a href="#logistic-regression-and-binary-cross-entropy" id="toc-logistic-regression-and-binary-cross-entropy" class="nav-link" data-scroll-target="#logistic-regression-and-binary-cross-entropy">3.2 Logistic regression and binary cross-entropy</a></li>
   <li><a href="#label-smoothing" id="toc-label-smoothing" class="nav-link" data-scroll-target="#label-smoothing">3.3 Label smoothing</a></li>
   </ul></li>
   <li><a href="#class-imbalance-cost-and-focal-loss" id="toc-class-imbalance-cost-and-focal-loss" class="nav-link" data-scroll-target="#class-imbalance-cost-and-focal-loss">4. Class Imbalance, Cost, and Focal Loss</a></li>
   <li><a href="#margin-losses-learn-a-boundary-not-a-distribution" id="toc-margin-losses-learn-a-boundary-not-a-distribution" class="nav-link" data-scroll-target="#margin-losses-learn-a-boundary-not-a-distribution">5. Margin Losses: Learn a Boundary, Not a Distribution</a></li>
-  <li><a href="#ranking-and-metric-learning" id="toc-ranking-and-metric-learning" class="nav-link" data-scroll-target="#ranking-and-metric-learning">6. Ranking and Metric Learning</a></li>
+  <li><a href="#contrastive-metric-and-ranking-losses" id="toc-contrastive-metric-and-ranking-losses" class="nav-link" data-scroll-target="#contrastive-metric-and-ranking-losses">6. Contrastive, Metric, and Ranking Losses</a>
+  <ul class="collapse">
+  <li><a href="#classical-pairwise-contrastive-loss" id="toc-classical-pairwise-contrastive-loss" class="nav-link" data-scroll-target="#classical-pairwise-contrastive-loss">6.1 Classical pairwise contrastive loss</a></li>
+  <li><a href="#triplet-loss" id="toc-triplet-loss" class="nav-link" data-scroll-target="#triplet-loss">6.2 Triplet loss</a></li>
+  <li><a href="#infonce-classify-the-positive-among-candidates" id="toc-infonce-classify-the-positive-among-candidates" class="nav-link" data-scroll-target="#infonce-classify-the-positive-among-candidates">6.3 InfoNCE: classify the positive among candidates</a></li>
+  <li><a href="#supervised-contrastive-loss" id="toc-supervised-contrastive-loss" class="nav-link" data-scroll-target="#supervised-contrastive-loss">6.4 Supervised contrastive loss</a></li>
+  <li><a href="#ranking-losses" id="toc-ranking-losses" class="nav-link" data-scroll-target="#ranking-losses">6.5 Ranking losses</a></li>
+  <li><a href="#sampling-is-part-of-the-loss" id="toc-sampling-is-part-of-the-loss" class="nav-link" data-scroll-target="#sampling-is-part-of-the-loss">Sampling is part of the loss</a></li>
+  </ul></li>
   <li><a href="#regression-losses-from-noise-models" id="toc-regression-losses-from-noise-models" class="nav-link" data-scroll-target="#regression-losses-from-noise-models">7. Regression Losses from Noise Models</a>
   <ul class="collapse">
   <li><a href="#mse-and-the-conditional-mean" id="toc-mse-and-the-conditional-mean" class="nav-link" data-scroll-target="#mse-and-the-conditional-mean">7.1 MSE and the conditional mean</a></li>
@@ -387,7 +395,7 @@ p_j-\mathbb 1[j=y].
 <p>The target logit rises; competing logits fall in proportion to their predicted probability.</p>
 <section id="minimal-stable-implementation" class="level4">
 <h4 class="anchored" data-anchor-id="minimal-stable-implementation">Minimal stable implementation</h4>
-<div id="7789f56b" class="cell" data-execution_count="1">
+<div id="e19283cf" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch.nn.functional <span class="im">as</span> F</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -417,8 +425,56 @@ p_j-\mathbb 1[j=y].
 </div>
 </section>
 </section>
-<section id="binary-and-multilabel-cross-entropy" class="level3">
-<h3 class="anchored" data-anchor-id="binary-and-multilabel-cross-entropy">3.2 Binary and multilabel cross-entropy</h3>
+<section id="logistic-regression-and-binary-cross-entropy" class="level3">
+<h3 class="anchored" data-anchor-id="logistic-regression-and-binary-cross-entropy">3.2 Logistic regression and binary cross-entropy</h3>
+<p>Logistic regression specifies a <strong>linear log-odds model</strong>:</p>
+<p><span class="math display">\[
+z_\theta(x)=w^Tx+b,
+\qquad
+p_\theta(y=1\mid x)=\sigma(z_\theta(x)).
+\]</span></p>
+<p>Because</p>
+<p><span class="math display">\[
+\log\frac{p_\theta(y=1\mid x)}
+{p_\theta(y=0\mid x)}
+=
+z_\theta(x),
+\]</span></p>
+<p>each coefficient is an additive effect on the log odds. Combining the Bernoulli observation model with this linear logit gives the per-example negative log-likelihood</p>
+<p><span class="math display">\[
+\mathcal L_{\text{logistic}}(w,b;x,y)
+=
+-y\log\sigma(z)
+-(1-y)\log[1-\sigma(z)],
+\qquad z=w^Tx+b.
+\]</span></p>
+<p>Thus <strong>binary cross-entropy is the logistic-regression loss</strong> when its logit is linear in the features. A neural binary classifier uses the same loss with a nonlinear logit <span class="math inline">\(z=f_\theta(x)\)</span>.</p>
+<p>For labels <span class="math inline">\(\widetilde y\in\{-1,+1\}\)</span>, the same objective has the compact form</p>
+<p><span class="math display">\[
+\mathcal L_{\text{logistic}}
+=
+\log\left(1+e^{-\widetilde y z}\right).
+\]</span></p>
+<p>The gradients expose the probabilistic residual:</p>
+<p><span class="math display">\[
+\frac{\partial\mathcal L}{\partial z}
+=
+\sigma(z)-y,
+\qquad
+\nabla_w\mathcal L
+=
+[\sigma(z)-y]x.
+\]</span></p>
+<p>For a linear logit, its Hessian is</p>
+<p><span class="math display">\[
+\nabla_w^2\mathcal L
+=
+\sigma(z)[1-\sigma(z)]xx^T
+\succeq 0.
+\]</span></p>
+<p>Therefore unregularized logistic NLL is convex in <span class="math inline">\((w,b)\)</span>, although it need not have a finite minimizer on perfectly separable data. L2 regularization makes the problem strongly convex when the design has the appropriate coverage.</p>
+<section id="stable-bce-form" class="level4">
+<h4 class="anchored" data-anchor-id="stable-bce-form">Stable BCE form</h4>
 <p>For <span class="math inline">\(y\in\{0,1\}\)</span> and <span class="math inline">\(p=\sigma(z)\)</span>,</p>
 <p><span class="math display">\[
 \mathcal L_{\mathrm{BCE}}
@@ -432,7 +488,7 @@ p_j-\mathbb 1[j=y].
 \max(z,0)-yz+\log(1+e^{-|z|}),
 \]</span></p>
 <p>with derivative <span class="math inline">\(\sigma(z)-y\)</span>.</p>
-<div id="3186de1d" class="cell" data-execution_count="2">
+<div id="25f1be66" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> binary_cross_entropy_with_logits(logits, targets, reduction<span class="op">=</span><span class="st">"mean"</span>):</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    targets <span class="op">=</span> targets.to(logits.dtype)</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    losses <span class="op">=</span> torch.logaddexp(torch.zeros_like(logits), logits) <span class="op">-</span> targets <span class="op">*</span> logits</span>
@@ -454,6 +510,7 @@ p_j-\mathbb 1[j=y].
 <span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Use independent BCE logits for multilabel outcomes. Use softmax CE when exactly one class must occur. Independent BCE does not enforce probabilities summing to one.</p>
+</section>
 </section>
 <section id="label-smoothing" class="level3">
 <h3 class="anchored" data-anchor-id="label-smoothing">3.3 Label smoothing</h3>
@@ -517,7 +574,7 @@ p,&amp;y=1,\\
 -\alpha_t(1-p_t)^\gamma\log p_t.
 \]</span></p>
 <p>At <span class="math inline">\(\gamma=0\)</span> it becomes weighted CE. For <span class="math inline">\(\gamma&gt;0\)</span>, the vast population of easy examples contributes less gradient. This helped dense detection where easy background anchors overwhelmed rare foreground examples. It can hurt probability calibration, so use it for gradient allocation—not merely because a dataset is imbalanced.</p>
-<div id="27f4c3a6" class="cell" data-execution_count="3">
+<div id="2792862d" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> binary_focal_loss(logits, targets, gamma<span class="op">=</span><span class="fl">2.0</span>, alpha<span class="op">=</span><span class="va">None</span>):</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    targets <span class="op">=</span> targets.to(logits.dtype)</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    bce <span class="op">=</span> F.binary_cross_entropy_with_logits(logits, targets, reduction<span class="op">=</span><span class="st">"none"</span>)</span>
@@ -549,9 +606,146 @@ p,&amp;y=1,\\
 \]</span></p>
 <p>The margin <span class="math inline">\(m\)</span> defines how much score separation counts as sufficient; score scale and regularization determine what that statement means geometrically.</p>
 </section>
-<section id="ranking-and-metric-learning" class="level2">
-<h2 class="anchored" data-anchor-id="ranking-and-metric-learning">6. Ranking and Metric Learning</h2>
-<p>When supervision says “<span class="math inline">\(i\)</span> should rank above <span class="math inline">\(j\)</span>,” predicting absolute labels solves a harder and possibly ill-posed problem. Use a pairwise abstraction:</p>
+<section id="contrastive-metric-and-ranking-losses" class="level2">
+<h2 class="anchored" data-anchor-id="contrastive-metric-and-ranking-losses">6. Contrastive, Metric, and Ranking Losses</h2>
+<p>Classification assigns examples to a fixed output vocabulary. Representation learning often needs a different abstraction: specify which observations should be close and which should be distinguishable. See <a href="../../notes/foundations/representation_learning.html">Representation Learning from First Principles</a> for the broader design problem.</p>
+<p>“Contrastive loss” is not one unique formula. It is a family of objectives built from <strong>positive relations</strong> and <strong>negative relations</strong>.</p>
+<section id="classical-pairwise-contrastive-loss" class="level3">
+<h3 class="anchored" data-anchor-id="classical-pairwise-contrastive-loss">6.1 Classical pairwise contrastive loss</h3>
+<p>Let <span class="math inline">\(r=1\)</span> indicate that a pair <span class="math inline">\((x_i,x_j)\)</span> is semantically similar, let <span class="math inline">\(r=0\)</span> indicate a dissimilar pair, and define embedding distance</p>
+<p><span class="math display">\[
+D_{ij}
+=
+\lVert f_\theta(x_i)-f_\theta(x_j)\rVert_2.
+\]</span></p>
+<p>The classical pairwise contrastive loss is</p>
+<p><span class="math display">\[
+\mathcal L_{\mathrm{contrastive}}
+=
+rD_{ij}^2
++(1-r)\left[\max(0,m-D_{ij})\right]^2.
+\]</span></p>
+<p>Positive pairs are pulled together. Negative pairs are pushed apart only until they reach margin <span class="math inline">\(m\)</span>; spending capacity separating them further does not help this objective.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Check the label convention
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Some sources use <span class="math inline">\(y=0\)</span> for similar pairs and <span class="math inline">\(y=1\)</span> for dissimilar pairs. The formula changes appearance but not meaning. Always define which value denotes a positive pair.</p>
+</div>
+</div>
+<div id="073b0135" class="cell" data-execution_count="4">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> pairwise_contrastive_loss(</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    left_embeddings,</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    right_embeddings,</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    is_positive,</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    margin<span class="op">=</span><span class="fl">1.0</span>,</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>):</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Classical contrastive loss; 1 means a semantically matching pair."""</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    distances <span class="op">=</span> torch.linalg.vector_norm(</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>        left_embeddings <span class="op">-</span> right_embeddings,</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>        dim<span class="op">=-</span><span class="dv">1</span>,</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    is_positive <span class="op">=</span> is_positive.to(distances.dtype)</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>    positive_loss <span class="op">=</span> is_positive <span class="op">*</span> distances.square()</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>    negative_loss <span class="op">=</span> (<span class="fl">1.0</span> <span class="op">-</span> is_positive) <span class="op">*</span> F.relu(</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>        margin <span class="op">-</span> distances</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>    ).square()</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> (positive_loss <span class="op">+</span> negative_loss).mean()</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>left <span class="op">=</span> torch.tensor([[<span class="fl">0.0</span>, <span class="fl">0.0</span>], [<span class="fl">0.0</span>, <span class="fl">0.0</span>]])</span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>well_arranged <span class="op">=</span> torch.tensor([[<span class="fl">0.1</span>, <span class="fl">0.0</span>], [<span class="fl">2.0</span>, <span class="fl">0.0</span>]])</span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>badly_arranged <span class="op">=</span> torch.tensor([[<span class="fl">2.0</span>, <span class="fl">0.0</span>], [<span class="fl">0.1</span>, <span class="fl">0.0</span>]])</span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>pair_types <span class="op">=</span> torch.tensor([<span class="fl">1.0</span>, <span class="fl">0.0</span>])</span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> pairwise_contrastive_loss(</span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>    left, well_arranged, pair_types</span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>) <span class="op">&lt;</span> pairwise_contrastive_loss(left, badly_arranged, pair_types)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="triplet-loss" class="level3">
+<h3 class="anchored" data-anchor-id="triplet-loss">6.2 Triplet loss</h3>
+<p>A triplet directly compares a positive and negative relative to the same anchor:</p>
+<p><span class="math display">\[
+\mathcal L_{\mathrm{triplet}}
+=
+\max\left(
+0,
+d(e_a,e_p)-d(e_a,e_n)+m
+\right).
+\]</span></p>
+<p>It asks for a ranking constraint,</p>
+<p><span class="math display">\[
+d(e_a,e_p)+m\le d(e_a,e_n),
+\]</span></p>
+<p>rather than an absolute target distance. Pairwise contrastive loss considers one relation at a time; triplet loss compares two relations in the same example.</p>
+</section>
+<section id="infonce-classify-the-positive-among-candidates" class="level3">
+<h3 class="anchored" data-anchor-id="infonce-classify-the-positive-among-candidates">6.3 InfoNCE: classify the positive among candidates</h3>
+<p>For an anchor <span class="math inline">\(z_i\)</span>, positive <span class="math inline">\(z_i^+\)</span>, similarity function <span class="math inline">\(\operatorname{sim}\)</span>, and temperature <span class="math inline">\(\tau\)</span>, InfoNCE uses</p>
+<p><span class="math display">\[
+\mathcal L_i
+=
+-\log
+\frac{
+\exp[\operatorname{sim}(z_i,z_i^+)/\tau]
+}{
+\sum_{j=1}^{B}
+\exp[\operatorname{sim}(z_i,z_j^+)/\tau]
+}.
+\]</span></p>
+<p>This is ordinary cross-entropy over a dynamically constructed classification problem: candidate <span class="math inline">\(i\)</span> is the target class and the other batch elements provide negatives. Temperature controls how strongly the loss focuses on the largest similarities.</p>
+<div id="237f9382" class="cell" data-execution_count="5">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> info_nce_loss(anchors, positives, temperature<span class="op">=</span><span class="fl">0.1</span>):</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    anchors <span class="op">=</span> F.normalize(anchors, dim<span class="op">=-</span><span class="dv">1</span>)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    positives <span class="op">=</span> F.normalize(positives, dim<span class="op">=-</span><span class="dv">1</span>)</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    logits <span class="op">=</span> anchors <span class="op">@</span> positives.T <span class="op">/</span> temperature</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    targets <span class="op">=</span> torch.arange(logits.shape[<span class="dv">0</span>], device<span class="op">=</span>logits.device)</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> F.cross_entropy(logits, targets)</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>torch.manual_seed(<span class="dv">0</span>)</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>anchors <span class="op">=</span> torch.randn(<span class="dv">16</span>, <span class="dv">32</span>)</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>matching_positives <span class="op">=</span> anchors <span class="op">+</span> <span class="fl">0.01</span> <span class="op">*</span> torch.randn_like(anchors)</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>wrong_positives <span class="op">=</span> matching_positives.roll(shifts<span class="op">=</span><span class="dv">1</span>, dims<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> info_nce_loss(</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>    anchors, matching_positives</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>) <span class="op">&lt;</span> info_nce_loss(anchors, wrong_positives)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The formula assumes that nonmatching batch items are valid negatives. Larger batches provide more comparisons, but also increase the chance of <strong>false negatives</strong>—different observations that share the same semantics.</p>
+</section>
+<section id="supervised-contrastive-loss" class="level3">
+<h3 class="anchored" data-anchor-id="supervised-contrastive-loss">6.4 Supervised contrastive loss</h3>
+<p>If labels reveal multiple positives for anchor <span class="math inline">\(i\)</span>, define</p>
+<p><span class="math display">\[
+P(i)=\{p\ne i:y_p=y_i\}.
+\]</span></p>
+<p>Supervised contrastive loss averages the log probability assigned to every positive:</p>
+<p><span class="math display">\[
+\mathcal L_i^{\mathrm{sup}}
+=
+-\frac{1}{|P(i)|}
+\sum_{p\in P(i)}
+\log
+\frac{
+\exp[\operatorname{sim}(z_i,z_p)/\tau]
+}{
+\sum_{a\ne i}
+\exp[\operatorname{sim}(z_i,z_a)/\tau]
+}.
+\]</span></p>
+<p>Unlike ordinary class cross-entropy, it directly shapes within-batch embedding geometry. Its notion of equivalence is still only as good as the labels: same-class examples may contain meaningful substructure that the loss encourages the model to ignore.</p>
+</section>
+<section id="ranking-losses" class="level3">
+<h3 class="anchored" data-anchor-id="ranking-losses">6.5 Ranking losses</h3>
+<p>When supervision says “item <span class="math inline">\(i\)</span> should rank above item <span class="math inline">\(j\)</span>,” predicting absolute labels solves a harder and possibly ill-posed problem. Use a pairwise abstraction:</p>
 <p><span class="math display">\[
 \mathcal L_{\mathrm{pairwise\ hinge}}
 =
@@ -563,16 +757,18 @@ p,&amp;y=1,\\
 =
 -\log\sigma(s_i-s_j).
 \]</span></p>
-<p>Triplet loss applies the same idea to embeddings:</p>
-<p><span class="math display">\[
-\mathcal L_{\mathrm{triplet}}
-=
-\max\left(
-0,
-d(e_a,e_p)-d(e_a,e_n)+m
-\right).
-\]</span></p>
-<p>Negative sampling is part of the objective. Easy negatives provide no margin signal; false or excessively hard negatives can teach incorrect geometry. The sampling distribution should match which confusions matter at retrieval time.</p>
+</section>
+<section id="sampling-is-part-of-the-loss" class="level3">
+<h3 class="anchored" data-anchor-id="sampling-is-part-of-the-loss">Sampling is part of the loss</h3>
+<p>Contrastive and ranking objectives are expectations over constructed tuples, not merely over individual observations. Therefore the positive- and negative-sampling distributions help define the population objective.</p>
+<ul>
+<li>easy negatives may provide almost no gradient</li>
+<li>false negatives teach an incorrect geometry</li>
+<li>extremely hard negatives may be mislabeled or unstable</li>
+<li>in-batch negatives couple the effective objective to batch composition</li>
+</ul>
+<p>Sampling should reflect which confusions matter at retrieval time. Report it as part of the loss definition rather than as an implementation detail.</p>
+</section>
 </section>
 <section id="regression-losses-from-noise-models" class="level2">
 <h2 class="anchored" data-anchor-id="regression-losses-from-noise-models">7. Regression Losses from Noise Models</h2>
@@ -728,11 +924,15 @@ m+\log\sum_k e^{z_k-m},
 <h2 class="anchored" data-anchor-id="interview-questions">Interview Questions</h2>
 <ul>
 <li>Derive CE, BCE, MSE, MAE, and Poisson loss from likelihood assumptions.</li>
+<li>Derive logistic loss from a Bernoulli model with linear log odds.</li>
+<li>Why is linear logistic regression convex, and what happens on separable data?</li>
 <li>Why is log loss a proper scoring rule?</li>
 <li>When should imbalance change the loss, sampling, or only the threshold?</li>
 <li>How does focal loss allocate gradients, and why can it affect calibration?</li>
 <li>Compare cross-entropy and hinge loss.</li>
-<li>Why is negative sampling part of a ranking objective?</li>
+<li>Compare pairwise contrastive loss, triplet loss, and InfoNCE.</li>
+<li>In what sense is InfoNCE a cross-entropy classification problem?</li>
+<li>Why is negative sampling part of a contrastive or ranking objective?</li>
 <li>Which statistics do MSE, MAE, and quantile loss estimate?</li>
 <li>Derive heteroscedastic Gaussian NLL and explain both terms.</li>
 <li>How can reduction change the effective data distribution?</li>
@@ -742,7 +942,9 @@ m+\log\sum_k e^{z_k-m},
 <h2 class="anchored" data-anchor-id="exercises">Exercises</h2>
 <ul class="task-list">
 <li><label><input type="checkbox">Plot CE, focal, and hinge losses and their logit derivatives.</label></li>
+<li><label><input type="checkbox">Fit logistic regression using the stable BCE implementation and compare it with a library implementation.</label></li>
 <li><label><input type="checkbox">Compare weighted BCE and threshold adjustment on an imbalanced dataset.</label></li>
+<li><label><input type="checkbox">Compare pairwise contrastive, triplet, and InfoNCE losses using the same synthetic embedding problem.</label></li>
 <li><label><input type="checkbox">Fit MSE, MAE, Huber, and heteroscedastic models to contaminated data.</label></li>
 <li><label><input type="checkbox">Compare random, hard, and false-negative sampling for a ranking loss.</label></li>
 <li><label><input type="checkbox">Audit a weighted loss by computing each example’s effective coefficient.</label></li>
@@ -751,6 +953,9 @@ m+\log\sum_k e^{z_k-m},
 <section id="primary-references" class="level2">
 <h2 class="anchored" data-anchor-id="primary-references">Primary References</h2>
 <ul>
+<li><a href="https://www.cs.toronto.edu/~hinton/csc2535/readings/hadsell-chopra-lecun-06.pdf">Dimensionality Reduction by Learning an Invariant Mapping</a></li>
+<li><a href="https://arxiv.org/abs/1807.03748">Representation Learning with Contrastive Predictive Coding</a></li>
+<li><a href="https://arxiv.org/abs/2004.11362">Supervised Contrastive Learning</a></li>
 <li><a href="https://arxiv.org/abs/1708.02002">Focal Loss for Dense Object Detection</a></li>
 <li><a href="https://link.springer.com/article/10.1007/BF00994018">Support Vector Networks</a></li>
 <li><a href="https://arxiv.org/abs/1205.2618">BPR: Bayesian Personalized Ranking from Implicit Feedback</a></li>
@@ -833,7 +1038,7 @@ m+\log\sum_k e^{z_k-m},
     }
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);
-        var filterRegex = new RegExp("https:\/\/threeeyelidds\.github\.io\/ml-interview-notes\/");
+        var filterRegex = new RegExp("https:\/\/threeeyelidds\.github\.io\/minimal-ml\/");
       var isInternal = (href) => {
           return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
       }
