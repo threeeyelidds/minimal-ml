@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Discriminative Losses from First Principles – Minimal ML</title>
+<title>Losses from First Principles – Minimal ML</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -25,41 +25,6 @@ ul.task-list li input[type="checkbox"] {
   width: 0.8em;
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
-}
-/* CSS for syntax highlighting */
-html { -webkit-text-size-adjust: 100%; }
-pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
-pre > code.sourceCode > span:empty { height: 1.2em; }
-.sourceCode { overflow: visible; }
-code.sourceCode > span { color: inherit; text-decoration: inherit; }
-div.sourceCode { margin: 1em 0; }
-pre.sourceCode { margin: 0; }
-@media screen {
-div.sourceCode { overflow: auto; }
-}
-@media print {
-pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
-}
-pre.numberSource code
-  { counter-reset: source-line 0; }
-pre.numberSource code > span
-  { position: relative; left: -4em; counter-increment: source-line; }
-pre.numberSource code > span > a:first-child::before
-  { content: counter(source-line);
-    position: relative; left: -1em; text-align: right; vertical-align: baseline;
-    border: none; display: inline-block;
-    -webkit-touch-callout: none; -webkit-user-select: none;
-    -khtml-user-select: none; -moz-user-select: none;
-    -ms-user-select: none; user-select: none;
-    padding: 0 4px; width: 4em;
-  }
-pre.numberSource { margin-left: 3em;  padding-left: 4px; }
-div.sourceCode
-  {   }
-@media screen {
-pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
 </style>
 
@@ -108,6 +73,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     "search-label": "Search"
   }
 }</script>
+<meta name="google-site-verification" content="Ztjr25pGaioeZP-mkoIn_MkNmmsFXWcU6I6W2tEPli0">
 
   <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
   <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
@@ -188,47 +154,19 @@ window.Quarto = {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#a-loss-encodes-a-statistical-decision" id="toc-a-loss-encodes-a-statistical-decision" class="nav-link active" data-scroll-target="#a-loss-encodes-a-statistical-decision">1. A Loss Encodes a Statistical Decision</a>
+  <li><a href="#a-loss-specifies-what-learning-means" id="toc-a-loss-specifies-what-learning-means" class="nav-link active" data-scroll-target="#a-loss-specifies-what-learning-means">A Loss Specifies What Learning Means</a></li>
+  <li><a href="#the-goal-is-not-always-to-learn-a-full-distribution" id="toc-the-goal-is-not-always-to-learn-a-full-distribution" class="nav-link" data-scroll-target="#the-goal-is-not-always-to-learn-a-full-distribution">The Goal Is Not Always to Learn a Full Distribution</a></li>
+  <li><a href="#assuming-a-distribution-is-not-a-binary-property" id="toc-assuming-a-distribution-is-not-a-binary-property" class="nav-link" data-scroll-target="#assuming-a-distribution-is-not-a-binary-property">“Assuming a Distribution” Is Not a Binary Property</a></li>
+  <li><a href="#why-discriminative-versus-generative-is-secondary" id="toc-why-discriminative-versus-generative-is-secondary" class="nav-link" data-scroll-target="#why-discriminative-versus-generative-is-secondary">Why Discriminative versus Generative Is Secondary</a></li>
+  <li><a href="#a-better-map-of-the-loss-notes" id="toc-a-better-map-of-the-loss-notes" class="nav-link" data-scroll-target="#a-better-map-of-the-loss-notes">A Better Map of the Loss Notes</a>
   <ul class="collapse">
-  <li><a href="#a-design-checklist" id="toc-a-design-checklist" class="nav-link" data-scroll-target="#a-design-checklist">A design checklist</a></li>
+  <li><a href="#prediction-and-decision-objectives" id="toc-prediction-and-decision-objectives" class="nav-link" data-scroll-target="#prediction-and-decision-objectives">Prediction and decision objectives</a></li>
+  <li><a href="#distribution-learning-objectives" id="toc-distribution-learning-objectives" class="nav-link" data-scroll-target="#distribution-learning-objectives">Distribution-learning objectives</a></li>
+  <li><a href="#representation-objectives" id="toc-representation-objectives" class="nav-link" data-scroll-target="#representation-objectives">Representation objectives</a></li>
+  <li><a href="#teacher-supervised-objectives" id="toc-teacher-supervised-objectives" class="nav-link" data-scroll-target="#teacher-supervised-objectives">Teacher-supervised objectives</a></li>
   </ul></li>
-  <li><a href="#likelihood-turns-statistical-assumptions-into-losses" id="toc-likelihood-turns-statistical-assumptions-into-losses" class="nav-link" data-scroll-target="#likelihood-turns-statistical-assumptions-into-losses">2. Likelihood Turns Statistical Assumptions into Losses</a></li>
-  <li><a href="#classification-as-probability-estimation" id="toc-classification-as-probability-estimation" class="nav-link" data-scroll-target="#classification-as-probability-estimation">3. Classification as Probability Estimation</a>
-  <ul class="collapse">
-  <li><a href="#multiclass-cross-entropy" id="toc-multiclass-cross-entropy" class="nav-link" data-scroll-target="#multiclass-cross-entropy">3.1 Multiclass cross-entropy</a></li>
-  <li><a href="#logistic-regression-and-binary-cross-entropy" id="toc-logistic-regression-and-binary-cross-entropy" class="nav-link" data-scroll-target="#logistic-regression-and-binary-cross-entropy">3.2 Logistic regression and binary cross-entropy</a></li>
-  <li><a href="#label-smoothing" id="toc-label-smoothing" class="nav-link" data-scroll-target="#label-smoothing">3.3 Label smoothing</a></li>
-  </ul></li>
-  <li><a href="#class-imbalance-cost-and-focal-loss" id="toc-class-imbalance-cost-and-focal-loss" class="nav-link" data-scroll-target="#class-imbalance-cost-and-focal-loss">4. Class Imbalance, Cost, and Focal Loss</a></li>
-  <li><a href="#margin-losses-learn-a-boundary-not-a-distribution" id="toc-margin-losses-learn-a-boundary-not-a-distribution" class="nav-link" data-scroll-target="#margin-losses-learn-a-boundary-not-a-distribution">5. Margin Losses: Learn a Boundary, Not a Distribution</a></li>
-  <li><a href="#contrastive-metric-and-ranking-losses" id="toc-contrastive-metric-and-ranking-losses" class="nav-link" data-scroll-target="#contrastive-metric-and-ranking-losses">6. Contrastive, Metric, and Ranking Losses</a>
-  <ul class="collapse">
-  <li><a href="#classical-pairwise-contrastive-loss" id="toc-classical-pairwise-contrastive-loss" class="nav-link" data-scroll-target="#classical-pairwise-contrastive-loss">6.1 Classical pairwise contrastive loss</a></li>
-  <li><a href="#triplet-loss" id="toc-triplet-loss" class="nav-link" data-scroll-target="#triplet-loss">6.2 Triplet loss</a></li>
-  <li><a href="#infonce-classify-the-positive-among-candidates" id="toc-infonce-classify-the-positive-among-candidates" class="nav-link" data-scroll-target="#infonce-classify-the-positive-among-candidates">6.3 InfoNCE: classify the positive among candidates</a></li>
-  <li><a href="#supervised-contrastive-loss" id="toc-supervised-contrastive-loss" class="nav-link" data-scroll-target="#supervised-contrastive-loss">6.4 Supervised contrastive loss</a></li>
-  <li><a href="#ranking-losses" id="toc-ranking-losses" class="nav-link" data-scroll-target="#ranking-losses">6.5 Ranking losses</a></li>
-  <li><a href="#sampling-is-part-of-the-loss" id="toc-sampling-is-part-of-the-loss" class="nav-link" data-scroll-target="#sampling-is-part-of-the-loss">Sampling is part of the loss</a></li>
-  </ul></li>
-  <li><a href="#regression-losses-from-noise-models" id="toc-regression-losses-from-noise-models" class="nav-link" data-scroll-target="#regression-losses-from-noise-models">7. Regression Losses from Noise Models</a>
-  <ul class="collapse">
-  <li><a href="#mse-and-the-conditional-mean" id="toc-mse-and-the-conditional-mean" class="nav-link" data-scroll-target="#mse-and-the-conditional-mean">7.1 MSE and the conditional mean</a></li>
-  <li><a href="#mae-and-the-conditional-median" id="toc-mae-and-the-conditional-median" class="nav-link" data-scroll-target="#mae-and-the-conditional-median">7.2 MAE and the conditional median</a></li>
-  <li><a href="#huber-loss" id="toc-huber-loss" class="nav-link" data-scroll-target="#huber-loss">7.3 Huber loss</a></li>
-  <li><a href="#heteroscedastic-uncertainty" id="toc-heteroscedastic-uncertainty" class="nav-link" data-scroll-target="#heteroscedastic-uncertainty">7.4 Heteroscedastic uncertainty</a></li>
-  <li><a href="#quantiles-and-counts" id="toc-quantiles-and-counts" class="nav-link" data-scroll-target="#quantiles-and-counts">7.5 Quantiles and counts</a></li>
-  </ul></li>
-  <li><a href="#numerical-stability-and-reduction" id="toc-numerical-stability-and-reduction" class="nav-link" data-scroll-target="#numerical-stability-and-reduction">8. Numerical Stability and Reduction</a></li>
-  <li><a href="#design-examples" id="toc-design-examples" class="nav-link" data-scroll-target="#design-examples">9. Design Examples</a>
-  <ul class="collapse">
-  <li><a href="#rare-event-classification" id="toc-rare-event-classification" class="nav-link" data-scroll-target="#rare-event-classification">Rare-event classification</a></li>
-  <li><a href="#regression-with-corrupt-targets" id="toc-regression-with-corrupt-targets" class="nav-link" data-scroll-target="#regression-with-corrupt-targets">Regression with corrupt targets</a></li>
-  <li><a href="#retrieval" id="toc-retrieval" class="nav-link" data-scroll-target="#retrieval">Retrieval</a></li>
-  </ul></li>
-  <li><a href="#common-failure-modes" id="toc-common-failure-modes" class="nav-link" data-scroll-target="#common-failure-modes">10. Common Failure Modes</a></li>
+  <li><a href="#a-loss-design-procedure" id="toc-a-loss-design-procedure" class="nav-link" data-scroll-target="#a-loss-design-procedure">A Loss-Design Procedure</a></li>
   <li><a href="#interview-questions" id="toc-interview-questions" class="nav-link" data-scroll-target="#interview-questions">Interview Questions</a></li>
-  <li><a href="#exercises" id="toc-exercises" class="nav-link" data-scroll-target="#exercises">Exercises</a></li>
-  <li><a href="#primary-references" id="toc-primary-references" class="nav-link" data-scroll-target="#primary-references">Primary References</a></li>
   </ul>
 </nav>
     </div>
@@ -237,7 +175,7 @@ window.Quarto = {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Discriminative Losses from First Principles</h1>
+<h1 class="title">Losses from First Principles</h1>
 </div>
 
 
@@ -254,76 +192,30 @@ window.Quarto = {
 </header>
 
 
-<section id="a-loss-encodes-a-statistical-decision" class="level2">
-<h2 class="anchored" data-anchor-id="a-loss-encodes-a-statistical-decision">1. A Loss Encodes a Statistical Decision</h2>
-<p>A loss is the interface between:</p>
+<section id="a-loss-specifies-what-learning-means" class="level2">
+<h2 class="anchored" data-anchor-id="a-loss-specifies-what-learning-means">A Loss Specifies What Learning Means</h2>
+<p>Let <span class="math inline">\(Z\sim p^*\)</span> denote an observation and let <span class="math inline">\(a_\theta\)</span> be the model output. Training minimizes an empirical approximation to a population objective:</p>
+<p><span class="math display">\[
+R(\theta)
+=
+\mathbb E_{Z\sim \mu}
+\left[\ell(a_\theta,Z)\right].
+\]</span></p>
+<p>This compact expression hides four independent design choices:</p>
 <ol type="1">
-<li><strong>statistical knowledge:</strong> what uncertainty generated the target?</li>
-<li><strong>problem abstraction:</strong> must the model estimate a probability, value, boundary, order, or representation?</li>
-<li><strong>optimization:</strong> what differentiable signal is aligned with the real metric?</li>
+<li><strong>Statistical object:</strong> a distribution, mean, quantile, boundary, representation, ranking, or policy.</li>
+<li><strong>Source of supervision:</strong> observed outcomes, pairs, latent variables, synthetic corruption, rewards, or a teacher model.</li>
+<li><strong>Discrepancy:</strong> a proper score, surrogate risk, divergence, variational bound, learned critic, or utility objective.</li>
+<li><strong>Expectation distribution <span class="math inline">\(\mu\)</span>:</strong> data examples, constructed pairs, noise levels, teacher trajectories, or student-generated states.</li>
 </ol>
-<p>Let <span class="math inline">\((X,Y)\sim p^*\)</span>, let <span class="math inline">\(a_\theta(X)\)</span> be a prediction, and let <span class="math inline">\(C(a,Y)\)</span> be the real cost. The ideal Bayes decision is</p>
-<p><span class="math display">\[
-a^*(x)
-=
-\arg\min_a
-\mathbb E_{Y\sim p^*(\cdot\mid x)}[C(a,Y)].
-\]</span></p>
-<p>Training replaces the unknown population expectation with empirical risk and usually replaces the real cost with a tractable surrogate:</p>
-<p><span class="math display">\[
-\widehat R(\theta)
-=
-\frac1N\sum_{i=1}^{N}
-\ell(a_\theta(x_i),y_i).
-\]</span></p>
-<p>The first-principles question is:</p>
+<p>The first-principles question is therefore not merely “which formula should I use?” It is:</p>
 <blockquote class="blockquote">
-<p>Which surrogate has an optimum and gradient geometry aligned with the decision we actually care about?</p>
+<p>What should the optimum recover, from which information, over which population, and with what tractable learning signal?</p>
 </blockquote>
-<p>For latent-variable and data-generation objectives, see <a href="../../notes/foundations/generative_losses.html">Generative Losses from First Principles</a>.</p>
-<section id="a-design-checklist" class="level3">
-<h3 class="anchored" data-anchor-id="a-design-checklist">A design checklist</h3>
-<p>Before choosing a formula, ask:</p>
-<ol type="1">
-<li>What is the target: categorical, binary, continuous, count, ordinal, or a pairwise preference?</li>
-<li>Do calibrated probabilities matter, or only the final boundary/ranking?</li>
-<li>What support and noise model should predictions respect?</li>
-<li>Are examples genuinely unequal in cost, or merely unequal in frequency?</li>
-<li>What is the evaluation metric, and is the loss a consistent surrogate?</li>
-<li>What sampling and reduction define the effective training population?</li>
-</ol>
-<div class="callout callout-style-default callout-important callout-titled">
-<div class="callout-header d-flex align-content-center">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<div class="callout-title-container flex-fill">
-<span class="screen-reader-only">Important</span>Loss and metric are different
-</div>
-</div>
-<div class="callout-body-container callout-body">
-<p>Accuracy, F1, recall, and ranking metrics can be nondifferentiable or nondecomposable. A loss is a surrogate. Lower loss matters only insofar as it improves the target decision or gives useful probability estimates.</p>
-</div>
-</div>
 </section>
-</section>
-<section id="likelihood-turns-statistical-assumptions-into-losses" class="level2">
-<h2 class="anchored" data-anchor-id="likelihood-turns-statistical-assumptions-into-losses">2. Likelihood Turns Statistical Assumptions into Losses</h2>
-<p>If the model defines <span class="math inline">\(p_\theta(y\mid x)\)</span>, maximum likelihood minimizes</p>
-<p><span class="math display">\[
-\mathcal L_{\mathrm{NLL}}
-=
--\mathbb E_{(x,y)\sim p^*}
-\log p_\theta(y\mid x).
-\]</span></p>
-<p>For fixed <span class="math inline">\(x\)</span>,</p>
-<p><span class="math display">\[
-\mathbb E_{y\sim p^*}[-\log p_\theta(y\mid x)]
-=
-H(p^*)+\mathrm{KL}(p^*\|p_\theta).
-\]</span></p>
-<p>The entropy term is constant in <span class="math inline">\(\theta\)</span>, so the population optimum is the true conditional distribution. Log loss is therefore a <strong>proper scoring rule</strong>.</p>
-<p>Many standard losses are simply NLL under different observation models:</p>
+<section id="the-goal-is-not-always-to-learn-a-full-distribution" class="level2">
+<h2 class="anchored" data-anchor-id="the-goal-is-not-always-to-learn-a-full-distribution">The Goal Is Not Always to Learn a Full Distribution</h2>
+<p>Some losses estimate a full probability distribution. Others deliberately estimate less structure because that is all the decision requires.</p>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 33%">
@@ -332,633 +224,175 @@ H(p^*)+\mathrm{KL}(p^*\|p_\theta).
 </colgroup>
 <thead>
 <tr class="header">
-<th>Assumption for <span class="math inline">\(Y\mid X\)</span></th>
-<th>Output</th>
-<th>NLL, ignoring constants</th>
+<th>Desired object</th>
+<th>Example objective</th>
+<th>Population optimum or interpretation</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td>Categorical</td>
-<td>class logits</td>
-<td>cross-entropy</td>
+<td>conditional distribution</td>
+<td>log loss / cross-entropy</td>
+<td><span class="math inline">\(p^*(y\mid x)\)</span> when the model is well specified</td>
 </tr>
 <tr class="even">
-<td>Bernoulli</td>
-<td>one logit</td>
-<td>binary cross-entropy</td>
-</tr>
-<tr class="odd">
-<td>Gaussian, fixed variance</td>
-<td>mean</td>
+<td>conditional mean</td>
 <td>squared error</td>
-</tr>
-<tr class="even">
-<td>Gaussian, learned variance</td>
-<td>mean and log variance</td>
-<td>scaled MSE + log variance</td>
+<td><span class="math inline">\(\mathbb E[Y\mid X=x]\)</span></td>
 </tr>
 <tr class="odd">
-<td>Laplace</td>
-<td>location</td>
+<td>conditional median</td>
 <td>absolute error</td>
+<td>a median of <span class="math inline">\(Y\mid X=x\)</span></td>
 </tr>
 <tr class="even">
-<td>Poisson count</td>
-<td>log-rate</td>
-<td><span class="math inline">\(e^\eta-y\eta\)</span></td>
+<td>conditional quantile</td>
+<td>pinball loss</td>
+<td><span class="math inline">\(q_\tau(Y\mid X=x)\)</span></td>
+</tr>
+<tr class="odd">
+<td>decision boundary</td>
+<td>hinge loss</td>
+<td>a margin-separated classifier</td>
+</tr>
+<tr class="even">
+<td>ordering</td>
+<td>pairwise ranking loss</td>
+<td>relative preferences between candidates</td>
+</tr>
+<tr class="odd">
+<td>representation geometry</td>
+<td>contrastive or metric loss</td>
+<td>invariances and separations defined by pairs</td>
+</tr>
+<tr class="even">
+<td>behavior</td>
+<td>policy objective</td>
+<td>actions that maximize expected utility</td>
 </tr>
 </tbody>
 </table>
-<p>The clever step is not memorizing the last column. It is choosing a distribution whose support, sufficient statistics, and noise assumptions fit the task.</p>
+<p>Learning a calibrated distribution is valuable when downstream users need probabilities, uncertainty, simulation, or many different decisions. It can be unnecessary excess structure when only one boundary or ranking matters.</p>
 </section>
-<section id="classification-as-probability-estimation" class="level2">
-<h2 class="anchored" data-anchor-id="classification-as-probability-estimation">3. Classification as Probability Estimation</h2>
-<section id="multiclass-cross-entropy" class="level3">
-<h3 class="anchored" data-anchor-id="multiclass-cross-entropy">3.1 Multiclass cross-entropy</h3>
-<p>For one of <span class="math inline">\(C\)</span> mutually exclusive classes with logits <span class="math inline">\(z\)</span>,</p>
+<section id="assuming-a-distribution-is-not-a-binary-property" class="level2">
+<h2 class="anchored" data-anchor-id="assuming-a-distribution-is-not-a-binary-property">“Assuming a Distribution” Is Not a Binary Property</h2>
+<p>The same formula can have both a likelihood derivation and a weaker decision-theoretic interpretation.</p>
+<p>For example, if</p>
 <p><span class="math display">\[
-p_j=\frac{e^{z_j}}{\sum_k e^{z_k}},
+Y\mid X=x\sim\mathcal N(f_\theta(x),\sigma^2),
+\]</span></p>
+<p>then Gaussian negative log-likelihood reduces to scaled MSE. This is an explicit observation-model assumption. But independently,</p>
+<p><span class="math display">\[
+\arg\min_a\mathbb E[(Y-a)^2\mid X=x]
+=
+\mathbb E[Y\mid X=x],
+\]</span></p>
+<p>whenever the expectation exists. MSE therefore elicits the conditional mean even when the residuals are not Gaussian. Similarly, MAE is Laplace NLL under one model but elicits a conditional median much more generally.</p>
+<p>Ask two separate questions:</p>
+<ol type="1">
+<li><strong>Likelihood question:</strong> under which probabilistic model is this loss an NLL or divergence?</li>
+<li><strong>Elicitation question:</strong> which statistic or decision does its population minimizer recover without that model being literally true?</li>
+</ol>
+<p>Every objective still contains assumptions—about support, noise, costs, invariances, sampling, or teacher reliability—even when it does not specify a normalized density.</p>
+</section>
+<section id="why-discriminative-versus-generative-is-secondary" class="level2">
+<h2 class="anchored" data-anchor-id="why-discriminative-versus-generative-is-secondary">Why Discriminative versus Generative Is Secondary</h2>
+<p>“Discriminative” and “generative” describe model factorization more naturally than they describe loss functions:</p>
+<p><span class="math display">\[
+\text{discriminative: }p_\theta(y\mid x),
 \qquad
-\mathcal L_{\mathrm{CE}}
-=
--\log p_y
-=
--z_y+\log\sum_k e^{z_k}.
+\text{generative: }p_\theta(x)\text{ or }p_\theta(x,y).
 \]</span></p>
-<p>Its logit gradient is especially interpretable:</p>
-<p><span class="math display">\[
-\frac{\partial\mathcal L_{\mathrm{CE}}}{\partial z_j}
-=
-p_j-\mathbb 1[j=y].
-\]</span></p>
-<p>The target logit rises; competing logits fall in proportion to their predicted probability.</p>
-<section id="minimal-stable-implementation" class="level4">
-<h4 class="anchored" data-anchor-id="minimal-stable-implementation">Minimal stable implementation</h4>
-<div id="dfcbaa61" class="cell" data-execution_count="1">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch.nn.functional <span class="im">as</span> F</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> cross_entropy_from_logits(logits, targets, reduction<span class="op">=</span><span class="st">"mean"</span>):</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    log_normalizer <span class="op">=</span> torch.logsumexp(logits, dim<span class="op">=-</span><span class="dv">1</span>)</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    target_logits <span class="op">=</span> logits.gather(</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>        <span class="op">-</span><span class="dv">1</span>, targets.unsqueeze(<span class="op">-</span><span class="dv">1</span>)</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    ).squeeze(<span class="op">-</span><span class="dv">1</span>)</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    losses <span class="op">=</span> log_normalizer <span class="op">-</span> target_logits</span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> reduction <span class="op">==</span> <span class="st">"none"</span>:</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> losses</span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> reduction <span class="op">==</span> <span class="st">"sum"</span>:</span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> losses.<span class="bu">sum</span>()</span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> reduction <span class="op">==</span> <span class="st">"mean"</span>:</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> losses.mean()</span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="ss">f"unknown reduction: </span><span class="sc">{</span>reduction<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>logits <span class="op">=</span> torch.tensor([[<span class="fl">1000.0</span>, <span class="fl">1001.0</span>, <span class="fl">999.0</span>], [<span class="op">-</span><span class="fl">2.0</span>, <span class="fl">0.5</span>, <span class="fl">3.0</span>]])</span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>targets <span class="op">=</span> torch.tensor([<span class="dv">1</span>, <span class="dv">2</span>])</span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>torch.testing.assert_close(</span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>    cross_entropy_from_logits(logits, targets),</span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>    F.cross_entropy(logits, targets),</span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</section>
-</section>
-<section id="logistic-regression-and-binary-cross-entropy" class="level3">
-<h3 class="anchored" data-anchor-id="logistic-regression-and-binary-cross-entropy">3.2 Logistic regression and binary cross-entropy</h3>
-<p>Logistic regression specifies a <strong>linear log-odds model</strong>:</p>
-<p><span class="math display">\[
-z_\theta(x)=w^Tx+b,
-\qquad
-p_\theta(y=1\mid x)=\sigma(z_\theta(x)).
-\]</span></p>
-<p>Because</p>
-<p><span class="math display">\[
-\log\frac{p_\theta(y=1\mid x)}
-{p_\theta(y=0\mid x)}
-=
-z_\theta(x),
-\]</span></p>
-<p>each coefficient is an additive effect on the log odds. Combining the Bernoulli observation model with this linear logit gives the per-example negative log-likelihood</p>
-<p><span class="math display">\[
-\mathcal L_{\text{logistic}}(w,b;x,y)
-=
--y\log\sigma(z)
--(1-y)\log[1-\sigma(z)],
-\qquad z=w^Tx+b.
-\]</span></p>
-<p>Thus <strong>binary cross-entropy is the logistic-regression loss</strong> when its logit is linear in the features. A neural binary classifier uses the same loss with a nonlinear logit <span class="math inline">\(z=f_\theta(x)\)</span>.</p>
-<p>For labels <span class="math inline">\(\widetilde y\in\{-1,+1\}\)</span>, the same objective has the compact form</p>
-<p><span class="math display">\[
-\mathcal L_{\text{logistic}}
-=
-\log\left(1+e^{-\widetilde y z}\right).
-\]</span></p>
-<p>The gradients expose the probabilistic residual:</p>
-<p><span class="math display">\[
-\frac{\partial\mathcal L}{\partial z}
-=
-\sigma(z)-y,
-\qquad
-\nabla_w\mathcal L
-=
-[\sigma(z)-y]x.
-\]</span></p>
-<p>For a linear logit, its Hessian is</p>
-<p><span class="math display">\[
-\nabla_w^2\mathcal L
-=
-\sigma(z)[1-\sigma(z)]xx^T
-\succeq 0.
-\]</span></p>
-<p>Therefore unregularized logistic NLL is convex in <span class="math inline">\((w,b)\)</span>, although it need not have a finite minimizer on perfectly separable data. L2 regularization makes the problem strongly convex when the design has the appropriate coverage.</p>
-<section id="stable-bce-form" class="level4">
-<h4 class="anchored" data-anchor-id="stable-bce-form">Stable BCE form</h4>
-<p>For <span class="math inline">\(y\in\{0,1\}\)</span> and <span class="math inline">\(p=\sigma(z)\)</span>,</p>
-<p><span class="math display">\[
-\mathcal L_{\mathrm{BCE}}
-=
--y\log p-(1-y)\log(1-p).
-\]</span></p>
-<p>The stable logits form is</p>
-<p><span class="math display">\[
-\mathcal L_{\mathrm{BCE}}(z,y)
-=
-\max(z,0)-yz+\log(1+e^{-|z|}),
-\]</span></p>
-<p>with derivative <span class="math inline">\(\sigma(z)-y\)</span>.</p>
-<div id="6958ba4e" class="cell" data-execution_count="2">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> binary_cross_entropy_with_logits(logits, targets, reduction<span class="op">=</span><span class="st">"mean"</span>):</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    targets <span class="op">=</span> targets.to(logits.dtype)</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    losses <span class="op">=</span> torch.logaddexp(torch.zeros_like(logits), logits) <span class="op">-</span> targets <span class="op">*</span> logits</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> reduction <span class="op">==</span> <span class="st">"none"</span>:</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> losses</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> reduction <span class="op">==</span> <span class="st">"sum"</span>:</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> losses.<span class="bu">sum</span>()</span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> reduction <span class="op">==</span> <span class="st">"mean"</span>:</span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> losses.mean()</span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="ss">f"unknown reduction: </span><span class="sc">{</span>reduction<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>binary_logits <span class="op">=</span> torch.tensor([<span class="op">-</span><span class="fl">1000.0</span>, <span class="op">-</span><span class="fl">2.0</span>, <span class="fl">0.0</span>, <span class="fl">2.0</span>, <span class="fl">1000.0</span>])</span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>binary_targets <span class="op">=</span> torch.tensor([<span class="fl">0.0</span>, <span class="fl">1.0</span>, <span class="fl">1.0</span>, <span class="fl">0.0</span>, <span class="fl">1.0</span>])</span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>torch.testing.assert_close(</span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>    binary_cross_entropy_with_logits(binary_logits, binary_targets),</span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>    F.binary_cross_entropy_with_logits(binary_logits, binary_targets),</span>
-<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-<p>Use independent BCE logits for multilabel outcomes. Use softmax CE when exactly one class must occur. Independent BCE does not enforce probabilities summing to one.</p>
-</section>
-</section>
-<section id="label-smoothing" class="level3">
-<h3 class="anchored" data-anchor-id="label-smoothing">3.3 Label smoothing</h3>
-<p>Replace a one-hot target by</p>
-<p><span class="math display">\[
-q_j
-=
-(1-\varepsilon)\mathbb 1[j=y]+\frac{\varepsilon}{C}
-\]</span></p>
-<p>and minimize <span class="math inline">\(-\sum_jq_j\log p_j\)</span>. This regularizes extreme confidence but also changes the population target. It is a prior about target uncertainty, not a universal fix for mislabeled data.</p>
-</section>
-</section>
-<section id="class-imbalance-cost-and-focal-loss" class="level2">
-<h2 class="anchored" data-anchor-id="class-imbalance-cost-and-focal-loss">4. Class Imbalance, Cost, and Focal Loss</h2>
-<p>Three problems are often conflated:</p>
+<p>Cross-entropy demonstrates the limitation of using this as the primary loss taxonomy:</p>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 50%">
-<col style="width: 50%">
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
 </colgroup>
 <thead>
 <tr class="header">
-<th>Problem</th>
-<th>Appropriate intervention</th>
+<th>Use of cross-entropy</th>
+<th>Target distribution</th>
+<th>Role</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td>unequal real-world error costs</td>
-<td>cost-sensitive loss or decision threshold</td>
+<td>image classification</td>
+<td>labels conditioned on an image</td>
+<td>discriminative prediction</td>
 </tr>
 <tr class="even">
-<td>minority examples rarely sampled</td>
-<td>resampling or importance weighting</td>
+<td>next-token prediction</td>
+<td>next tokens conditioned on a prefix</td>
+<td>generative density modeling</td>
 </tr>
 <tr class="odd">
-<td>easy examples dominate total gradient</td>
-<td>hard-example mining or focal modulation</td>
+<td>knowledge distillation</td>
+<td>teacher outputs conditioned on an input or state</td>
+<td>teacher-supervised transfer</td>
 </tr>
 </tbody>
 </table>
-<p>Weighted BCE, for example,</p>
-<p><span class="math display">\[
-\mathcal L
-=
--w_+y\log p-w_-(1-y)\log(1-p),
-\]</span></p>
-<p>changes the risk being optimized. If the deployment population is unchanged, the resulting probabilities may need recalibration.</p>
-<p><a href="https://arxiv.org/abs/1708.02002">Focal loss</a> starts from cross-entropy and downweights already-correct examples. Define</p>
-<p><span class="math display">\[
-p_t=
-\begin{cases}
-p,&amp;y=1,\\
-1-p,&amp;y=0,
-\end{cases}
-\]</span></p>
-<p>then</p>
-<p><span class="math display">\[
-\mathcal L_{\mathrm{focal}}
-=
--\alpha_t(1-p_t)^\gamma\log p_t.
-\]</span></p>
-<p>At <span class="math inline">\(\gamma=0\)</span> it becomes weighted CE. For <span class="math inline">\(\gamma&gt;0\)</span>, the vast population of easy examples contributes less gradient. This helped dense detection where easy background anchors overwhelmed rare foreground examples. It can hurt probability calibration, so use it for gradient allocation—not merely because a dataset is imbalanced.</p>
-<div id="01d23b81" class="cell" data-execution_count="3">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> binary_focal_loss(logits, targets, gamma<span class="op">=</span><span class="fl">2.0</span>, alpha<span class="op">=</span><span class="va">None</span>):</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    targets <span class="op">=</span> targets.to(logits.dtype)</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    bce <span class="op">=</span> F.binary_cross_entropy_with_logits(logits, targets, reduction<span class="op">=</span><span class="st">"none"</span>)</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    p_t <span class="op">=</span> torch.exp(<span class="op">-</span>bce)</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    weights <span class="op">=</span> (<span class="fl">1.0</span> <span class="op">-</span> p_t).<span class="bu">pow</span>(gamma)</span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> alpha <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>        alpha_t <span class="op">=</span> alpha <span class="op">*</span> targets <span class="op">+</span> (<span class="fl">1.0</span> <span class="op">-</span> alpha) <span class="op">*</span> (<span class="fl">1.0</span> <span class="op">-</span> targets)</span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>        weights <span class="op">=</span> weights <span class="op">*</span> alpha_t</span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> (weights <span class="op">*</span> bce).mean()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
+<p>The algebra is nearly identical. What changes is the target, the sampled state, and the meaning of a successful optimum.</p>
 </section>
-<section id="margin-losses-learn-a-boundary-not-a-distribution" class="level2">
-<h2 class="anchored" data-anchor-id="margin-losses-learn-a-boundary-not-a-distribution">5. Margin Losses: Learn a Boundary, Not a Distribution</h2>
-<p>If only the decision boundary matters, calibrated probabilities may be excess structure. For <span class="math inline">\(y\in\{-1,+1\}\)</span> and score <span class="math inline">\(f_\theta(x)\)</span>, hinge loss is</p>
-<p><span class="math display">\[
-\mathcal L_{\mathrm{hinge}}
-=
-\max(0,1-yf_\theta(x)).
-\]</span></p>
-<p>Correct examples receive a gradient until they lie beyond margin one, then contribute zero. Cross-entropy continues increasing confidence. This is a choice between <strong>separation geometry</strong> and <strong>probability estimation</strong>.</p>
-<p>For multiclass scores, one structured hinge form is</p>
-<p><span class="math display">\[
-\mathcal L
-=
-\max_{j\ne y}
-\left[0,m+z_j-z_y\right].
-\]</span></p>
-<p>The margin <span class="math inline">\(m\)</span> defines how much score separation counts as sufficient; score scale and regularization determine what that statement means geometrically.</p>
-</section>
-<section id="contrastive-metric-and-ranking-losses" class="level2">
-<h2 class="anchored" data-anchor-id="contrastive-metric-and-ranking-losses">6. Contrastive, Metric, and Ranking Losses</h2>
-<p>Classification assigns examples to a fixed output vocabulary. Representation learning often needs a different abstraction: specify which observations should be close and which should be distinguishable. See <a href="../../notes/foundations/representation_learning.html">Representation Learning from First Principles</a> for the broader design problem.</p>
-<p>“Contrastive loss” is not one unique formula. It is a family of objectives built from <strong>positive relations</strong> and <strong>negative relations</strong>.</p>
-<section id="classical-pairwise-contrastive-loss" class="level3">
-<h3 class="anchored" data-anchor-id="classical-pairwise-contrastive-loss">6.1 Classical pairwise contrastive loss</h3>
-<p>Let <span class="math inline">\(r=1\)</span> indicate that a pair <span class="math inline">\((x_i,x_j)\)</span> is semantically similar, let <span class="math inline">\(r=0\)</span> indicate a dissimilar pair, and define embedding distance</p>
-<p><span class="math display">\[
-D_{ij}
-=
-\lVert f_\theta(x_i)-f_\theta(x_j)\rVert_2.
-\]</span></p>
-<p>The classical pairwise contrastive loss is</p>
-<p><span class="math display">\[
-\mathcal L_{\mathrm{contrastive}}
-=
-rD_{ij}^2
-+(1-r)\left[\max(0,m-D_{ij})\right]^2.
-\]</span></p>
-<p>Positive pairs are pulled together. Negative pairs are pushed apart only until they reach margin <span class="math inline">\(m\)</span>; spending capacity separating them further does not help this objective.</p>
-<div class="callout callout-style-default callout-note callout-titled">
-<div class="callout-header d-flex align-content-center">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<div class="callout-title-container flex-fill">
-<span class="screen-reader-only">Note</span>Check the label convention
-</div>
-</div>
-<div class="callout-body-container callout-body">
-<p>Some sources use <span class="math inline">\(y=0\)</span> for similar pairs and <span class="math inline">\(y=1\)</span> for dissimilar pairs. The formula changes appearance but not meaning. Always define which value denotes a positive pair.</p>
-</div>
-</div>
-<div id="5aa08cc3" class="cell" data-execution_count="4">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> pairwise_contrastive_loss(</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    left_embeddings,</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    right_embeddings,</span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    is_positive,</span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    margin<span class="op">=</span><span class="fl">1.0</span>,</span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>):</span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Classical contrastive loss; 1 means a semantically matching pair."""</span></span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    distances <span class="op">=</span> torch.linalg.vector_norm(</span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>        left_embeddings <span class="op">-</span> right_embeddings,</span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>        dim<span class="op">=-</span><span class="dv">1</span>,</span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    is_positive <span class="op">=</span> is_positive.to(distances.dtype)</span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>    positive_loss <span class="op">=</span> is_positive <span class="op">*</span> distances.square()</span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>    negative_loss <span class="op">=</span> (<span class="fl">1.0</span> <span class="op">-</span> is_positive) <span class="op">*</span> F.relu(</span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>        margin <span class="op">-</span> distances</span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>    ).square()</span>
-<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> (positive_loss <span class="op">+</span> negative_loss).mean()</span>
-<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>left <span class="op">=</span> torch.tensor([[<span class="fl">0.0</span>, <span class="fl">0.0</span>], [<span class="fl">0.0</span>, <span class="fl">0.0</span>]])</span>
-<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>well_arranged <span class="op">=</span> torch.tensor([[<span class="fl">0.1</span>, <span class="fl">0.0</span>], [<span class="fl">2.0</span>, <span class="fl">0.0</span>]])</span>
-<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>badly_arranged <span class="op">=</span> torch.tensor([[<span class="fl">2.0</span>, <span class="fl">0.0</span>], [<span class="fl">0.1</span>, <span class="fl">0.0</span>]])</span>
-<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>pair_types <span class="op">=</span> torch.tensor([<span class="fl">1.0</span>, <span class="fl">0.0</span>])</span>
-<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> pairwise_contrastive_loss(</span>
-<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>    left, well_arranged, pair_types</span>
-<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>) <span class="op">&lt;</span> pairwise_contrastive_loss(left, badly_arranged, pair_types)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</section>
-<section id="triplet-loss" class="level3">
-<h3 class="anchored" data-anchor-id="triplet-loss">6.2 Triplet loss</h3>
-<p>A triplet directly compares a positive and negative relative to the same anchor:</p>
-<p><span class="math display">\[
-\mathcal L_{\mathrm{triplet}}
-=
-\max\left(
-0,
-d(e_a,e_p)-d(e_a,e_n)+m
-\right).
-\]</span></p>
-<p>It asks for a ranking constraint,</p>
-<p><span class="math display">\[
-d(e_a,e_p)+m\le d(e_a,e_n),
-\]</span></p>
-<p>rather than an absolute target distance. Pairwise contrastive loss considers one relation at a time; triplet loss compares two relations in the same example.</p>
-</section>
-<section id="infonce-classify-the-positive-among-candidates" class="level3">
-<h3 class="anchored" data-anchor-id="infonce-classify-the-positive-among-candidates">6.3 InfoNCE: classify the positive among candidates</h3>
-<p>For an anchor <span class="math inline">\(z_i\)</span>, positive <span class="math inline">\(z_i^+\)</span>, similarity function <span class="math inline">\(\operatorname{sim}\)</span>, and temperature <span class="math inline">\(\tau\)</span>, InfoNCE uses</p>
-<p><span class="math display">\[
-\mathcal L_i
-=
--\log
-\frac{
-\exp[\operatorname{sim}(z_i,z_i^+)/\tau]
-}{
-\sum_{j=1}^{B}
-\exp[\operatorname{sim}(z_i,z_j^+)/\tau]
-}.
-\]</span></p>
-<p>This is ordinary cross-entropy over a dynamically constructed classification problem: candidate <span class="math inline">\(i\)</span> is the target class and the other batch elements provide negatives. Temperature controls how strongly the loss focuses on the largest similarities.</p>
-<div id="7def9d9c" class="cell" data-execution_count="5">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> info_nce_loss(anchors, positives, temperature<span class="op">=</span><span class="fl">0.1</span>):</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    anchors <span class="op">=</span> F.normalize(anchors, dim<span class="op">=-</span><span class="dv">1</span>)</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    positives <span class="op">=</span> F.normalize(positives, dim<span class="op">=-</span><span class="dv">1</span>)</span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    logits <span class="op">=</span> anchors <span class="op">@</span> positives.T <span class="op">/</span> temperature</span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    targets <span class="op">=</span> torch.arange(logits.shape[<span class="dv">0</span>], device<span class="op">=</span>logits.device)</span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> F.cross_entropy(logits, targets)</span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>torch.manual_seed(<span class="dv">0</span>)</span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>anchors <span class="op">=</span> torch.randn(<span class="dv">16</span>, <span class="dv">32</span>)</span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>matching_positives <span class="op">=</span> anchors <span class="op">+</span> <span class="fl">0.01</span> <span class="op">*</span> torch.randn_like(anchors)</span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>wrong_positives <span class="op">=</span> matching_positives.roll(shifts<span class="op">=</span><span class="dv">1</span>, dims<span class="op">=</span><span class="dv">0</span>)</span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> info_nce_loss(</span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>    anchors, matching_positives</span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>) <span class="op">&lt;</span> info_nce_loss(anchors, wrong_positives)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-<p>The formula assumes that nonmatching batch items are valid negatives. Larger batches provide more comparisons, but also increase the chance of <strong>false negatives</strong>—different observations that share the same semantics.</p>
-</section>
-<section id="supervised-contrastive-loss" class="level3">
-<h3 class="anchored" data-anchor-id="supervised-contrastive-loss">6.4 Supervised contrastive loss</h3>
-<p>If labels reveal multiple positives for anchor <span class="math inline">\(i\)</span>, define</p>
-<p><span class="math display">\[
-P(i)=\{p\ne i:y_p=y_i\}.
-\]</span></p>
-<p>Supervised contrastive loss averages the log probability assigned to every positive:</p>
-<p><span class="math display">\[
-\mathcal L_i^{\mathrm{sup}}
-=
--\frac{1}{|P(i)|}
-\sum_{p\in P(i)}
-\log
-\frac{
-\exp[\operatorname{sim}(z_i,z_p)/\tau]
-}{
-\sum_{a\ne i}
-\exp[\operatorname{sim}(z_i,z_a)/\tau]
-}.
-\]</span></p>
-<p>Unlike ordinary class cross-entropy, it directly shapes within-batch embedding geometry. Its notion of equivalence is still only as good as the labels: same-class examples may contain meaningful substructure that the loss encourages the model to ignore.</p>
-</section>
-<section id="ranking-losses" class="level3">
-<h3 class="anchored" data-anchor-id="ranking-losses">6.5 Ranking losses</h3>
-<p>When supervision says “item <span class="math inline">\(i\)</span> should rank above item <span class="math inline">\(j\)</span>,” predicting absolute labels solves a harder and possibly ill-posed problem. Use a pairwise abstraction:</p>
-<p><span class="math display">\[
-\mathcal L_{\mathrm{pairwise\ hinge}}
-=
-\max(0,m-s_i+s_j),
-\]</span></p>
-<p>or the smooth BPR/logistic loss</p>
-<p><span class="math display">\[
-\mathcal L_{\mathrm{BPR}}
-=
--\log\sigma(s_i-s_j).
-\]</span></p>
-</section>
-<section id="sampling-is-part-of-the-loss" class="level3">
-<h3 class="anchored" data-anchor-id="sampling-is-part-of-the-loss">Sampling is part of the loss</h3>
-<p>Contrastive and ranking objectives are expectations over constructed tuples, not merely over individual observations. Therefore the positive- and negative-sampling distributions help define the population objective.</p>
+<section id="a-better-map-of-the-loss-notes" class="level2">
+<h2 class="anchored" data-anchor-id="a-better-map-of-the-loss-notes">A Better Map of the Loss Notes</h2>
+<section id="prediction-and-decision-objectives" class="level3">
+<h3 class="anchored" data-anchor-id="prediction-and-decision-objectives">Prediction and decision objectives</h3>
+<p>Use <a href="../../notes/foundations/prediction_decision_losses.html">Prediction and Decision Losses</a> when the goal is a label, point estimate, boundary, margin, or ranking. It covers:</p>
 <ul>
-<li>easy negatives may provide almost no gradient</li>
-<li>false negatives teach an incorrect geometry</li>
-<li>extremely hard negatives may be mislabeled or unstable</li>
-<li>in-batch negatives couple the effective objective to batch composition</li>
+<li>proper scoring rules and calibrated classification</li>
+<li>logistic regression, CE, BCE, label smoothing, and focal loss</li>
+<li>margin and ranking surrogates</li>
+<li>mean, median, robust, heteroscedastic, quantile, and count regression</li>
 </ul>
-<p>Sampling should reflect which confusions matter at retrieval time. Report it as part of the loss definition rather than as an implementation detail.</p>
 </section>
-</section>
-<section id="regression-losses-from-noise-models" class="level2">
-<h2 class="anchored" data-anchor-id="regression-losses-from-noise-models">7. Regression Losses from Noise Models</h2>
-<section id="mse-and-the-conditional-mean" class="level3">
-<h3 class="anchored" data-anchor-id="mse-and-the-conditional-mean">7.1 MSE and the conditional mean</h3>
-<p>If</p>
-<p><span class="math display">\[
-Y\mid X=x\sim\mathcal N(\mu_\theta(x),\sigma^2)
-\]</span></p>
-<p>with fixed variance, NLL reduces to scaled squared error. More generally,</p>
-<p><span class="math display">\[
-\arg\min_f\mathbb E[(Y-f(X))^2\mid X=x]
-=
-\mathbb E[Y\mid X=x].
-\]</span></p>
-<p>MSE targets the conditional mean. Its residual gradient grows linearly, so outliers can dominate.</p>
-</section>
-<section id="mae-and-the-conditional-median" class="level3">
-<h3 class="anchored" data-anchor-id="mae-and-the-conditional-median">7.2 MAE and the conditional median</h3>
-<p>A Laplace likelihood produces</p>
-<p><span class="math display">\[
-\mathcal L_{\mathrm{MAE}}=|y-\widehat y|.
-\]</span></p>
-<p>MAE targets a conditional median and has bounded residual-gradient magnitude. It is robust to large errors but nonsmooth at zero.</p>
-</section>
-<section id="huber-loss" class="level3">
-<h3 class="anchored" data-anchor-id="huber-loss">7.3 Huber loss</h3>
-<p>For residual <span class="math inline">\(r=y-\widehat y\)</span>,</p>
-<p><span class="math display">\[
-\mathcal L_\delta(r)
-=
-\begin{cases}
-\frac12r^2,&amp;|r|\le\delta,\\
-\delta\left(|r|-\frac12\delta\right),&amp;|r|&gt;\delta.
-\end{cases}
-\]</span></p>
-<p>Huber is quadratic for small residuals and linear in the tails. The threshold <span class="math inline">\(\delta\)</span> states what residual scale counts as an outlier, so it must be chosen relative to target normalization.</p>
-</section>
-<section id="heteroscedastic-uncertainty" class="level3">
-<h3 class="anchored" data-anchor-id="heteroscedastic-uncertainty">7.4 Heteroscedastic uncertainty</h3>
-<p>If noise varies with <span class="math inline">\(x\)</span>, predict mean <span class="math inline">\(\mu_\theta(x)\)</span> and log variance <span class="math inline">\(s_\theta(x)=\log\sigma_\theta^2(x)\)</span>:</p>
-<p><span class="math display">\[
-\mathcal L
-=
-\frac12
-\left[
-e^{-s_\theta(x)}(y-\mu_\theta(x))^2+s_\theta(x)
-\right].
-\]</span></p>
-<p>The first term discounts uncertain examples; the second prevents infinite variance. A seemingly clever learned weight follows directly from a normalized Gaussian likelihood.</p>
-</section>
-<section id="quantiles-and-counts" class="level3">
-<h3 class="anchored" data-anchor-id="quantiles-and-counts">7.5 Quantiles and counts</h3>
-<p>Conditional quantile <span class="math inline">\(q_\tau(x)\)</span> is elicited by pinball loss</p>
-<p><span class="math display">\[
-\rho_\tau(r)
-=
-\begin{cases}
-\tau r,&amp;r\ge0,\\
-(\tau-1)r,&amp;r&lt;0,
-\end{cases}
-\qquad r=y-q_\tau(x).
-\]</span></p>
-<p>For nonnegative counts, a Poisson model with log-rate <span class="math inline">\(\eta\)</span> gives</p>
-<p><span class="math display">\[
-\mathcal L_{\mathrm{Poisson}}
-=
-e^\eta-y\eta+\log(y!).
-\]</span></p>
-<p>Unlike Gaussian regression, the likelihood respects count support and ties variance to the mean. If real counts are overdispersed, a negative-binomial model may be more appropriate.</p>
-</section>
-</section>
-<section id="numerical-stability-and-reduction" class="level2">
-<h2 class="anchored" data-anchor-id="numerical-stability-and-reduction">8. Numerical Stability and Reduction</h2>
-<p>Pass raw logits to <code>CrossEntropyLoss</code> and <code>BCEWithLogitsLoss</code>. Do not materialize softmax/sigmoid probabilities and then take logs.</p>
-<p>For CE, use</p>
-<p><span class="math display">\[
-\log\sum_k e^{z_k}
-=
-m+\log\sum_k e^{z_k-m},
-\qquad m=\max_k z_k.
-\]</span></p>
-<p>Also inspect the reduction:</p>
+<section id="distribution-learning-objectives" class="level3">
+<h3 class="anchored" data-anchor-id="distribution-learning-objectives">Distribution-learning objectives</h3>
+<p>Use <a href="../../notes/foundations/generative_losses.html">Distribution Learning Losses</a> when the model must represent or sample from a high-dimensional distribution and direct likelihood is exact, latent, or unavailable. It covers:</p>
 <ul>
-<li>mean over examples versus sum</li>
-<li>mean over valid labels versus all padded positions</li>
-<li>mean per group versus mean over a population with unequal group size</li>
-<li>interaction between sample weights and the denominator</li>
+<li>exact autoregressive likelihood and next-token prediction</li>
+<li>KL geometry</li>
+<li>variational likelihood and the VAE ELBO</li>
+<li>sample-based adversarial discrepancies</li>
+<li>diffusion denoising and score-learning abstractions</li>
 </ul>
-<p>The denominator silently defines which population receives equal importance.</p>
 </section>
-<section id="design-examples" class="level2">
-<h2 class="anchored" data-anchor-id="design-examples">9. Design Examples</h2>
-<section id="rare-event-classification" class="level3">
-<h3 class="anchored" data-anchor-id="rare-event-classification">Rare-event classification</h3>
-<p>Start with Bernoulli NLL. If false negatives have higher decision cost, adjust the loss or threshold using that cost. If easy negatives dominate gradient compute, consider focal loss. If probabilities drive downstream decisions, measure and repair calibration.</p>
+<section id="representation-objectives" class="level3">
+<h3 class="anchored" data-anchor-id="representation-objectives">Representation objectives</h3>
+<p>Use <a href="../../notes/foundations/representation_learning.html">Representation Learning from First Principles</a> for contrastive, metric, reconstruction, redundancy-reduction, and predictive objectives. These losses specify which information and invariances a representation should preserve rather than directly specifying a final decision.</p>
 </section>
-<section id="regression-with-corrupt-targets" class="level3">
-<h3 class="anchored" data-anchor-id="regression-with-corrupt-targets">Regression with corrupt targets</h3>
-<p>Inspect residual tails. MSE is efficient for clean, light-tailed noise; Huber or Laplace NLL is more robust. If uncertainty varies by example, predict a distribution rather than only a robust point.</p>
-</section>
-<section id="retrieval" class="level3">
-<h3 class="anchored" data-anchor-id="retrieval">Retrieval</h3>
-<p>If evaluation depends only on order, a pairwise or contrastive abstraction is more direct than absolute regression. Design negative sampling around realistic retrieval confusions and audit for false negatives.</p>
+<section id="teacher-supervised-objectives" class="level3">
+<h3 class="anchored" data-anchor-id="teacher-supervised-objectives">Teacher-supervised objectives</h3>
+<p>Use <a href="../../notes/foundations/distillation.html">Distillation: Learning from a Teacher</a> when supervision comes from another model. Distillation can train a classifier, generator, representation, or policy, so it is a cross-cutting supervision mechanism—not a subtype of generative modeling.</p>
 </section>
 </section>
-<section id="common-failure-modes" class="level2">
-<h2 class="anchored" data-anchor-id="common-failure-modes">10. Common Failure Modes</h2>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 50%">
-<col style="width: 50%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Failure</th>
-<th>Diagnostic question</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>optimizing the wrong population</td>
-<td>What sampling and weights define this expectation?</td>
-</tr>
-<tr class="even">
-<td>surrogate mismatch</td>
-<td>Is this loss calibrated/consistent for the target decision?</td>
-</tr>
-<tr class="odd">
-<td>shortcut learning</td>
-<td>Can an unintended feature satisfy the target?</td>
-</tr>
-<tr class="even">
-<td>gradient domination</td>
-<td>Which class, task, or group supplies most gradient norm?</td>
-</tr>
-<tr class="odd">
-<td>bad noise model</td>
-<td>Does the likelihood have the right support and tail behavior?</td>
-</tr>
-<tr class="even">
-<td>reduction bug</td>
-<td>What exactly is divided by what?</td>
-</tr>
-<tr class="odd">
-<td>numerical failure</td>
-<td>Can the objective be computed directly in logits or log space?</td>
-</tr>
-</tbody>
-</table>
+<section id="a-loss-design-procedure" class="level2">
+<h2 class="anchored" data-anchor-id="a-loss-design-procedure">A Loss-Design Procedure</h2>
+<p>Given a new problem:</p>
+<ol type="1">
+<li>Write the real decision, generation, or representation goal.</li>
+<li>Decide whether you need a full distribution or only a functional/decision.</li>
+<li>State what observations and supervisory signals are actually available.</li>
+<li>Choose a proper score, surrogate, divergence, bound, critic, or utility whose optimum is aligned with that target.</li>
+<li>Write the expectation distribution and reduction explicitly.</li>
+<li>Check support, calibration, robustness, and train–deployment mismatch.</li>
+<li>Only then choose a numerically stable parameterization and implementation.</li>
+</ol>
+<p>Two objectives may have the same optimum yet very different gradients. A statistically correct objective can also fail when its estimator has high variance, its sampling distribution misses important states, or its parameterization makes optimization difficult.</p>
 </section>
 <section id="interview-questions" class="level2">
 <h2 class="anchored" data-anchor-id="interview-questions">Interview Questions</h2>
 <ul>
-<li>Derive CE, BCE, MSE, MAE, and Poisson loss from likelihood assumptions.</li>
-<li>Derive logistic loss from a Bernoulli model with linear log odds.</li>
-<li>Why is linear logistic regression convex, and what happens on separable data?</li>
-<li>Why is log loss a proper scoring rule?</li>
-<li>When should imbalance change the loss, sampling, or only the threshold?</li>
-<li>How does focal loss allocate gradients, and why can it affect calibration?</li>
-<li>Compare cross-entropy and hinge loss.</li>
-<li>Compare pairwise contrastive loss, triplet loss, and InfoNCE.</li>
-<li>In what sense is InfoNCE a cross-entropy classification problem?</li>
-<li>Why is negative sampling part of a contrastive or ranking objective?</li>
-<li>Which statistics do MSE, MAE, and quantile loss estimate?</li>
-<li>Derive heteroscedastic Gaussian NLL and explain both terms.</li>
-<li>How can reduction change the effective data distribution?</li>
-</ul>
-</section>
-<section id="exercises" class="level2">
-<h2 class="anchored" data-anchor-id="exercises">Exercises</h2>
-<ul class="task-list">
-<li><label><input type="checkbox">Plot CE, focal, and hinge losses and their logit derivatives.</label></li>
-<li><label><input type="checkbox">Fit logistic regression using the stable BCE implementation and compare it with a library implementation.</label></li>
-<li><label><input type="checkbox">Compare weighted BCE and threshold adjustment on an imbalanced dataset.</label></li>
-<li><label><input type="checkbox">Compare pairwise contrastive, triplet, and InfoNCE losses using the same synthetic embedding problem.</label></li>
-<li><label><input type="checkbox">Fit MSE, MAE, Huber, and heteroscedastic models to contaminated data.</label></li>
-<li><label><input type="checkbox">Compare random, hard, and false-negative sampling for a ranking loss.</label></li>
-<li><label><input type="checkbox">Audit a weighted loss by computing each example’s effective coefficient.</label></li>
-</ul>
-</section>
-<section id="primary-references" class="level2">
-<h2 class="anchored" data-anchor-id="primary-references">Primary References</h2>
-<ul>
-<li><a href="https://www.cs.toronto.edu/~hinton/csc2535/readings/hadsell-chopra-lecun-06.pdf">Dimensionality Reduction by Learning an Invariant Mapping</a></li>
-<li><a href="https://arxiv.org/abs/1807.03748">Representation Learning with Contrastive Predictive Coding</a></li>
-<li><a href="https://arxiv.org/abs/2004.11362">Supervised Contrastive Learning</a></li>
-<li><a href="https://arxiv.org/abs/1708.02002">Focal Loss for Dense Object Detection</a></li>
-<li><a href="https://link.springer.com/article/10.1007/BF00994018">Support Vector Networks</a></li>
-<li><a href="https://arxiv.org/abs/1205.2618">BPR: Bayesian Personalized Ranking from Implicit Feedback</a></li>
+<li>Why does discriminative versus generative classify models better than losses?</li>
+<li>Give three interpretations of cross-entropy with the same algebra.</li>
+<li>Does using MSE require Gaussian data? Separate its likelihood and elicitation interpretations.</li>
+<li>When is learning a full conditional distribution unnecessary?</li>
+<li>Why are the supervision source and expectation distribution separate from the discrepancy formula?</li>
+<li>Is distillation a loss, a model family, or a source of supervision?</li>
+<li>Can two losses share a population optimum but train very differently?</li>
 </ul>
 
 

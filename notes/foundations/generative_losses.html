@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Generative Losses from First Principles – Minimal ML</title>
+<title>Distribution Learning Losses – Minimal ML</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -73,6 +73,7 @@ ul.task-list li input[type="checkbox"] {
     "search-label": "Search"
   }
 }</script>
+<meta name="google-site-verification" content="Ztjr25pGaioeZP-mkoIn_MkNmmsFXWcU6I6W2tEPli0">
 
   <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
   <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
@@ -153,7 +154,7 @@ window.Quarto = {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#why-generative-losses-need-clever-abstractions" id="toc-why-generative-losses-need-clever-abstractions" class="nav-link active" data-scroll-target="#why-generative-losses-need-clever-abstractions">1. Why Generative Losses Need Clever Abstractions</a>
+  <li><a href="#why-distribution-learning-needs-clever-abstractions" id="toc-why-distribution-learning-needs-clever-abstractions" class="nav-link active" data-scroll-target="#why-distribution-learning-needs-clever-abstractions">1. Why Distribution Learning Needs Clever Abstractions</a>
   <ul class="collapse">
   <li><a href="#a-generative-loss-design-checklist" id="toc-a-generative-loss-design-checklist" class="nav-link" data-scroll-target="#a-generative-loss-design-checklist">A generative-loss design checklist</a></li>
   </ul></li>
@@ -162,21 +163,20 @@ window.Quarto = {
   <ul class="collapse">
   <li><a href="#what-statistical-objective-does-ntp-optimize" id="toc-what-statistical-objective-does-ntp-optimize" class="nav-link" data-scroll-target="#what-statistical-objective-does-ntp-optimize">What statistical objective does NTP optimize?</a></li>
   </ul></li>
-  <li><a href="#reverse-kl-in-on-policy-distillation" id="toc-reverse-kl-in-on-policy-distillation" class="nav-link" data-scroll-target="#reverse-kl-in-on-policy-distillation">4. Reverse KL in On-Policy Distillation</a></li>
-  <li><a href="#latent-variables-vae-and-the-elbo" id="toc-latent-variables-vae-and-the-elbo" class="nav-link" data-scroll-target="#latent-variables-vae-and-the-elbo">5. Latent Variables: VAE and the ELBO</a>
+  <li><a href="#latent-variables-vae-and-the-elbo" id="toc-latent-variables-vae-and-the-elbo" class="nav-link" data-scroll-target="#latent-variables-vae-and-the-elbo">4. Latent Variables: VAE and the ELBO</a>
   <ul class="collapse">
   <li><a href="#the-reconstruction-term-is-a-likelihood" id="toc-the-reconstruction-term-is-a-likelihood" class="nav-link" data-scroll-target="#the-reconstruction-term-is-a-likelihood">The reconstruction term is a likelihood</a></li>
   <li><a href="#reparameterization-and-posterior-collapse" id="toc-reparameterization-and-posterior-collapse" class="nav-link" data-scroll-target="#reparameterization-and-posterior-collapse">Reparameterization and posterior collapse</a></li>
   </ul></li>
-  <li><a href="#gans-learn-a-discrepancy-from-samples" id="toc-gans-learn-a-discrepancy-from-samples" class="nav-link" data-scroll-target="#gans-learn-a-discrepancy-from-samples">6. GANs: Learn a Discrepancy from Samples</a></li>
-  <li><a href="#diffusion-turn-density-learning-into-denoising" id="toc-diffusion-turn-density-learning-into-denoising" class="nav-link" data-scroll-target="#diffusion-turn-density-learning-into-denoising">7. Diffusion: Turn Density Learning into Denoising</a>
+  <li><a href="#gans-learn-a-discrepancy-from-samples" id="toc-gans-learn-a-discrepancy-from-samples" class="nav-link" data-scroll-target="#gans-learn-a-discrepancy-from-samples">5. GANs: Learn a Discrepancy from Samples</a></li>
+  <li><a href="#diffusion-turn-density-learning-into-denoising" id="toc-diffusion-turn-density-learning-into-denoising" class="nav-link" data-scroll-target="#diffusion-turn-density-learning-into-denoising">6. Diffusion: Turn Density Learning into Denoising</a>
   <ul class="collapse">
   <li><a href="#where-design-choices-enter" id="toc-where-design-choices-enter" class="nav-link" data-scroll-target="#where-design-choices-enter">Where design choices enter</a></li>
   </ul></li>
-  <li><a href="#comparing-the-main-abstractions" id="toc-comparing-the-main-abstractions" class="nav-link" data-scroll-target="#comparing-the-main-abstractions">8. Comparing the Main Abstractions</a></li>
-  <li><a href="#loss-weighting-is-part-of-the-model" id="toc-loss-weighting-is-part-of-the-model" class="nav-link" data-scroll-target="#loss-weighting-is-part-of-the-model">9. Loss Weighting Is Part of the Model</a></li>
-  <li><a href="#numerical-and-estimation-stability" id="toc-numerical-and-estimation-stability" class="nav-link" data-scroll-target="#numerical-and-estimation-stability">10. Numerical and Estimation Stability</a></li>
-  <li><a href="#common-failure-modes" id="toc-common-failure-modes" class="nav-link" data-scroll-target="#common-failure-modes">11. Common Failure Modes</a></li>
+  <li><a href="#comparing-the-main-abstractions" id="toc-comparing-the-main-abstractions" class="nav-link" data-scroll-target="#comparing-the-main-abstractions">7. Comparing the Main Abstractions</a></li>
+  <li><a href="#loss-weighting-is-part-of-the-model" id="toc-loss-weighting-is-part-of-the-model" class="nav-link" data-scroll-target="#loss-weighting-is-part-of-the-model">8. Loss Weighting Is Part of the Model</a></li>
+  <li><a href="#numerical-and-estimation-stability" id="toc-numerical-and-estimation-stability" class="nav-link" data-scroll-target="#numerical-and-estimation-stability">9. Numerical and Estimation Stability</a></li>
+  <li><a href="#common-failure-modes" id="toc-common-failure-modes" class="nav-link" data-scroll-target="#common-failure-modes">10. Common Failure Modes</a></li>
   <li><a href="#interview-questions" id="toc-interview-questions" class="nav-link" data-scroll-target="#interview-questions">Interview Questions</a></li>
   <li><a href="#exercises" id="toc-exercises" class="nav-link" data-scroll-target="#exercises">Exercises</a></li>
   <li><a href="#primary-references" id="toc-primary-references" class="nav-link" data-scroll-target="#primary-references">Primary References</a></li>
@@ -188,7 +188,7 @@ window.Quarto = {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Generative Losses from First Principles</h1>
+<h1 class="title">Distribution Learning Losses</h1>
 </div>
 
 
@@ -205,8 +205,8 @@ window.Quarto = {
 </header>
 
 
-<section id="why-generative-losses-need-clever-abstractions" class="level2">
-<h2 class="anchored" data-anchor-id="why-generative-losses-need-clever-abstractions">1. Why Generative Losses Need Clever Abstractions</h2>
+<section id="why-distribution-learning-needs-clever-abstractions" class="level2">
+<h2 class="anchored" data-anchor-id="why-distribution-learning-needs-clever-abstractions">1. Why Distribution Learning Needs Clever Abstractions</h2>
 <p>A generative model tries to represent a distribution over high-dimensional objects:</p>
 <p><span class="math display">\[
 x\sim p_{\mathrm{data}}(x),
@@ -217,11 +217,10 @@ p_\theta(x)\approx p_{\mathrm{data}}(x).
 <ul>
 <li>factor a sequence into next-token conditionals</li>
 <li>lower-bound an intractable latent-variable likelihood</li>
-<li>compare teacher and student distributions with a chosen KL direction</li>
 <li>learn a discriminator when only samples are available</li>
 <li>corrupt clean data and train a denoiser</li>
 </ul>
-<p>The loss is therefore inseparable from the model architecture and sampling procedure. For classification, regression, focal, margin, and ranking losses, see <a href="../../notes/foundations/losses.html">Discriminative Losses from First Principles</a>.</p>
+<p>The loss is therefore inseparable from the model architecture and sampling procedure. For the overall taxonomy, see <a href="../../notes/foundations/losses.html">Losses from First Principles</a>. For classification, regression, focal, margin, and ranking losses, see <a href="../../notes/foundations/prediction_decision_losses.html">Prediction and Decision Losses</a>. Distillation is treated separately in <a href="../../notes/foundations/distillation.html">Distillation: Learning from a Teacher</a>.</p>
 <section id="a-generative-loss-design-checklist" class="level3">
 <h3 class="anchored" data-anchor-id="a-generative-loss-design-checklist">A generative-loss design checklist</h3>
 <ol type="1">
@@ -327,43 +326,8 @@ p_\theta(x_{1:T})
 <p>NTP estimates text likelihood; it does not directly optimize factuality, semantic equivalence, pass@<span class="math inline">\(k\)</span>, or user preference. Post-training objectives exist because these sequence-level goals are not identical to token likelihood.</p>
 </section>
 </section>
-<section id="reverse-kl-in-on-policy-distillation" class="level2">
-<h2 class="anchored" data-anchor-id="reverse-kl-in-on-policy-distillation">4. Reverse KL in On-Policy Distillation</h2>
-<p>Let <span class="math inline">\(q\)</span> be a teacher and <span class="math inline">\(p_\theta\)</span> a student. Standard off-policy distillation often minimizes</p>
-<p><span class="math display">\[
-\underbrace{\mathrm{KL}(q\|p_\theta)}_{\text{forward KL}}
-\]</span></p>
-<p>on teacher/data prefixes. Forward KL asks the student to cover probability mass assigned by the teacher.</p>
-<p>In <a href="https://arxiv.org/abs/2306.13649">on-policy distillation</a> (OPD), the student generates prefixes <span class="math inline">\(h_t\)</span> and the teacher evaluates what the student encounters. A common local objective is reverse KL:</p>
-<p><span class="math display">\[
-\mathcal L_{\mathrm{OPD}}(h_t)
-=
-\mathrm{KL}
-\left(
-p_\theta(\cdot\mid h_t)
-\,
-\middle\|\,
-q(\cdot\mid h_t)
-\right).
-\]</span></p>
-<p>For <span class="math inline">\(a_t\sim p_\theta(\cdot\mid h_t)\)</span>,</p>
-<p><span class="math display">\[
-r_t
-=
-\log q(a_t\mid h_t)
--
-\log p_\theta(a_t\mid h_t)
-\]</span></p>
-<p>acts like a dense token-level reward. The full-vocabulary KL can be computed when teacher logits are available; sampled implementations use an RL-style policy-gradient estimator.</p>
-<p>Two independent design choices are easy to conflate:</p>
-<ol type="1">
-<li><strong>On-policy state distribution:</strong> prefixes come from the student, reducing train–inference mismatch.</li>
-<li><strong>Reverse-KL token geometry:</strong> student probability weights the local mismatch, discouraging student modes the teacher considers unlikely.</li>
-</ol>
-<p>Reverse KL can be mode seeking, lose diversity, or become unstable when the teacher is uncertain or the student reaches prefixes far outside reliable teacher behavior. <a href="https://arxiv.org/abs/2606.01249">TrOPD</a> uses trust regions and forward-KL guidance in unreliable regions. The right lesson is not that one KL direction always wins, but that state distribution, support, and divergence geometry must be designed together.</p>
-</section>
 <section id="latent-variables-vae-and-the-elbo" class="level2">
-<h2 class="anchored" data-anchor-id="latent-variables-vae-and-the-elbo">5. Latent Variables: VAE and the ELBO</h2>
+<h2 class="anchored" data-anchor-id="latent-variables-vae-and-the-elbo">4. Latent Variables: VAE and the ELBO</h2>
 <p>A latent-variable model defines</p>
 <p><span class="math display">\[
 p_\theta(x)
@@ -443,7 +407,7 @@ z
 </section>
 </section>
 <section id="gans-learn-a-discrepancy-from-samples" class="level2">
-<h2 class="anchored" data-anchor-id="gans-learn-a-discrepancy-from-samples">6. GANs: Learn a Discrepancy from Samples</h2>
+<h2 class="anchored" data-anchor-id="gans-learn-a-discrepancy-from-samples">5. GANs: Learn a Discrepancy from Samples</h2>
 <p>If real density is unavailable but real samples are available, learn a critic. The original GAN game is</p>
 <p><span class="math display">\[
 \min_\theta\max_\psi
@@ -468,7 +432,7 @@ z
 <p>GAN optimization is a game, not ordinary scalar minimization. Mode collapse, oscillation, critic overfitting, and sensitivity to relative learning rates are properties of the coupled dynamics. Hinge GANs, Wasserstein objectives, and gradient penalties alter those dynamics or the discrepancy being estimated.</p>
 </section>
 <section id="diffusion-turn-density-learning-into-denoising" class="level2">
-<h2 class="anchored" data-anchor-id="diffusion-turn-density-learning-into-denoising">7. Diffusion: Turn Density Learning into Denoising</h2>
+<h2 class="anchored" data-anchor-id="diffusion-turn-density-learning-into-denoising">6. Diffusion: Turn Density Learning into Denoising</h2>
 <p>Define a known forward corruption process. A common closed form is</p>
 <p><span class="math display">\[
 x_t
@@ -502,7 +466,7 @@ x_t
 </section>
 </section>
 <section id="comparing-the-main-abstractions" class="level2">
-<h2 class="anchored" data-anchor-id="comparing-the-main-abstractions">8. Comparing the Main Abstractions</h2>
+<h2 class="anchored" data-anchor-id="comparing-the-main-abstractions">7. Comparing the Main Abstractions</h2>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 25%">
@@ -526,24 +490,18 @@ x_t
 <td>data prefixes versus model prefixes; token loss versus sequence utility</td>
 </tr>
 <tr class="even">
-<td>OPD</td>
-<td>teacher scores on student trajectories</td>
-<td>reverse-KL dense reward</td>
-<td>teacher reliability and mode loss on student states</td>
-</tr>
-<tr class="odd">
 <td>VAE</td>
 <td>data and encoder-sampled latent</td>
 <td>variational likelihood bound</td>
 <td>bound looseness and latent collapse</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>GAN</td>
 <td>real and generated samples</td>
 <td>learned discriminator discrepancy</td>
 <td>equilibrium theory versus unstable game dynamics</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>Diffusion</td>
 <td>clean data and synthetic noise</td>
 <td>denoising/score estimation</td>
@@ -554,7 +512,7 @@ x_t
 <p>No universal “generation loss” exists. Each method makes a different intractable object observable.</p>
 </section>
 <section id="loss-weighting-is-part-of-the-model" class="level2">
-<h2 class="anchored" data-anchor-id="loss-weighting-is-part-of-the-model">9. Loss Weighting Is Part of the Model</h2>
+<h2 class="anchored" data-anchor-id="loss-weighting-is-part-of-the-model">8. Loss Weighting Is Part of the Model</h2>
 <p>Generative objectives often have the form</p>
 <p><span class="math display">\[
 \mathcal L
@@ -568,17 +526,15 @@ x_t
 <li>token averaging gives long documents more total weight</li>
 <li>KL annealing changes the VAE rate–distortion path</li>
 <li>diffusion timestep sampling changes which noise scales dominate</li>
-<li>OPD rollout policy changes which prefixes receive teacher supervision</li>
 <li>GAN update ratios change the game dynamics</li>
 </ul>
 <p>Always log components separately. A total scalar can improve while one component collapses or dominates.</p>
 </section>
 <section id="numerical-and-estimation-stability" class="level2">
-<h2 class="anchored" data-anchor-id="numerical-and-estimation-stability">10. Numerical and Estimation Stability</h2>
+<h2 class="anchored" data-anchor-id="numerical-and-estimation-stability">9. Numerical and Estimation Stability</h2>
 <ul>
 <li>Compute token NLL with <code>log_softmax</code>/cross-entropy on logits.</li>
 <li>Keep KL calculations in log space when probabilities are small.</li>
-<li>For sampled reverse KL, distinguish an unbiased integrand estimate from a correct gradient estimator; sampling depends on student parameters.</li>
 <li>Parameterize positive variances through log variance or softplus.</li>
 <li>In VAEs, monitor reconstruction NLL and KL per latent dimension.</li>
 <li>In diffusion, record loss by timestep/SNR rather than only the average.</li>
@@ -586,7 +542,7 @@ x_t
 </ul>
 </section>
 <section id="common-failure-modes" class="level2">
-<h2 class="anchored" data-anchor-id="common-failure-modes">11. Common Failure Modes</h2>
+<h2 class="anchored" data-anchor-id="common-failure-modes">10. Common Failure Modes</h2>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 50%">
@@ -616,18 +572,14 @@ x_t
 <td>likelihood and latent bottleneck reward conditional averaging</td>
 </tr>
 <tr class="odd">
-<td>unstable OPD</td>
-<td>reverse-KL estimator is applied where teacher/student support differs</td>
-</tr>
-<tr class="even">
 <td>poor diffusion detail</td>
 <td>parameterization or timestep weighting underserves relevant SNRs</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>misleading total loss</td>
 <td>reduction hides token, timestep, or component imbalance</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>likelihood–quality gap</td>
 <td>statistical density assigns value differently from perception/task utility</td>
 </tr>
@@ -640,8 +592,6 @@ x_t
 <li>Why does maximum likelihood minimize forward KL from data to model?</li>
 <li>Explain KL direction by identifying which distribution supplies the expectation.</li>
 <li>Why is NTP repeated classification and also exact sequence likelihood?</li>
-<li>Separate exposure bias from KL direction in OPD.</li>
-<li>Why does OPD commonly use reverse KL on student-generated prefixes?</li>
 <li>Derive the ELBO and explain both VAE terms.</li>
 <li>Why is VAE reconstruction loss determined by decoder likelihood?</li>
 <li>How can posterior collapse be an optimum rather than an implementation bug?</li>
@@ -656,7 +606,6 @@ x_t
 <li><label><input type="checkbox">Construct a bimodal target and compare forward- and reverse-KL fits with a unimodal approximation.</label></li>
 <li><label><input type="checkbox">Implement token NTP with correct prompt/padding masks and compare token- versus sequence-level reduction.</label></li>
 <li><label><input type="checkbox">Derive diagonal-Gaussian VAE KL in closed form.</label></li>
-<li><label><input type="checkbox">Implement full-vocabulary reverse-KL OPD and a sampled policy-gradient estimator.</label></li>
 <li><label><input type="checkbox">Derive the diffusion noise target from the forward process and plot loss by signal-to-noise ratio.</label></li>
 <li><label><input type="checkbox">Compare saturating and non-saturating GAN generator gradients.</label></li>
 </ul>
@@ -667,9 +616,6 @@ x_t
 <li><a href="https://arxiv.org/abs/1312.6114">Auto-Encoding Variational Bayes</a></li>
 <li><a href="https://arxiv.org/abs/1406.2661">Generative Adversarial Nets</a></li>
 <li><a href="https://arxiv.org/abs/2006.11239">Denoising Diffusion Probabilistic Models</a></li>
-<li><a href="https://arxiv.org/abs/2306.13649">On-Policy Distillation of Language Models</a></li>
-<li><a href="https://arxiv.org/abs/2306.08543">MiniLLM: Knowledge Distillation of Large Language Models</a></li>
-<li><a href="https://arxiv.org/abs/2606.01249">Trust Region On-Policy Distillation</a></li>
 </ul>
 
 

@@ -108,6 +108,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     "search-label": "Search"
   }
 }</script>
+<meta name="google-site-verification" content="Ztjr25pGaioeZP-mkoIn_MkNmmsFXWcU6I6W2tEPli0">
 
   <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
   <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
@@ -458,7 +459,7 @@ W_o\left[
 <li>Clamping bounds unusually large intermediate values, which is helpful for stable low-precision expert computation.</li>
 <li>The shift <span class="math inline">\(b+1\)</span> leaves a gate-dependent signal even when the learned content branch is near zero.</li>
 </ul>
-<div id="ef23d455" class="cell" data-execution_count="1">
+<div id="1660d072" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -773,7 +774,7 @@ p_i(\delta_{ij}-p_j).
 </section>
 <section id="minimal-pytorch-implementations" class="level2">
 <h2 class="anchored" data-anchor-id="minimal-pytorch-implementations">Minimal PyTorch Implementations</h2>
-<div id="033214fc" class="cell" data-execution_count="3">
+<div id="6a4929f6" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> math</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -801,7 +802,7 @@ p_i(\delta_{ij}-p_j).
 </div>
 <section id="inspect-the-gradients" class="level3">
 <h3 class="anchored" data-anchor-id="inspect-the-gradients">Inspect the gradients</h3>
-<div id="425543d7" class="cell" data-execution_count="4">
+<div id="6ec70ba9" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>inputs <span class="op">=</span> torch.tensor([<span class="op">-</span><span class="fl">10.0</span>, <span class="op">-</span><span class="fl">1.0</span>, <span class="fl">0.0</span>, <span class="fl">1.0</span>, <span class="fl">10.0</span>], requires_grad<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -990,7 +991,7 @@ x_{\ell+1}=x_\ell+F_\ell(\operatorname{Norm}(x_\ell)).
 </tbody>
 </table>
 <p>This minimal helper shows conventional PyTorch starting points. It is an educational default, not a reproduction of any particular LLM recipe.</p>
-<div id="9567c90a" class="cell" data-execution_count="5">
+<div id="f2364772" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> math</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch.nn <span class="im">as</span> nn</span>

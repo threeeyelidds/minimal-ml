@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Linear Attention – Minimal ML</title>
+<title>Distillation: Learning from a Teacher – Minimal ML</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -189,20 +189,28 @@ window.Quarto = {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#motivation" id="toc-motivation" class="nav-link active" data-scroll-target="#motivation">Motivation</a></li>
-  <li><a href="#why-softmax-attention-cannot-simply-be-reordered" id="toc-why-softmax-attention-cannot-simply-be-reordered" class="nav-link" data-scroll-target="#why-softmax-attention-cannot-simply-be-reordered">Why Softmax Attention Cannot Simply Be Reordered</a></li>
-  <li><a href="#kernel-factorization" id="toc-kernel-factorization" class="nav-link" data-scroll-target="#kernel-factorization">Kernel Factorization</a></li>
-  <li><a href="#causal-linear-attention-as-a-recurrence" id="toc-causal-linear-attention-as-a-recurrence" class="nav-link" data-scroll-target="#causal-linear-attention-as-a-recurrence">Causal Linear Attention as a Recurrence</a></li>
-  <li><a href="#complexity" id="toc-complexity" class="nav-link" data-scroll-target="#complexity">Complexity</a></li>
-  <li><a href="#minimal-causal-implementation" id="toc-minimal-causal-implementation" class="nav-link" data-scroll-target="#minimal-causal-implementation">Minimal Causal Implementation</a></li>
-  <li><a href="#choosing-the-feature-map" id="toc-choosing-the-feature-map" class="nav-link" data-scroll-target="#choosing-the-feature-map">Choosing the Feature Map</a></li>
-  <li><a href="#what-is-gained-and-lost" id="toc-what-is-gained-and-lost" class="nav-link" data-scroll-target="#what-is-gained-and-lost">What Is Gained and Lost?</a>
+  <li><a href="#distillation-is-a-source-of-supervision" id="toc-distillation-is-a-source-of-supervision" class="nav-link active" data-scroll-target="#distillation-is-a-source-of-supervision">Distillation Is a Source of Supervision</a></li>
+  <li><a href="#output-distillation-soft-targets" id="toc-output-distillation-soft-targets" class="nav-link" data-scroll-target="#output-distillation-soft-targets">Output Distillation: Soft Targets</a>
   <ul class="collapse">
-  <li><a href="#advantages" id="toc-advantages" class="nav-link" data-scroll-target="#advantages">Advantages</a></li>
-  <li><a href="#limitations" id="toc-limitations" class="nav-link" data-scroll-target="#limitations">Limitations</a></li>
+  <li><a href="#minimal-implementation" id="toc-minimal-implementation" class="nav-link" data-scroll-target="#minimal-implementation">Minimal implementation</a></li>
   </ul></li>
+  <li><a href="#kl-direction-and-state-distribution-are-independent" id="toc-kl-direction-and-state-distribution-are-independent" class="nav-link" data-scroll-target="#kl-direction-and-state-distribution-are-independent">KL Direction and State Distribution Are Independent</a>
+  <ul class="collapse">
+  <li><a href="#divergence-direction" id="toc-divergence-direction" class="nav-link" data-scroll-target="#divergence-direction">Divergence direction</a></li>
+  <li><a href="#state-or-input-distribution" id="toc-state-or-input-distribution" class="nav-link" data-scroll-target="#state-or-input-distribution">State or input distribution</a></li>
+  </ul></li>
+  <li><a href="#on-policy-distillation-for-autoregressive-models" id="toc-on-policy-distillation-for-autoregressive-models" class="nav-link" data-scroll-target="#on-policy-distillation-for-autoregressive-models">On-Policy Distillation for Autoregressive Models</a></li>
+  <li><a href="#sequence-distillation" id="toc-sequence-distillation" class="nav-link" data-scroll-target="#sequence-distillation">Sequence Distillation</a></li>
+  <li><a href="#feature-and-relational-distillation" id="toc-feature-and-relational-distillation" class="nav-link" data-scroll-target="#feature-and-relational-distillation">Feature and Relational Distillation</a>
+  <ul class="collapse">
+  <li><a href="#feature-matching" id="toc-feature-matching" class="nav-link" data-scroll-target="#feature-matching">Feature matching</a></li>
+  <li><a href="#relational-matching" id="toc-relational-matching" class="nav-link" data-scroll-target="#relational-matching">Relational matching</a></li>
+  </ul></li>
+  <li><a href="#choosing-the-distillation-objective" id="toc-choosing-the-distillation-objective" class="nav-link" data-scroll-target="#choosing-the-distillation-objective">Choosing the Distillation Objective</a></li>
+  <li><a href="#common-failure-modes" id="toc-common-failure-modes" class="nav-link" data-scroll-target="#common-failure-modes">Common Failure Modes</a></li>
   <li><a href="#interview-questions" id="toc-interview-questions" class="nav-link" data-scroll-target="#interview-questions">Interview Questions</a></li>
   <li><a href="#exercises" id="toc-exercises" class="nav-link" data-scroll-target="#exercises">Exercises</a></li>
+  <li><a href="#primary-references" id="toc-primary-references" class="nav-link" data-scroll-target="#primary-references">Primary References</a></li>
   </ul>
 </nav>
     </div>
@@ -211,7 +219,7 @@ window.Quarto = {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Linear Attention</h1>
+<h1 class="title">Distillation: Learning from a Teacher</h1>
 </div>
 
 
@@ -228,255 +236,350 @@ window.Quarto = {
 </header>
 
 
-<section id="motivation" class="level2">
-<h2 class="anchored" data-anchor-id="motivation">Motivation</h2>
-<p>Standard attention for one head is</p>
-<p><span class="math display">\[
-\operatorname{Attention}(Q,K,V)
-=
-\operatorname{softmax}(QK^T)V.
-\]</span></p>
-<p>For sequence length <span class="math inline">\(T\)</span>, forming the score matrix requires <span class="math inline">\(O(T^2)\)</span> pairwise interactions and <span class="math inline">\(O(T^2)\)</span> attention storage in a straightforward implementation. FlashAttention avoids materializing this matrix in high-bandwidth memory, but it does not change the quadratic arithmetic of dense attention.</p>
-<p><strong>Linear attention</strong> changes the attention function so computation can be reassociated. Its cost becomes linear in sequence length when the feature dimension is treated as fixed.</p>
+<section id="distillation-is-a-source-of-supervision" class="level2">
+<h2 class="anchored" data-anchor-id="distillation-is-a-source-of-supervision">Distillation Is a Source of Supervision</h2>
+<p>Let <span class="math inline">\(q\)</span> denote a teacher and <span class="math inline">\(p_\theta\)</span> a student. Distillation transfers information exposed by the teacher that is not contained in a single hard label:</p>
+<ul>
+<li>uncertainty across classes or tokens</li>
+<li>similarities between alternatives</li>
+<li>intermediate representations</li>
+<li>generated solutions or trajectories</li>
+<li>behavior on states selected by either teacher or student</li>
+</ul>
+<p>The defining property is not one particular formula. It is that the training target comes from another model. A distilled student may be discriminative, generative, representational, or policy-like.</p>
+<p>Three choices define a distillation objective:</p>
+<ol type="1">
+<li><strong>What is matched?</strong> Outputs, logits, features, relations, sequences, or behavior.</li>
+<li><strong>Where is it matched?</strong> Data inputs, teacher-generated inputs, or student-generated/on-policy states.</li>
+<li><strong>How is it matched?</strong> Forward KL, reverse KL, MSE, cosine distance, sequence NLL, or an RL-style objective.</li>
+</ol>
 </section>
-<section id="why-softmax-attention-cannot-simply-be-reordered" class="level2">
-<h2 class="anchored" data-anchor-id="why-softmax-attention-cannot-simply-be-reordered">Why Softmax Attention Cannot Simply Be Reordered</h2>
-<p>Matrix multiplication is associative:</p>
+<section id="output-distillation-soft-targets" class="level2">
+<h2 class="anchored" data-anchor-id="output-distillation-soft-targets">Output Distillation: Soft Targets</h2>
+<p>For class or token logits <span class="math inline">\(z^T\)</span> and <span class="math inline">\(z^S\)</span>, temperature <span class="math inline">\(\tau\)</span> defines</p>
 <p><span class="math display">\[
-(QK^T)V=Q(K^TV).
-\]</span></p>
-<p>But row-wise softmax sits between the two products:</p>
-<p><span class="math display">\[
-\operatorname{softmax}(QK^T)V
-\neq
-Q\operatorname{softmax}(K^TV).
-\]</span></p>
-<p>The softmax normalization for query <span class="math inline">\(q_i\)</span> depends on all of its scores against the keys. Moving parentheses alone therefore does not produce linear softmax attention.</p>
-</section>
-<section id="kernel-factorization" class="level2">
-<h2 class="anchored" data-anchor-id="kernel-factorization">Kernel Factorization</h2>
-<p>Generalized attention can use a non-negative similarity function:</p>
-<p><span class="math display">\[
-o_i
+q_\tau(i\mid x)
 =
-\frac{
-\sum_{j=1}^{T}\operatorname{sim}(q_i,k_j)v_j
-}{
-\sum_{j=1}^{T}\operatorname{sim}(q_i,k_j)
-}.
-\]</span></p>
-<p>Suppose the similarity factorizes through a feature map <span class="math inline">\(\phi:\mathbb R^{d_h}\rightarrow\mathbb R^r\)</span>:</p>
-<p><span class="math display">\[
-\operatorname{sim}(q,k)=\phi(q)^T\phi(k).
-\]</span></p>
-<p>Then the numerator can be reassociated:</p>
-<p><span class="math display">\[
-\begin{aligned}
-\sum_j \left[\phi(q_i)^T\phi(k_j)\right]v_j
-&amp;=
-\phi(q_i)^T
-\left(\sum_j\phi(k_j)v_j^T\right).
-\end{aligned}
-\]</span></p>
-<p>Define the sequence summaries</p>
-<p><span class="math display">\[
-S=\sum_j\phi(k_j)v_j^T
-\in\mathbb R^{r\times d_v},
+\operatorname{softmax}\left(\frac{z_i^T}{\tau}\right),
 \qquad
-z=\sum_j\phi(k_j)
-\in\mathbb R^r.
-\]</span></p>
-<p>The output is</p>
-<p><span class="math display">\[
-\boxed{
-o_i
+p_{\theta,\tau}(i\mid x)
 =
-\frac{\phi(q_i)^TS}{\phi(q_i)^Tz}
-}.
+\operatorname{softmax}\left(\frac{z_i^S}{\tau}\right).
 \]</span></p>
-<p>No <span class="math inline">\(T\times T\)</span> matrix is required.</p>
-</section>
-<section id="causal-linear-attention-as-a-recurrence" class="level2">
-<h2 class="anchored" data-anchor-id="causal-linear-attention-as-a-recurrence">Causal Linear Attention as a Recurrence</h2>
-<p>For causal attention, query position <span class="math inline">\(i\)</span> may use only keys and values at <span class="math inline">\(j\leq i\)</span>. Replace the full summaries with prefix states:</p>
+<p>Classical output distillation minimizes forward KL:</p>
 <p><span class="math display">\[
-S_i=S_{i-1}+\phi(k_i)v_i^T,
-\]</span></p>
-<p><span class="math display">\[
-z_i=z_{i-1}+\phi(k_i),
-\]</span></p>
-<p><span class="math display">\[
-o_i
+\mathcal L_{\mathrm{KD}}
 =
-\frac{\phi(q_i)^TS_i}{\phi(q_i)^Tz_i+\varepsilon}.
+\tau^2
+\operatorname{KL}
+\left(q_\tau(\cdot\mid x)\|p_{\theta,\tau}(\cdot\mid x)\right).
 \]</span></p>
-<p>The causal mask is enforced by the update order, not by constructing a mask matrix. During autoregressive decoding, <span class="math inline">\((S_i,z_i)\)</span> is a fixed-size recurrent state. This makes the connection to an RNN explicit: the sequence history is compressed into state rather than retained as a growing KV cache.</p>
-<div class="callout callout-style-default callout-note callout-titled">
-<div class="callout-header d-flex align-content-center">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<div class="callout-title-container flex-fill">
-<span class="screen-reader-only">Note</span>Inclusive versus exclusive recurrence
-</div>
-</div>
-<div class="callout-body-container callout-body">
-<p>The equations update the state with <span class="math inline">\((k_i,v_i)\)</span> before reading it, so token <span class="math inline">\(i\)</span> can attend to itself. Reading before updating would implement a strictly previous-token convention.</p>
-</div>
-</div>
-</section>
-<section id="complexity" class="level2">
-<h2 class="anchored" data-anchor-id="complexity">Complexity</h2>
-<p>Let query/key feature width be <span class="math inline">\(r\)</span> and value width be <span class="math inline">\(d_v\)</span>.</p>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 27%">
-<col style="width: 36%">
-<col style="width: 36%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Method</th>
-<th style="text-align: right;">Sequence work per head</th>
-<th style="text-align: right;">Attention state</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>Dense softmax attention</td>
-<td style="text-align: right;"><span class="math inline">\(O(T^2(d_h+d_v))\)</span></td>
-<td style="text-align: right;"><span class="math inline">\(O(T^2)\)</span> naïvely; tiled by FlashAttention</td>
-</tr>
-<tr class="even">
-<td>Linear attention</td>
-<td style="text-align: right;"><span class="math inline">\(O(Trd_v)\)</span></td>
-<td style="text-align: right;"><span class="math inline">\(O(rd_v+r)\)</span></td>
-</tr>
-</tbody>
-</table>
-<p>Linear dependence on <span class="math inline">\(T\)</span> is not automatically faster. If <span class="math inline">\(r d_v\)</span> is large, sequences are short, or the implementation uses a slow sequential loop, dense attention with optimized kernels may win in wall-clock time.</p>
-</section>
-<section id="minimal-causal-implementation" class="level2">
-<h2 class="anchored" data-anchor-id="minimal-causal-implementation">Minimal Causal Implementation</h2>
-<p>The positive feature map</p>
+<p>The teacher supplies the expectation, so missing a teacher-supported class is costly. The entropy of <span class="math inline">\(q_\tau\)</span> is constant with respect to the student; therefore this is equivalent to soft-label cross-entropy up to a constant.</p>
+<p>Larger <span class="math inline">\(\tau\)</span> reveals relative preferences among non-maximum classes. Dividing logits by <span class="math inline">\(\tau\)</span> also shrinks their gradients, so the conventional <span class="math inline">\(\tau^2\)</span> factor approximately preserves gradient scale when comparing temperatures.</p>
+<p>A common supervised mixture is</p>
 <p><span class="math display">\[
-\phi(x)=\operatorname{ELU}(x)+1
+\mathcal L
+=
+(1-\lambda)\operatorname{CE}(y,p_{\theta,1})
++
+\lambda\tau^2
+\operatorname{KL}(q_\tau\|p_{\theta,\tau}).
 \]</span></p>
-<p>makes every kernel score non-negative. This is a pedagogical kernel attention implementation, not an approximation of ordinary softmax attention.</p>
-<div id="6cbabf3e" class="cell" data-execution_count="1">
+<p>The hard label anchors the student to observed outcomes; the soft target transfers the teacher’s richer geometry. A teacher can also be wrong, biased, or miscalibrated, so the mixture is not automatically better than either term.</p>
+<section id="minimal-implementation" class="level3">
+<h3 class="anchored" data-anchor-id="minimal-implementation">Minimal implementation</h3>
+<div id="81d4eeb7" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch.nn.functional <span class="im">as</span> F</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> positive_feature_map(x):</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> F.elu(x) <span class="op">+</span> <span class="fl">1.0</span></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> causal_linear_attention(q, k, v, eps<span class="op">=</span><span class="fl">1e-6</span>):</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""</span></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co">    q, k: [batch, heads, time, feature_dim]</span></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="co">    v:    [batch, heads, time, value_dim]</span></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="co">    """</span></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    q_features <span class="op">=</span> positive_feature_map(q)</span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    k_features <span class="op">=</span> positive_feature_map(k)</span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    batch, heads, time, feature_dim <span class="op">=</span> q_features.shape</span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    value_dim <span class="op">=</span> v.shape[<span class="op">-</span><span class="dv">1</span>]</span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>    state <span class="op">=</span> q.new_zeros(batch, heads, feature_dim, value_dim)</span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>    normalizer_state <span class="op">=</span> q.new_zeros(batch, heads, feature_dim)</span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>    outputs <span class="op">=</span> []</span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> index <span class="kw">in</span> <span class="bu">range</span>(time):</span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>        k_t <span class="op">=</span> k_features[:, :, index]</span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>        v_t <span class="op">=</span> v[:, :, index]</span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>        q_t <span class="op">=</span> q_features[:, :, index]</span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>        state <span class="op">=</span> state <span class="op">+</span> torch.einsum(<span class="st">"bhr,bhd-&gt;bhrd"</span>, k_t, v_t)</span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>        normalizer_state <span class="op">=</span> normalizer_state <span class="op">+</span> k_t</span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>        numerator <span class="op">=</span> torch.einsum(<span class="st">"bhr,bhrd-&gt;bhd"</span>, q_t, state)</span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>        denominator <span class="op">=</span> torch.einsum(</span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>            <span class="st">"bhr,bhr-&gt;bh"</span>, q_t, normalizer_state</span>
-<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>        ).unsqueeze(<span class="op">-</span><span class="dv">1</span>)</span>
-<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>        outputs.append(numerator <span class="op">/</span> denominator.clamp_min(eps))</span>
-<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> torch.stack(outputs, dim<span class="op">=</span><span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> forward_kl_distillation(student_logits, teacher_logits, temperature<span class="op">=</span><span class="fl">2.0</span>):</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Teacher-to-student KL, averaged over the batch."""</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    log_p_student <span class="op">=</span> F.log_softmax(student_logits <span class="op">/</span> temperature, dim<span class="op">=-</span><span class="dv">1</span>)</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    p_teacher <span class="op">=</span> F.softmax(teacher_logits <span class="op">/</span> temperature, dim<span class="op">=-</span><span class="dv">1</span>)</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> (</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>        F.kl_div(</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>            log_p_student,</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>            p_teacher,</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>            reduction<span class="op">=</span><span class="st">"batchmean"</span>,</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>        <span class="op">*</span> temperature<span class="op">**</span><span class="dv">2</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>torch.manual_seed(<span class="dv">0</span>)</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>teacher_logits <span class="op">=</span> torch.randn(<span class="dv">8</span>, <span class="dv">10</span>)</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>close_student <span class="op">=</span> teacher_logits <span class="op">+</span> <span class="fl">0.01</span> <span class="op">*</span> torch.randn_like(teacher_logits)</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>far_student <span class="op">=</span> torch.randn_like(teacher_logits)</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> forward_kl_distillation(</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>    close_student, teacher_logits</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>) <span class="op">&lt;</span> forward_kl_distillation(far_student, teacher_logits)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>Verify the recurrence against a quadratic implementation of the <strong>same kernel</strong>, not against softmax attention:</p>
-<div id="b21e0e3d" class="cell" data-execution_count="2">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>torch.manual_seed(<span class="dv">0</span>)</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>q <span class="op">=</span> torch.randn(<span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">5</span>, <span class="dv">4</span>)</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>k <span class="op">=</span> torch.randn(<span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">5</span>, <span class="dv">4</span>)</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>v <span class="op">=</span> torch.randn(<span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">5</span>, <span class="dv">6</span>)</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>q_features <span class="op">=</span> positive_feature_map(q)</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>k_features <span class="op">=</span> positive_feature_map(k)</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>scores <span class="op">=</span> torch.einsum(<span class="st">"bhir,bhjr-&gt;bhij"</span>, q_features, k_features)</span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>causal <span class="op">=</span> torch.ones(<span class="dv">5</span>, <span class="dv">5</span>, dtype<span class="op">=</span>torch.<span class="bu">bool</span>).tril()</span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>scores <span class="op">=</span> scores.masked_fill(<span class="op">~</span>causal, <span class="fl">0.0</span>)</span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>expected <span class="op">=</span> torch.einsum(<span class="st">"bhij,bhjd-&gt;bhid"</span>, scores, v)</span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>expected <span class="op">=</span> expected <span class="op">/</span> scores.<span class="bu">sum</span>(dim<span class="op">=-</span><span class="dv">1</span>, keepdim<span class="op">=</span><span class="va">True</span>).clamp_min(<span class="fl">1e-6</span>)</span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>actual <span class="op">=</span> causal_linear_attention(q, k, v)</span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>torch.testing.assert_close(actual, expected)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-<p>The Python loop makes the recurrence easy to see but prevents efficient parallel training. Production implementations use chunking, prefix scans, or specialized recurrent kernels.</p>
+<p>Detach teacher outputs unless the teacher is intentionally co-trained. Otherwise the objective may change the target while the student chases it.</p>
 </section>
-<section id="choosing-the-feature-map" class="level2">
-<h2 class="anchored" data-anchor-id="choosing-the-feature-map">Choosing the Feature Map</h2>
-<p>The feature map defines the attention kernel.</p>
+</section>
+<section id="kl-direction-and-state-distribution-are-independent" class="level2">
+<h2 class="anchored" data-anchor-id="kl-direction-and-state-distribution-are-independent">KL Direction and State Distribution Are Independent</h2>
+<p>Two design axes are often conflated.</p>
+<section id="divergence-direction" class="level3">
+<h3 class="anchored" data-anchor-id="divergence-direction">Divergence direction</h3>
+<p>Forward KL uses teacher probability as its local weighting:</p>
+<p><span class="math display">\[
+\operatorname{KL}(q\|p_\theta)
+=
+\mathbb E_{a\sim q}
+\left[\log q(a)-\log p_\theta(a)\right].
+\]</span></p>
+<p>It encourages the student to cover alternatives supported by the teacher. Reverse KL uses student probability as its local weighting:</p>
+<p><span class="math display">\[
+\operatorname{KL}(p_\theta\|q)
+=
+\mathbb E_{a\sim p_\theta}
+\left[\log p_\theta(a)-\log q(a)\right].
+\]</span></p>
+<p>It strongly discourages choices the student makes that the teacher considers unlikely, but can be mode-seeking. These are tendencies; capacity, support, temperature, and optimization also matter.</p>
+</section>
+<section id="state-or-input-distribution" class="level3">
+<h3 class="anchored" data-anchor-id="state-or-input-distribution">State or input distribution</h3>
+<p>The context <span class="math inline">\(h\)</span> at which the distributions are compared can come from:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>State source</th>
+<th>What it teaches</th>
+<th>Main risk</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>observed/data inputs</td>
+<td>behavior near the training distribution</td>
+<td>misses student-induced errors</td>
+</tr>
+<tr class="even">
+<td>teacher trajectories</td>
+<td>states a strong policy visits</td>
+<td>student may not reach them</td>
+</tr>
+<tr class="odd">
+<td>student trajectories</td>
+<td>recovery on deployment-like states</td>
+<td>teacher may be unreliable off distribution</td>
+</tr>
+<tr class="even">
+<td>mixture or replay</td>
+<td>broader coverage</td>
+<td>weighting becomes another design choice</td>
+</tr>
+</tbody>
+</table>
+<p>One can use forward or reverse KL under any of these state distributions. “Use reverse KL” does not by itself make an objective on-policy.</p>
+</section>
+</section>
+<section id="on-policy-distillation-for-autoregressive-models" class="level2">
+<h2 class="anchored" data-anchor-id="on-policy-distillation-for-autoregressive-models">On-Policy Distillation for Autoregressive Models</h2>
+<p>Teacher forcing trains on data prefixes, whereas generation visits prefixes created by the student. On-policy distillation lets the student generate a prefix <span class="math inline">\(h_t\)</span> and asks the teacher to evaluate that encountered state.</p>
+<p>A common local objective is</p>
+<p><span class="math display">\[
+\mathcal L_{\mathrm{OPD}}(h_t)
+=
+\operatorname{KL}
+\left(
+p_\theta(\cdot\mid h_t)
+\middle\|
+q(\cdot\mid h_t)
+\right).
+\]</span></p>
+<p>For a sampled action <span class="math inline">\(a_t\sim p_\theta(\cdot\mid h_t)\)</span>,</p>
+<p><span class="math display">\[
+r_t
+=
+\log q(a_t\mid h_t)
+-
+\log p_\theta(a_t\mid h_t)
+\]</span></p>
+<p>can act as a dense token-level reward. Full-vocabulary KL is available when teacher logits can be queried; sampled implementations require care because the sampling distribution itself depends on <span class="math inline">\(\theta\)</span>.</p>
+<p>On-policy training addresses <strong>state-distribution mismatch</strong>. Reverse KL chooses the <strong>local discrepancy geometry</strong>. They solve different problems.</p>
+<p>Potential failures include:</p>
 <ul>
-<li>Simple positive maps such as <code>ELU(x) + 1</code> are cheap but define a different similarity from softmax.</li>
-<li>Random-feature methods approximate the exponential softmax kernel. Increasing feature width can improve the approximation but increases compute and state.</li>
-<li>Learned features can adapt the kernel but add parameters and training dynamics.</li>
-<li>Gated or decayed variants control how old information contributes to the fixed-size state.</li>
+<li>the student reaches prefixes outside the teacher’s reliable region</li>
+<li>reverse KL removes useful diversity</li>
+<li>teacher querying dominates training cost</li>
+<li>sampled gradient estimates have high variance</li>
+<li>locally imitating next-token probabilities does not preserve sequence-level behavior</li>
 </ul>
-<p>The denominator matters. Omitting it produces unnormalized aggregation whose magnitude can grow with sequence length. Non-negative features make the normalizer interpretable and reduce the risk of cancellation near zero.</p>
+<p><a href="https://arxiv.org/abs/2306.13649">On-Policy Distillation</a> develops the state- distribution view. <a href="https://arxiv.org/abs/2306.08543">MiniLLM</a> studies reverse-KL distillation for generative language models. More recent trust-region methods such as <a href="https://arxiv.org/abs/2606.01249">TrOPD</a> restrict unreliable updates and can mix forward-KL guidance into uncertain regions.</p>
 </section>
-<section id="what-is-gained-and-lost" class="level2">
-<h2 class="anchored" data-anchor-id="what-is-gained-and-lost">What Is Gained and Lost?</h2>
-<section id="advantages" class="level3">
-<h3 class="anchored" data-anchor-id="advantages">Advantages</h3>
-<ul>
-<li>linear sequence scaling for fixed <span class="math inline">\(r\)</span> and <span class="math inline">\(d_v\)</span></li>
-<li>constant-size decoding state instead of a KV cache that grows with context</li>
-<li>natural recurrent, streaming interpretation</li>
-<li>causal masking is implicit in the state update</li>
-</ul>
+<section id="sequence-distillation" class="level2">
+<h2 class="anchored" data-anchor-id="sequence-distillation">Sequence Distillation</h2>
+<p>When teacher logits are unavailable or expensive to store, generate teacher outputs <span class="math inline">\(\widetilde y\sim q(\cdot\mid x)\)</span> and train by ordinary NLL:</p>
+<p><span class="math display">\[
+\mathcal L_{\mathrm{seq}}
+=
+-\log p_\theta(\widetilde y\mid x).
+\]</span></p>
+<p>This converts the teacher into a data generator. It is simple and works across different APIs or vocabularies, but a sampled sequence exposes far less information than the full teacher distribution. Decoding also changes the target: greedy outputs reduce diversity, while sampled outputs introduce variance and possible errors.</p>
+<p>For reasoning models, a teacher can supply final answers, rationales, tool-use traces, or verified trajectories. These are different supervisory objects. Imitating a rationale’s tokens does not prove that the student has learned the same internal algorithm, and incorrect rationales can transfer persuasive failure modes.</p>
 </section>
-<section id="limitations" class="level3">
-<h3 class="anchored" data-anchor-id="limitations">Limitations</h3>
-<ul>
-<li>most feature maps do not reproduce exact softmax attention</li>
-<li>a fixed-size state can overwrite or entangle information from many tokens</li>
-<li>prefix sums can accumulate numerical error over long sequences</li>
-<li>efficient parallel training needs more than the simple recurrent loop</li>
-<li>positional information, locality, forgetting, and state capacity require explicit architectural choices</li>
-</ul>
-<p>FlashAttention and linear attention therefore solve different problems: FlashAttention computes ordinary dense attention with better memory movement; linear attention changes the operator to avoid quadratic pairwise computation.</p>
-<p><a href="../../notes/advanced/continual_intelligence_ttt.html">From Test-Time Training to Continual Intelligence</a> develops the related view that learned fast-weight updates can implement a linear-attention-like recurrent state rather than literal key-value regression.</p>
+<section id="feature-and-relational-distillation" class="level2">
+<h2 class="anchored" data-anchor-id="feature-and-relational-distillation">Feature and Relational Distillation</h2>
+<p>Output matching is not the only transfer channel.</p>
+<section id="feature-matching" class="level3">
+<h3 class="anchored" data-anchor-id="feature-matching">Feature matching</h3>
+<p>Given teacher and student representations <span class="math inline">\(h^T(x)\)</span> and <span class="math inline">\(h^S(x)\)</span>,</p>
+<p><span class="math display">\[
+\mathcal L_{\mathrm{feature}}
+=
+\left\|P_\phi(h^S(x))-h^T(x)\right\|_2^2,
+\]</span></p>
+<p>where <span class="math inline">\(P_\phi\)</span> aligns dimensions. Cosine distance or attention-map matching may be used instead. Layer alignment is an architectural hypothesis, not a neutral implementation detail: a smaller student may organize computation differently.</p>
 </section>
+<section id="relational-matching" class="level3">
+<h3 class="anchored" data-anchor-id="relational-matching">Relational matching</h3>
+<p>Rather than matching coordinates, match relations within a batch:</p>
+<p><span class="math display">\[
+\mathcal L_{\mathrm{relation}}
+=
+\sum_{i,j}
+\left(
+\operatorname{sim}(h_i^S,h_j^S)
+-
+\operatorname{sim}(h_i^T,h_j^T)
+\right)^2.
+\]</span></p>
+<p>This preserves teacher geometry while allowing rotations or different feature bases. It connects distillation to <a href="../../notes/foundations/representation_learning.html">Representation Learning</a>.</p>
+<p>Self-distillation methods such as BYOL- and DINO-style training use a momentum or stop-gradient teacher to create a stable target. Their main challenge is not compression but preventing representational collapse.</p>
+</section>
+</section>
+<section id="choosing-the-distillation-objective" class="level2">
+<h2 class="anchored" data-anchor-id="choosing-the-distillation-objective">Choosing the Distillation Objective</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Constraint or goal</th>
+<th>Natural starting point</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>same label/token space and teacher logits available</td>
+<td>temperature-scaled forward KL</td>
+</tr>
+<tr class="even">
+<td>generation errors compound on student prefixes</td>
+<td>on-policy state collection</td>
+</tr>
+<tr class="odd">
+<td>only teacher API outputs available</td>
+<td>sequence distillation</td>
+</tr>
+<tr class="even">
+<td>output vocabularies differ</td>
+<td>sequence-, feature-, or representation-level transfer</td>
+</tr>
+<tr class="odd">
+<td>internal geometry matters</td>
+<td>feature or relational matching</td>
+</tr>
+<tr class="even">
+<td>teacher has multiple useful modes</td>
+<td>prefer covering objectives and audit diversity</td>
+</tr>
+<tr class="odd">
+<td>deployment behavior matters more than token agreement</td>
+<td>trajectory or policy distillation</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="common-failure-modes" class="level2">
+<h2 class="anchored" data-anchor-id="common-failure-modes">Common Failure Modes</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Failure</th>
+<th>First-principles diagnosis</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>student copies teacher errors</td>
+<td>the teacher was treated as ground truth</td>
+</tr>
+<tr class="even">
+<td>no gain over hard labels</td>
+<td>temperature or teacher distribution exposes little extra information</td>
+</tr>
+<tr class="odd">
+<td>capacity gap</td>
+<td>the student cannot represent the teacher target</td>
+</tr>
+<tr class="even">
+<td>mode loss</td>
+<td>divergence, decoding, or synthetic data collapses alternatives</td>
+</tr>
+<tr class="odd">
+<td>exposure bias</td>
+<td>matching occurs only on data/teacher states</td>
+</tr>
+<tr class="even">
+<td>unstable on-policy learning</td>
+<td>student visits states where teacher guidance or estimation is unreliable</td>
+</tr>
+<tr class="odd">
+<td>feature conflict</td>
+<td>forced layer correspondence is inappropriate</td>
+</tr>
+<tr class="even">
+<td>hidden cost</td>
+<td>teacher inference or stored logits erase the intended efficiency gain</td>
+</tr>
+</tbody>
+</table>
 </section>
 <section id="interview-questions" class="level2">
 <h2 class="anchored" data-anchor-id="interview-questions">Interview Questions</h2>
 <ul>
-<li>Why can <span class="math inline">\((QK^T)V\)</span> be reassociated while <span class="math inline">\(\operatorname{softmax}(QK^T)V\)</span> cannot?</li>
-<li>Derive the <span class="math inline">\(S_i\)</span> and <span class="math inline">\(z_i\)</span> causal recurrences.</li>
-<li>In what sense is causal linear attention an RNN?</li>
-<li>Why must a quadratic reference use the same kernel for a correctness test?</li>
-<li>How does feature width trade approximation quality for state and compute?</li>
-<li>Compare the decoding state of softmax attention, linear attention, and an RNN.</li>
-<li>Why might FlashAttention outperform linear attention at moderate lengths?</li>
+<li>Why is distillation a supervision mechanism rather than one loss formula?</li>
+<li>Derive why forward KL and soft-label cross-entropy have the same student gradient.</li>
+<li>Why is the <span class="math inline">\(\tau^2\)</span> factor commonly used in logit distillation?</li>
+<li>Separate KL direction from the distribution over prefixes or inputs.</li>
+<li>Why might reverse KL improve generation while reducing diversity?</li>
+<li>Compare logit, sequence, feature, relational, and policy distillation.</li>
+<li>When can sequence distillation work across different tokenizers?</li>
+<li>How can a self-distillation teacher avoid becoming a moving, collapsing target?</li>
 </ul>
 </section>
 <section id="exercises" class="level2">
 <h2 class="anchored" data-anchor-id="exercises">Exercises</h2>
 <ul class="task-list">
-<li><label><input type="checkbox">Implement the non-causal vectorized form without a Python loop.</label></li>
-<li><label><input type="checkbox">Change the code to read state before updating it and explain the mask.</label></li>
-<li><label><input type="checkbox">Compare outputs from the ELU kernel and softmax attention.</label></li>
-<li><label><input type="checkbox">Add an exponential decay to the recurrent state.</label></li>
-<li><label><input type="checkbox">Measure runtime and memory as sequence length grows.</label></li>
+<li><label><input type="checkbox">Implement forward- and reverse-KL distillation and compare their fits to a multimodal categorical teacher.</label></li>
+<li><label><input type="checkbox">Plot teacher soft targets and student gradients across temperatures.</label></li>
+<li><label><input type="checkbox">Compare hard-label, soft-label, and mixed objectives under teacher noise.</label></li>
+<li><label><input type="checkbox">Compare data-prefix and student-prefix distillation for a small sequence model.</label></li>
+<li><label><input type="checkbox">Match representations by coordinates and by pairwise similarities, then test invariance to rotation.</label></li>
+</ul>
+</section>
+<section id="primary-references" class="level2">
+<h2 class="anchored" data-anchor-id="primary-references">Primary References</h2>
+<ul>
+<li><a href="https://arxiv.org/abs/1503.02531">Distilling the Knowledge in a Neural Network</a></li>
+<li><a href="https://arxiv.org/abs/2306.13649">On-Policy Distillation of Language Models</a></li>
+<li><a href="https://arxiv.org/abs/2306.08543">MiniLLM: Knowledge Distillation of Large Language Models</a></li>
+<li><a href="https://arxiv.org/abs/2606.01249">Trust Region On-Policy Distillation</a></li>
 </ul>
 
 
