@@ -153,7 +153,75 @@ torch.testing.assert_close(
 )
 ```
 
-### 3.2 Binary and multilabel cross-entropy
+### 3.2 Logistic regression and binary cross-entropy
+
+Logistic regression specifies a **linear log-odds model**:
+
+$$
+z_\theta(x)=w^Tx+b,
+\qquad
+p_\theta(y=1\mid x)=\sigma(z_\theta(x)).
+$$
+
+Because
+
+$$
+\log\frac{p_\theta(y=1\mid x)}
+{p_\theta(y=0\mid x)}
+=
+z_\theta(x),
+$$
+
+each coefficient is an additive effect on the log odds. Combining the
+Bernoulli observation model with this linear logit gives the per-example
+negative log-likelihood
+
+$$
+\mathcal L_{\text{logistic}}(w,b;x,y)
+=
+-y\log\sigma(z)
+-(1-y)\log[1-\sigma(z)],
+\qquad z=w^Tx+b.
+$$
+
+Thus **binary cross-entropy is the logistic-regression loss** when its logit is
+linear in the features. A neural binary classifier uses the same loss with a
+nonlinear logit $z=f_\theta(x)$.
+
+For labels $\widetilde y\in\{-1,+1\}$, the same objective has the compact form
+
+$$
+\mathcal L_{\text{logistic}}
+=
+\log\left(1+e^{-\widetilde y z}\right).
+$$
+
+The gradients expose the probabilistic residual:
+
+$$
+\frac{\partial\mathcal L}{\partial z}
+=
+\sigma(z)-y,
+\qquad
+\nabla_w\mathcal L
+=
+[\sigma(z)-y]x.
+$$
+
+For a linear logit, its Hessian is
+
+$$
+\nabla_w^2\mathcal L
+=
+\sigma(z)[1-\sigma(z)]xx^T
+\succeq 0.
+$$
+
+Therefore unregularized logistic NLL is convex in $(w,b)$, although it need not
+have a finite minimizer on perfectly separable data. L2 regularization makes the
+problem strongly convex when the design has the appropriate coverage.
+
+#### Stable BCE form
 
 For $y\in\{0,1\}$ and $p=\sigma(z)$,
 
@@ -300,10 +368,181 @@ $$
 The margin $m$ defines how much score separation counts as sufficient; score
 scale and regularization determine what that statement means geometrically.
 
-## 6. Ranking and Metric Learning
+## 6. Contrastive, Metric, and Ranking Losses
 
-When supervision says “$i$ should rank above $j$,” predicting absolute labels
-solves a harder and possibly ill-posed problem. Use a pairwise abstraction:
+Classification assigns examples to a fixed output vocabulary. Representation
+learning often needs a different abstraction: specify which observations should
+be close and which should be distinguishable. See
+[Representation Learning from First Principles](representation_learning.qmd)
+for the broader design problem.
+
+“Contrastive loss” is not one unique formula. It is a family of objectives built
+from **positive relations** and **negative relations**.
+
+### 6.1 Classical pairwise contrastive loss
+
+Let $r=1$ indicate that a pair $(x_i,x_j)$ is semantically similar, let $r=0$
+indicate a dissimilar pair, and define embedding distance
+
+$$
+D_{ij}
+=
+\lVert f_\theta(x_i)-f_\theta(x_j)\rVert_2.
+$$
+
+The classical pairwise contrastive loss is
+
+$$
+\mathcal L_{\mathrm{contrastive}}
+=
+rD_{ij}^2
++(1-r)\left[\max(0,m-D_{ij})\right]^2.
+$$
+
+Positive pairs are pulled together. Negative pairs are pushed apart only until
+they reach margin $m$; spending capacity separating them further does not help
+this objective.
+
+::: {.callout-note}
+## Check the label convention
+
+Some sources use $y=0$ for similar pairs and $y=1$ for dissimilar pairs. The
+formula changes appearance but not meaning. Always define which value denotes a
+positive pair.
+:::
+
+```{python}
+def pairwise_contrastive_loss(
+    left_embeddings,
+    right_embeddings,
+    is_positive,
+    margin=1.0,
+):
+    """Classical contrastive loss; 1 means a semantically matching pair."""
+    distances = torch.linalg.vector_norm(
+        left_embeddings - right_embeddings,
+        dim=-1,
+    )
+    is_positive = is_positive.to(distances.dtype)
+    positive_loss = is_positive * distances.square()
+    negative_loss = (1.0 - is_positive) * F.relu(
+        margin - distances
+    ).square()
+    return (positive_loss + negative_loss).mean()
+
+
+left = torch.tensor([[0.0, 0.0], [0.0, 0.0]])
+well_arranged = torch.tensor([[0.1, 0.0], [2.0, 0.0]])
+badly_arranged = torch.tensor([[2.0, 0.0], [0.1, 0.0]])
+pair_types = torch.tensor([1.0, 0.0])
+
+assert pairwise_contrastive_loss(
+    left, well_arranged, pair_types
+) < pairwise_contrastive_loss(left, badly_arranged, pair_types)
+```
+
+### 6.2 Triplet loss
+
+A triplet directly compares a positive and negative relative to the same anchor:
+
+$$
+\mathcal L_{\mathrm{triplet}}
+=
+\max\left(
+0,
+d(e_a,e_p)-d(e_a,e_n)+m
+\right).
+$$
+
+It asks for a ranking constraint,
+
+$$
+d(e_a,e_p)+m\le d(e_a,e_n),
+$$
+
+rather than an absolute target distance. Pairwise contrastive loss considers one
+relation at a time; triplet loss compares two relations in the same example.
+
+### 6.3 InfoNCE: classify the positive among candidates
+
+For an anchor $z_i$, positive $z_i^+$, similarity function
+$\operatorname{sim}$, and temperature $\tau$, InfoNCE uses
+
+$$
+\mathcal L_i
+=
+-\log
+\frac{
+\exp[\operatorname{sim}(z_i,z_i^+)/\tau]
+}{
+\sum_{j=1}^{B}
+\exp[\operatorname{sim}(z_i,z_j^+)/\tau]
+}.
+$$
+
+This is ordinary cross-entropy over a dynamically constructed classification
+problem: candidate $i$ is the target class and the other batch elements provide
+negatives. Temperature controls how strongly the loss focuses on the largest
+similarities.
+
+```{python}
+def info_nce_loss(anchors, positives, temperature=0.1):
+    anchors = F.normalize(anchors, dim=-1)
+    positives = F.normalize(positives, dim=-1)
+    logits = anchors @ positives.T / temperature
+    targets = torch.arange(logits.shape[0], device=logits.device)
+    return F.cross_entropy(logits, targets)
+
+
+torch.manual_seed(0)
+anchors = torch.randn(16, 32)
+matching_positives = anchors + 0.01 * torch.randn_like(anchors)
+wrong_positives = matching_positives.roll(shifts=1, dims=0)
+
+assert info_nce_loss(
+    anchors, matching_positives
+) < info_nce_loss(anchors, wrong_positives)
+```
+
+The formula assumes that nonmatching batch items are valid negatives. Larger
+batches provide more comparisons, but also increase the chance of **false
+negatives**—different observations that share the same semantics.
+
+### 6.4 Supervised contrastive loss
+
+If labels reveal multiple positives for anchor $i$, define
+
+$$
+P(i)=\{p\ne i:y_p=y_i\}.
+$$
+
+Supervised contrastive loss averages the log probability assigned to every
+positive:
+
+$$
+\mathcal L_i^{\mathrm{sup}}
+=
+-\frac{1}{|P(i)|}
+\sum_{p\in P(i)}
+\log
+\frac{
+\exp[\operatorname{sim}(z_i,z_p)/\tau]
+}{
+\sum_{a\ne i}
+\exp[\operatorname{sim}(z_i,z_a)/\tau]
+}.
+$$
+
+Unlike ordinary class cross-entropy, it directly shapes within-batch embedding
+geometry. Its notion of equivalence is still only as good as the labels:
+same-class examples may contain meaningful substructure that the loss
+encourages the model to ignore.
+
+### 6.5 Ranking losses
+
+When supervision says “item $i$ should rank above item $j$,” predicting absolute
+labels solves a harder and possibly ill-posed problem. Use a pairwise
+abstraction:
 
 $$
 \mathcal L_{\mathrm{pairwise\ hinge}}
@@ -319,20 +558,19 @@ $$
 -\log\sigma(s_i-s_j).
 $$
 
-Triplet loss applies the same idea to embeddings:
+### Sampling is part of the loss
 
-$$
-\mathcal L_{\mathrm{triplet}}
-=
-\max\left(
-0,
-d(e_a,e_p)-d(e_a,e_n)+m
-\right).
-$$
+Contrastive and ranking objectives are expectations over constructed tuples,
+not merely over individual observations. Therefore the positive- and
+negative-sampling distributions help define the population objective.
 
-Negative sampling is part of the objective. Easy negatives provide no margin
-signal; false or excessively hard negatives can teach incorrect geometry. The
-sampling distribution should match which confusions matter at retrieval time.
+- easy negatives may provide almost no gradient
+- false negatives teach an incorrect geometry
+- extremely hard negatives may be mislabeled or unstable
+- in-batch negatives couple the effective objective to batch composition
+
+Sampling should reflect which confusions matter at retrieval time. Report it as
+part of the loss definition rather than as an implementation detail.
 
 ## 7. Regression Losses from Noise Models
 
@@ -486,11 +724,15 @@ retrieval confusions and audit for false negatives.
 ## Interview Questions
 
 - Derive CE, BCE, MSE, MAE, and Poisson loss from likelihood assumptions.
+- Derive logistic loss from a Bernoulli model with linear log odds.
+- Why is linear logistic regression convex, and what happens on separable data?
 - Why is log loss a proper scoring rule?
 - When should imbalance change the loss, sampling, or only the threshold?
 - How does focal loss allocate gradients, and why can it affect calibration?
 - Compare cross-entropy and hinge loss.
-- Why is negative sampling part of a ranking objective?
+- Compare pairwise contrastive loss, triplet loss, and InfoNCE.
+- In what sense is InfoNCE a cross-entropy classification problem?
+- Why is negative sampling part of a contrastive or ranking objective?
 - Which statistics do MSE, MAE, and quantile loss estimate?
 - Derive heteroscedastic Gaussian NLL and explain both terms.
 - How can reduction change the effective data distribution?
@@ -498,13 +740,20 @@ retrieval confusions and audit for false negatives.
 ## Exercises
 
 - [ ] Plot CE, focal, and hinge losses and their logit derivatives.
+- [ ] Fit logistic regression using the stable BCE implementation and compare it
+  with a library implementation.
 - [ ] Compare weighted BCE and threshold adjustment on an imbalanced dataset.
+- [ ] Compare pairwise contrastive, triplet, and InfoNCE losses using the same
+  synthetic embedding problem.
 - [ ] Fit MSE, MAE, Huber, and heteroscedastic models to contaminated data.
 - [ ] Compare random, hard, and false-negative sampling for a ranking loss.
 - [ ] Audit a weighted loss by computing each example's effective coefficient.
 
 ## Primary References
 
+- [Dimensionality Reduction by Learning an Invariant Mapping](https://www.cs.toronto.edu/~hinton/csc2535/readings/hadsell-chopra-lecun-06.pdf)
+- [Representation Learning with Contrastive Predictive Coding](https://arxiv.org/abs/1807.03748)
+- [Supervised Contrastive Learning](https://arxiv.org/abs/2004.11362)
 - [Focal Loss for Dense Object Detection](https://arxiv.org/abs/1708.02002)
 - [Support Vector Networks](https://link.springer.com/article/10.1007/BF00994018)
 - [BPR: Bayesian Personalized Ranking from Implicit Feedback](https://arxiv.org/abs/1205.2618)
