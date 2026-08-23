@@ -7,5 +7,4 @@ listing:
   fields: [date, title, subtitle, author]
 ---
 
-Non-technical thought experiments about intelligence, economics, society, and
-the futures they might produce.
+Non-technical and non-political thought experiments.

@@ -5,8 +5,10 @@ title: "Notes"
 ## Foundations
 
 - [Activation Functions](foundations/activations.qmd)
-- [Discriminative Losses from First Principles](foundations/losses.qmd)
-- [Generative Losses from First Principles](foundations/generative_losses.qmd)
+- [Losses from First Principles](foundations/losses.qmd)
+- [Prediction and Decision Losses](foundations/prediction_decision_losses.qmd)
+- [Distribution Learning Losses](foundations/generative_losses.qmd)
+- [Distillation: Learning from a Teacher](foundations/distillation.qmd)
 - [Representation Learning from First Principles](foundations/representation_learning.qmd)
 - [Zeroth-, First-, and Second-Order Optimization](foundations/optimizers.qmd)
 - [RNNs and LSTMs](foundations/rnn_lstm.qmd)
@@ -37,4 +39,3 @@ title: "Notes"
 - density estimation, from energy-based models to flow matching
 - causality and counterfactuals
 - some relevant ML theories
-

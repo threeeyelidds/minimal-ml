@@ -1,759 +1,179 @@
 ---
-title: "Discriminative Losses from First Principles"
+title: "Losses from First Principles"
 ---
 
-## 1. A Loss Encodes a Statistical Decision
+## A Loss Specifies What Learning Means
 
-A loss is the interface between:
-
-1. **statistical knowledge:** what uncertainty generated the target?
-2. **problem abstraction:** must the model estimate a probability, value,
-   boundary, order, or representation?
-3. **optimization:** what differentiable signal is aligned with the real metric?
-
-Let $(X,Y)\sim p^*$, let $a_\theta(X)$ be a prediction, and let $C(a,Y)$ be the
-real cost. The ideal Bayes decision is
+Let $Z\sim p^*$ denote an observation and let $a_\theta$ be the model output.
+Training minimizes an empirical approximation to a population objective:
 
 $$
-a^*(x)
+R(\theta)
 =
-\arg\min_a
-\mathbb E_{Y\sim p^*(\cdot\mid x)}[C(a,Y)].
+\mathbb E_{Z\sim \mu}
+\left[\ell(a_\theta,Z)\right].
 $$
 
-Training replaces the unknown population expectation with empirical risk and
-usually replaces the real cost with a tractable surrogate:
+This compact expression hides four independent design choices:
 
-$$
-\widehat R(\theta)
-=
-\frac1N\sum_{i=1}^{N}
-\ell(a_\theta(x_i),y_i).
-$$
+1. **Statistical object:** a distribution, mean, quantile, boundary,
+   representation, ranking, or policy.
+2. **Source of supervision:** observed outcomes, pairs, latent variables,
+   synthetic corruption, rewards, or a teacher model.
+3. **Discrepancy:** a proper score, surrogate risk, divergence, variational
+   bound, learned critic, or utility objective.
+4. **Expectation distribution $\mu$:** data examples, constructed pairs,
+   noise levels, teacher trajectories, or student-generated states.
 
-The first-principles question is:
+The first-principles question is therefore not merely “which formula should I
+use?” It is:
 
-> Which surrogate has an optimum and gradient geometry aligned with the
-> decision we actually care about?
+> What should the optimum recover, from which information, over which
+> population, and with what tractable learning signal?
 
-For latent-variable and data-generation objectives, see
-[Generative Losses from First Principles](generative_losses.qmd).
+## The Goal Is Not Always to Learn a Full Distribution
 
-### A design checklist
+Some losses estimate a full probability distribution. Others deliberately
+estimate less structure because that is all the decision requires.
 
-Before choosing a formula, ask:
-
-1. What is the target: categorical, binary, continuous, count, ordinal, or a
-   pairwise preference?
-2. Do calibrated probabilities matter, or only the final boundary/ranking?
-3. What support and noise model should predictions respect?
-4. Are examples genuinely unequal in cost, or merely unequal in frequency?
-5. What is the evaluation metric, and is the loss a consistent surrogate?
-6. What sampling and reduction define the effective training population?
-
-::: {.callout-important}
-## Loss and metric are different
-
-Accuracy, F1, recall, and ranking metrics can be nondifferentiable or
-nondecomposable. A loss is a surrogate. Lower loss matters only insofar as it
-improves the target decision or gives useful probability estimates.
-:::
-
-## 2. Likelihood Turns Statistical Assumptions into Losses
-
-If the model defines $p_\theta(y\mid x)$, maximum likelihood minimizes
-
-$$
-\mathcal L_{\mathrm{NLL}}
-=
--\mathbb E_{(x,y)\sim p^*}
-\log p_\theta(y\mid x).
-$$
-
-For fixed $x$,
-
-$$
-\mathbb E_{y\sim p^*}[-\log p_\theta(y\mid x)]
-=
-H(p^*)+\mathrm{KL}(p^*\|p_\theta).
-$$
-
-The entropy term is constant in $\theta$, so the population optimum is the true
-conditional distribution. Log loss is therefore a **proper scoring rule**.
-
-Many standard losses are simply NLL under different observation models:
-
-| Assumption for $Y\mid X$ | Output | NLL, ignoring constants |
+| Desired object | Example objective | Population optimum or interpretation |
 |---|---|---|
-| Categorical | class logits | cross-entropy |
-| Bernoulli | one logit | binary cross-entropy |
-| Gaussian, fixed variance | mean | squared error |
-| Gaussian, learned variance | mean and log variance | scaled MSE + log variance |
-| Laplace | location | absolute error |
-| Poisson count | log-rate | $e^\eta-y\eta$ |
+| conditional distribution | log loss / cross-entropy | $p^*(y\mid x)$ when the model is well specified |
+| conditional mean | squared error | $\mathbb E[Y\mid X=x]$ |
+| conditional median | absolute error | a median of $Y\mid X=x$ |
+| conditional quantile | pinball loss | $q_\tau(Y\mid X=x)$ |
+| decision boundary | hinge loss | a margin-separated classifier |
+| ordering | pairwise ranking loss | relative preferences between candidates |
+| representation geometry | contrastive or metric loss | invariances and separations defined by pairs |
+| behavior | policy objective | actions that maximize expected utility |
 
-The clever step is not memorizing the last column. It is choosing a distribution
-whose support, sufficient statistics, and noise assumptions fit the task.
+Learning a calibrated distribution is valuable when downstream users need
+probabilities, uncertainty, simulation, or many different decisions. It can be
+unnecessary excess structure when only one boundary or ranking matters.
 
-## 3. Classification as Probability Estimation
+## “Assuming a Distribution” Is Not a Binary Property
 
-### 3.1 Multiclass cross-entropy
+The same formula can have both a likelihood derivation and a weaker
+decision-theoretic interpretation.
 
-For one of $C$ mutually exclusive classes with logits $z$,
+For example, if
 
 $$
-p_j=\frac{e^{z_j}}{\sum_k e^{z_k}},
+Y\mid X=x\sim\mathcal N(f_\theta(x),\sigma^2),
+$$
+
+then Gaussian negative log-likelihood reduces to scaled MSE. This is an
+explicit observation-model assumption. But independently,
+
+$$
+\arg\min_a\mathbb E[(Y-a)^2\mid X=x]
+=
+\mathbb E[Y\mid X=x],
+$$
+
+whenever the expectation exists. MSE therefore elicits the conditional mean
+even when the residuals are not Gaussian. Similarly, MAE is Laplace NLL under
+one model but elicits a conditional median much more generally.
+
+Ask two separate questions:
+
+1. **Likelihood question:** under which probabilistic model is this loss an
+   NLL or divergence?
+2. **Elicitation question:** which statistic or decision does its population
+   minimizer recover without that model being literally true?
+
+Every objective still contains assumptions—about support, noise, costs,
+invariances, sampling, or teacher reliability—even when it does not specify a
+normalized density.
+
+## Why Discriminative versus Generative Is Secondary
+
+“Discriminative” and “generative” describe model factorization more naturally
+than they describe loss functions:
+
+$$
+\text{discriminative: }p_\theta(y\mid x),
 \qquad
-\mathcal L_{\mathrm{CE}}
-=
--\log p_y
-=
--z_y+\log\sum_k e^{z_k}.
+\text{generative: }p_\theta(x)\text{ or }p_\theta(x,y).
 $$
 
-Its logit gradient is especially interpretable:
+Cross-entropy demonstrates the limitation of using this as the primary loss
+taxonomy:
 
-$$
-\frac{\partial\mathcal L_{\mathrm{CE}}}{\partial z_j}
-=
-p_j-\mathbb 1[j=y].
-$$
-
-The target logit rises; competing logits fall in proportion to their predicted
-probability.
-
-#### Minimal stable implementation
-
-```{python}
-import torch
-import torch.nn.functional as F
-
-
-def cross_entropy_from_logits(logits, targets, reduction="mean"):
-    log_normalizer = torch.logsumexp(logits, dim=-1)
-    target_logits = logits.gather(
-        -1, targets.unsqueeze(-1)
-    ).squeeze(-1)
-    losses = log_normalizer - target_logits
-
-    if reduction == "none":
-        return losses
-    if reduction == "sum":
-        return losses.sum()
-    if reduction == "mean":
-        return losses.mean()
-    raise ValueError(f"unknown reduction: {reduction}")
-
-
-logits = torch.tensor([[1000.0, 1001.0, 999.0], [-2.0, 0.5, 3.0]])
-targets = torch.tensor([1, 2])
-torch.testing.assert_close(
-    cross_entropy_from_logits(logits, targets),
-    F.cross_entropy(logits, targets),
-)
-```
-
-### 3.2 Logistic regression and binary cross-entropy
-
-Logistic regression specifies a **linear log-odds model**:
-
-$$
-z_\theta(x)=w^Tx+b,
-\qquad
-p_\theta(y=1\mid x)=\sigma(z_\theta(x)).
-$$
-
-Because
-
-$$
-\log\frac{p_\theta(y=1\mid x)}
-{p_\theta(y=0\mid x)}
-=
-z_\theta(x),
-$$
-
-each coefficient is an additive effect on the log odds. Combining the
-Bernoulli observation model with this linear logit gives the per-example
-negative log-likelihood
-
-$$
-\mathcal L_{\text{logistic}}(w,b;x,y)
-=
--y\log\sigma(z)
--(1-y)\log[1-\sigma(z)],
-\qquad z=w^Tx+b.
-$$
-
-Thus **binary cross-entropy is the logistic-regression loss** when its logit is
-linear in the features. A neural binary classifier uses the same loss with a
-nonlinear logit $z=f_\theta(x)$.
-
-For labels $\widetilde y\in\{-1,+1\}$, the same objective has the compact form
-
-$$
-\mathcal L_{\text{logistic}}
-=
-\log\left(1+e^{-\widetilde y z}\right).
-$$
-
-The gradients expose the probabilistic residual:
-
-$$
-\frac{\partial\mathcal L}{\partial z}
-=
-\sigma(z)-y,
-\qquad
-\nabla_w\mathcal L
-=
-[\sigma(z)-y]x.
-$$
-
-For a linear logit, its Hessian is
-
-$$
-\nabla_w^2\mathcal L
-=
-\sigma(z)[1-\sigma(z)]xx^T
-\succeq 0.
-$$
-
-Therefore unregularized logistic NLL is convex in $(w,b)$, although it need not
-have a finite minimizer on perfectly separable data. L2 regularization makes the
-problem strongly convex when the design has the appropriate coverage.
-
-#### Stable BCE form
-
-For $y\in\{0,1\}$ and $p=\sigma(z)$,
-
-$$
-\mathcal L_{\mathrm{BCE}}
-=
--y\log p-(1-y)\log(1-p).
-$$
-
-The stable logits form is
-
-$$
-\mathcal L_{\mathrm{BCE}}(z,y)
-=
-\max(z,0)-yz+\log(1+e^{-|z|}),
-$$
-
-with derivative $\sigma(z)-y$.
-
-```{python}
-def binary_cross_entropy_with_logits(logits, targets, reduction="mean"):
-    targets = targets.to(logits.dtype)
-    losses = torch.logaddexp(torch.zeros_like(logits), logits) - targets * logits
-
-    if reduction == "none":
-        return losses
-    if reduction == "sum":
-        return losses.sum()
-    if reduction == "mean":
-        return losses.mean()
-    raise ValueError(f"unknown reduction: {reduction}")
-
-
-binary_logits = torch.tensor([-1000.0, -2.0, 0.0, 2.0, 1000.0])
-binary_targets = torch.tensor([0.0, 1.0, 1.0, 0.0, 1.0])
-torch.testing.assert_close(
-    binary_cross_entropy_with_logits(binary_logits, binary_targets),
-    F.binary_cross_entropy_with_logits(binary_logits, binary_targets),
-)
-```
-
-Use independent BCE logits for multilabel outcomes. Use softmax CE when exactly
-one class must occur. Independent BCE does not enforce probabilities summing to
-one.
-
-### 3.3 Label smoothing
-
-Replace a one-hot target by
-
-$$
-q_j
-=
-(1-\varepsilon)\mathbb 1[j=y]+\frac{\varepsilon}{C}
-$$
-
-and minimize $-\sum_jq_j\log p_j$. This regularizes extreme confidence but also
-changes the population target. It is a prior about target uncertainty, not a
-universal fix for mislabeled data.
-
-## 4. Class Imbalance, Cost, and Focal Loss
-
-Three problems are often conflated:
-
-| Problem | Appropriate intervention |
-|---|---|
-| unequal real-world error costs | cost-sensitive loss or decision threshold |
-| minority examples rarely sampled | resampling or importance weighting |
-| easy examples dominate total gradient | hard-example mining or focal modulation |
-
-Weighted BCE, for example,
-
-$$
-\mathcal L
-=
--w_+y\log p-w_-(1-y)\log(1-p),
-$$
-
-changes the risk being optimized. If the deployment population is unchanged,
-the resulting probabilities may need recalibration.
-
-[Focal loss](https://arxiv.org/abs/1708.02002) starts from cross-entropy and
-downweights already-correct examples. Define
-
-$$
-p_t=
-\begin{cases}
-p,&y=1,\\
-1-p,&y=0,
-\end{cases}
-$$
-
-then
-
-$$
-\mathcal L_{\mathrm{focal}}
-=
--\alpha_t(1-p_t)^\gamma\log p_t.
-$$
-
-At $\gamma=0$ it becomes weighted CE. For $\gamma>0$, the vast population of
-easy examples contributes less gradient. This helped dense detection where easy
-background anchors overwhelmed rare foreground examples. It can hurt
-probability calibration, so use it for gradient allocation—not merely because a
-dataset is imbalanced.
-
-```{python}
-def binary_focal_loss(logits, targets, gamma=2.0, alpha=None):
-    targets = targets.to(logits.dtype)
-    bce = F.binary_cross_entropy_with_logits(logits, targets, reduction="none")
-    p_t = torch.exp(-bce)
-    weights = (1.0 - p_t).pow(gamma)
-
-    if alpha is not None:
-        alpha_t = alpha * targets + (1.0 - alpha) * (1.0 - targets)
-        weights = weights * alpha_t
-
-    return (weights * bce).mean()
-```
-
-## 5. Margin Losses: Learn a Boundary, Not a Distribution
-
-If only the decision boundary matters, calibrated probabilities may be excess
-structure. For $y\in\{-1,+1\}$ and score $f_\theta(x)$, hinge loss is
-
-$$
-\mathcal L_{\mathrm{hinge}}
-=
-\max(0,1-yf_\theta(x)).
-$$
-
-Correct examples receive a gradient until they lie beyond margin one, then
-contribute zero. Cross-entropy continues increasing confidence. This is a choice
-between **separation geometry** and **probability estimation**.
-
-For multiclass scores, one structured hinge form is
-
-$$
-\mathcal L
-=
-\max_{j\ne y}
-\left[0,m+z_j-z_y\right].
-$$
-
-The margin $m$ defines how much score separation counts as sufficient; score
-scale and regularization determine what that statement means geometrically.
-
-## 6. Contrastive, Metric, and Ranking Losses
-
-Classification assigns examples to a fixed output vocabulary. Representation
-learning often needs a different abstraction: specify which observations should
-be close and which should be distinguishable. See
-[Representation Learning from First Principles](representation_learning.qmd)
-for the broader design problem.
-
-“Contrastive loss” is not one unique formula. It is a family of objectives built
-from **positive relations** and **negative relations**.
-
-### 6.1 Classical pairwise contrastive loss
-
-Let $r=1$ indicate that a pair $(x_i,x_j)$ is semantically similar, let $r=0$
-indicate a dissimilar pair, and define embedding distance
-
-$$
-D_{ij}
-=
-\lVert f_\theta(x_i)-f_\theta(x_j)\rVert_2.
-$$
-
-The classical pairwise contrastive loss is
-
-$$
-\mathcal L_{\mathrm{contrastive}}
-=
-rD_{ij}^2
-+(1-r)\left[\max(0,m-D_{ij})\right]^2.
-$$
-
-Positive pairs are pulled together. Negative pairs are pushed apart only until
-they reach margin $m$; spending capacity separating them further does not help
-this objective.
-
-::: {.callout-note}
-## Check the label convention
-
-Some sources use $y=0$ for similar pairs and $y=1$ for dissimilar pairs. The
-formula changes appearance but not meaning. Always define which value denotes a
-positive pair.
-:::
-
-```{python}
-def pairwise_contrastive_loss(
-    left_embeddings,
-    right_embeddings,
-    is_positive,
-    margin=1.0,
-):
-    """Classical contrastive loss; 1 means a semantically matching pair."""
-    distances = torch.linalg.vector_norm(
-        left_embeddings - right_embeddings,
-        dim=-1,
-    )
-    is_positive = is_positive.to(distances.dtype)
-    positive_loss = is_positive * distances.square()
-    negative_loss = (1.0 - is_positive) * F.relu(
-        margin - distances
-    ).square()
-    return (positive_loss + negative_loss).mean()
-
-
-left = torch.tensor([[0.0, 0.0], [0.0, 0.0]])
-well_arranged = torch.tensor([[0.1, 0.0], [2.0, 0.0]])
-badly_arranged = torch.tensor([[2.0, 0.0], [0.1, 0.0]])
-pair_types = torch.tensor([1.0, 0.0])
-
-assert pairwise_contrastive_loss(
-    left, well_arranged, pair_types
-) < pairwise_contrastive_loss(left, badly_arranged, pair_types)
-```
-
-### 6.2 Triplet loss
-
-A triplet directly compares a positive and negative relative to the same anchor:
-
-$$
-\mathcal L_{\mathrm{triplet}}
-=
-\max\left(
-0,
-d(e_a,e_p)-d(e_a,e_n)+m
-\right).
-$$
-
-It asks for a ranking constraint,
-
-$$
-d(e_a,e_p)+m\le d(e_a,e_n),
-$$
-
-rather than an absolute target distance. Pairwise contrastive loss considers one
-relation at a time; triplet loss compares two relations in the same example.
-
-### 6.3 InfoNCE: classify the positive among candidates
-
-For an anchor $z_i$, positive $z_i^+$, similarity function
-$\operatorname{sim}$, and temperature $\tau$, InfoNCE uses
-
-$$
-\mathcal L_i
-=
--\log
-\frac{
-\exp[\operatorname{sim}(z_i,z_i^+)/\tau]
-}{
-\sum_{j=1}^{B}
-\exp[\operatorname{sim}(z_i,z_j^+)/\tau]
-}.
-$$
-
-This is ordinary cross-entropy over a dynamically constructed classification
-problem: candidate $i$ is the target class and the other batch elements provide
-negatives. Temperature controls how strongly the loss focuses on the largest
-similarities.
-
-```{python}
-def info_nce_loss(anchors, positives, temperature=0.1):
-    anchors = F.normalize(anchors, dim=-1)
-    positives = F.normalize(positives, dim=-1)
-    logits = anchors @ positives.T / temperature
-    targets = torch.arange(logits.shape[0], device=logits.device)
-    return F.cross_entropy(logits, targets)
-
-
-torch.manual_seed(0)
-anchors = torch.randn(16, 32)
-matching_positives = anchors + 0.01 * torch.randn_like(anchors)
-wrong_positives = matching_positives.roll(shifts=1, dims=0)
-
-assert info_nce_loss(
-    anchors, matching_positives
-) < info_nce_loss(anchors, wrong_positives)
-```
-
-The formula assumes that nonmatching batch items are valid negatives. Larger
-batches provide more comparisons, but also increase the chance of **false
-negatives**—different observations that share the same semantics.
-
-### 6.4 Supervised contrastive loss
-
-If labels reveal multiple positives for anchor $i$, define
-
-$$
-P(i)=\{p\ne i:y_p=y_i\}.
-$$
-
-Supervised contrastive loss averages the log probability assigned to every
-positive:
-
-$$
-\mathcal L_i^{\mathrm{sup}}
-=
--\frac{1}{|P(i)|}
-\sum_{p\in P(i)}
-\log
-\frac{
-\exp[\operatorname{sim}(z_i,z_p)/\tau]
-}{
-\sum_{a\ne i}
-\exp[\operatorname{sim}(z_i,z_a)/\tau]
-}.
-$$
-
-Unlike ordinary class cross-entropy, it directly shapes within-batch embedding
-geometry. Its notion of equivalence is still only as good as the labels:
-same-class examples may contain meaningful substructure that the loss
-encourages the model to ignore.
-
-### 6.5 Ranking losses
-
-When supervision says “item $i$ should rank above item $j$,” predicting absolute
-labels solves a harder and possibly ill-posed problem. Use a pairwise
-abstraction:
-
-$$
-\mathcal L_{\mathrm{pairwise\ hinge}}
-=
-\max(0,m-s_i+s_j),
-$$
+| Use of cross-entropy | Target distribution | Role |
+|---|---|---|
+| image classification | labels conditioned on an image | discriminative prediction |
+| next-token prediction | next tokens conditioned on a prefix | generative density modeling |
+| knowledge distillation | teacher outputs conditioned on an input or state | teacher-supervised transfer |
 
-or the smooth BPR/logistic loss
+The algebra is nearly identical. What changes is the target, the sampled state,
+and the meaning of a successful optimum.
 
-$$
-\mathcal L_{\mathrm{BPR}}
-=
--\log\sigma(s_i-s_j).
-$$
-
-### Sampling is part of the loss
-
-Contrastive and ranking objectives are expectations over constructed tuples,
-not merely over individual observations. Therefore the positive- and
-negative-sampling distributions help define the population objective.
-
-- easy negatives may provide almost no gradient
-- false negatives teach an incorrect geometry
-- extremely hard negatives may be mislabeled or unstable
-- in-batch negatives couple the effective objective to batch composition
-
-Sampling should reflect which confusions matter at retrieval time. Report it as
-part of the loss definition rather than as an implementation detail.
-
-## 7. Regression Losses from Noise Models
-
-### 7.1 MSE and the conditional mean
-
-If
-
-$$
-Y\mid X=x\sim\mathcal N(\mu_\theta(x),\sigma^2)
-$$
-
-with fixed variance, NLL reduces to scaled squared error. More generally,
-
-$$
-\arg\min_f\mathbb E[(Y-f(X))^2\mid X=x]
-=
-\mathbb E[Y\mid X=x].
-$$
-
-MSE targets the conditional mean. Its residual gradient grows linearly, so
-outliers can dominate.
-
-### 7.2 MAE and the conditional median
-
-A Laplace likelihood produces
-
-$$
-\mathcal L_{\mathrm{MAE}}=|y-\widehat y|.
-$$
-
-MAE targets a conditional median and has bounded residual-gradient magnitude.
-It is robust to large errors but nonsmooth at zero.
-
-### 7.3 Huber loss
+## A Better Map of the Loss Notes
 
-For residual $r=y-\widehat y$,
+### Prediction and decision objectives
 
-$$
-\mathcal L_\delta(r)
-=
-\begin{cases}
-\frac12r^2,&|r|\le\delta,\\
-\delta\left(|r|-\frac12\delta\right),&|r|>\delta.
-\end{cases}
-$$
-
-Huber is quadratic for small residuals and linear in the tails. The threshold
-$\delta$ states what residual scale counts as an outlier, so it must be chosen
-relative to target normalization.
-
-### 7.4 Heteroscedastic uncertainty
-
-If noise varies with $x$, predict mean $\mu_\theta(x)$ and log variance
-$s_\theta(x)=\log\sigma_\theta^2(x)$:
-
-$$
-\mathcal L
-=
-\frac12
-\left[
-e^{-s_\theta(x)}(y-\mu_\theta(x))^2+s_\theta(x)
-\right].
-$$
-
-The first term discounts uncertain examples; the second prevents infinite
-variance. A seemingly clever learned weight follows directly from a normalized
-Gaussian likelihood.
-
-### 7.5 Quantiles and counts
-
-Conditional quantile $q_\tau(x)$ is elicited by pinball loss
-
-$$
-\rho_\tau(r)
-=
-\begin{cases}
-\tau r,&r\ge0,\\
-(\tau-1)r,&r<0,
-\end{cases}
-\qquad r=y-q_\tau(x).
-$$
-
-For nonnegative counts, a Poisson model with log-rate $\eta$ gives
-
-$$
-\mathcal L_{\mathrm{Poisson}}
-=
-e^\eta-y\eta+\log(y!).
-$$
-
-Unlike Gaussian regression, the likelihood respects count support and ties
-variance to the mean. If real counts are overdispersed, a negative-binomial
-model may be more appropriate.
-
-## 8. Numerical Stability and Reduction
-
-Pass raw logits to `CrossEntropyLoss` and `BCEWithLogitsLoss`. Do not materialize
-softmax/sigmoid probabilities and then take logs.
-
-For CE, use
-
-$$
-\log\sum_k e^{z_k}
-=
-m+\log\sum_k e^{z_k-m},
-\qquad m=\max_k z_k.
-$$
+Use [Prediction and Decision Losses](prediction_decision_losses.qmd) when the
+goal is a label, point estimate, boundary, margin, or ranking. It covers:
 
-Also inspect the reduction:
+- proper scoring rules and calibrated classification
+- logistic regression, CE, BCE, label smoothing, and focal loss
+- margin and ranking surrogates
+- mean, median, robust, heteroscedastic, quantile, and count regression
 
-- mean over examples versus sum
-- mean over valid labels versus all padded positions
-- mean per group versus mean over a population with unequal group size
-- interaction between sample weights and the denominator
+### Distribution-learning objectives
 
-The denominator silently defines which population receives equal importance.
+Use [Distribution Learning Losses](generative_losses.qmd) when the model must
+represent or sample from a high-dimensional distribution and direct likelihood
+is exact, latent, or unavailable. It covers:
 
-## 9. Design Examples
+- exact autoregressive likelihood and next-token prediction
+- KL geometry
+- variational likelihood and the VAE ELBO
+- sample-based adversarial discrepancies
+- diffusion denoising and score-learning abstractions
 
-### Rare-event classification
+### Representation objectives
 
-Start with Bernoulli NLL. If false negatives have higher decision cost, adjust
-the loss or threshold using that cost. If easy negatives dominate gradient
-compute, consider focal loss. If probabilities drive downstream decisions,
-measure and repair calibration.
+Use [Representation Learning from First Principles](representation_learning.qmd)
+for contrastive, metric, reconstruction, redundancy-reduction, and predictive
+objectives. These losses specify which information and invariances a
+representation should preserve rather than directly specifying a final
+decision.
 
-### Regression with corrupt targets
+### Teacher-supervised objectives
 
-Inspect residual tails. MSE is efficient for clean, light-tailed noise; Huber or
-Laplace NLL is more robust. If uncertainty varies by example, predict a
-distribution rather than only a robust point.
+Use [Distillation: Learning from a Teacher](distillation.qmd) when supervision
+comes from another model. Distillation can train a classifier, generator,
+representation, or policy, so it is a cross-cutting supervision mechanism—not
+a subtype of generative modeling.
 
-### Retrieval
+## A Loss-Design Procedure
 
-If evaluation depends only on order, a pairwise or contrastive abstraction is
-more direct than absolute regression. Design negative sampling around realistic
-retrieval confusions and audit for false negatives.
+Given a new problem:
 
-## 10. Common Failure Modes
+1. Write the real decision, generation, or representation goal.
+2. Decide whether you need a full distribution or only a functional/decision.
+3. State what observations and supervisory signals are actually available.
+4. Choose a proper score, surrogate, divergence, bound, critic, or utility whose
+   optimum is aligned with that target.
+5. Write the expectation distribution and reduction explicitly.
+6. Check support, calibration, robustness, and train–deployment mismatch.
+7. Only then choose a numerically stable parameterization and implementation.
 
-| Failure | Diagnostic question |
-|---|---|
-| optimizing the wrong population | What sampling and weights define this expectation? |
-| surrogate mismatch | Is this loss calibrated/consistent for the target decision? |
-| shortcut learning | Can an unintended feature satisfy the target? |
-| gradient domination | Which class, task, or group supplies most gradient norm? |
-| bad noise model | Does the likelihood have the right support and tail behavior? |
-| reduction bug | What exactly is divided by what? |
-| numerical failure | Can the objective be computed directly in logits or log space? |
+Two objectives may have the same optimum yet very different gradients. A
+statistically correct objective can also fail when its estimator has high
+variance, its sampling distribution misses important states, or its
+parameterization makes optimization difficult.
 
 ## Interview Questions
 
-- Derive CE, BCE, MSE, MAE, and Poisson loss from likelihood assumptions.
-- Derive logistic loss from a Bernoulli model with linear log odds.
-- Why is linear logistic regression convex, and what happens on separable data?
-- Why is log loss a proper scoring rule?
-- When should imbalance change the loss, sampling, or only the threshold?
-- How does focal loss allocate gradients, and why can it affect calibration?
-- Compare cross-entropy and hinge loss.
-- Compare pairwise contrastive loss, triplet loss, and InfoNCE.
-- In what sense is InfoNCE a cross-entropy classification problem?
-- Why is negative sampling part of a contrastive or ranking objective?
-- Which statistics do MSE, MAE, and quantile loss estimate?
-- Derive heteroscedastic Gaussian NLL and explain both terms.
-- How can reduction change the effective data distribution?
-
-## Exercises
-
-- [ ] Plot CE, focal, and hinge losses and their logit derivatives.
-- [ ] Fit logistic regression using the stable BCE implementation and compare it
-  with a library implementation.
-- [ ] Compare weighted BCE and threshold adjustment on an imbalanced dataset.
-- [ ] Compare pairwise contrastive, triplet, and InfoNCE losses using the same
-  synthetic embedding problem.
-- [ ] Fit MSE, MAE, Huber, and heteroscedastic models to contaminated data.
-- [ ] Compare random, hard, and false-negative sampling for a ranking loss.
-- [ ] Audit a weighted loss by computing each example's effective coefficient.
-
-## Primary References
-
-- [Dimensionality Reduction by Learning an Invariant Mapping](https://www.cs.toronto.edu/~hinton/csc2535/readings/hadsell-chopra-lecun-06.pdf)
-- [Representation Learning with Contrastive Predictive Coding](https://arxiv.org/abs/1807.03748)
-- [Supervised Contrastive Learning](https://arxiv.org/abs/2004.11362)
-- [Focal Loss for Dense Object Detection](https://arxiv.org/abs/1708.02002)
-- [Support Vector Networks](https://link.springer.com/article/10.1007/BF00994018)
-- [BPR: Bayesian Personalized Ranking from Implicit Feedback](https://arxiv.org/abs/1205.2618)
+- Why does discriminative versus generative classify models better than losses?
+- Give three interpretations of cross-entropy with the same algebra.
+- Does using MSE require Gaussian data? Separate its likelihood and elicitation
+  interpretations.
+- When is learning a full conditional distribution unnecessary?
+- Why are the supervision source and expectation distribution separate from the
+  discrepancy formula?
+- Is distillation a loss, a model family, or a source of supervision?
+- Can two losses share a population optimum but train very differently?

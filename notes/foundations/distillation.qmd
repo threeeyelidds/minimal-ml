@@ -1,0 +1,323 @@
+---
+title: "Distillation: Learning from a Teacher"
+---
+
+## Distillation Is a Source of Supervision
+
+Let $q$ denote a teacher and $p_\theta$ a student. Distillation transfers
+information exposed by the teacher that is not contained in a single hard
+label:
+
+- uncertainty across classes or tokens
+- similarities between alternatives
+- intermediate representations
+- generated solutions or trajectories
+- behavior on states selected by either teacher or student
+
+The defining property is not one particular formula. It is that the training
+target comes from another model. A distilled student may be discriminative,
+generative, representational, or policy-like.
+
+Three choices define a distillation objective:
+
+1. **What is matched?** Outputs, logits, features, relations, sequences, or
+   behavior.
+2. **Where is it matched?** Data inputs, teacher-generated inputs, or
+   student-generated/on-policy states.
+3. **How is it matched?** Forward KL, reverse KL, MSE, cosine distance,
+   sequence NLL, or an RL-style objective.
+
+## Output Distillation: Soft Targets
+
+For class or token logits $z^T$ and $z^S$, temperature $\tau$ defines
+
+$$
+q_\tau(i\mid x)
+=
+\operatorname{softmax}\left(\frac{z_i^T}{\tau}\right),
+\qquad
+p_{\theta,\tau}(i\mid x)
+=
+\operatorname{softmax}\left(\frac{z_i^S}{\tau}\right).
+$$
+
+Classical output distillation minimizes forward KL:
+
+$$
+\mathcal L_{\mathrm{KD}}
+=
+\tau^2
+\operatorname{KL}
+\left(q_\tau(\cdot\mid x)\|p_{\theta,\tau}(\cdot\mid x)\right).
+$$
+
+The teacher supplies the expectation, so missing a teacher-supported class is
+costly. The entropy of $q_\tau$ is constant with respect to the student;
+therefore this is equivalent to soft-label cross-entropy up to a constant.
+
+Larger $\tau$ reveals relative preferences among non-maximum classes. Dividing
+logits by $\tau$ also shrinks their gradients, so the conventional $\tau^2$
+factor approximately preserves gradient scale when comparing temperatures.
+
+A common supervised mixture is
+
+$$
+\mathcal L
+=
+(1-\lambda)\operatorname{CE}(y,p_{\theta,1})
++
+\lambda\tau^2
+\operatorname{KL}(q_\tau\|p_{\theta,\tau}).
+$$
+
+The hard label anchors the student to observed outcomes; the soft target
+transfers the teacher's richer geometry. A teacher can also be wrong, biased,
+or miscalibrated, so the mixture is not automatically better than either term.
+
+### Minimal implementation
+
+```{python}
+import torch
+import torch.nn.functional as F
+
+
+def forward_kl_distillation(student_logits, teacher_logits, temperature=2.0):
+    """Teacher-to-student KL, averaged over the batch."""
+    log_p_student = F.log_softmax(student_logits / temperature, dim=-1)
+    p_teacher = F.softmax(teacher_logits / temperature, dim=-1)
+    return (
+        F.kl_div(
+            log_p_student,
+            p_teacher,
+            reduction="batchmean",
+        )
+        * temperature**2
+    )
+
+
+torch.manual_seed(0)
+teacher_logits = torch.randn(8, 10)
+close_student = teacher_logits + 0.01 * torch.randn_like(teacher_logits)
+far_student = torch.randn_like(teacher_logits)
+assert forward_kl_distillation(
+    close_student, teacher_logits
+) < forward_kl_distillation(far_student, teacher_logits)
+```
+
+Detach teacher outputs unless the teacher is intentionally co-trained. Otherwise
+the objective may change the target while the student chases it.
+
+## KL Direction and State Distribution Are Independent
+
+Two design axes are often conflated.
+
+### Divergence direction
+
+Forward KL uses teacher probability as its local weighting:
+
+$$
+\operatorname{KL}(q\|p_\theta)
+=
+\mathbb E_{a\sim q}
+\left[\log q(a)-\log p_\theta(a)\right].
+$$
+
+It encourages the student to cover alternatives supported by the teacher.
+Reverse KL uses student probability as its local weighting:
+
+$$
+\operatorname{KL}(p_\theta\|q)
+=
+\mathbb E_{a\sim p_\theta}
+\left[\log p_\theta(a)-\log q(a)\right].
+$$
+
+It strongly discourages choices the student makes that the teacher considers
+unlikely, but can be mode-seeking. These are tendencies; capacity, support,
+temperature, and optimization also matter.
+
+### State or input distribution
+
+The context $h$ at which the distributions are compared can come from:
+
+| State source | What it teaches | Main risk |
+|---|---|---|
+| observed/data inputs | behavior near the training distribution | misses student-induced errors |
+| teacher trajectories | states a strong policy visits | student may not reach them |
+| student trajectories | recovery on deployment-like states | teacher may be unreliable off distribution |
+| mixture or replay | broader coverage | weighting becomes another design choice |
+
+One can use forward or reverse KL under any of these state distributions. “Use
+reverse KL” does not by itself make an objective on-policy.
+
+## On-Policy Distillation for Autoregressive Models
+
+Teacher forcing trains on data prefixes, whereas generation visits prefixes
+created by the student. On-policy distillation lets the student generate a
+prefix $h_t$ and asks the teacher to evaluate that encountered state.
+
+A common local objective is
+
+$$
+\mathcal L_{\mathrm{OPD}}(h_t)
+=
+\operatorname{KL}
+\left(
+p_\theta(\cdot\mid h_t)
+\middle\|
+q(\cdot\mid h_t)
+\right).
+$$
+
+For a sampled action $a_t\sim p_\theta(\cdot\mid h_t)$,
+
+$$
+r_t
+=
+\log q(a_t\mid h_t)
+-
+\log p_\theta(a_t\mid h_t)
+$$
+
+can act as a dense token-level reward. Full-vocabulary KL is available when
+teacher logits can be queried; sampled implementations require care because
+the sampling distribution itself depends on $\theta$.
+
+On-policy training addresses **state-distribution mismatch**. Reverse KL chooses
+the **local discrepancy geometry**. They solve different problems.
+
+Potential failures include:
+
+- the student reaches prefixes outside the teacher's reliable region
+- reverse KL removes useful diversity
+- teacher querying dominates training cost
+- sampled gradient estimates have high variance
+- locally imitating next-token probabilities does not preserve sequence-level
+  behavior
+
+[On-Policy Distillation](https://arxiv.org/abs/2306.13649) develops the state-
+distribution view. [MiniLLM](https://arxiv.org/abs/2306.08543) studies reverse-KL
+distillation for generative language models. More recent trust-region methods
+such as [TrOPD](https://arxiv.org/abs/2606.01249) restrict unreliable updates and
+can mix forward-KL guidance into uncertain regions.
+
+## Sequence Distillation
+
+When teacher logits are unavailable or expensive to store, generate teacher
+outputs $\widetilde y\sim q(\cdot\mid x)$ and train by ordinary NLL:
+
+$$
+\mathcal L_{\mathrm{seq}}
+=
+-\log p_\theta(\widetilde y\mid x).
+$$
+
+This converts the teacher into a data generator. It is simple and works across
+different APIs or vocabularies, but a sampled sequence exposes far less
+information than the full teacher distribution. Decoding also changes the
+target: greedy outputs reduce diversity, while sampled outputs introduce
+variance and possible errors.
+
+For reasoning models, a teacher can supply final answers, rationales, tool-use
+traces, or verified trajectories. These are different supervisory objects.
+Imitating a rationale's tokens does not prove that the student has learned the
+same internal algorithm, and incorrect rationales can transfer persuasive
+failure modes.
+
+## Feature and Relational Distillation
+
+Output matching is not the only transfer channel.
+
+### Feature matching
+
+Given teacher and student representations $h^T(x)$ and $h^S(x)$,
+
+$$
+\mathcal L_{\mathrm{feature}}
+=
+\left\|P_\phi(h^S(x))-h^T(x)\right\|_2^2,
+$$
+
+where $P_\phi$ aligns dimensions. Cosine distance or attention-map matching may
+be used instead. Layer alignment is an architectural hypothesis, not a neutral
+implementation detail: a smaller student may organize computation differently.
+
+### Relational matching
+
+Rather than matching coordinates, match relations within a batch:
+
+$$
+\mathcal L_{\mathrm{relation}}
+=
+\sum_{i,j}
+\left(
+\operatorname{sim}(h_i^S,h_j^S)
+-
+\operatorname{sim}(h_i^T,h_j^T)
+\right)^2.
+$$
+
+This preserves teacher geometry while allowing rotations or different feature
+bases. It connects distillation to
+[Representation Learning](representation_learning.qmd).
+
+Self-distillation methods such as BYOL- and DINO-style training use a momentum
+or stop-gradient teacher to create a stable target. Their main challenge is not
+compression but preventing representational collapse.
+
+## Choosing the Distillation Objective
+
+| Constraint or goal | Natural starting point |
+|---|---|
+| same label/token space and teacher logits available | temperature-scaled forward KL |
+| generation errors compound on student prefixes | on-policy state collection |
+| only teacher API outputs available | sequence distillation |
+| output vocabularies differ | sequence-, feature-, or representation-level transfer |
+| internal geometry matters | feature or relational matching |
+| teacher has multiple useful modes | prefer covering objectives and audit diversity |
+| deployment behavior matters more than token agreement | trajectory or policy distillation |
+
+## Common Failure Modes
+
+| Failure | First-principles diagnosis |
+|---|---|
+| student copies teacher errors | the teacher was treated as ground truth |
+| no gain over hard labels | temperature or teacher distribution exposes little extra information |
+| capacity gap | the student cannot represent the teacher target |
+| mode loss | divergence, decoding, or synthetic data collapses alternatives |
+| exposure bias | matching occurs only on data/teacher states |
+| unstable on-policy learning | student visits states where teacher guidance or estimation is unreliable |
+| feature conflict | forced layer correspondence is inappropriate |
+| hidden cost | teacher inference or stored logits erase the intended efficiency gain |
+
+## Interview Questions
+
+- Why is distillation a supervision mechanism rather than one loss formula?
+- Derive why forward KL and soft-label cross-entropy have the same student
+  gradient.
+- Why is the $\tau^2$ factor commonly used in logit distillation?
+- Separate KL direction from the distribution over prefixes or inputs.
+- Why might reverse KL improve generation while reducing diversity?
+- Compare logit, sequence, feature, relational, and policy distillation.
+- When can sequence distillation work across different tokenizers?
+- How can a self-distillation teacher avoid becoming a moving, collapsing
+  target?
+
+## Exercises
+
+- [ ] Implement forward- and reverse-KL distillation and compare their fits to a
+  multimodal categorical teacher.
+- [ ] Plot teacher soft targets and student gradients across temperatures.
+- [ ] Compare hard-label, soft-label, and mixed objectives under teacher noise.
+- [ ] Compare data-prefix and student-prefix distillation for a small sequence
+  model.
+- [ ] Match representations by coordinates and by pairwise similarities, then
+  test invariance to rotation.
+
+## Primary References
+
+- [Distilling the Knowledge in a Neural Network](https://arxiv.org/abs/1503.02531)
+- [On-Policy Distillation of Language Models](https://arxiv.org/abs/2306.13649)
+- [MiniLLM: Knowledge Distillation of Large Language Models](https://arxiv.org/abs/2306.08543)
+- [Trust Region On-Policy Distillation](https://arxiv.org/abs/2606.01249)
+

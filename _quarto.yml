@@ -20,6 +20,9 @@ format:
     toc: true
     code-fold: false
     code-copy: true
+    include-in-header:
+      text: |
+        <meta name="google-site-verification" content="Ztjr25pGaioeZP-mkoIn_MkNmmsFXWcU6I6W2tEPli0">
     theme: cosmo
     css:
       - styles.css

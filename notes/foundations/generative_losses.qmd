@@ -1,8 +1,8 @@
 ---
-title: "Generative Losses from First Principles"
+title: "Distribution Learning Losses"
 ---
 
-## 1. Why Generative Losses Need Clever Abstractions
+## 1. Why Distribution Learning Needs Clever Abstractions
 
 A generative model tries to represent a distribution over high-dimensional
 objects:
@@ -18,13 +18,15 @@ generative losses arise by changing the problem into something observable:
 
 - factor a sequence into next-token conditionals
 - lower-bound an intractable latent-variable likelihood
-- compare teacher and student distributions with a chosen KL direction
 - learn a discriminator when only samples are available
 - corrupt clean data and train a denoiser
 
 The loss is therefore inseparable from the model architecture and sampling
-procedure. For classification, regression, focal, margin, and ranking losses,
-see [Discriminative Losses from First Principles](losses.qmd).
+procedure. For the overall taxonomy, see
+[Losses from First Principles](losses.qmd). For classification, regression,
+focal, margin, and ranking losses, see
+[Prediction and Decision Losses](prediction_decision_losses.qmd). Distillation
+is treated separately in [Distillation: Learning from a Teacher](distillation.qmd).
 
 ### A generative-loss design checklist
 
@@ -129,63 +131,7 @@ NTP estimates text likelihood; it does not directly optimize factuality,
 semantic equivalence, pass@$k$, or user preference. Post-training objectives
 exist because these sequence-level goals are not identical to token likelihood.
 
-## 4. Reverse KL in On-Policy Distillation
-
-Let $q$ be a teacher and $p_\theta$ a student. Standard off-policy distillation
-often minimizes
-
-$$
-\underbrace{\mathrm{KL}(q\|p_\theta)}_{\text{forward KL}}
-$$
-
-on teacher/data prefixes. Forward KL asks the student to cover probability mass
-assigned by the teacher.
-
-In [on-policy distillation](https://arxiv.org/abs/2306.13649) (OPD), the student
-generates prefixes $h_t$ and the teacher evaluates what the student encounters.
-A common local objective is reverse KL:
-
-$$
-\mathcal L_{\mathrm{OPD}}(h_t)
-=
-\mathrm{KL}
-\left(
-p_\theta(\cdot\mid h_t)
-\,
-\middle\|\,
-q(\cdot\mid h_t)
-\right).
-$$
-
-For $a_t\sim p_\theta(\cdot\mid h_t)$,
-
-$$
-r_t
-=
-\log q(a_t\mid h_t)
--
-\log p_\theta(a_t\mid h_t)
-$$
-
-acts like a dense token-level reward. The full-vocabulary KL can be computed
-when teacher logits are available; sampled implementations use an RL-style
-policy-gradient estimator.
-
-Two independent design choices are easy to conflate:
-
-1. **On-policy state distribution:** prefixes come from the student, reducing
-   train–inference mismatch.
-2. **Reverse-KL token geometry:** student probability weights the local mismatch,
-   discouraging student modes the teacher considers unlikely.
-
-Reverse KL can be mode seeking, lose diversity, or become unstable when the
-teacher is uncertain or the student reaches prefixes far outside reliable
-teacher behavior. [TrOPD](https://arxiv.org/abs/2606.01249) uses trust regions
-and forward-KL guidance in unreliable regions. The right lesson is not that one
-KL direction always wins, but that state distribution, support, and divergence
-geometry must be designed together.
-
-## 5. Latent Variables: VAE and the ELBO
+## 4. Latent Variables: VAE and the ELBO
 
 A latent-variable model defines
 
@@ -280,7 +226,7 @@ which moves randomness outside the differentiable path. If a strong decoder can
 model $x$ without $z$, it may choose $q_\phi(z\mid x)\approx p(z)$ and drive the
 KL toward zero: posterior collapse.
 
-## 6. GANs: Learn a Discrepancy from Samples
+## 5. GANs: Learn a Discrepancy from Samples
 
 If real density is unavailable but real samples are available, learn a critic.
 The original GAN game is
@@ -319,7 +265,7 @@ oscillation, critic overfitting, and sensitivity to relative learning rates are
 properties of the coupled dynamics. Hinge GANs, Wasserstein objectives, and
 gradient penalties alter those dynamics or the discrepancy being estimated.
 
-## 7. Diffusion: Turn Density Learning into Denoising
+## 6. Diffusion: Turn Density Learning into Denoising
 
 Define a known forward corruption process. A common closed form is
 
@@ -364,12 +310,11 @@ though it changes the likelihood objective. The statistical derivation tells us
 what is being approximated; empirical optimization tells us whether that
 particular weighting trains well.
 
-## 8. Comparing the Main Abstractions
+## 7. Comparing the Main Abstractions
 
 | Method | Observable training signal | Tractable abstraction | Main mismatch |
 |---|---|---|---|
 | NTP | exact next tokens | factorized likelihood | data prefixes versus model prefixes; token loss versus sequence utility |
-| OPD | teacher scores on student trajectories | reverse-KL dense reward | teacher reliability and mode loss on student states |
 | VAE | data and encoder-sampled latent | variational likelihood bound | bound looseness and latent collapse |
 | GAN | real and generated samples | learned discriminator discrepancy | equilibrium theory versus unstable game dynamics |
 | Diffusion | clean data and synthetic noise | denoising/score estimation | likelihood-derived versus perceptual weighting |
@@ -377,7 +322,7 @@ particular weighting trains well.
 No universal “generation loss” exists. Each method makes a different
 intractable object observable.
 
-## 9. Loss Weighting Is Part of the Model
+## 8. Loss Weighting Is Part of the Model
 
 Generative objectives often have the form
 
@@ -397,25 +342,22 @@ Examples:
 - token averaging gives long documents more total weight
 - KL annealing changes the VAE rate–distortion path
 - diffusion timestep sampling changes which noise scales dominate
-- OPD rollout policy changes which prefixes receive teacher supervision
 - GAN update ratios change the game dynamics
 
 Always log components separately. A total scalar can improve while one
 component collapses or dominates.
 
-## 10. Numerical and Estimation Stability
+## 9. Numerical and Estimation Stability
 
 - Compute token NLL with `log_softmax`/cross-entropy on logits.
 - Keep KL calculations in log space when probabilities are small.
-- For sampled reverse KL, distinguish an unbiased integrand estimate from a
-  correct gradient estimator; sampling depends on student parameters.
 - Parameterize positive variances through log variance or softplus.
 - In VAEs, monitor reconstruction NLL and KL per latent dimension.
 - In diffusion, record loss by timestep/SNR rather than only the average.
 - In GANs, monitor both players and generated diversity; discriminator accuracy
   alone is not progress.
 
-## 11. Common Failure Modes
+## 10. Common Failure Modes
 
 | Failure | First-principles diagnosis |
 |---|---|
@@ -423,7 +365,6 @@ component collapses or dominates.
 | mode collapse | objective/dynamics reward a narrow generated support |
 | posterior collapse | decoder can ignore the latent while satisfying ELBO |
 | blurry VAE samples | likelihood and latent bottleneck reward conditional averaging |
-| unstable OPD | reverse-KL estimator is applied where teacher/student support differs |
 | poor diffusion detail | parameterization or timestep weighting underserves relevant SNRs |
 | misleading total loss | reduction hides token, timestep, or component imbalance |
 | likelihood–quality gap | statistical density assigns value differently from perception/task utility |
@@ -434,8 +375,6 @@ component collapses or dominates.
 - Explain KL direction by identifying which distribution supplies the
   expectation.
 - Why is NTP repeated classification and also exact sequence likelihood?
-- Separate exposure bias from KL direction in OPD.
-- Why does OPD commonly use reverse KL on student-generated prefixes?
 - Derive the ELBO and explain both VAE terms.
 - Why is VAE reconstruction loss determined by decoder likelihood?
 - How can posterior collapse be an optimum rather than an implementation bug?
@@ -451,8 +390,6 @@ component collapses or dominates.
 - [ ] Implement token NTP with correct prompt/padding masks and compare token-
   versus sequence-level reduction.
 - [ ] Derive diagonal-Gaussian VAE KL in closed form.
-- [ ] Implement full-vocabulary reverse-KL OPD and a sampled policy-gradient
-  estimator.
 - [ ] Derive the diffusion noise target from the forward process and plot loss
   by signal-to-noise ratio.
 - [ ] Compare saturating and non-saturating GAN generator gradients.
@@ -462,6 +399,3 @@ component collapses or dominates.
 - [Auto-Encoding Variational Bayes](https://arxiv.org/abs/1312.6114)
 - [Generative Adversarial Nets](https://arxiv.org/abs/1406.2661)
 - [Denoising Diffusion Probabilistic Models](https://arxiv.org/abs/2006.11239)
-- [On-Policy Distillation of Language Models](https://arxiv.org/abs/2306.13649)
-- [MiniLLM: Knowledge Distillation of Large Language Models](https://arxiv.org/abs/2306.08543)
-- [Trust Region On-Policy Distillation](https://arxiv.org/abs/2606.01249)
