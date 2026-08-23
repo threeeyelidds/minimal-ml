@@ -11,8 +11,8 @@ website:
         text: Home
       - href: notes/index.qmd
         text: Notes
-      - href: posts/index.qmd
-        text: Blog
+      - href: essays/index.qmd
+        text: Essays
   search: true
 
 format:

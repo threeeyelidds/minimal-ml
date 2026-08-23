@@ -1,0 +1,11 @@
+---
+title: "Essays"
+listing:
+  contents: "*.qmd"
+  sort: "date desc"
+  type: default
+  fields: [date, title, subtitle, author]
+---
+
+Non-technical thought experiments about intelligence, economics, society, and
+the futures they might produce.

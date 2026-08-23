@@ -20,7 +20,7 @@ title: "Notes"
 
 ## Advanced
 
-- [Advanced Attention Techniques](advanced/advanced_attention.qmd)
+- [Attention Techniques in Modern LLMs](advanced/advanced_attention.qmd)
 - [Linear Attention](advanced/linear_attention.qmd)
 - [From Test-Time Training to Continual Intelligence](advanced/continual_intelligence_ttt.qmd)
 
@@ -33,7 +33,8 @@ title: "Notes"
 ## Coming next
 
 - post-train
-- recommender as a decision system
+- modern recommender as a decision system
 - density estimation, from energy-based models to flow matching
 - causality and counterfactuals
+- some relevant ML theories
 
