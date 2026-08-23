@@ -9,6 +9,11 @@ permutes the outputs in the same way. The attention score $q_i^T k_j$ contains
 content similarity, but it does not inherently say whether token $j$ comes
 before or after token $i$, or how far apart they are.
 
+This statement needs one qualification: a **causal mask is itself tied to
+sequence order**. Although it does not attach an explicit coordinate to a token,
+it gives different positions different visible prefixes. This asymmetry is what
+makes NoPE possible in decoder-only Transformers.
+
 Position information can be introduced by:
 
 - adding a position-dependent vector to each token representation
@@ -17,6 +22,322 @@ Position information can be introduced by:
 
 > **Learning prompt:** Precisely distinguish permutation equivariance from
 > permutation invariance. Which one describes self-attention?
+
+## NoPE: No Explicit Positional Encoding
+
+**NoPE** removes the explicit positional mechanism entirely:
+
+$$
+x_i=E_{\text{token}}[w_i],
+\qquad
+S_{ij}=\frac{q_i^T k_j}{\sqrt{d_h}}.
+$$
+
+There is no additive position embedding, relative-position bias, or RoPE
+rotation. A decoder still applies its causal mask:
+
+$$
+\widetilde S_{ij}
+=
+\begin{cases}
+S_{ij}, & j\le i,\\
+-\infty, & j>i.
+\end{cases}
+$$
+
+Thus the visible set at position $i$ is the prefix
+$\{1,\ldots,i\}$. Position is not supplied as a feature; it can emerge from the
+structure of the computation.
+
+### How can order emerge from only a causal mask?
+
+At layer $\ell$, position $i$ aggregates representations only from its prefix:
+
+$$
+h_i^{(\ell+1)}
+=
+F\!\left(
+h_i^{(\ell)},
+\left\{h_j^{(\ell)}:j\le i\right\}
+\right).
+$$
+
+Each earlier representation already summarizes a **different nested prefix**.
+Consequently, a multi-layer model can distinguish orders that one content-only
+attention layer cannot.
+
+Consider `A B C` and `B A C`. At `C`, a first layer sees the same multiset
+`{A, B, C}` in either sequence, so its direct content aggregation can be the
+same. But the earlier states differ:
+
+```text
+A B C:  h_A sees {A};    h_B sees {A, B}
+B A C:  h_B sees {B};    h_A sees {B, A}
+```
+
+At the next layer, `C` attends to these already contextualized states and can
+distinguish the two orders. This is why the depth qualification matters: causal
+connectivity can carry order through the network even though the token
+embeddings contain no position.
+
+The model may also infer approximate absolute position from signals correlated
+with prefix length, such as its number of predecessors, special anchor tokens,
+or changes in attention-output statistics. Probing experiments find recoverable
+absolute-position information in trained NoPE models. However, the causal mask
+does not hand the model an exact integer $i$; learning a useful coordinate is an
+emergent behavior, not a guaranteed primitive.
+
+### What the causal mask does and does not provide
+
+| Property | Causal NoPE |
+|---|---|
+| Which tokens are in the past? | supplied by the triangular connectivity pattern |
+| Exact absolute index $i$ | not supplied explicitly; may be inferred |
+| Exact distance $i-j$ | not supplied explicitly; may be represented by deeper computation |
+| Order sensitivity | possible in multi-layer autoregressive Transformers |
+| Bidirectional encoder order | not recovered from a full, symmetric attention mask alone |
+| Extra position parameters or rotations | none |
+
+So the answer to “does causal masking fully encode position?” is **no**. It
+breaks permutation symmetry and exposes an ordered prefix structure from which
+the model can learn position. That is weaker and less direct than providing an
+absolute or relative coordinate.
+
+### Minimal implementation
+
+NoPE is implemented mostly by omission: do not add a position table and do not
+transform $Q$ or $K$.
+
+```python
+import torch
+import torch.nn.functional as F
+
+
+def nope_attention(q: torch.Tensor,
+                   k: torch.Tensor,
+                   v: torch.Tensor) -> torch.Tensor:
+    """Causal NoPE attention for q, k, v shaped (B, H, T, D)."""
+    return F.scaled_dot_product_attention(
+        q, k, v,
+        attn_mask=None,
+        is_causal=True,
+    )
+```
+
+KV caching still works. Cached keys need no position-dependent rotation, but the
+harness or attention kernel must still know which cached tokens precede the new
+query so it can enforce causality.
+
+### Why use or avoid NoPE?
+
+| Potential advantage | Potential limitation |
+|---|---|
+| no position parameters or rotation cost | weaker positional inductive bias |
+| no learned position table with a fixed maximum index | training must discover useful order and distance features |
+| no RoPE frequencies that move out of their training regime | exact position-sensitive tasks may be harder |
+| strong length generalization on some reasoning tasks | results are architecture- and task-dependent |
+| especially natural for causal decoders | not a direct solution for bidirectional attention |
+
+[Haviv et al. (2022)](https://aclanthology.org/2022.findings-emnlp.99/)
+found that causal language models without explicit positional encodings can be
+competitive and develop probe-decodable absolute position. In controlled
+reasoning experiments,
+[Kazemnejad et al. (2023)](https://proceedings.neurips.cc/paper_files/paper/2023/hash/4e85362c02172c0c6567ce593122d31c-Abstract-Conference.html)
+found that NoPE generalized to longer sequences better than several explicit
+alternatives. These findings establish possibility, not a universal claim that
+NoPE always beats RoPE or relative bias.
+
+### Recent update: frontier models use hybrid NoPE
+
+The important production shift is not that frontier models have universally
+removed positional encoding from every layer. The clearer 2025--2026 trend is
+to give different layer types different positional roles. One important form
+**interleaves RoPE and NoPE layers**:
+
+$$
+\operatorname{Attn}_{\ell}
+=
+\begin{cases}
+\operatorname{LocalAttn}(R_iq_i,R_jk_j,V),
+& \ell\notin\mathcal L_{\text{NoPE}},\\
+\operatorname{GlobalAttn}(Q,K,V),
+& \ell\in\mathcal L_{\text{NoPE}}.
+\end{cases}
+$$
+
+This is a division of labor:
+
+- **local RoPE layers** provide a strong inductive bias for nearby order and
+  relative distance
+- **global NoPE layers** communicate across the full context without applying a
+  position-dependent rotation outside its familiar training regime
+- depth lets the global layer operate on token states that have already acquired
+  local order information from earlier RoPE layers
+
+A second form replaces the local RoPE layers with an **ordered recurrent or
+linear-attention mechanism**. The recurrence itself is position-sensitive, so
+global full-attention layers can use NoPE without making the entire network
+permutation-invariant. Kimi K3 is the frontier-scale example below.
+
+```{mermaid}
+flowchart LR
+    X[Token states] --> R1[Local RoPE]
+    R1 --> R2[Local RoPE]
+    R2 --> R3[Local RoPE]
+    R3 --> N[Global NoPE]
+    N --> Y[Repeat the block]
+```
+
+This hybrid is easier to understand as **two communication scales** than as a
+vote over which positional encoding is universally best. RoPE answers “where is
+this token relative to nearby tokens?” Global NoPE answers “which content
+anywhere in the prefix is relevant?”
+
+#### Llama 4: iRoPE
+
+Meta calls Llama 4's design **iRoPE**, for interleaved RoPE and NoPE. Meta states
+that most layers retain RoPE while some attention layers omit positional
+embeddings to improve length generalization. The released reference
+implementation marks every fourth layer as NoPE; those layers use global causal
+attention, while the intervening RoPE layers use chunked attention.
+
+For an interval $r=4$,
+
+$$
+\mathcal L_{\text{NoPE}}
+=
+\{\ell:(\ell+1)\bmod 4=0\}.
+$$
+
+Thus “Llama 4 uses NoPE” does **not** mean all of its attention is position-free:
+the repeating pattern is three RoPE layers followed by one NoPE layer. See
+Meta's [Llama 4 architecture announcement](https://ai.meta.com/blog/llama-4-multimodal-intelligence/)
+and its
+[`is_nope_layer` implementation](https://github.com/meta-llama/llama-models/blob/main/models/llama4/model.py).
+
+#### Apple foundation models
+
+Apple's 2025 foundation models also interleave sliding-window local attention
+with RoPE and global attention without positional embeddings. Apple reports this
+choice as improving length generalization while maintaining long-context model
+quality. See the
+[Apple Intelligence Foundation Language Models report](https://machinelearning.apple.com/research/apple-foundation-models-2025-updates).
+
+This is stronger evidence of an architectural pattern than one isolated model:
+two frontier-scale model families independently assign explicit position to
+local communication and NoPE to global communication.
+
+#### Kimi K3: NoPE global attention after recurrent position mixing
+
+Kimi K3 makes the more substantial switch that motivates much of the recent
+NoPE discussion. Kimi K2 and K2.5 used MLA with RoPE, whereas Kimi K3 applies
+**NoPE to every global Gated MLA layer**. Its repeating block contains three
+Kimi Delta Attention (KDA) layers followed by one global Gated MLA layer:
+
+$$
+\underbrace{\operatorname{KDA}
+\rightarrow \operatorname{KDA}
+\rightarrow \operatorname{KDA}}_{\text{ordered recurrent mixing}}
+\rightarrow
+\underbrace{\operatorname{GatedMLA}_{\text{NoPE}}}_{\text{global content routing}}.
+$$
+
+This does not mean that Kimi K3 has no notion of position. KDA updates a
+recurrent state in token order and uses learned, channel-wise decay, making its
+mixing both position-sensitive and recency-aware. The later NoPE MLA layer can
+therefore globally retrieve representations that already contain order. No RoPE
+frequency needs to be retuned when the context is extended.
+
+This is a useful generalization of the Llama 4 pattern:
+
+| Local or recurrent path | Global path |
+|---|---|
+| Llama 4: local attention with explicit RoPE | full attention with NoPE |
+| Kimi K3: KDA recurrence with implicit, learned positional dynamics | Gated MLA with NoPE |
+
+See the [Kimi K3 technical report](https://arxiv.org/abs/2607.24653), especially
+Sections 2.1 and 3.4.
+
+#### SmolLM3: an open, reproducible example
+
+Hugging Face's 3B SmolLM3 is not frontier-scale, but it provides unusually open
+ablation evidence and a practical implementation. It removes RoPE from every
+fourth layer and reports improved long-context behavior without hurting
+short-context results. Its remaining RoPE layers still use YaRN and adjusted
+RoPE frequencies for context extension. Therefore the model is another **hybrid
+RoPE--NoPE** design, not a pure NoPE model. See the
+[SmolLM3 training report](https://huggingface.co/blog/smollm3).
+
+#### Model map: NoPE is a trend, not a universal switch
+
+| Model family | Position design | Correct interpretation |
+|---|---|---|
+| Llama 4 | local/chunked RoPE; periodic global NoPE | hybrid RoPE--NoPE |
+| Apple foundation models (2025) | sliding-window RoPE; global NoPE | hybrid RoPE--NoPE |
+| Kimi K3 | three KDA layers; every global Gated MLA layer uses NoPE | recurrent-position + global-NoPE hybrid |
+| SmolLM3 | every fourth layer removes RoPE; other layers retain RoPE/YaRN | open small-scale hybrid |
+| Qwen3 | RoPE in the architecture; ABF, YaRN, and DCA for long context | not NoPE |
+| DeepSeek-V3 | MLA with a decoupled query/key component carrying RoPE | not NoPE |
+
+The last two rows are important counterexamples. Qwen3 explicitly retains RoPE
+and raises its base frequency during long-context training; DeepSeek-V3's MLA
+compresses content keys and values but keeps a separate RoPE-bearing component.
+MLA therefore does **not** imply NoPE. See the
+[Qwen3 technical report](https://arxiv.org/abs/2505.09388) and
+[DeepSeek-V3 technical report](https://arxiv.org/abs/2412.19437).
+
+### Minimal hybrid implementation
+
+The layer schedule can be implemented by conditionally applying RoPE:
+
+```python
+def hybrid_attention(q, k, v, layer_idx, apply_rope, nope_interval=4):
+    """Sketch of a 3-RoPE : 1-NoPE schedule."""
+    is_nope_layer = (layer_idx + 1) % nope_interval == 0
+
+    if not is_nope_layer:
+        q, k = apply_rope(q, k)
+
+    return F.scaled_dot_product_attention(
+        q, k, v,
+        is_causal=True,
+    )
+```
+
+This sketch changes only the positional transform. Llama 4 additionally changes
+the attention span: RoPE layers are local/chunked and NoPE layers are global.
+Kimi K3 instead replaces the RoPE branch with an ordered KDA recurrence. A real
+implementation must construct the appropriate mask or recurrent state for each
+layer and handle cached positions consistently.
+
+### What changed in our understanding?
+
+| Earlier interpretation | More recent interpretation |
+|---|---|
+| choose one PE for the entire model | positional strategy can vary by layer |
+| NoPE is mainly a surprising ablation | NoPE can be a global-routing component in a production LLM |
+| every layer must directly encode distance | local layers can encode order for later global layers |
+| context extension is only a RoPE-rescaling problem | architecture can provide a position-free global path |
+| NoPE has zero positional signal | it has no **explicit** PE but still inherits causal and contextual order |
+
+Recent theory also sharpens the role of depth. Work on the
+[counting power of NoPE Transformers](https://arxiv.org/abs/2505.11199)
+finds a large expressivity gap between one and multiple attention layers in a
+formal hard-attention setting. This supports the nested-prefix intuition above,
+although a theorem about an idealized hard-attention model is not direct evidence
+about optimization or quality in a finite-precision frontier LLM.
+
+The practical conclusion is:
+
+$$
+\boxed{
+\text{modern NoPE trend}
+\approx
+\text{position-aware local or recurrent mixing}
++
+\text{position-free global routing}
+}.
+$$
 
 ## Absolute Positional Encodings
 
@@ -109,6 +430,20 @@ TODO:
 
 - Why does self-attention require position information?
 - Does the causal mask by itself fully encode token positions?
+- What does NoPE remove, and what order-dependent structure remains?
+- Why can a multi-layer NoPE decoder distinguish `A B C` from `B A C` even
+  when a single content-only attention layer at `C` cannot?
+- Why is NoPE more natural for a causal decoder than a bidirectional encoder?
+- What length-generalization advantage might NoPE have over a learned position
+  table or fixed RoPE frequencies?
+- Why do Llama 4 and Apple's foundation models combine local RoPE with global
+  NoPE instead of removing RoPE everywhere?
+- How can Kimi K3 use NoPE in every global MLA layer while remaining sensitive
+  to order? What positional role does KDA play?
+- In iRoPE, how can a global NoPE layer remain order-aware after local RoPE
+  layers?
+- Does saying “Llama 4 uses NoPE” imply that every attention layer is NoPE?
+- Why does DeepSeek-V3's use of MLA not imply that it uses NoPE?
 - What is the difference between absolute and relative position information?
 - How does RoPE make attention scores depend on relative displacement?
 - Why must the RoPE head dimension be arranged in pairs?

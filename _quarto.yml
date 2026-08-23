@@ -3,6 +3,8 @@ project:
 
 website:
   title: "Minimal ML"
+  site-url: "https://threeeyelidds.github.io/minimal-ml/"
+  repo-url: "https://github.com/threeeyelidds/minimal-ml"
   navbar:
     left:
       - href: index.qmd

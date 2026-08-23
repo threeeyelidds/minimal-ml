@@ -1,0 +1,499 @@
+---
+title: "Codex: Anatomy of an Open-Source Coding Agent"
+---
+
+> **Scope.** Codex CLI has been open-source since April 2025. This note studies
+> the current agent runtime at OpenAI's
+> [`openai/codex`](https://github.com/openai/codex) repository, pinned for this
+> analysis at commit
+> [`aec653d`](https://github.com/openai/codex/tree/aec653daa9873bf44517a623fd033722737817a8).
+> The repository exposes the local harness, protocol, sandboxing, SDKs, and
+> supporting services. It does **not** open-source the Codex model weights or
+> imply that every hosted service and product interface is present.
+
+Codex is valuable to study because it turns the abstract components in
+[Agent Harness](harness.qmd) into a production system. The main lesson is not a
+particular prompt. It is how probabilistic model decisions are embedded inside
+deterministic state, execution, security, and protocol boundaries.
+
+## 1. Start from the Actual System Boundary
+
+A coding model proposes tokens and structured actions. A coding agent must also
+own a workspace, execute processes, preserve history, constrain side effects,
+stream progress, accept interruptions, and recover across sessions.
+
+Write the end-to-end system as
+
+$$
+\boxed{
+\text{Codex system}
+=
+\text{coding model}
++
+\text{Codex harness}
++
+\text{execution environment}
++
+\text{client or orchestrator}
+}.
+$$
+
+These parts have different jobs:
+
+| Layer | Responsibility | Learned? |
+|---|---|---|
+| Model | interpret intent, reason about code, choose actions, synthesize results | mostly |
+| Harness | compile context, run the loop, route tools, persist state, enforce policy | mostly not |
+| Environment | files, Git state, processes, network, APIs, tests, external consequences | no |
+| Client | interaction, review, steering, approval, and presentation | no |
+| Orchestrator | assign tasks, isolate workspaces, supervise many agent sessions | possibly hybrid |
+
+The open-source repository is primarily the second layer plus interfaces into
+the third and fourth. A model can be replaced behind a compatible Responses API
+endpoint, while a client can communicate with the harness through the app-server
+protocol. This is an intentional separation of **intelligence**, **mechanism**,
+and **product surface**.
+
+## 2. Architecture: One Core, Several Surfaces
+
+```{mermaid}
+flowchart LR
+    U[User or orchestrator]
+    C[CLI / TUI / IDE / client]
+    A[App-server protocol]
+    H[Codex core harness]
+    M[Responses-compatible model]
+    X[Tool router]
+    P[Policy and approvals]
+    E[Execution environment]
+    R[Rollout and state stores]
+
+    U <--> C
+    C <--> A
+    A <--> H
+    H <--> M
+    H <--> X
+    X --> P
+    P --> E
+    E --> X
+    H <--> R
+    H -. events .-> A
+```
+
+The diagram is conceptual, not a complete crate dependency graph. The source is
+large, but a few regions reveal the design:
+
+| Source area | Architectural role |
+|---|---|
+| [`codex-rs/core`](https://github.com/openai/codex/tree/aec653daa9873bf44517a623fd033722737817a8/codex-rs/core) | session, turn, context, model, tool, permission, and agent logic |
+| [`core/src/session/turn.rs`](https://github.com/openai/codex/blob/aec653daa9873bf44517a623fd033722737817a8/codex-rs/core/src/session/turn.rs) | the model--tool feedback loop |
+| [`core/src/tools`](https://github.com/openai/codex/tree/aec653daa9873bf44517a623fd033722737817a8/codex-rs/core/src/tools) | tool specifications, routing, handlers, hooks, and concurrency |
+| [`app-server`](https://github.com/openai/codex/tree/aec653daa9873bf44517a623fd033722737817a8/codex-rs/app-server) and [`app-server-protocol`](https://github.com/openai/codex/tree/aec653daa9873bf44517a623fd033722737817a8/codex-rs/app-server-protocol) | UI-independent thread, turn, item, approval, and event API |
+| [`rollout`](https://github.com/openai/codex/tree/aec653daa9873bf44517a623fd033722737817a8/codex-rs/rollout) and [`state`](https://github.com/openai/codex/tree/aec653daa9873bf44517a623fd033722737817a8/codex-rs/state) | durable histories, reconstruction, indexing, and metadata |
+| [`sandboxing`](https://github.com/openai/codex/tree/aec653daa9873bf44517a623fd033722737817a8/codex-rs/sandboxing) and [`execpolicy`](https://github.com/openai/codex/tree/aec653daa9873bf44517a623fd033722737817a8/codex-rs/execpolicy) | OS isolation and command policy |
+| [`skills`](https://github.com/openai/codex/tree/aec653daa9873bf44517a623fd033722737817a8/codex-rs/skills), [`plugins`](https://github.com/openai/codex/tree/aec653daa9873bf44517a623fd033722737817a8/codex-rs/core/src/plugins), and [`rmcp-client`](https://github.com/openai/codex/tree/aec653daa9873bf44517a623fd033722737817a8/codex-rs/rmcp-client) | reusable instructions and external capabilities |
+
+The important design choice is that the harness core is not fused to one UI.
+The app-server exposes a typed lifecycle that multiple clients can project into
+different experiences.
+
+## 3. Three Nested Timescales
+
+“Agent step” is too ambiguous. Codex distinguishes at least three timescales:
+
+| Unit | Begins with | May contain | Ends with |
+|---|---|---|---|
+| Thread | starting or resuming a conversation | many turns | archive, delete, or abandonment |
+| Turn | new user input | many model samples and tool calls | final assistant message, error, or interruption |
+| Sampling step | one model request | streamed items and possibly several tool calls | response completion or retryable failure |
+
+This distinction matters for state ownership:
+
+- model-client routing and some caches can be turn-scoped
+- conversation history is thread-scoped
+- a tool call belongs to the exact step context that advertised it
+- cancellation can stop an in-flight turn without destroying the thread
+- steering can append user input while a regular turn is running
+
+The [app-server API](https://developers.openai.com/codex/app-server) makes these
+boundaries explicit through operations such as `thread/start`, `thread/resume`,
+`turn/start`, `turn/steer`, and `turn/interrupt`.
+
+## 4. The Core Loop
+
+At a high level, Codex runs
+
+```text
+record user input and context changes
+repeat:
+    construct the current model-visible history and tool list
+    stream a response from a Responses-compatible endpoint
+    record response items and emit client events
+    if the response contains tool calls:
+        validate, authorize, dispatch, and observe them
+        append bounded tool outputs to history
+    otherwise:
+        finish the turn with the assistant message
+until interrupted, failed, or complete
+```
+
+```{mermaid}
+flowchart TD
+    I[User input] --> W[Capture a consistent step context]
+    W --> B[Build prompt: history + instructions + tools]
+    B --> S[Stream model response]
+    S --> T{Tool call?}
+    T -- no --> F[Record final assistant message]
+    T -- yes --> V[Parse and route typed call]
+    V --> G[Hooks, policy, sandbox, approval]
+    G --> E[Execute tool]
+    E --> O[Record result and emit events]
+    O --> K{Context limit or new input?}
+    K -- compact / merge --> B
+    K -- continue --> B
+```
+
+The real [`run_turn`](https://github.com/openai/codex/blob/aec653daa9873bf44517a623fd033722737817a8/codex-rs/core/src/session/turn.rs)
+is more complex because production loops must handle streaming, retries,
+compaction, hooks, dynamic tools, pending user input, cancellation, telemetry,
+and partial failures. But its invariant remains simple:
+
+$$
+\text{model proposal}
+\ne
+\text{environmental side effect}.
+$$
+
+The proposal becomes a side effect only after harness-controlled parsing,
+routing, authorization, and execution.
+
+## 5. Context Is Compiled State, Not Just Chat History
+
+Codex's initial model input combines several sources with distinct authority:
+
+1. model-specific base instructions
+2. sandbox and approval instructions
+3. managed or user developer instructions
+4. hierarchical repository instructions such as `AGENTS.md`
+5. skill and plugin metadata
+6. environment state such as working directory and shell
+7. conversation items and the current user request
+
+Repository instructions are discovered from the project root toward the working
+directory, so broad rules can be refined by more local ones. This makes context
+composition resemble lexical scoping: the effective behavior at a file depends
+on the instructions along its path. See OpenAI's
+[`AGENTS.md` guide](https://developers.openai.com/codex/guides/agents-md) and the
+source implementation in
+[`agents_md.rs`](https://github.com/openai/codex/blob/aec653daa9873bf44517a623fd033722737817a8/codex-rs/core/src/agents_md.rs).
+
+### Context also has a systems cost
+
+For transformer inference, a stable prompt prefix can reuse cached computation.
+Consequently, semantically equivalent context layouts need not have equivalent
+cost. Codex tries to avoid rewriting earlier history, maintains deterministic
+tool ordering, and appends changes to permissions or environment as new items.
+
+A better context objective therefore includes both relevance and prefix
+stability:
+
+$$
+c_t^*
+=
+\arg\max_{c_t}
+\left[
+U(c_t)
+-\lambda |c_t|
++\gamma\,\operatorname{ReusablePrefix}(c_{t-1},c_t)
+\right].
+$$
+
+This produces a general harness principle:
+
+> Treat the prompt prefix like a cache-sensitive interface. Keep stable facts
+> stable, order dynamic collections deterministically, and append state changes
+> when possible.
+
+### Compaction is state estimation
+
+Conversation history grows until it competes with future reasoning and output
+tokens. Codex can replace a long history with a compact representation and then
+continue the same thread. Compaction is not mere compression; it estimates the
+smallest state sufficient for future decisions:
+
+$$
+p(o_{t+1}\mid h_t,a_t)
+\approx
+p(o_{t+1}\mid \phi(h_t),a_t).
+$$
+
+The failure mode is not only losing prose. A bad summary can discard an
+unresolved error, user constraint, permission boundary, or the reason an earlier
+approach failed. Durable rollouts and external artifacts keep raw evidence
+available even when model-visible history is compacted.
+
+## 6. Tools Are Typed Capabilities
+
+The model receives schemas, but the harness owns implementations. Codex's tool
+path separates:
+
+1. **specification:** what the model is allowed to request
+2. **routing:** which implementation owns the call
+3. **lifecycle:** start, stream, finish, abort, and telemetry events
+4. **policy:** whether the action may execute
+5. **execution:** how it runs and how output is bounded
+6. **observation:** the normalized result returned to the model
+
+The [`ToolRouter`](https://github.com/openai/codex/blob/aec653daa9873bf44517a623fd033722737817a8/codex-rs/core/src/tools/router.rs)
+maps response items into namespaced typed calls. The registry can combine
+built-ins, hosted tools, MCP tools, plugins, and dynamically exposed tools.
+
+### Concurrency is a tool property
+
+Codex does not assume that all tool calls are safe to parallelize. In
+[`parallel.rs`](https://github.com/openai/codex/blob/aec653daa9873bf44517a623fd033722737817a8/codex-rs/core/src/tools/parallel.rs),
+parallel-safe calls share a read lock, while a non-parallel call takes the write
+lock and excludes the others.
+
+This is a compact concurrency contract:
+
+$$
+\text{parallelize}(a_i,a_j)
+\iff
+\text{their declared effects commute safely}.
+$$
+
+The model should decide which operations are useful; deterministic runtime
+metadata should decide whether their executions may overlap.
+
+### Errors are observations unless they break the runtime
+
+A malformed argument, command failure, or unavailable tool is often useful
+feedback for replanning. Codex can turn an ordinary tool failure into a tool
+result the model can inspect. A fatal invariant violation instead terminates the
+sampling path. This distinction prevents both extremes: crashing on every tool
+error and hiding genuine harness corruption inside natural-language feedback.
+
+### Hooks are middleware, not policy by prompt
+
+Pre-tool hooks can block or transform a request; post-tool hooks can attach
+feedback or additional context. They provide deterministic extension points
+around the side-effect boundary. Importantly, a post-tool hook cannot undo an
+already executed side effect, so precondition checks belong before execution.
+
+## 7. Security Is the Intersection of Controls
+
+No single “safe mode” is enough. Codex composes several mechanisms:
+
+| Mechanism | Question answered |
+|---|---|
+| OS sandbox | What files, processes, and network resources are technically reachable? |
+| Approval policy | When must authority return to a human or reviewer? |
+| Execution rules | Which known command patterns may run, prompt, or be blocked? |
+| Managed network policy | Which destinations are allowed or require review? |
+| Tool-specific policy | What constraints apply to MCP or other external capabilities? |
+| Telemetry | What happened, under whose request, and with what decision? |
+
+The effective action set is the intersection
+
+$$
+\mathcal A_{\text{effective}}
+=
+\mathcal A_{\text{sandbox}}
+\cap
+\mathcal A_{\text{approval}}
+\cap
+\mathcal A_{\text{rules}}
+\cap
+\mathcal A_{\text{tool}}.
+$$
+
+This separation matters because prompting only influences model behavior; it
+does not create a hard resource boundary. Conversely, a sandbox alone cannot
+decide whether sending a message or changing a production record is authorized.
+
+One subtle but general lesson from the
+[agent-loop description](https://openai.com/index/unrolling-the-codex-agent-loop/)
+is that Codex's local shell sandbox does not automatically wrap arbitrary MCP
+tools. Each external tool provider must enforce its own constraints. A harness
+should never advertise “the agent is sandboxed” without naming which capability
+is actually inside which boundary.
+
+OpenAI's deployment guidance adds two production practices: avoid open-ended
+outbound network access, and combine endpoint security alerts with agent-native
+logs that preserve the surrounding user intent, tool activity, approvals, and
+network decisions. See
+[Running Codex safely at OpenAI](https://openai.com/index/running-codex-safely/).
+
+## 8. Event-Driven State Makes Clients Replaceable
+
+Codex app-server uses requests for commands and notifications for lifecycle
+changes. The client does not need to infer hidden state from terminal text; it
+can observe explicit thread, turn, item, approval, and completion events.
+
+This yields a useful split:
+
+```text
+command:      "start this turn" or "approve this action"
+event:        "turn started", "item completed", or "turn interrupted"
+projection:   what a TUI, IDE, app, or orchestrator displays
+```
+
+Durable rollout records are written as JSONL and can be replayed or inspected.
+The state layer also indexes thread metadata for listing and resumption. This is
+event-sourcing-like without requiring every derived UI state to be written into
+the model conversation.
+
+Why this matters:
+
+- clients can disconnect and rehydrate state
+- CLI, IDE, and app surfaces can share a core runtime
+- tests can assert lifecycle events rather than scrape prose
+- interruption and partial completion become explicit states
+- protocol evolution becomes a compatibility problem that can be tested
+
+The source repository's own review guidance treats app-server APIs, raw response
+events, configuration, CLI parameters, and rollout resumption as external
+compatibility surfaces. That is a strong harness-engineering principle: **the
+protocol is part of the product, not incidental glue**.
+
+## 9. Persistence, Resumption, and Steering
+
+Long-running work should expect process death, client disconnection, user
+course-correction, and context replacement. Codex supports these cases with:
+
+- append-only rollout records
+- thread resume and fork operations
+- history reconstruction
+- explicit interruption markers
+- in-flight steering for regular turns
+- background process handles and cancellation tokens
+- separate stored artifacts in the workspace
+
+A robust turn is therefore not a blocking function call. It is a resumable state
+machine:
+
+$$
+z_{t+1}
+=
+F(z_t,\text{command},\text{event}),
+$$
+
+where $z_t$ includes the active turn, history position, running tools,
+permission state, and client-visible lifecycle.
+
+The practical lesson is to design interruption semantics early. “Cancel” must
+define what happens to the model stream, in-flight tool, already completed side
+effects, stored history, and next resumption. Killing a process is not a full
+cancellation design.
+
+## 10. Skills, Plugins, MCP, and Subagents
+
+These mechanisms operate at different abstraction levels:
+
+| Mechanism | Adds | Main risk |
+|---|---|---|
+| Instruction file | repository-local constraints and conventions | stale or conflicting context |
+| Skill | reusable procedure plus selected resources | loading too much context |
+| Plugin | packaged skills, hooks, tools, or integrations | dependency and permission expansion |
+| MCP server | external tool/resource interface | trust boundary and side effects |
+| Subagent | another model trajectory with separate context | coordination and duplicated work |
+
+The architectural insight is **progressive capability disclosure**. A small
+stable description can tell the model what exists; detailed instructions and
+heavy resources are loaded only when selected. This saves tokens and reduces
+irrelevant instruction interference.
+
+Subagents are implemented as managed child threads rather than magical extra
+reasoning. Their benefit comes from parallel compute and context isolation; their
+cost comes from communication, synchronization, and merge conflicts. They are
+most useful when work can be partitioned with explicit inputs and inspectable
+outputs.
+
+## 11. What Codex Adds to the Generic Harness Picture
+
+The generic [Agent Harness](harness.qmd) note explains the components. Codex
+adds several concrete engineering lessons:
+
+| Generic principle | Codex realization | Broader lesson |
+|---|---|---|
+| Compile context | layered instructions plus per-step world-state diffs | context has authority, provenance, and cache cost |
+| Route tools | typed, namespaced router and registry | separate model-visible schemas from runtimes |
+| Control side effects | sandbox, approvals, rules, hooks, network policy | safety is an intersection of controls |
+| Preserve state | JSONL rollouts plus indexed thread state | make histories replayable and derived views rebuildable |
+| Support feedback | streaming events, tool results, steering, cancellation | turns are interactive state machines |
+| Parallelize safely | per-tool concurrency declaration | concurrency belongs in capability metadata |
+| Serve many clients | versioned app-server protocol | keep the core loop independent from presentation |
+| Manage cost | stable prompt prefixes and automatic compaction | optimize cached inference, not token count alone |
+
+The most important synthesis is:
+
+$$
+\boxed{
+\text{reliable autonomy}
+=
+\text{semantic flexibility inside deterministic boundaries}
+}.
+$$
+
+## 12. What the Source Does Not Prove
+
+Reading the harness cannot answer every question about Codex performance:
+
+- It does not reveal the proprietary model's training data or complete
+  post-training recipe.
+- Code presence does not show which feature is enabled in every product or
+  account.
+- A configurable mechanism does not establish its production configuration.
+- End-to-end benchmark gains cannot be assigned to the model or harness without
+  controlled ablations.
+- A large mature codebase contains compatibility layers and experiments; not
+  every module is a timeless design recommendation.
+
+Separate three kinds of claims when reading an agent repository:
+
+1. **mechanism:** the source can do this
+2. **configuration:** a deployment enables it this way
+3. **effect:** enabling it causally improves quality, cost, or safety
+
+Source inspection is strongest for the first and needs documentation,
+telemetry, or experiments for the other two.
+
+## 13. Interview Questions
+
+- What exactly is open-source when someone says “Codex is open-source”?
+- Why separate a thread, a user turn, and a model sampling step?
+- Why should a tool call retain the step context that advertised it?
+- How does deterministic tool ordering affect inference cost?
+- Why are ordinary tool failures returned to the model while fatal runtime
+  failures terminate the turn?
+- What can an OS sandbox enforce that an approval policy cannot, and vice versa?
+- Why does sandboxing a shell tool not automatically sandbox an MCP tool?
+- When may two tool calls run concurrently?
+- Why is an event protocol better than scraping terminal output?
+- What state is needed to resume correctly after interruption?
+- Which parts of Codex are model intelligence, and which are harness
+  intelligence?
+- How would you ablate model and harness changes to attribute a quality gain?
+
+## 14. Exercises
+
+- [ ] Trace one function call from streamed response item through routing,
+  execution, and returned observation.
+- [ ] Draw the state transitions for start, steer, interrupt, and resume.
+- [ ] Design a tool concurrency declaration for read, edit, test, and deploy.
+- [ ] Specify a permission profile using sandbox, approval, and network rules.
+- [ ] Implement an append-only rollout and reconstruct a thread from it.
+- [ ] Measure prompt-cache hits before and after randomizing tool order.
+- [ ] Compare failure recovery with and without durable artifacts.
+
+## Sources
+
+- [OpenAI Codex repository](https://github.com/openai/codex)
+- [Unrolling the Codex agent loop — OpenAI](https://openai.com/index/unrolling-the-codex-agent-loop/)
+- [Codex app-server documentation](https://developers.openai.com/codex/app-server)
+- [Codex security documentation](https://developers.openai.com/codex/security)
+- [Custom instructions with `AGENTS.md`](https://developers.openai.com/codex/guides/agents-md)
+- [Running Codex safely at OpenAI](https://openai.com/index/running-codex-safely/)
+- [Introducing OpenAI o3 and o4-mini](https://openai.com/index/introducing-o3-and-o4-mini/)
+- [Agent Harness](harness.qmd)

@@ -169,6 +169,11 @@ The model does not call the operating system or an API directly. It proposes an
 action; the harness validates, authorizes, executes, records, and returns a
 bounded observation. That indirection is the key control boundary.
 
+OpenAI's open-source Codex runtime is a concrete implementation of this loop.
+See [Codex: Anatomy of an Open-Source Coding Agent](codex.qmd) for a source-level
+analysis of its turn loop, typed tool router, event protocol, persistence, and
+sandbox boundary.
+
 ### Model decisions versus code decisions
 
 Use the model when the choice requires semantic judgment under ambiguity. Use
@@ -201,6 +206,16 @@ The context compiler decides what the model sees on the next turn. It assembles:
 It must resolve ordering, priority, truncation, compaction, and provenance.
 Simply appending every prior token eventually produces an expensive, noisy, and
 contradictory context.
+
+Context layout also affects inference cost. A stable prompt prefix can reuse
+cached transformer computation, whereas reordering tools or rewriting old
+messages can invalidate that cache. Codex consequently treats model-visible
+history as append-oriented state, orders dynamic inputs deterministically, and
+represents environment or permission changes as new context items when possible.
+This suggests a further invariant:
+
+> Keep stable context stable. Compile semantic changes without gratuitously
+> perturbing the reusable prefix.
 
 In control terms, context and memory perform **state estimation**. From the full
 history
@@ -275,6 +290,11 @@ window and survive interruptions.
 Do not confuse persistence with relevance. A file can preserve everything, but
 the context compiler must still select what matters now.
 
+For recovery, make the event log **replayable**, not merely readable. Codex
+persists append-only JSONL rollouts and reconstructs thread history from stored
+items and lifecycle markers. Derived UI state can then be rebuilt after a
+disconnect instead of becoming a second, inconsistent source of truth.
+
 ### 5.4 Workflow controller
 
 The controller determines the shape of execution:
@@ -302,6 +322,11 @@ It owns:
 
 The workflow may be a general loop, a deterministic DAG, or a hybrid in which
 code fixes the outer stages and the model makes local decisions.
+
+Name the controller's timescales explicitly. Codex separates a durable
+conversation **thread**, a user-facing **turn**, and each model **sampling
+step** within that turn. Budgets, cancellation, caches, and persistence may
+belong to different levels; a generic “agent step” obscures who owns what.
 
 For uncertain environments, prefer a receding-horizon pattern:
 
@@ -364,6 +389,12 @@ High-impact actions may require user approval even when the model is confident.
 Retrieved documents and tool outputs are untrusted data, not instructions that
 can modify the permission policy.
 
+Security is normally a composition rather than one switch. Codex combines OS
+sandboxing, approval policy, command rules, managed network policy, and
+agent-native telemetry. These controls cover different failure modes. Also note
+that sandboxing a built-in shell does not automatically sandbox an external MCP
+tool; every capability needs an explicit trust and policy boundary.
+
 Formally, the permission layer enforces
 
 $$
@@ -404,6 +435,11 @@ $$
 
 A final success score says whether a run failed, but the trajectory is needed to
 attribute why it failed.
+
+Prefer typed lifecycle events over scraping rendered text. Codex app-server
+exposes thread, turn, item, approval, interruption, and completion events so
+different clients can project the same core state. This separation makes
+reconnection, testing, and protocol compatibility tractable.
 
 ## 6. Context Engineering
 
@@ -765,6 +801,12 @@ need for brittle scaffolding; they do not eliminate the runtime contract.
     belief revision; repeated introspection alone does not.
 11. **Planning should remain feedback-sensitive.** Plan, act briefly, observe,
     and replan when the environment is uncertain.
+12. **Stable context is a performance feature.** Preserve cacheable prefixes and
+    order dynamic inputs deterministically.
+13. **Protocols should expose lifecycle, not presentation.** Typed events make
+    clients replaceable and state recoverable.
+14. **Concurrency belongs in tool metadata.** Parallelize calls only when their
+    declared effects can safely overlap.
 
 ## Interview Questions
 
@@ -789,6 +831,9 @@ need for brittle scaffolding; they do not eliminate the runtime contract.
   plan?
 - Why is reflection after a failed test more useful than reflection with no new
   evidence?
+- Why can two semantically equivalent prompts have different inference costs?
+- Why should thread, turn, and sampling-step state be distinguished?
+- Why does sandboxing the shell not automatically sandbox every external tool?
 
 ## Exercises
 
@@ -806,5 +851,7 @@ need for brittle scaffolding; they do not eliminate the runtime contract.
 
 - [Harness Engineering for Self-Improvement — Lilian Weng](https://lilianweng.github.io/posts/2026-07-04-harness/)
 - [LLM Powered Autonomous Agents — Lilian Weng](https://lilianweng.github.io/posts/2023-06-23-agent/)
+- [Codex: Anatomy of an Open-Source Coding Agent](codex.qmd)
+- [Unrolling the Codex agent loop — OpenAI](https://openai.com/index/unrolling-the-codex-agent-loop/)
 - [Agentic Search](agentic_search.qmd)
 - [From Test-Time Training to Continual Intelligence](../advanced/continual_intelligence_ttt.qmd)

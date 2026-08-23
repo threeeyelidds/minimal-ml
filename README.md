@@ -2,6 +2,9 @@
 
 Concise, executable notes for understanding machine learning from first principles.
 
+- Website: <https://threeeyelidds.github.io/minimal-ml/>
+- Repository: <https://github.com/threeeyelidds/minimal-ml>
+
 ## Setup
 
 Install Quarto and uv, then:

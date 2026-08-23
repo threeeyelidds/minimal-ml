@@ -16,7 +16,7 @@ title: "Notes"
 - [Tokenization Across Modalities: language, vision, item IDs](tokenization.qmd)
 - [Attention](transformers/attention.qmd)
 - [Transformers](transformers/transformer.qmd)
-- [Positional Encoding](transformers/positional_encoding.qmd)
+- [Positional Encoding: RoPE or NoPE](transformers/positional_encoding.qmd)
 
 ## Advanced
 
@@ -28,12 +28,12 @@ title: "Notes"
 
 - [Agentic Search: is it a fake problem](applied_ml/agentic_search.qmd)
 - [Agent Harness: turning prediction into decision](applied_ml/harness.qmd)
+- [Codex: anatomy of an open-source coding agent](applied_ml/codex.qmd)
 
 ## Coming next
 
-- KL divergence
-- DPO
-- PPO / GRPO
-- KV cache
-- FlashAttention
-- Distributed training
+- post-train
+- recommender as a decision system
+- density estimation, from energy-based models to flow matching
+- causality and counterfactuals
+
