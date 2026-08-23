@@ -26,6 +26,41 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
 </style>
 
 
@@ -73,6 +108,9 @@ ul.task-list li input[type="checkbox"] {
     "search-label": "Search"
   }
 }</script>
+<script src="../../site_libs/quarto-diagram/mermaid.min.js"></script>
+<script src="../../site_libs/quarto-diagram/mermaid-init.js"></script>
+<link href="../../site_libs/quarto-diagram/mermaid.css" rel="stylesheet">
 
   <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
   <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
@@ -154,6 +192,16 @@ window.Quarto = {
    
   <ul>
   <li><a href="#why-position-information-is-necessary" id="toc-why-position-information-is-necessary" class="nav-link active" data-scroll-target="#why-position-information-is-necessary">Why Position Information Is Necessary</a></li>
+  <li><a href="#nope-no-explicit-positional-encoding" id="toc-nope-no-explicit-positional-encoding" class="nav-link" data-scroll-target="#nope-no-explicit-positional-encoding">NoPE: No Explicit Positional Encoding</a>
+  <ul class="collapse">
+  <li><a href="#how-can-order-emerge-from-only-a-causal-mask" id="toc-how-can-order-emerge-from-only-a-causal-mask" class="nav-link" data-scroll-target="#how-can-order-emerge-from-only-a-causal-mask">How can order emerge from only a causal mask?</a></li>
+  <li><a href="#what-the-causal-mask-does-and-does-not-provide" id="toc-what-the-causal-mask-does-and-does-not-provide" class="nav-link" data-scroll-target="#what-the-causal-mask-does-and-does-not-provide">What the causal mask does and does not provide</a></li>
+  <li><a href="#minimal-implementation" id="toc-minimal-implementation" class="nav-link" data-scroll-target="#minimal-implementation">Minimal implementation</a></li>
+  <li><a href="#why-use-or-avoid-nope" id="toc-why-use-or-avoid-nope" class="nav-link" data-scroll-target="#why-use-or-avoid-nope">Why use or avoid NoPE?</a></li>
+  <li><a href="#recent-update-frontier-models-use-hybrid-nope" id="toc-recent-update-frontier-models-use-hybrid-nope" class="nav-link" data-scroll-target="#recent-update-frontier-models-use-hybrid-nope">Recent update: frontier models use hybrid NoPE</a></li>
+  <li><a href="#minimal-hybrid-implementation" id="toc-minimal-hybrid-implementation" class="nav-link" data-scroll-target="#minimal-hybrid-implementation">Minimal hybrid implementation</a></li>
+  <li><a href="#what-changed-in-our-understanding" id="toc-what-changed-in-our-understanding" class="nav-link" data-scroll-target="#what-changed-in-our-understanding">What changed in our understanding?</a></li>
+  </ul></li>
   <li><a href="#absolute-positional-encodings" id="toc-absolute-positional-encodings" class="nav-link" data-scroll-target="#absolute-positional-encodings">Absolute Positional Encodings</a>
   <ul class="collapse">
   <li><a href="#sinusoidal-encoding" id="toc-sinusoidal-encoding" class="nav-link" data-scroll-target="#sinusoidal-encoding">Sinusoidal encoding</a></li>
@@ -191,6 +239,7 @@ window.Quarto = {
 <section id="why-position-information-is-necessary" class="level2">
 <h2 class="anchored" data-anchor-id="why-position-information-is-necessary">Why Position Information Is Necessary</h2>
 <p>Self-attention alone is permutation-equivariant: permuting the input tokens permutes the outputs in the same way. The attention score <span class="math inline">\(q_i^T k_j\)</span> contains content similarity, but it does not inherently say whether token <span class="math inline">\(j\)</span> comes before or after token <span class="math inline">\(i\)</span>, or how far apart they are.</p>
+<p>This statement needs one qualification: a <strong>causal mask is itself tied to sequence order</strong>. Although it does not attach an explicit coordinate to a token, it gives different positions different visible prefixes. This asymmetry is what makes NoPE possible in decoder-only Transformers.</p>
 <p>Position information can be introduced by:</p>
 <ul>
 <li>adding a position-dependent vector to each token representation</li>
@@ -200,6 +249,350 @@ window.Quarto = {
 <blockquote class="blockquote">
 <p><strong>Learning prompt:</strong> Precisely distinguish permutation equivariance from permutation invariance. Which one describes self-attention?</p>
 </blockquote>
+</section>
+<section id="nope-no-explicit-positional-encoding" class="level2">
+<h2 class="anchored" data-anchor-id="nope-no-explicit-positional-encoding">NoPE: No Explicit Positional Encoding</h2>
+<p><strong>NoPE</strong> removes the explicit positional mechanism entirely:</p>
+<p><span class="math display">\[
+x_i=E_{\text{token}}[w_i],
+\qquad
+S_{ij}=\frac{q_i^T k_j}{\sqrt{d_h}}.
+\]</span></p>
+<p>There is no additive position embedding, relative-position bias, or RoPE rotation. A decoder still applies its causal mask:</p>
+<p><span class="math display">\[
+\widetilde S_{ij}
+=
+\begin{cases}
+S_{ij}, &amp; j\le i,\\
+-\infty, &amp; j&gt;i.
+\end{cases}
+\]</span></p>
+<p>Thus the visible set at position <span class="math inline">\(i\)</span> is the prefix <span class="math inline">\(\{1,\ldots,i\}\)</span>. Position is not supplied as a feature; it can emerge from the structure of the computation.</p>
+<section id="how-can-order-emerge-from-only-a-causal-mask" class="level3">
+<h3 class="anchored" data-anchor-id="how-can-order-emerge-from-only-a-causal-mask">How can order emerge from only a causal mask?</h3>
+<p>At layer <span class="math inline">\(\ell\)</span>, position <span class="math inline">\(i\)</span> aggregates representations only from its prefix:</p>
+<p><span class="math display">\[
+h_i^{(\ell+1)}
+=
+F\!\left(
+h_i^{(\ell)},
+\left\{h_j^{(\ell)}:j\le i\right\}
+\right).
+\]</span></p>
+<p>Each earlier representation already summarizes a <strong>different nested prefix</strong>. Consequently, a multi-layer model can distinguish orders that one content-only attention layer cannot.</p>
+<p>Consider <code>A B C</code> and <code>B A C</code>. At <code>C</code>, a first layer sees the same multiset <code>{A, B, C}</code> in either sequence, so its direct content aggregation can be the same. But the earlier states differ:</p>
+<pre class="text"><code>A B C:  h_A sees {A};    h_B sees {A, B}
+B A C:  h_B sees {B};    h_A sees {B, A}</code></pre>
+<p>At the next layer, <code>C</code> attends to these already contextualized states and can distinguish the two orders. This is why the depth qualification matters: causal connectivity can carry order through the network even though the token embeddings contain no position.</p>
+<p>The model may also infer approximate absolute position from signals correlated with prefix length, such as its number of predecessors, special anchor tokens, or changes in attention-output statistics. Probing experiments find recoverable absolute-position information in trained NoPE models. However, the causal mask does not hand the model an exact integer <span class="math inline">\(i\)</span>; learning a useful coordinate is an emergent behavior, not a guaranteed primitive.</p>
+</section>
+<section id="what-the-causal-mask-does-and-does-not-provide" class="level3">
+<h3 class="anchored" data-anchor-id="what-the-causal-mask-does-and-does-not-provide">What the causal mask does and does not provide</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Property</th>
+<th>Causal NoPE</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Which tokens are in the past?</td>
+<td>supplied by the triangular connectivity pattern</td>
+</tr>
+<tr class="even">
+<td>Exact absolute index <span class="math inline">\(i\)</span></td>
+<td>not supplied explicitly; may be inferred</td>
+</tr>
+<tr class="odd">
+<td>Exact distance <span class="math inline">\(i-j\)</span></td>
+<td>not supplied explicitly; may be represented by deeper computation</td>
+</tr>
+<tr class="even">
+<td>Order sensitivity</td>
+<td>possible in multi-layer autoregressive Transformers</td>
+</tr>
+<tr class="odd">
+<td>Bidirectional encoder order</td>
+<td>not recovered from a full, symmetric attention mask alone</td>
+</tr>
+<tr class="even">
+<td>Extra position parameters or rotations</td>
+<td>none</td>
+</tr>
+</tbody>
+</table>
+<p>So the answer to “does causal masking fully encode position?” is <strong>no</strong>. It breaks permutation symmetry and exposes an ordered prefix structure from which the model can learn position. That is weaker and less direct than providing an absolute or relative coordinate.</p>
+</section>
+<section id="minimal-implementation" class="level3">
+<h3 class="anchored" data-anchor-id="minimal-implementation">Minimal implementation</h3>
+<p>NoPE is implemented mostly by omission: do not add a position table and do not transform <span class="math inline">\(Q\)</span> or <span class="math inline">\(K\)</span>.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch.nn.functional <span class="im">as</span> F</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> nope_attention(q: torch.Tensor,</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>                   k: torch.Tensor,</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>                   v: torch.Tensor) <span class="op">-&gt;</span> torch.Tensor:</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Causal NoPE attention for q, k, v shaped (B, H, T, D)."""</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> F.scaled_dot_product_attention(</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>        q, k, v,</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>        attn_mask<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>        is_causal<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>KV caching still works. Cached keys need no position-dependent rotation, but the harness or attention kernel must still know which cached tokens precede the new query so it can enforce causality.</p>
+</section>
+<section id="why-use-or-avoid-nope" class="level3">
+<h3 class="anchored" data-anchor-id="why-use-or-avoid-nope">Why use or avoid NoPE?</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Potential advantage</th>
+<th>Potential limitation</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>no position parameters or rotation cost</td>
+<td>weaker positional inductive bias</td>
+</tr>
+<tr class="even">
+<td>no learned position table with a fixed maximum index</td>
+<td>training must discover useful order and distance features</td>
+</tr>
+<tr class="odd">
+<td>no RoPE frequencies that move out of their training regime</td>
+<td>exact position-sensitive tasks may be harder</td>
+</tr>
+<tr class="even">
+<td>strong length generalization on some reasoning tasks</td>
+<td>results are architecture- and task-dependent</td>
+</tr>
+<tr class="odd">
+<td>especially natural for causal decoders</td>
+<td>not a direct solution for bidirectional attention</td>
+</tr>
+</tbody>
+</table>
+<p><a href="https://aclanthology.org/2022.findings-emnlp.99/">Haviv et al.&nbsp;(2022)</a> found that causal language models without explicit positional encodings can be competitive and develop probe-decodable absolute position. In controlled reasoning experiments, <a href="https://proceedings.neurips.cc/paper_files/paper/2023/hash/4e85362c02172c0c6567ce593122d31c-Abstract-Conference.html">Kazemnejad et al.&nbsp;(2023)</a> found that NoPE generalized to longer sequences better than several explicit alternatives. These findings establish possibility, not a universal claim that NoPE always beats RoPE or relative bias.</p>
+</section>
+<section id="recent-update-frontier-models-use-hybrid-nope" class="level3">
+<h3 class="anchored" data-anchor-id="recent-update-frontier-models-use-hybrid-nope">Recent update: frontier models use hybrid NoPE</h3>
+<p>The important production shift is not that frontier models have universally removed positional encoding from every layer. The clearer 2025–2026 trend is to give different layer types different positional roles. One important form <strong>interleaves RoPE and NoPE layers</strong>:</p>
+<p><span class="math display">\[
+\operatorname{Attn}_{\ell}
+=
+\begin{cases}
+\operatorname{LocalAttn}(R_iq_i,R_jk_j,V),
+&amp; \ell\notin\mathcal L_{\text{NoPE}},\\
+\operatorname{GlobalAttn}(Q,K,V),
+&amp; \ell\in\mathcal L_{\text{NoPE}}.
+\end{cases}
+\]</span></p>
+<p>This is a division of labor:</p>
+<ul>
+<li><strong>local RoPE layers</strong> provide a strong inductive bias for nearby order and relative distance</li>
+<li><strong>global NoPE layers</strong> communicate across the full context without applying a position-dependent rotation outside its familiar training regime</li>
+<li>depth lets the global layer operate on token states that have already acquired local order information from earlier RoPE layers</li>
+</ul>
+<p>A second form replaces the local RoPE layers with an <strong>ordered recurrent or linear-attention mechanism</strong>. The recurrence itself is position-sensitive, so global full-attention layers can use NoPE without making the entire network permutation-invariant. Kimi K3 is the frontier-scale example below.</p>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p><figure class="figure"><p></p>
+<div>
+<pre class="mermaid mermaid-js">flowchart LR
+    X[Token states] --&gt; R1[Local RoPE]
+    R1 --&gt; R2[Local RoPE]
+    R2 --&gt; R3[Local RoPE]
+    R3 --&gt; N[Global NoPE]
+    N --&gt; Y[Repeat the block]
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+<p>This hybrid is easier to understand as <strong>two communication scales</strong> than as a vote over which positional encoding is universally best. RoPE answers “where is this token relative to nearby tokens?” Global NoPE answers “which content anywhere in the prefix is relevant?”</p>
+<section id="llama-4-irope" class="level4">
+<h4 class="anchored" data-anchor-id="llama-4-irope">Llama 4: iRoPE</h4>
+<p>Meta calls Llama 4’s design <strong>iRoPE</strong>, for interleaved RoPE and NoPE. Meta states that most layers retain RoPE while some attention layers omit positional embeddings to improve length generalization. The released reference implementation marks every fourth layer as NoPE; those layers use global causal attention, while the intervening RoPE layers use chunked attention.</p>
+<p>For an interval <span class="math inline">\(r=4\)</span>,</p>
+<p><span class="math display">\[
+\mathcal L_{\text{NoPE}}
+=
+\{\ell:(\ell+1)\bmod 4=0\}.
+\]</span></p>
+<p>Thus “Llama 4 uses NoPE” does <strong>not</strong> mean all of its attention is position-free: the repeating pattern is three RoPE layers followed by one NoPE layer. See Meta’s <a href="https://ai.meta.com/blog/llama-4-multimodal-intelligence/">Llama 4 architecture announcement</a> and its <a href="https://github.com/meta-llama/llama-models/blob/main/models/llama4/model.py"><code>is_nope_layer</code> implementation</a>.</p>
+</section>
+<section id="apple-foundation-models" class="level4">
+<h4 class="anchored" data-anchor-id="apple-foundation-models">Apple foundation models</h4>
+<p>Apple’s 2025 foundation models also interleave sliding-window local attention with RoPE and global attention without positional embeddings. Apple reports this choice as improving length generalization while maintaining long-context model quality. See the <a href="https://machinelearning.apple.com/research/apple-foundation-models-2025-updates">Apple Intelligence Foundation Language Models report</a>.</p>
+<p>This is stronger evidence of an architectural pattern than one isolated model: two frontier-scale model families independently assign explicit position to local communication and NoPE to global communication.</p>
+</section>
+<section id="kimi-k3-nope-global-attention-after-recurrent-position-mixing" class="level4">
+<h4 class="anchored" data-anchor-id="kimi-k3-nope-global-attention-after-recurrent-position-mixing">Kimi K3: NoPE global attention after recurrent position mixing</h4>
+<p>Kimi K3 makes the more substantial switch that motivates much of the recent NoPE discussion. Kimi K2 and K2.5 used MLA with RoPE, whereas Kimi K3 applies <strong>NoPE to every global Gated MLA layer</strong>. Its repeating block contains three Kimi Delta Attention (KDA) layers followed by one global Gated MLA layer:</p>
+<p><span class="math display">\[
+\underbrace{\operatorname{KDA}
+\rightarrow \operatorname{KDA}
+\rightarrow \operatorname{KDA}}_{\text{ordered recurrent mixing}}
+\rightarrow
+\underbrace{\operatorname{GatedMLA}_{\text{NoPE}}}_{\text{global content routing}}.
+\]</span></p>
+<p>This does not mean that Kimi K3 has no notion of position. KDA updates a recurrent state in token order and uses learned, channel-wise decay, making its mixing both position-sensitive and recency-aware. The later NoPE MLA layer can therefore globally retrieve representations that already contain order. No RoPE frequency needs to be retuned when the context is extended.</p>
+<p>This is a useful generalization of the Llama 4 pattern:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Local or recurrent path</th>
+<th>Global path</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Llama 4: local attention with explicit RoPE</td>
+<td>full attention with NoPE</td>
+</tr>
+<tr class="even">
+<td>Kimi K3: KDA recurrence with implicit, learned positional dynamics</td>
+<td>Gated MLA with NoPE</td>
+</tr>
+</tbody>
+</table>
+<p>See the <a href="https://arxiv.org/abs/2607.24653">Kimi K3 technical report</a>, especially Sections 2.1 and 3.4.</p>
+</section>
+<section id="smollm3-an-open-reproducible-example" class="level4">
+<h4 class="anchored" data-anchor-id="smollm3-an-open-reproducible-example">SmolLM3: an open, reproducible example</h4>
+<p>Hugging Face’s 3B SmolLM3 is not frontier-scale, but it provides unusually open ablation evidence and a practical implementation. It removes RoPE from every fourth layer and reports improved long-context behavior without hurting short-context results. Its remaining RoPE layers still use YaRN and adjusted RoPE frequencies for context extension. Therefore the model is another <strong>hybrid RoPE–NoPE</strong> design, not a pure NoPE model. See the <a href="https://huggingface.co/blog/smollm3">SmolLM3 training report</a>.</p>
+</section>
+<section id="model-map-nope-is-a-trend-not-a-universal-switch" class="level4">
+<h4 class="anchored" data-anchor-id="model-map-nope-is-a-trend-not-a-universal-switch">Model map: NoPE is a trend, not a universal switch</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Model family</th>
+<th>Position design</th>
+<th>Correct interpretation</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Llama 4</td>
+<td>local/chunked RoPE; periodic global NoPE</td>
+<td>hybrid RoPE–NoPE</td>
+</tr>
+<tr class="even">
+<td>Apple foundation models (2025)</td>
+<td>sliding-window RoPE; global NoPE</td>
+<td>hybrid RoPE–NoPE</td>
+</tr>
+<tr class="odd">
+<td>Kimi K3</td>
+<td>three KDA layers; every global Gated MLA layer uses NoPE</td>
+<td>recurrent-position + global-NoPE hybrid</td>
+</tr>
+<tr class="even">
+<td>SmolLM3</td>
+<td>every fourth layer removes RoPE; other layers retain RoPE/YaRN</td>
+<td>open small-scale hybrid</td>
+</tr>
+<tr class="odd">
+<td>Qwen3</td>
+<td>RoPE in the architecture; ABF, YaRN, and DCA for long context</td>
+<td>not NoPE</td>
+</tr>
+<tr class="even">
+<td>DeepSeek-V3</td>
+<td>MLA with a decoupled query/key component carrying RoPE</td>
+<td>not NoPE</td>
+</tr>
+</tbody>
+</table>
+<p>The last two rows are important counterexamples. Qwen3 explicitly retains RoPE and raises its base frequency during long-context training; DeepSeek-V3’s MLA compresses content keys and values but keeps a separate RoPE-bearing component. MLA therefore does <strong>not</strong> imply NoPE. See the <a href="https://arxiv.org/abs/2505.09388">Qwen3 technical report</a> and <a href="https://arxiv.org/abs/2412.19437">DeepSeek-V3 technical report</a>.</p>
+</section>
+</section>
+<section id="minimal-hybrid-implementation" class="level3">
+<h3 class="anchored" data-anchor-id="minimal-hybrid-implementation">Minimal hybrid implementation</h3>
+<p>The layer schedule can be implemented by conditionally applying RoPE:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> hybrid_attention(q, k, v, layer_idx, apply_rope, nope_interval<span class="op">=</span><span class="dv">4</span>):</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Sketch of a 3-RoPE : 1-NoPE schedule."""</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    is_nope_layer <span class="op">=</span> (layer_idx <span class="op">+</span> <span class="dv">1</span>) <span class="op">%</span> nope_interval <span class="op">==</span> <span class="dv">0</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> is_nope_layer:</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>        q, k <span class="op">=</span> apply_rope(q, k)</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> F.scaled_dot_product_attention(</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>        q, k, v,</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>        is_causal<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>This sketch changes only the positional transform. Llama 4 additionally changes the attention span: RoPE layers are local/chunked and NoPE layers are global. Kimi K3 instead replaces the RoPE branch with an ordered KDA recurrence. A real implementation must construct the appropriate mask or recurrent state for each layer and handle cached positions consistently.</p>
+</section>
+<section id="what-changed-in-our-understanding" class="level3">
+<h3 class="anchored" data-anchor-id="what-changed-in-our-understanding">What changed in our understanding?</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Earlier interpretation</th>
+<th>More recent interpretation</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>choose one PE for the entire model</td>
+<td>positional strategy can vary by layer</td>
+</tr>
+<tr class="even">
+<td>NoPE is mainly a surprising ablation</td>
+<td>NoPE can be a global-routing component in a production LLM</td>
+</tr>
+<tr class="odd">
+<td>every layer must directly encode distance</td>
+<td>local layers can encode order for later global layers</td>
+</tr>
+<tr class="even">
+<td>context extension is only a RoPE-rescaling problem</td>
+<td>architecture can provide a position-free global path</td>
+</tr>
+<tr class="odd">
+<td>NoPE has zero positional signal</td>
+<td>it has no <strong>explicit</strong> PE but still inherits causal and contextual order</td>
+</tr>
+</tbody>
+</table>
+<p>Recent theory also sharpens the role of depth. Work on the <a href="https://arxiv.org/abs/2505.11199">counting power of NoPE Transformers</a> finds a large expressivity gap between one and multiple attention layers in a formal hard-attention setting. This supports the nested-prefix intuition above, although a theorem about an idealized hard-attention model is not direct evidence about optimization or quality in a finite-precision frontier LLM.</p>
+<p>The practical conclusion is:</p>
+<p><span class="math display">\[
+\boxed{
+\text{modern NoPE trend}
+\approx
+\text{position-aware local or recurrent mixing}
++
+\text{position-free global routing}
+}.
+\]</span></p>
+</section>
 </section>
 <section id="absolute-positional-encodings" class="level2">
 <h2 class="anchored" data-anchor-id="absolute-positional-encodings">Absolute Positional Encodings</h2>
@@ -285,6 +678,15 @@ q_t^T R_{s-t}k_s.
 <ul>
 <li>Why does self-attention require position information?</li>
 <li>Does the causal mask by itself fully encode token positions?</li>
+<li>What does NoPE remove, and what order-dependent structure remains?</li>
+<li>Why can a multi-layer NoPE decoder distinguish <code>A B C</code> from <code>B A C</code> even when a single content-only attention layer at <code>C</code> cannot?</li>
+<li>Why is NoPE more natural for a causal decoder than a bidirectional encoder?</li>
+<li>What length-generalization advantage might NoPE have over a learned position table or fixed RoPE frequencies?</li>
+<li>Why do Llama 4 and Apple’s foundation models combine local RoPE with global NoPE instead of removing RoPE everywhere?</li>
+<li>How can Kimi K3 use NoPE in every global MLA layer while remaining sensitive to order? What positional role does KDA play?</li>
+<li>In iRoPE, how can a global NoPE layer remain order-aware after local RoPE layers?</li>
+<li>Does saying “Llama 4 uses NoPE” imply that every attention layer is NoPE?</li>
+<li>Why does DeepSeek-V3’s use of MLA not imply that it uses NoPE?</li>
 <li>What is the difference between absolute and relative position information?</li>
 <li>How does RoPE make attention scores depend on relative displacement?</li>
 <li>Why must the RoPE head dimension be arranged in pairs?</li>

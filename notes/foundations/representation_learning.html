@@ -477,7 +477,7 @@ z=W^Tx,
 R(k)=\sum_{j=k+1}^{d}\lambda_j.
 \]</span></p>
 <p>A linear autoencoder with squared-error loss learns the same principal subspace as PCA, although its coordinates can differ by an invertible change of basis.</p>
-<div id="9f744456" class="cell" data-execution_count="1">
+<div id="0a1f588b" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -684,7 +684,7 @@ d(z_a,z_p)-d(z_a,z_n)+m
 <li><strong>uniformity/separation:</strong> the population should not collapse to one point</li>
 </ul>
 <p>Under its sampling assumptions, InfoNCE also gives the mutual-information lower bound <span class="math inline">\(I\ge \log N-\mathcal L_{\text{NCE}}\)</span>, where <span class="math inline">\(N\)</span> is the number of candidates. This interpretation is useful but incomplete: downstream quality depends on the view construction and representation geometry, not just on making the bound large.</p>
-<div id="43e2f0ce" class="cell" data-execution_count="2">
+<div id="599b15d5" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch.nn.functional <span class="im">as</span> F</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -729,7 +729,7 @@ d(z_a,z_p)-d(z_a,z_n)+m
 +\nu\mathcal L_{\text{cov}}.
 \]</span></p>
 <p>The terms respectively align paired views, keep each dimension’s batch standard deviation above a threshold, and penalize off-diagonal covariance.</p>
-<div id="6c760c9f" class="cell" data-execution_count="3">
+<div id="25d2eba1" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> off_diagonal(matrix):</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    size <span class="op">=</span> matrix.shape[<span class="dv">0</span>]</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> matrix.flatten()[:<span class="op">-</span><span class="dv">1</span>].view(size <span class="op">-</span> <span class="dv">1</span>, size <span class="op">+</span> <span class="dv">1</span>)[:, <span class="dv">1</span>:].flatten()</span>

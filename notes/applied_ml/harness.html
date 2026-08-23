@@ -472,6 +472,7 @@ s_{t+1},
 </div>
 </div>
 <p>The model does not call the operating system or an API directly. It proposes an action; the harness validates, authorizes, executes, records, and returns a bounded observation. That indirection is the key control boundary.</p>
+<p>OpenAI’s open-source Codex runtime is a concrete implementation of this loop. See <a href="../../notes/applied_ml/codex.html">Codex: Anatomy of an Open-Source Coding Agent</a> for a source-level analysis of its turn loop, typed tool router, event protocol, persistence, and sandbox boundary.</p>
 <section id="model-decisions-versus-code-decisions" class="level3">
 <h3 class="anchored" data-anchor-id="model-decisions-versus-code-decisions">Model decisions versus code decisions</h3>
 <p>Use the model when the choice requires semantic judgment under ambiguity. Use ordinary code when the rule is known:</p>
@@ -526,6 +527,10 @@ s_{t+1},
 <li>recent observations and errors</li>
 </ol>
 <p>It must resolve ordering, priority, truncation, compaction, and provenance. Simply appending every prior token eventually produces an expensive, noisy, and contradictory context.</p>
+<p>Context layout also affects inference cost. A stable prompt prefix can reuse cached transformer computation, whereas reordering tools or rewriting old messages can invalidate that cache. Codex consequently treats model-visible history as append-oriented state, orders dynamic inputs deterministically, and represents environment or permission changes as new context items when possible. This suggests a further invariant:</p>
+<blockquote class="blockquote">
+<p>Keep stable context stable. Compile semantic changes without gratuitously perturbing the reusable prefix.</p>
+</blockquote>
 <p>In control terms, context and memory perform <strong>state estimation</strong>. From the full history</p>
 <p><span class="math display">\[
 h_t=(o_1,a_1,\ldots,o_t),
@@ -607,6 +612,7 @@ a^*
 </ul>
 <p>Weng highlights the filesystem as an effective persistent-memory substrate for long-horizon work. Models already understand files, paths, diffs, and shell operations from pretraining; artifacts remain inspectable outside the context window and survive interruptions.</p>
 <p>Do not confuse persistence with relevance. A file can preserve everything, but the context compiler must still select what matters now.</p>
+<p>For recovery, make the event log <strong>replayable</strong>, not merely readable. Codex persists append-only JSONL rollouts and reconstructs thread history from stored items and lifecycle markers. Derived UI state can then be rebuilt after a disconnect instead of becoming a second, inconsistent source of truth.</p>
 </section>
 <section id="workflow-controller" class="level3">
 <h3 class="anchored" data-anchor-id="workflow-controller">5.4 Workflow controller</h3>
@@ -632,6 +638,7 @@ a^*
 <li>recovery after interruption</li>
 </ul>
 <p>The workflow may be a general loop, a deterministic DAG, or a hybrid in which code fixes the outer stages and the model makes local decisions.</p>
+<p>Name the controller’s timescales explicitly. Codex separates a durable conversation <strong>thread</strong>, a user-facing <strong>turn</strong>, and each model <strong>sampling step</strong> within that turn. Budgets, cancellation, caches, and persistence may belong to different levels; a generic “agent step” obscures who owns what.</p>
 <p>For uncertain environments, prefer a receding-horizon pattern:</p>
 <p><span class="math display">\[
 \text{plan}
@@ -675,6 +682,7 @@ a^*
 <li>financial, destructive, privileged, or difficult-to-reverse action</li>
 </ul>
 <p>High-impact actions may require user approval even when the model is confident. Retrieved documents and tool outputs are untrusted data, not instructions that can modify the permission policy.</p>
+<p>Security is normally a composition rather than one switch. Codex combines OS sandboxing, approval policy, command rules, managed network policy, and agent-native telemetry. These controls cover different failure modes. Also note that sandboxing a built-in shell does not automatically sandbox an external MCP tool; every capability needs an explicit trust and policy boundary.</p>
 <p>Formally, the permission layer enforces</p>
 <p><span class="math display">\[
 a_t\in\mathcal A_{\text{allowed}}(s_t).
@@ -705,6 +713,7 @@ _{\text{agent loop}},
 _{\text{development loop}}.
 \]</span></p>
 <p>A final success score says whether a run failed, but the trajectory is needed to attribute why it failed.</p>
+<p>Prefer typed lifecycle events over scraping rendered text. Codex app-server exposes thread, turn, item, approval, interruption, and completion events so different clients can project the same core state. This separation makes reconnection, testing, and protocol compatibility tractable.</p>
 </section>
 </section>
 <section id="context-engineering" class="level2">
@@ -1063,6 +1072,9 @@ h_{t+1}.
 <li><strong>Tools are sensors as well as actuators.</strong> Information-gathering actions can be more valuable than premature execution.</li>
 <li><strong>Useful reflection begins with surprise.</strong> New external evidence enables belief revision; repeated introspection alone does not.</li>
 <li><strong>Planning should remain feedback-sensitive.</strong> Plan, act briefly, observe, and replan when the environment is uncertain.</li>
+<li><strong>Stable context is a performance feature.</strong> Preserve cacheable prefixes and order dynamic inputs deterministically.</li>
+<li><strong>Protocols should expose lifecycle, not presentation.</strong> Typed events make clients replaceable and state recoverable.</li>
+<li><strong>Concurrency belongs in tool metadata.</strong> Parallelize calls only when their declared effects can safely overlap.</li>
 </ol>
 </section>
 <section id="interview-questions" class="level2">
@@ -1082,6 +1094,9 @@ h_{t+1}.
 <li>What makes a verifier produce useful surprise rather than merely another model opinion?</li>
 <li>When is receding-horizon planning preferable to committing to a complete plan?</li>
 <li>Why is reflection after a failed test more useful than reflection with no new evidence?</li>
+<li>Why can two semantically equivalent prompts have different inference costs?</li>
+<li>Why should thread, turn, and sampling-step state be distinguished?</li>
+<li>Why does sandboxing the shell not automatically sandbox every external tool?</li>
 </ul>
 </section>
 <section id="exercises" class="level2">
@@ -1102,6 +1117,8 @@ h_{t+1}.
 <ul>
 <li><a href="https://lilianweng.github.io/posts/2026-07-04-harness/">Harness Engineering for Self-Improvement — Lilian Weng</a></li>
 <li><a href="https://lilianweng.github.io/posts/2023-06-23-agent/">LLM Powered Autonomous Agents — Lilian Weng</a></li>
+<li><a href="../../notes/applied_ml/codex.html">Codex: Anatomy of an Open-Source Coding Agent</a></li>
+<li><a href="https://openai.com/index/unrolling-the-codex-agent-loop/">Unrolling the Codex agent loop — OpenAI</a></li>
 <li><a href="../../notes/applied_ml/agentic_search.html">Agentic Search</a></li>
 <li><a href="../../notes/advanced/continual_intelligence_ttt.html">From Test-Time Training to Continual Intelligence</a></li>
 </ul>
