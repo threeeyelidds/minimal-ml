@@ -366,42 +366,6 @@ $$
 
 The exact update form depends on the momentum convention and framework.
 
-### Per-Parameter Adaptive Learning Rates
-
-#### AdaGrad
-
-AdaGrad accumulates squared gradients:
-
-$$
-s_t=s_{t-1}+g_t^2,
-$$
-
-$$
-\theta_{t+1}
-=
-\theta_t-\eta\frac{g_t}{\sqrt{s_t}+\epsilon}.
-$$
-
-Parameters with frequent large gradients receive smaller effective learning
-rates. This can work well for sparse features, but $s_t$ only grows, so the
-learning rate may decay too aggressively.
-
-#### RMSProp
-
-RMSProp replaces the sum with an exponential moving average:
-
-$$
-s_t=\beta_2s_{t-1}+(1-\beta_2)g_t^2,
-$$
-
-$$
-\theta_{t+1}
-=
-\theta_t-\eta\frac{g_t}{\sqrt{s_t}+\epsilon}.
-$$
-
-Old squared gradients decay, preventing the denominator from growing forever.
-
 ## Online and Cumulative Optimization
 
 Online optimization makes the prediction/update boundary part of the problem.
@@ -761,15 +725,63 @@ The practical FTRL-Proximal algorithm derived here replaces each loss with a
 gradient-based linear surrogate, so **that algorithm is first-order**.
 :::
 
-## Adam and Decoupled Regularization
+## Adaptive Gradient Lineage: AdaGrad to AdamW
 
-Adam combines the local-update view of SGD with exponentially weighted
-per-parameter state. AdamW then separates parameter shrinkage from that adaptive
-gradient transformation.
+These methods are easiest to understand as a sequence of choices about how much
+gradient history to retain:
+
+| Method | First-moment state | Second-moment state | Core change |
+|---|---|---|---|
+| SGD | none | none | use the current gradient |
+| Momentum | EMA of $g_t$ | none | smooth the update direction |
+| AdaGrad | none | cumulative sum of $g_t^2$ | shrink frequently active coordinates |
+| RMSProp | none | EMA of $g_t^2$ | forget stale squared gradients |
+| Adam | EMA of $g_t$ | EMA of $g_t^2$ | combine momentum-like direction with RMSProp-like scaling |
+| AdamW | EMA of $g_t$ | EMA of $g_t^2$ | Adam plus separately applied parameter decay |
+
+Thus, **Adam is approximately RMSProp plus momentum**, with bias correction and
+specific normalization details. It is not literally obtained by composing two
+optimizer objects, but its two state variables play those two roles.
+
+### AdaGrad
+
+AdaGrad accumulates squared gradients:
+
+$$
+s_t=s_{t-1}+g_t^2,
+$$
+
+$$
+\theta_{t+1}
+=
+\theta_t-\eta\frac{g_t}{\sqrt{s_t}+\epsilon}.
+$$
+
+Parameters with frequent large gradients receive smaller effective learning
+rates. This can work well for sparse features, but $s_t$ only grows, so the
+learning rate may decay too aggressively.
+
+### RMSProp
+
+RMSProp replaces AdaGrad's cumulative sum with an exponential moving average:
+
+$$
+s_t=\beta_2s_{t-1}+(1-\beta_2)g_t^2,
+$$
+
+$$
+\theta_{t+1}
+=
+\theta_t-\eta\frac{g_t}{\sqrt{s_t}+\epsilon}.
+$$
+
+Old squared gradients decay, preventing the denominator from growing forever.
+This makes RMSProp more responsive when the gradient distribution changes.
 
 ### Adam
 
-Adam combines a first-moment estimate with an RMSProp-like second moment:
+Adam adds a momentum-like exponential first moment to the RMSProp-like
+exponential second moment:
 
 $$
 m_t=\beta_1m_{t-1}+(1-\beta_1)g_t,
@@ -778,6 +790,18 @@ $$
 $$
 v_t=\beta_2v_{t-1}+(1-\beta_2)g_t^2.
 $$
+
+The lineage shorthand is:
+
+$$
+\underbrace{\widehat m_t}_{\text{momentum-like direction}}
+\quad\Big/\quad
+\underbrace{(\sqrt{\widehat v_t}+\epsilon)}_{\text{RMSProp-like scale}}.
+$$
+
+It is only a shorthand. Momentum conventions may omit the factor
+$1-\beta_1$; Adam bias-corrects both moving averages; and the numerator and
+denominator interact in one normalized update.
 
 Because both moving averages start at zero, early estimates are biased toward
 zero. Adam corrects this:
@@ -815,25 +839,72 @@ simplified assumption. The same argument applies to $v_t$.
 
 ### AdamW and Weight Decay
 
-#### L2 regularization
+#### Coupled L2 regularization
 
-Adding an L2 penalty changes the loss:
+First define the gradient of the **data loss**:
 
 $$
-L_{\text{reg}}(\theta)
+g_t=\nabla_\theta L_{\text{data}}(\theta_t).
+$$
+
+If an L2 penalty is explicitly added to that loss,
+
+$$
+L_{\text{total}}(\theta)
 =
-L(\theta)+\frac{\lambda}{2}\|\theta\|_2^2,
+L_{\text{data}}(\theta)
++\frac{\lambda}{2}\|\theta\|_2^2,
 $$
 
-so the gradient becomes
+then automatic differentiation returns
 
 $$
-g_t^{\text{reg}}=g_t+\lambda\theta_t.
+g_t^{\text{total}}
+=
+g_t+\lambda\theta_t.
 $$
 
-#### Decoupled weight decay
+Ordinary Adam treats this entire quantity as its gradient. The penalty therefore
+enters **both** moment accumulators:
 
-AdamW applies parameter shrinkage separately from the adaptive gradient update:
+$$
+m_t
+=
+\beta_1m_{t-1}
++(1-\beta_1)(g_t+\lambda\theta_t),
+$$
+
+$$
+v_t
+=
+\beta_2v_{t-1}
++(1-\beta_2)(g_t+\lambda\theta_t)^2.
+$$
+
+The $\lambda\theta_t$ term is mixed with the data gradient, momentum, and
+coordinate-wise second-moment scaling. This is called **coupled** L2
+regularization.
+
+#### AdamW: decay outside the gradient path
+
+In the defining AdamW update, the loss passed to automatic differentiation does
+**not** include the L2 weight penalty:
+
+$$
+g_t=\nabla_\theta L_{\text{data}}(\theta_t).
+$$
+
+AdamW computes its moments from this data-loss gradient alone:
+
+$$
+m_t=\beta_1m_{t-1}+(1-\beta_1)g_t,
+$$
+
+$$
+v_t=\beta_2v_{t-1}+(1-\beta_2)g_t^2.
+$$
+
+It then applies uniform parameter shrinkage as a separate optimizer operation:
 
 $$
 \theta_{t+1}
@@ -844,10 +915,36 @@ $$
 \frac{\widehat m_t}{\sqrt{\widehat v_t}+\epsilon}.
 $$
 
-With ordinary SGD, L2 regularization and weight decay can be equivalent under a
-matching convention. With Adam, adding $\lambda\theta$ to the gradient causes
-the penalty to be rescaled by the adaptive denominator, so it is not equivalent
-to uniform parameter decay. AdamW restores the decoupled interpretation.
+“Decoupled” means that weight decay is excluded from the loss gradient, first
+moment, second moment, and adaptive denominator. It does **not** mean that
+AdamW has no regularizing effect.
+
+For plain SGD, coupled L2 and weight decay are algebraically equivalent:
+
+$$
+\theta_{t+1}
+=
+\theta_t-\eta(g_t+\lambda\theta_t)
+=
+(1-\eta\lambda)\theta_t-\eta g_t.
+$$
+
+For Adam they are not equivalent because $g_t+\lambda\theta_t$ would pass
+through the adaptive moment machinery.
+
+| Mechanism | Gradient seen by moments | Separate shrinkage |
+|---|---|---|
+| Adam + explicit L2 loss | $g_t+\lambda\theta_t$ | no |
+| AdamW weight decay | $g_t$ | $(1-\eta\lambda)\theta_t$ |
+
+::: {.callout-warning}
+## Do not apply both accidentally
+
+The standard AdamW recipe computes the backward pass from the data loss and sets
+the weight-decay option on the optimizer. If the same parameters also receive an
+explicit $\lambda\lVert\theta\rVert^2/2$ term in the loss, they get **both**
+coupled L2 regularization and decoupled weight decay.
+:::
 
 Common practice excludes biases and normalization scale parameters from weight
 decay, though this remains a modeling choice rather than a mathematical law.
@@ -1020,6 +1117,54 @@ The polar factor prevents a few large singular directions in the raw momentum
 matrix from dominating the update. It can also be interpreted as a steepest-
 descent direction under a matrix spectral-norm geometry.
 
+#### Muon versus full-matrix AdaGrad
+
+For a parameter with $p$ scalar entries, full-matrix AdaGrad flattens its
+gradient into $g_t\in\mathbb R^p$ and accumulates
+
+$$
+H_t
+=
+\epsilon I_p+\sum_{s=1}^{t}g_sg_s^T.
+$$
+
+It then preconditions the current gradient:
+
+$$
+\widetilde g_t=H_t^{-1/2}g_t.
+$$
+
+The inverse root uses a **historical uncentered gradient second moment** to
+reduce directions that have repeatedly carried large gradients and to rotate
+correlated coordinates. Its prohibitive cost is a dense $p\times p$ state. For an
+$m\times n$ matrix parameter, $p=mn$, so this state contains $m^2n^2$ entries.
+
+Muon performs a superficially similar inverse-square-root operation,
+
+$$
+\operatorname{orth}(M_t)
+=
+M_t(M_t^TM_t)^{-1/2},
+$$
+
+but $M_t$ is only the current momentum matrix. The Gram matrix $M_t^TM_t$ is
+formed from that momentum's matrix axes; it is **not** the cumulative outer
+product of vectorized gradients. Muon normalizes the singular values of the
+update direction instead of estimating a historical covariance preconditioner.
+
+| Property | Full-matrix AdaGrad | Muon |
+|---|---|---|
+| Historical statistic | cumulative gradient outer products | EMA-like first-moment matrix |
+| Matrix being inverse-rooted | $p\times p$ second moment over vectorized coordinates | row- or column-space Gram matrix of current momentum |
+| Result | rotate and scale by historical gradient geometry | approximately set nonzero momentum singular values to one |
+| Persistent state | $O(p^2)$ | $O(p)$ momentum |
+| Main interpretation | adaptive covariance preconditioning | spectral-norm steepest-descent geometry |
+
+Shampoo is the closer scalable relative of full-matrix AdaGrad: it approximates
+the enormous vectorized second moment through per-axis matrix statistics. Muon
+instead replaces second-moment tracking with a cheaper geometric transformation
+of momentum.
+
 #### Newton--Schulz orthogonalization
 
 Computing an SVD for every matrix at every step is expensive. Muon instead uses
@@ -1190,9 +1335,11 @@ class MinimalAdamW:
             if parameter.grad is None:
                 continue
 
+            # This gradient came from the caller's data loss. AdamW does not
+            # add weight_decay * parameter to it.
             gradient = parameter.grad
 
-            # Decoupled weight decay.
+            # Shrink the parameter outside the first/second-moment updates.
             parameter.mul_(1.0 - self.lr * self.weight_decay)
 
             first.mul_(self.beta1).add_(gradient, alpha=1.0 - self.beta1)
@@ -1215,16 +1362,17 @@ class MinimalAdamW:
 
 ```{python}
 parameter = torch.nn.Parameter(torch.tensor([3.0, -4.0]))
+target = torch.tensor([1.0, -1.0])
 optimizer = MinimalAdamW([parameter], lr=0.1, weight_decay=0.01)
-initial_norm = parameter.detach().norm()
+initial_error = (parameter.detach() - target).norm()
 
 for _ in range(100):
-    loss = parameter.square().sum()
-    loss.backward()
+    data_loss = (parameter - target).square().sum()
+    data_loss.backward()  # No explicit L2 penalty is added to this loss.
     optimizer.step()
     optimizer.zero_grad()
 
-assert parameter.norm() < 0.02 * initial_norm
+assert (parameter - target).norm() < 0.02 * initial_error
 parameter
 ```
 
@@ -1316,6 +1464,8 @@ an excessive learning rate or a deeper stability problem.
 - Why is weight decay orthogonal to the derivative-order taxonomy?
 - How does momentum reduce oscillation?
 - Why does AdaGrad's effective learning rate continually shrink?
+- In what precise sense is Adam “RMSProp plus momentum,” and what details does
+  that shorthand omit?
 - Derive Adam's bias-correction terms.
 - Why are L2 regularization and weight decay different for Adam?
 - How much optimizer-state memory does Adam require?
@@ -1327,6 +1477,7 @@ an excessive learning rate or a deeper stability problem.
 - Why does matrix Shampoo use $-1/4$ powers on both sides?
 - What does Muon's Newton--Schulz iteration compute, and why is it not Newton's
   method on the training loss?
+- Why is Muon's $M(M^TM)^{-1/2}$ not a full-matrix AdaGrad preconditioner?
 - Why is Muon commonly paired with AdamW for the remaining parameters?
 - Compare the optimizer-state and computation costs of AdamW, Shampoo, and Muon.
 
@@ -1347,9 +1498,13 @@ an excessive learning rate or a deeper stability problem.
   exact zeros.
 - [ ] Compare `MinimalAdamW` with `torch.optim.AdamW` for several deterministic steps.
 - [ ] Plot the effective per-parameter learning rates in Adam.
+- [ ] Construct Adam from separate first-moment and RMSProp-style
+  second-moment components and compare it with the equations in the note.
 - [ ] Derive training-memory usage for parameters, gradients, and Adam states.
 - [ ] Implement linear warmup followed by cosine decay.
 - [ ] Compare Shampoo's direction with an element-wise AdaGrad direction.
+- [ ] Compare full-matrix AdaGrad and Muon on a small matrix parameter, tracking
+  their state sizes and singular values.
 - [ ] Compare the Newton--Schulz polar factor against `torch.linalg.svd`.
 - [ ] Route 2D hidden weights to Muon and all other parameters to AdamW.
 
@@ -1361,6 +1516,9 @@ an excessive learning rate or a deeper stability problem.
 - [A Tutorial on Bayesian Optimization](https://arxiv.org/abs/1807.02811)
 - [Random Gradient-Free Minimization of Convex Functions](https://link.springer.com/article/10.1007/s10208-015-9296-2)
 - [Ad Click Prediction: A View from the Trenches](https://research.google.com/pubs/archive/41159.pdf)
+- [Adaptive Subgradient Methods for Online Learning and Stochastic Optimization](https://jmlr.org/papers/v12/duchi11a.html)
+- [Adam: A Method for Stochastic Optimization](https://arxiv.org/abs/1412.6980)
+- [Decoupled Weight Decay Regularization](https://arxiv.org/abs/1711.05101)
 - [Shampoo: Preconditioned Stochastic Tensor Optimization](https://arxiv.org/abs/1802.09568)
 - [Muon Is Scalable for LLM Training](https://arxiv.org/abs/2502.16982)
 - [Practical Efficiency of Muon for Pretraining](https://arxiv.org/abs/2505.02222)
