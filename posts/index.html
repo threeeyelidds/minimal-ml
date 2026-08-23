@@ -85,9 +85,9 @@ ul.task-list li input[type="checkbox"] {
     }
 
     const options = {
-      valueNames: [{ data: ['index'] },{ data: ['categories'] },{ data: ['listing-date-sort'] },{ data: ['listing-file-modified-sort'] }],
+      valueNames: ['listing-date','listing-title','listing-subtitle','listing-author',{ data: ['index'] },{ data: ['categories'] },{ data: ['listing-date-sort'] },{ data: ['listing-file-modified-sort'] }],
       
-      searchColumns: [],
+      searchColumns: ["listing-date","listing-title","listing-author","listing-subtitle","listing-image","listing-description"],
     };
 
     window['quarto-listings'] = window['quarto-listings'] || {};
@@ -211,7 +211,26 @@ window.Quarto = {
 
 <div class="quarto-listing quarto-listing-container-default" id="listing-listing">
 <div class="list quarto-listing-default">
-
+<div class="quarto-post image-right" data-index="0" data-listing-date-sort="1787011200000" data-listing-file-modified-sort="1787462825519" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="12" data-listing-word-count-sort="2341">
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="../posts/ai-gdp-productivity-purpose.html" class="no-external">When Productivity Outruns Demand: Can AI Become an Economic Goal in Itself?</a>
+</h3>
+<div class="listing-subtitle">
+<a href="../posts/ai-gdp-productivity-purpose.html" class="no-external">From the Great Depression to machine-generated final demand</a>
+</div>
+</div>
+<div class="metadata">
+<a href="../posts/ai-gdp-productivity-purpose.html" class="no-external">
+<div class="listing-date">
+Aug 18, 2026
+</div>
+<div class="listing-author">
+Kedi Xu
+</div>
+</a>
+</div>
+</div>
 </div>
 <div class="listing-no-matching d-none">No matching items</div>
 </div></main> <!-- /main -->

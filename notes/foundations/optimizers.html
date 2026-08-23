@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>First- and Second-Order Optimization – Minimal ML</title>
+<title>Zeroth-, First-, and Second-Order Optimization – Minimal ML</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -189,44 +189,40 @@ window.Quarto = {
    
   <ul>
   <li><a href="#optimization-setup" id="toc-optimization-setup" class="nav-link active" data-scroll-target="#optimization-setup">Optimization Setup</a></li>
-  <li><a href="#stochastic-gradient-descent" id="toc-stochastic-gradient-descent" class="nav-link" data-scroll-target="#stochastic-gradient-descent">Stochastic Gradient Descent</a>
+  <li><a href="#zeroth-order-and-derivative-free-optimization" id="toc-zeroth-order-and-derivative-free-optimization" class="nav-link" data-scroll-target="#zeroth-order-and-derivative-free-optimization">Zeroth-Order and Derivative-Free Optimization</a>
   <ul class="collapse">
-  <li><a href="#why-stochasticity-can-help" id="toc-why-stochasticity-can-help" class="nav-link" data-scroll-target="#why-stochasticity-can-help">Why stochasticity can help</a></li>
+  <li><a href="#family-1-direct-and-model-based-search" id="toc-family-1-direct-and-model-based-search" class="nav-link" data-scroll-target="#family-1-direct-and-model-based-search">Family 1: direct and model-based search</a></li>
+  <li><a href="#family-2-estimate-a-gradient-from-function-values" id="toc-family-2-estimate-a-gradient-from-function-values" class="nav-link" data-scroll-target="#family-2-estimate-a-gradient-from-function-values">Family 2: estimate a gradient from function values</a></li>
+  <li><a href="#why-zeroth-order-methods-are-expensive-in-high-dimensions" id="toc-why-zeroth-order-methods-are-expensive-in-high-dimensions" class="nav-link" data-scroll-target="#why-zeroth-order-methods-are-expensive-in-high-dimensions">Why zeroth-order methods are expensive in high dimensions</a></li>
+  <li><a href="#minimal-two-point-implementation" id="toc-minimal-two-point-implementation" class="nav-link" data-scroll-target="#minimal-two-point-implementation">Minimal two-point implementation</a></li>
   </ul></li>
-  <li><a href="#momentum" id="toc-momentum" class="nav-link" data-scroll-target="#momentum">Momentum</a>
+  <li><a href="#local-stochastic-first-order-methods" id="toc-local-stochastic-first-order-methods" class="nav-link" data-scroll-target="#local-stochastic-first-order-methods">Local Stochastic First-Order Methods</a>
   <ul class="collapse">
-  <li><a href="#nesterov-momentum" id="toc-nesterov-momentum" class="nav-link" data-scroll-target="#nesterov-momentum">Nesterov momentum</a></li>
+  <li><a href="#stochastic-gradient-descent" id="toc-stochastic-gradient-descent" class="nav-link" data-scroll-target="#stochastic-gradient-descent">Stochastic Gradient Descent</a></li>
+  <li><a href="#momentum" id="toc-momentum" class="nav-link" data-scroll-target="#momentum">Momentum</a></li>
   </ul></li>
-  <li><a href="#per-parameter-adaptive-learning-rates" id="toc-per-parameter-adaptive-learning-rates" class="nav-link" data-scroll-target="#per-parameter-adaptive-learning-rates">Per-Parameter Adaptive Learning Rates</a>
+  <li><a href="#online-and-cumulative-optimization" id="toc-online-and-cumulative-optimization" class="nav-link" data-scroll-target="#online-and-cumulative-optimization">Online and Cumulative Optimization</a>
+  <ul class="collapse">
+  <li><a href="#ftrl-online-and-proximal-first-order-optimization" id="toc-ftrl-online-and-proximal-first-order-optimization" class="nav-link" data-scroll-target="#ftrl-online-and-proximal-first-order-optimization">FTRL: Online and Proximal First-Order Optimization</a></li>
+  </ul></li>
+  <li><a href="#adaptive-gradient-lineage-adagrad-to-adamw" id="toc-adaptive-gradient-lineage-adagrad-to-adamw" class="nav-link" data-scroll-target="#adaptive-gradient-lineage-adagrad-to-adamw">Adaptive Gradient Lineage: AdaGrad to AdamW</a>
   <ul class="collapse">
   <li><a href="#adagrad" id="toc-adagrad" class="nav-link" data-scroll-target="#adagrad">AdaGrad</a></li>
   <li><a href="#rmsprop" id="toc-rmsprop" class="nav-link" data-scroll-target="#rmsprop">RMSProp</a></li>
+  <li><a href="#adam" id="toc-adam" class="nav-link" data-scroll-target="#adam">Adam</a></li>
+  <li><a href="#adamw-and-weight-decay" id="toc-adamw-and-weight-decay" class="nav-link" data-scroll-target="#adamw-and-weight-decay">AdamW and Weight Decay</a></li>
   </ul></li>
-  <li><a href="#adam" id="toc-adam" class="nav-link" data-scroll-target="#adam">Adam</a>
+  <li><a href="#matrix-geometry-and-curvature-aware-methods" id="toc-matrix-geometry-and-curvature-aware-methods" class="nav-link" data-scroll-target="#matrix-geometry-and-curvature-aware-methods">Matrix Geometry and Curvature-Aware Methods</a>
   <ul class="collapse">
-  <li><a href="#why-bias-correction-matters" id="toc-why-bias-correction-matters" class="nav-link" data-scroll-target="#why-bias-correction-matters">Why bias correction matters</a></li>
+  <li><a href="#shampoo" id="toc-shampoo" class="nav-link" data-scroll-target="#shampoo">Shampoo</a></li>
+  <li><a href="#muon" id="toc-muon" class="nav-link" data-scroll-target="#muon">Muon</a></li>
   </ul></li>
-  <li><a href="#adamw-and-weight-decay" id="toc-adamw-and-weight-decay" class="nav-link" data-scroll-target="#adamw-and-weight-decay">AdamW and Weight Decay</a>
+  <li><a href="#optimizer-comparison" id="toc-optimizer-comparison" class="nav-link" data-scroll-target="#optimizer-comparison">Optimizer Comparison</a>
   <ul class="collapse">
-  <li><a href="#l2-regularization" id="toc-l2-regularization" class="nav-link" data-scroll-target="#l2-regularization">L2 regularization</a></li>
-  <li><a href="#decoupled-weight-decay" id="toc-decoupled-weight-decay" class="nav-link" data-scroll-target="#decoupled-weight-decay">Decoupled weight decay</a></li>
+  <li><a href="#local-stochastic-methods" id="toc-local-stochastic-methods" class="nav-link" data-scroll-target="#local-stochastic-methods">Local stochastic methods</a></li>
+  <li><a href="#online-cumulative-methods" id="toc-online-cumulative-methods" class="nav-link" data-scroll-target="#online-cumulative-methods">Online cumulative methods</a></li>
+  <li><a href="#matrix-geometry-methods" id="toc-matrix-geometry-methods" class="nav-link" data-scroll-target="#matrix-geometry-methods">Matrix-geometry methods</a></li>
   </ul></li>
-  <li><a href="#first-order-second-order-and-preconditioning" id="toc-first-order-second-order-and-preconditioning" class="nav-link" data-scroll-target="#first-order-second-order-and-preconditioning">First Order, Second Order, and Preconditioning</a></li>
-  <li><a href="#shampoo" id="toc-shampoo" class="nav-link" data-scroll-target="#shampoo">Shampoo</a>
-  <ul class="collapse">
-  <li><a href="#why-the-exponent-is--14" id="toc-why-the-exponent-is--14" class="nav-link" data-scroll-target="#why-the-exponent-is--14">Why the exponent is <span class="math inline">\(-1/4\)</span></a></li>
-  <li><a href="#why-shampoo-is-more-structured-than-adam" id="toc-why-shampoo-is-more-structured-than-adam" class="nav-link" data-scroll-target="#why-shampoo-is-more-structured-than-adam">Why Shampoo is more structured than Adam</a></li>
-  <li><a href="#minimal-matrix-shampoo-direction" id="toc-minimal-matrix-shampoo-direction" class="nav-link" data-scroll-target="#minimal-matrix-shampoo-direction">Minimal matrix Shampoo direction</a></li>
-  <li><a href="#shampoo-costs" id="toc-shampoo-costs" class="nav-link" data-scroll-target="#shampoo-costs">Shampoo costs</a></li>
-  </ul></li>
-  <li><a href="#muon" id="toc-muon" class="nav-link" data-scroll-target="#muon">Muon</a>
-  <ul class="collapse">
-  <li><a href="#newtonschulz-orthogonalization" id="toc-newtonschulz-orthogonalization" class="nav-link" data-scroll-target="#newtonschulz-orthogonalization">Newton–Schulz orthogonalization</a></li>
-  <li><a href="#which-parameters-use-muon" id="toc-which-parameters-use-muon" class="nav-link" data-scroll-target="#which-parameters-use-muon">Which parameters use Muon?</a></li>
-  <li><a href="#is-muon-a-second-order-optimizer" id="toc-is-muon-a-second-order-optimizer" class="nav-link" data-scroll-target="#is-muon-a-second-order-optimizer">Is Muon a second-order optimizer?</a></li>
-  <li><a href="#shampoo-versus-muon" id="toc-shampoo-versus-muon" class="nav-link" data-scroll-target="#shampoo-versus-muon">Shampoo versus Muon</a></li>
-  </ul></li>
-  <li><a href="#optimizer-comparison" id="toc-optimizer-comparison" class="nav-link" data-scroll-target="#optimizer-comparison">Optimizer Comparison</a></li>
   <li><a href="#minimal-adamw-implementation" id="toc-minimal-adamw-implementation" class="nav-link" data-scroll-target="#minimal-adamw-implementation">Minimal AdamW Implementation</a></li>
   <li><a href="#learning-rate-schedules" id="toc-learning-rate-schedules" class="nav-link" data-scroll-target="#learning-rate-schedules">Learning-Rate Schedules</a>
   <ul class="collapse">
@@ -246,7 +242,7 @@ window.Quarto = {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">First- and Second-Order Optimization</h1>
+<h1 class="title">Zeroth-, First-, and Second-Order Optimization</h1>
 </div>
 
 
@@ -272,11 +268,11 @@ L(\theta)
 =
 \frac{1}{N}\sum_{i=1}^{N}\ell(f_\theta(x_i),y_i).
 \]</span></p>
-<p>A mini-batch provides a stochastic gradient</p>
+<p>Most deep-learning optimizers use a stochastic gradient from a mini-batch:</p>
 <p><span class="math display">\[
 g_t=\nabla_\theta L_{\mathcal B_t}(\theta_t),
 \]</span></p>
-<p>which is an estimate of the full-dataset gradient. An optimizer converts the current gradient and its accumulated state into a parameter update.</p>
+<p>This is an estimate of the full-dataset gradient. A first-order optimizer converts that gradient and its accumulated state into a parameter update. Zeroth-order methods receive only evaluations of <span class="math inline">\(L(\theta)\)</span>. Some estimate a gradient-like direction; others compare candidate points, move a simplex, fit a surrogate, or evolve a population without constructing any gradient estimate.</p>
 <p>Optimization quality depends on more than the optimizer name:</p>
 <ul>
 <li>learning rate and schedule</li>
@@ -286,17 +282,324 @@ g_t=\nabla_\theta L_{\mathcal B_t}(\theta_t),
 <li>regularization and weight decay</li>
 <li>numerical precision</li>
 </ul>
+<p>The “order” of an optimizer refers to the highest derivative of the objective available to it:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Order</th>
+<th>Oracle information</th>
+<th>Examples</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Zeroth</td>
+<td>function values <span class="math inline">\(L(\theta)\)</span></td>
+<td>pattern search, Nelder–Mead, Powell, CMA-ES, Bayesian optimization, finite differences</td>
+</tr>
+<tr class="even">
+<td>First</td>
+<td>gradients <span class="math inline">\(\nabla L(\theta)\)</span></td>
+<td>SGD, AdamW, AdaGrad, linearized FTRL-Proximal</td>
+</tr>
+<tr class="odd">
+<td>Second</td>
+<td>Hessian or curvature information</td>
+<td>Newton, quasi-Newton, Hessian-free methods</td>
+</tr>
+</tbody>
+</table>
+<p>Preconditioning and regularization are separate axes. A method can transform a first-order gradient using matrix geometry, and weight decay can be attached to an optimizer without changing its derivative order.</p>
+<p>Derivative order is only one taxonomy. The <strong>learning protocol</strong> asks a different question:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Protocol</th>
+<th>Objective or evaluation</th>
+<th>Meaning of the example index</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Static empirical risk</td>
+<td>minimize one fixed dataset average</td>
+<td>examples are usually treated as exchangeable</td>
+</tr>
+<tr class="even">
+<td>Stochastic optimization</td>
+<td>estimate the static objective from sampled mini-batches</td>
+<td>sampled order is mainly an optimization device</td>
+</tr>
+<tr class="odd">
+<td>Online learning</td>
+<td>predict, reveal the next loss, then update</td>
+<td><span class="math inline">\(t\)</span> is a causal decision round</td>
+</tr>
+</tbody>
+</table>
+<p>SGD and FTRL can both use first-order information while solving differently organized problems. This distinction becomes important below.</p>
 </section>
-<section id="stochastic-gradient-descent" class="level2">
-<h2 class="anchored" data-anchor-id="stochastic-gradient-descent">Stochastic Gradient Descent</h2>
+<section id="zeroth-order-and-derivative-free-optimization" class="level2">
+<h2 class="anchored" data-anchor-id="zeroth-order-and-derivative-free-optimization">Zeroth-Order and Derivative-Free Optimization</h2>
+<p>A <strong>zeroth-order oracle</strong> returns function values but no derivatives. The broader term <strong>derivative-free optimization</strong> emphasizes algorithms designed to work without gradients. These algorithms are useful for black-box APIs, nondifferentiable simulators, physical experiments, hyperparameter tuning, mixed/discrete decisions, and objectives whose implementation cannot be differentiated.</p>
+<p>Two families should be distinguished:</p>
+<ol type="1">
+<li><strong>Direct/model-based search:</strong> choose candidates from comparisons, geometric rules, populations, or a fitted response surface. No gradient is estimated.</li>
+<li><strong>Zeroth-order gradient estimation:</strong> use function differences to construct a gradient-like vector, then apply an SGD-style update.</li>
+</ol>
+<p>The first family is the traditional meaning of “optimization without derivatives.”</p>
+<section id="family-1-direct-and-model-based-search" class="level3">
+<h3 class="anchored" data-anchor-id="family-1-direct-and-model-based-search">Family 1: direct and model-based search</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Method</th>
+<th>State and move</th>
+<th>Best fit</th>
+<th>Main limitation</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Grid/random search</td>
+<td>evaluate independent candidate points</td>
+<td>baselines, discrete spaces, embarrassingly parallel search</td>
+<td>ignores information from earlier evaluations</td>
+</tr>
+<tr class="even">
+<td>Coordinate/pattern search</td>
+<td>test a finite set of directions; accept improvements and shrink step size</td>
+<td>low-dimensional local optimization, nonsmooth objectives</td>
+<td>evaluations grow with dimension and coordinate alignment can be poor</td>
+</tr>
+<tr class="odd">
+<td>Nelder–Mead</td>
+<td>transform a simplex of <span class="math inline">\(d+1\)</span> points by reflection, expansion, contraction, and shrinkage</td>
+<td>small, deterministic continuous problems</td>
+<td>weak scaling and limited convergence guarantees in general dimensions</td>
+</tr>
+<tr class="even">
+<td>Powell direction-set</td>
+<td>repeated one-dimensional line searches; update the direction set</td>
+<td>smooth low-dimensional continuous problems</td>
+<td>line searches can be expensive and noise-sensitive</td>
+</tr>
+<tr class="odd">
+<td>Simulated annealing</td>
+<td>sometimes accept worse moves with a temperature-dependent probability</td>
+<td>multimodal or combinatorial search</td>
+<td>slow schedules and many evaluations</td>
+</tr>
+<tr class="even">
+<td>Evolution strategies / CMA-ES</td>
+<td>sample a population and update its search distribution</td>
+<td>nonconvex, rugged continuous objectives</td>
+<td>population evaluations and covariance state are expensive</td>
+</tr>
+<tr class="odd">
+<td>Bayesian optimization</td>
+<td>fit a probabilistic surrogate and optimize an acquisition function</td>
+<td>very expensive objectives with modest dimension</td>
+<td>surrogate/acquisition overhead and poor high-dimensional scaling</td>
+</tr>
+</tbody>
+</table>
+<section id="coordinate-and-pattern-search" class="level4">
+<h4 class="anchored" data-anchor-id="coordinate-and-pattern-search">Coordinate and pattern search</h4>
+<p>At point <span class="math inline">\(x_t\)</span> with step size <span class="math inline">\(\Delta_t\)</span>, a coordinate search evaluates</p>
+<p><span class="math display">\[
+x_t\pm\Delta_t e_i,
+\qquad i=1,\ldots,d.
+\]</span></p>
+<p>It moves to an improving candidate. If none improves the objective, it shrinks <span class="math inline">\(\Delta_t\)</span>. More general pattern-search methods use a set of directions that positively spans the space. Their convergence arguments come from ensuring that failure to improve at progressively smaller scales implies a local stationarity condition—not from approximating a gradient.</p>
+<div id="a5b39d1c" class="cell" data-execution_count="1">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="at">@torch.no_grad</span>()</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> coordinate_pattern_search(</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    objective,</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    initial_point,</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    initial_step<span class="op">=</span><span class="fl">1.0</span>,</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    shrink<span class="op">=</span><span class="fl">0.5</span>,</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    tolerance<span class="op">=</span><span class="fl">1e-5</span>,</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    max_sweeps<span class="op">=</span><span class="dv">200</span>,</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>):</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Greedy coordinate search using function comparisons only."""</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    point <span class="op">=</span> initial_point.clone()</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    value <span class="op">=</span> <span class="bu">float</span>(objective(point))</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    step <span class="op">=</span> initial_step</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(max_sweeps):</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>        improved <span class="op">=</span> <span class="va">False</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> index <span class="kw">in</span> <span class="bu">range</span>(point.numel()):</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> sign <span class="kw">in</span> (<span class="op">-</span><span class="fl">1.0</span>, <span class="fl">1.0</span>):</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>                candidate <span class="op">=</span> point.clone()</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>                candidate[index] <span class="op">+=</span> sign <span class="op">*</span> step</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>                candidate_value <span class="op">=</span> <span class="bu">float</span>(objective(candidate))</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>                <span class="cf">if</span> candidate_value <span class="op">&lt;</span> value:</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>                    point, value <span class="op">=</span> candidate, candidate_value</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>                    improved <span class="op">=</span> <span class="va">True</span></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="kw">not</span> improved:</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>            step <span class="op">*=</span> shrink</span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> step <span class="op">&lt;</span> tolerance:</span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>                <span class="cf">break</span></span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> point, value</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>target <span class="op">=</span> torch.tensor([<span class="fl">0.5</span>, <span class="op">-</span><span class="fl">1.0</span>, <span class="fl">2.0</span>])</span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>solution, value <span class="op">=</span> coordinate_pattern_search(</span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>    <span class="kw">lambda</span> x: (x <span class="op">-</span> target).square().<span class="bu">sum</span>(),</span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>    initial_point<span class="op">=</span>torch.tensor([<span class="fl">4.0</span>, <span class="fl">3.0</span>, <span class="op">-</span><span class="fl">2.0</span>]),</span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>torch.testing.assert_close(solution, target, atol<span class="op">=</span><span class="fl">2e-5</span>, rtol<span class="op">=</span><span class="fl">0.0</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="neldermead-and-powell" class="level4">
+<h4 class="anchored" data-anchor-id="neldermead-and-powell">Nelder–Mead and Powell</h4>
+<p>Nelder–Mead maintains a simplex rather than a direction estimate. It reflects the worst vertex through the centroid of the others, then may expand, contract, or shrink based only on function comparisons. Do not confuse this geometric simplex with the simplex algorithm for linear programming.</p>
+<p>Powell’s method performs derivative-free one-dimensional minimizations along a set of directions and periodically replaces a direction using the net movement over a cycle. It can learn useful conjugate-like directions on smooth quadratic problems without evaluating derivatives.</p>
+<p>Both are valuable classical local methods for modest dimension. Neither is a good default for optimizing billions of neural-network parameters.</p>
+</section>
+<section id="simulated-annealing-and-evolutionary-search" class="level4">
+<h4 class="anchored" data-anchor-id="simulated-annealing-and-evolutionary-search">Simulated annealing and evolutionary search</h4>
+<p>For a proposed move with objective change <span class="math inline">\(\Delta=L(x')-L(x)\)</span>, simulated annealing accepts improvements and may accept a worse move with probability</p>
+<p><span class="math display">\[
+P(\text{accept})
+=
+\exp\left(-\frac{\Delta}{T}\right),
+\qquad \Delta&gt;0.
+\]</span></p>
+<p>High temperature <span class="math inline">\(T\)</span> encourages exploration; cooling gradually makes the search greedy. The method targets global exploration rather than local gradient reconstruction.</p>
+<p>CMA-ES samples a population from a Gaussian search distribution and adapts its mean, overall scale, and covariance from ranked candidates. It learns the shape of successful search directions statistically, but does not approximate the objective gradient by finite differences.</p>
+</section>
+<section id="bayesian-optimization" class="level4">
+<h4 class="anchored" data-anchor-id="bayesian-optimization">Bayesian optimization</h4>
+<p>When each evaluation takes minutes, hours, or a physical experiment, evaluation count matters more than optimizer arithmetic. Bayesian optimization fits a surrogate distribution over the objective and chooses the next point by an acquisition function:</p>
+<p><span class="math display">\[
+x_{t+1}
+=
+\arg\max_x
+a(x\mid\mathcal D_t),
+\]</span></p>
+<p>where <span class="math inline">\(a\)</span> may be expected improvement, probability of improvement, an upper confidence bound, or an information-gain criterion. It explicitly trades off promising predictions against uncertainty. Classical Gaussian-process BO is most natural in relatively low-dimensional continuous spaces.</p>
+</section>
+</section>
+<section id="family-2-estimate-a-gradient-from-function-values" class="level3">
+<h3 class="anchored" data-anchor-id="family-2-estimate-a-gradient-from-function-values">Family 2: estimate a gradient from function values</h3>
+<p>This is only one branch of zeroth-order optimization, but it connects most directly to neural-network training. For <span class="math inline">\(d\)</span> parameters, sample a random unit direction <span class="math inline">\(u\)</span> and evaluate the loss on both sides of the current point:</p>
+<p><span class="math display">\[
+\widehat g(\theta;u)
+=
+\frac{d}{2\mu}
+\left[
+L(\theta+\mu u)-L(\theta-\mu u)
+\right]u.
+\]</span></p>
+<p>Although <span class="math inline">\(\widehat g\)</span> looks like a gradient, it was constructed only from two function values. It estimates the gradient of a smoothed objective. The update can then reuse a familiar first-order rule:</p>
+<p><span class="math display">\[
+\theta_{t+1}=\theta_t-\eta\widehat g_t.
+\]</span></p>
+<p>The smoothing radius <span class="math inline">\(\mu\)</span> has a numerical tradeoff. A large value introduces bias because it averages over a wider neighborhood; a very small value makes the loss difference vulnerable to evaluation noise and floating-point error.</p>
+</section>
+<section id="why-zeroth-order-methods-are-expensive-in-high-dimensions" class="level3">
+<h3 class="anchored" data-anchor-id="why-zeroth-order-methods-are-expensive-in-high-dimensions">Why zeroth-order methods are expensive in high dimensions</h3>
+<p>One random direction contains little information about a <span class="math inline">\(d\)</span>-dimensional gradient, so the estimator can have high variance that worsens with dimension. Using <span class="math inline">\(q\)</span> directions requires <span class="math inline">\(2q\)</span> loss evaluations per update. Backpropagation, by contrast, computes all parameter partial derivatives in roughly a small constant multiple of one forward-pass cost.</p>
+<p>This is why zeroth-order optimization is usually a fallback for black-box or nondifferentiable problems rather than the default way to train a large neural network. Structure helps: coordinate sampling, antithetic evaluations, shared randomness, low-dimensional subspaces, and variance reduction can lower the query cost.</p>
+</section>
+<section id="minimal-two-point-implementation" class="level3">
+<h3 class="anchored" data-anchor-id="minimal-two-point-implementation">Minimal two-point implementation</h3>
+<p>This educational implementation optimizes one tensor without calling <code>backward()</code> or reading <code>.grad</code>:</p>
+<div id="8d74197d" class="cell" data-execution_count="2">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="at">@torch.no_grad</span>()</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> two_point_zo_step(</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    parameter,</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    loss_fn,</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    lr<span class="op">=</span><span class="fl">0.05</span>,</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    smoothing<span class="op">=</span><span class="fl">1e-2</span>,</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    num_directions<span class="op">=</span><span class="dv">16</span>,</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>):</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    estimate <span class="op">=</span> torch.zeros_like(parameter)</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    dimension <span class="op">=</span> parameter.numel()</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(num_directions):</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>        direction <span class="op">=</span> torch.randn_like(parameter)</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>        direction.div_(direction.norm().clamp_min(<span class="fl">1e-12</span>))</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>        parameter.add_(direction, alpha<span class="op">=</span>smoothing)</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>        loss_plus <span class="op">=</span> <span class="bu">float</span>(loss_fn())</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>        parameter.add_(direction, alpha<span class="op">=-</span><span class="fl">2.0</span> <span class="op">*</span> smoothing)</span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>        loss_minus <span class="op">=</span> <span class="bu">float</span>(loss_fn())</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Restore the original point before accumulating the estimate.</span></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>        parameter.add_(direction, alpha<span class="op">=</span>smoothing)</span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>        estimate.add_(</span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>            direction,</span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>            alpha<span class="op">=</span>dimension <span class="op">*</span> (loss_plus <span class="op">-</span> loss_minus) <span class="op">/</span> (<span class="fl">2.0</span> <span class="op">*</span> smoothing),</span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>    estimate.div_(num_directions)</span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>    parameter.add_(estimate, alpha<span class="op">=-</span>lr)</span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>torch.manual_seed(<span class="dv">0</span>)</span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>point <span class="op">=</span> torch.tensor([<span class="fl">3.0</span>, <span class="op">-</span><span class="fl">2.0</span>, <span class="fl">1.0</span>, <span class="fl">4.0</span>])</span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>target <span class="op">=</span> torch.tensor([<span class="fl">0.5</span>, <span class="fl">0.5</span>, <span class="fl">0.5</span>, <span class="fl">0.5</span>])</span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> black_box_loss():</span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> (point <span class="op">-</span> target).square().<span class="bu">sum</span>()</span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a>initial_loss <span class="op">=</span> black_box_loss().item()</span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">120</span>):</span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a>    two_point_zo_step(point, black_box_loss)</span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> black_box_loss() <span class="op">&lt;</span> <span class="fl">1e-3</span> <span class="op">*</span> initial_loss</span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a>point</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="2">
+<pre><code>tensor([0.5000, 0.5000, 0.5000, 0.5000])</code></pre>
+</div>
+</div>
+</section>
+</section>
+<section id="local-stochastic-first-order-methods" class="level2">
+<h2 class="anchored" data-anchor-id="local-stochastic-first-order-methods">Local Stochastic First-Order Methods</h2>
+<p>These methods start from the current parameter, current stochastic gradient, and a compact optimizer state. They do not explicitly re-solve an objective over the entire observed prefix.</p>
+<section id="stochastic-gradient-descent" class="level3">
+<h3 class="anchored" data-anchor-id="stochastic-gradient-descent">Stochastic Gradient Descent</h3>
 <p>Vanilla SGD updates</p>
 <p><span class="math display">\[
 \theta_{t+1}=\theta_t-\eta g_t,
 \]</span></p>
 <p>where <span class="math inline">\(\eta\)</span> is the learning rate.</p>
 <p>Full-batch gradient descent uses the entire dataset per step. SGD historically means one example per step; in deep learning, “SGD” commonly means mini-batch SGD.</p>
-<section id="why-stochasticity-can-help" class="level3">
-<h3 class="anchored" data-anchor-id="why-stochasticity-can-help">Why stochasticity can help</h3>
+<section id="why-stochasticity-can-help" class="level4">
+<h4 class="anchored" data-anchor-id="why-stochasticity-can-help">Why stochasticity can help</h4>
 <ul>
 <li>mini-batches make each update cheaper</li>
 <li>gradient noise can help leave saddle points or narrow regions</li>
@@ -305,8 +608,8 @@ g_t=\nabla_\theta L_{\mathcal B_t}(\theta_t),
 <p>But noisy gradients may oscillate, especially in directions of high curvature.</p>
 </section>
 </section>
-<section id="momentum" class="level2">
-<h2 class="anchored" data-anchor-id="momentum">Momentum</h2>
+<section id="momentum" class="level3">
+<h3 class="anchored" data-anchor-id="momentum">Momentum</h3>
 <p>Momentum maintains an exponential moving average of gradients:</p>
 <p><span class="math display">\[
 v_t=\beta v_{t-1}+g_t,
@@ -321,8 +624,8 @@ v_t=\beta v_{t-1}+g_t,
 <li>damps oscillation when gradients repeatedly change sign</li>
 <li>introduces one state scalar per parameter</li>
 </ul>
-<section id="nesterov-momentum" class="level3">
-<h3 class="anchored" data-anchor-id="nesterov-momentum">Nesterov momentum</h3>
+<section id="nesterov-momentum" class="level4">
+<h4 class="anchored" data-anchor-id="nesterov-momentum">Nesterov momentum</h4>
 <p>Nesterov accelerated gradient evaluates the gradient at an approximate look-ahead position:</p>
 <p><span class="math display">\[
 g_t=\nabla L(\theta_t-\eta\beta v_{t-1}).
@@ -330,8 +633,396 @@ g_t=\nabla L(\theta_t-\eta\beta v_{t-1}).
 <p>The exact update form depends on the momentum convention and framework.</p>
 </section>
 </section>
-<section id="per-parameter-adaptive-learning-rates" class="level2">
-<h2 class="anchored" data-anchor-id="per-parameter-adaptive-learning-rates">Per-Parameter Adaptive Learning Rates</h2>
+</section>
+<section id="online-and-cumulative-optimization" class="level2">
+<h2 class="anchored" data-anchor-id="online-and-cumulative-optimization">Online and Cumulative Optimization</h2>
+<p>Online optimization makes the prediction/update boundary part of the problem. The central object is not a shuffled approximation to one fixed batch objective, but the sequence of losses revealed after successive decisions.</p>
+<section id="ftrl-online-and-proximal-first-order-optimization" class="level3">
+<h3 class="anchored" data-anchor-id="ftrl-online-and-proximal-first-order-optimization">FTRL: Online and Proximal First-Order Optimization</h3>
+<section id="start-with-native-follow-the-leader" class="level4">
+<h4 class="anchored" data-anchor-id="start-with-native-follow-the-leader">Start with native Follow the Leader</h4>
+<p>Online learning changes the order of events. At round <span class="math inline">\(t\)</span>:</p>
+<ol type="1">
+<li>choose parameters <span class="math inline">\(w_t\)</span> using only rounds <span class="math inline">\(1,\ldots,t-1\)</span></li>
+<li>make the current prediction</li>
+<li>observe the outcome and incur the revealed loss <span class="math inline">\(\ell_t(w_t)\)</span></li>
+<li>use <span class="math inline">\(\ell_t(\cdot)\)</span> to choose <span class="math inline">\(w_{t+1}\)</span></li>
+</ol>
+<p><strong>Follow the Leader (FTL)</strong> chooses the parameter that would have performed best on all previous rounds:</p>
+<p><span class="math display">\[
+w_{t+1}
+=
+\arg\min_w
+\sum_{s=1}^{t}\ell_s(w).
+\]</span></p>
+<p>This is the native idea: follow the leader of the cumulative <strong>actual losses</strong>. It does not begin with gradients, proximal terms, or a special “FTRL loss.” If a finite dataset is replayed, FTL resembles refitting empirical risk minimization after every new example.</p>
+<p>For online logistic regression,</p>
+<p><span class="math display">\[
+p_t(w)=\sigma(w^Tx_t),
+\]</span></p>
+<p><span class="math display">\[
+\ell_t(w)
+=
+-y_t\log p_t(w)
+-(1-y_t)\log[1-p_t(w)].
+\]</span></p>
+<p>Native FTL would minimize the accumulated logistic losses after every example. That gives the clean conceptual starting point, but repeatedly solving a growing nonlinear problem can be expensive.</p>
+</section>
+<section id="what-ftrl-preserves-about-the-data-axis" class="level4">
+<h4 class="anchored" data-anchor-id="what-ftrl-preserves-about-the-data-axis">What FTRL preserves about the data axis</h4>
+<p>The important insight is that FTRL preserves the <strong>causal prefix structure</strong> of the data. The model <span class="math inline">\(w_t\)</span> can depend only on losses revealed before round <span class="math inline">\(t\)</span>. Its natural evaluation is therefore regret:</p>
+<p><span class="math display">\[
+\operatorname{Regret}_T
+=
+\sum_{t=1}^{T}\ell_t(w_t)
+-
+\min_w\sum_{t=1}^{T}\ell_t(w).
+\]</span></p>
+<p>The first term evaluates the decisions that were actually made through time. The second asks how well the best single fixed parameter would have performed in hindsight.</p>
+<p>This differs from the usual static empirical-risk objective</p>
+<p><span class="math display">\[
+L(w)=\frac1N\sum_{i=1}^{N}\ell_i(w).
+\]</span></p>
+<p>In ordinary shuffled training, the example index <span class="math inline">\(i\)</span> is assumed to be exchangeable. SGD samples a mini-batch to estimate <span class="math inline">\(\nabla L(w)\)</span> cheaply:</p>
+<p><span class="math display">\[
+g_t
+\approx
+\nabla L(w_t).
+\]</span></p>
+<p>Random shuffling deliberately treats the observed ordering as a nuisance rather than as part of the statistical problem.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Property</th>
+<th>Shuffled SGD/Adam</th>
+<th>Online FTRL</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Information available at step <span class="math inline">\(t\)</span></td>
+<td>sampled examples from a fixed dataset</td>
+<td>only the revealed prefix <span class="math inline">\(1{:}t-1\)</span></td>
+</tr>
+<tr class="even">
+<td>Meaning of order</td>
+<td>usually randomized to reduce sampling bias</td>
+<td>causal prediction order</td>
+</tr>
+<tr class="odd">
+<td>Main target</td>
+<td>minimize static empirical risk</td>
+<td>minimize cumulative online loss or regret</td>
+</tr>
+<tr class="even">
+<td>History state</td>
+<td>current parameters and optimizer moments</td>
+<td>cumulative loss/gradient statistics and regularizer</td>
+</tr>
+<tr class="odd">
+<td>Standard assumption</td>
+<td>data are often treated as IID or exchangeable</td>
+<td>sequence need not be IID</td>
+</tr>
+</tbody>
+</table>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>FTRL does not store the whole time axis
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>FTRL preserves <strong>when a decision must be made relative to the revealed data</strong>, not every historical example or its timestamp. Practical FTRL-Proximal compresses the prefix into statistics such as</p>
+<p><span class="math display">\[
+z_t,
+\qquad
+n_t=\sum_{s=1}^{t}g_s^2.
+\]</span></p>
+<p>Within a fixed prefix, these accumulators do not reveal when each contribution arrived. Temporal meaning comes from the predict–reveal–update protocol and from evaluating every decision <span class="math inline">\(w_t\)</span>.</p>
+</div>
+</div>
+<p>SGD and Adam are also path-dependent: changing mini-batch order changes the parameters encountered, and Adam’s exponential moments weight recent gradients more heavily. The difference is conceptual intent. Shuffled batch training tries to make order an irrelevant Monte Carlo detail; online learning makes the information boundary at each round explicit.</p>
+<p>Finally, cumulative FTRL does not automatically forget old evidence. Under concept drift, one may need discounted losses, sliding windows, restarts, or time-decayed statistics. This connects online optimization to <a href="../../notes/advanced/continual_intelligence_ttt.html">continual adaptation</a>, but respecting causal order alone is not enough to track a changing environment.</p>
+</section>
+<section id="a-solvable-native-example" class="level4">
+<h4 class="anchored" data-anchor-id="a-solvable-native-example">A solvable native example</h4>
+<p>Suppose each round reveals a scalar target <span class="math inline">\(y_t\)</span> and uses squared loss</p>
+<p><span class="math display">\[
+\ell_t(w)=\frac12(w-y_t)^2.
+\]</span></p>
+<p>Plain FTL chooses</p>
+<p><span class="math display">\[
+w_{t+1}
+=
+\arg\min_w
+\frac12\sum_{s=1}^{t}(w-y_s)^2
+=
+\frac1t\sum_{s=1}^{t}y_s.
+\]</span></p>
+<p>The current leader is simply the empirical mean. Adding the quadratic regularizer <span class="math inline">\(R(w)=\lambda w^2/2\)</span> gives native FTRL:</p>
+<p><span class="math display">\[
+w_{t+1}
+=
+\arg\min_w
+\left[
+\frac12\sum_{s=1}^{t}(w-y_s)^2
++\frac{\lambda}{2}w^2
+\right]
+=
+\frac{\sum_{s=1}^{t}y_s}{t+\lambda}.
+\]</span></p>
+<p>This example contains no loss linearization. Regularization shrinks an uncertain early estimate toward zero; the data gradually dominates as <span class="math inline">\(t\)</span> grows.</p>
+</section>
+<section id="why-plain-ftl-can-be-unstable" class="level4">
+<h4 class="anchored" data-anchor-id="why-plain-ftl-can-be-unstable">Why plain FTL can be unstable</h4>
+<p>FTL assumes the current cumulative winner is a safe next decision. If a small change in history changes the winner, it can jump sharply between parameters. An adversarial sequence can exploit those jumps and cause linear regret.</p>
+<p>The first repair is <strong>Follow the Regularized Leader</strong>:</p>
+<p><span class="math display">\[
+w_{t+1}
+=
+\arg\min_w
+\left[
+\sum_{s=1}^{t}\ell_s(w)+R_t(w)
+\right].
+\]</span></p>
+<p>For example, <span class="math inline">\(R_t(w)=\lVert w\rVert_2^2/(2\eta)\)</span> makes extreme leaders costly. The regularizer is not the predictive loss: it controls stability, geometry, and possibly sparsity.</p>
+</section>
+<section id="from-actual-losses-to-linearized-losses" class="level4">
+<h4 class="anchored" data-anchor-id="from-actual-losses-to-linearized-losses">From actual losses to linearized losses</h4>
+<p>Even regularized FTL may require solving a nonlinear problem each round. For a differentiable convex loss, construct its tangent surrogate at the point that was actually played:</p>
+<p><span class="math display">\[
+\widetilde\ell_s(w)
+=
+\ell_s(w_s)+g_s^T(w-w_s),
+\qquad
+g_s=\nabla\ell_s(w_s).
+\]</span></p>
+<p>Terms independent of candidate <span class="math inline">\(w\)</span> disappear inside the argmin:</p>
+<p><span class="math display">\[
+w_{t+1}
+=
+\arg\min_w
+\left[
+\left(\sum_{s=1}^{t}g_s\right)^Tw+R_t(w)
+\right].
+\]</span></p>
+<p>This is FTRL applied to <strong>linearized surrogate losses</strong>. The previous note started at this equation and therefore hid the native follow-the-leader idea.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Method</th>
+<th>Objective used to choose <span class="math inline">\(w_{t+1}\)</span></th>
+<th>What changed?</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>FTL</td>
+<td><span class="math inline">\(\sum_{s\le t}\ell_s(w)\)</span></td>
+<td>cumulative actual losses</td>
+</tr>
+<tr class="even">
+<td>Regularized FTL</td>
+<td><span class="math inline">\(\sum_{s\le t}\ell_s(w)+R_t(w)\)</span></td>
+<td>stabilize the leader</td>
+</tr>
+<tr class="odd">
+<td>Linearized FTRL</td>
+<td><span class="math inline">\(\sum_{s\le t}g_s^Tw+R_t(w)\)</span></td>
+<td>replace each loss by its tangent surrogate</td>
+</tr>
+<tr class="even">
+<td>FTRL-Proximal</td>
+<td>linearized losses plus proximal, L1, and L2 terms</td>
+<td>efficient adaptive updates and exact sparsity</td>
+</tr>
+</tbody>
+</table>
+<p>With <span class="math inline">\(R_t(w)=\lVert w\rVert_2^2/(2\eta)\)</span>, the minimizer is</p>
+<p><span class="math display">\[
+w_{t+1}
+=
+-\eta\sum_{s=1}^{t}g_s.
+\]</span></p>
+<p>For a constant learning rate and <span class="math inline">\(w_1=0\)</span>, this is exactly the sequence produced by online gradient descent:</p>
+<p><span class="math display">\[
+w_{t+1}=w_t-\eta g_t.
+\]</span></p>
+<p>One form recomputes an argmin over cumulative gradients; the other writes the same change incrementally.</p>
+</section>
+<section id="ftrl-proximal" class="level4">
+<h4 class="anchored" data-anchor-id="ftrl-proximal">FTRL-Proximal</h4>
+<p>FTRL-Proximal combines gradient-descent-like behavior with effective L1 sparsity by centering quadratic penalties at parameters used on past rounds:</p>
+<p><span class="math display">\[
+w_{t+1}
+=
+\arg\min_w
+\left[
+g_{1:t}^Tw
++\frac{A_0}{2}\lVert w\rVert_2^2
++\frac12\sum_{s=1}^{t}\sigma_s\lVert w-w_s\rVert_2^2
++\lambda_1\lVert w\rVert_1
++\frac{\lambda_2}{2}\lVert w\rVert_2^2
+\right],
+\]</span></p>
+<p>where <span class="math inline">\(g_{1:t}=\sum_{s=1}^{t}g_s\)</span>. The nonnegative <span class="math inline">\(\sigma_s\)</span> encode increases in the inverse learning rate. Expanding the quadratic terms for coordinate <span class="math inline">\(i\)</span> gives, up to constants,</p>
+<p><span class="math display">\[
+z_{t,i}w_i
++\frac12(A_{t,i}+\lambda_2)w_i^2
++\lambda_1|w_i|,
+\]</span></p>
+<p>where</p>
+<p><span class="math display">\[
+A_{t,i}=A_{0,i}+\sum_{s=1}^{t}\sigma_{s,i},
+\qquad
+z_{t,i}
+=
+g_{1:t,i}-\sum_{s=1}^{t}\sigma_{s,i}w_{s,i}.
+\]</span></p>
+<p>This one-dimensional convex objective has the soft-thresholded solution</p>
+<p><span class="math display">\[
+w_{t+1,i}
+=
+\begin{cases}
+0, &amp; |z_{t,i}|\le\lambda_1,\\[4pt]
+-\dfrac{z_{t,i}-\operatorname{sign}(z_{t,i})\lambda_1}
+{A_{t,i}+\lambda_2},
+&amp; |z_{t,i}|&gt;\lambda_1.
+\end{cases}
+\]</span></p>
+<p>The zero is the exact minimizer whenever accumulated evidence <span class="math inline">\(|z_{t,i}|\)</span> has not crossed the L1 threshold. This is why FTRL-Proximal creates exact sparsity while merely adding an L1 subgradient to SGD almost never lands exactly at zero.</p>
+</section>
+<section id="adaptive-per-coordinate-ftrl" class="level4">
+<h4 class="anchored" data-anchor-id="adaptive-per-coordinate-ftrl">Adaptive per-coordinate FTRL</h4>
+<p>Large-scale click-through-rate data is extremely sparse: each event touches only a tiny subset of a huge feature space. A common schedule accumulates</p>
+<p><span class="math display">\[
+n_{t,i}=\sum_{s=1}^{t}g_{s,i}^2
+\]</span></p>
+<p>and chooses</p>
+<p><span class="math display">\[
+\eta_{t,i}
+=
+\frac{\alpha}{\beta+\sqrt{n_{t,i}}}.
+\]</span></p>
+<p>A frequently updated coordinate becomes conservative, while a rare coordinate retains a larger step. Setting</p>
+<p><span class="math display">\[
+A_{t,i}=\frac{1}{\eta_{t,i}}
+=
+\frac{\beta+\sqrt{n_{t,i}}}{\alpha}
+\]</span></p>
+<p>amounts to choosing <span class="math inline">\(A_{0,i}=\beta/\alpha\)</span> and the increments below. It yields the familiar implementation:</p>
+<p><span class="math display">\[
+w_{t+1,i}
+=
+\begin{cases}
+0, &amp; |z_{t,i}|\le\lambda_1,\\[4pt]
+-\dfrac{z_{t,i}-\operatorname{sign}(z_{t,i})\lambda_1}
+{(\beta+\sqrt{n_{t,i}})/\alpha+\lambda_2},
+&amp; |z_{t,i}|&gt;\lambda_1.
+\end{cases}
+\]</span></p>
+<p>After observing <span class="math inline">\(g_{t,i}\)</span>, update the two stored statistics:</p>
+<p><span class="math display">\[
+\sigma_{t,i}
+=
+\frac{\sqrt{n_{t-1,i}+g_{t,i}^2}-\sqrt{n_{t-1,i}}}{\alpha},
+\]</span></p>
+<p><span class="math display">\[
+z_{t,i}
+=
+z_{t-1,i}+g_{t,i}-\sigma_{t,i}w_{t,i},
+\qquad
+n_{t,i}=n_{t-1,i}+g_{t,i}^2.
+\]</span></p>
+<p>Only active coordinates need to be touched. Here <span class="math inline">\(\lambda_1\)</span> controls exact sparsity, <span class="math inline">\(\lambda_2\)</span> supplies smooth shrinkage, and <span class="math inline">\(\alpha,\beta\)</span> control the adaptive learning rate.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Is FTRL inherently first-order?
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Native FTRL is an online decision template: minimize past revealed losses plus a regularizer. It is not inherently classified by a derivative oracle. The practical FTRL-Proximal algorithm derived here replaces each loss with a gradient-based linear surrogate, so <strong>that algorithm is first-order</strong>.</p>
+</div>
+</div>
+</section>
+</section>
+</section>
+<section id="adaptive-gradient-lineage-adagrad-to-adamw" class="level2">
+<h2 class="anchored" data-anchor-id="adaptive-gradient-lineage-adagrad-to-adamw">Adaptive Gradient Lineage: AdaGrad to AdamW</h2>
+<p>These methods are easiest to understand as a sequence of choices about how much gradient history to retain:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Method</th>
+<th>First-moment state</th>
+<th>Second-moment state</th>
+<th>Core change</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>SGD</td>
+<td>none</td>
+<td>none</td>
+<td>use the current gradient</td>
+</tr>
+<tr class="even">
+<td>Momentum</td>
+<td>EMA of <span class="math inline">\(g_t\)</span></td>
+<td>none</td>
+<td>smooth the update direction</td>
+</tr>
+<tr class="odd">
+<td>AdaGrad</td>
+<td>none</td>
+<td>cumulative sum of <span class="math inline">\(g_t^2\)</span></td>
+<td>shrink frequently active coordinates</td>
+</tr>
+<tr class="even">
+<td>RMSProp</td>
+<td>none</td>
+<td>EMA of <span class="math inline">\(g_t^2\)</span></td>
+<td>forget stale squared gradients</td>
+</tr>
+<tr class="odd">
+<td>Adam</td>
+<td>EMA of <span class="math inline">\(g_t\)</span></td>
+<td>EMA of <span class="math inline">\(g_t^2\)</span></td>
+<td>combine momentum-like direction with RMSProp-like scaling</td>
+</tr>
+<tr class="even">
+<td>AdamW</td>
+<td>EMA of <span class="math inline">\(g_t\)</span></td>
+<td>EMA of <span class="math inline">\(g_t^2\)</span></td>
+<td>Adam plus separately applied parameter decay</td>
+</tr>
+</tbody>
+</table>
+<p>Thus, <strong>Adam is approximately RMSProp plus momentum</strong>, with bias correction and specific normalization details. It is not literally obtained by composing two optimizer objects, but its two state variables play those two roles.</p>
 <section id="adagrad" class="level3">
 <h3 class="anchored" data-anchor-id="adagrad">AdaGrad</h3>
 <p>AdaGrad accumulates squared gradients:</p>
@@ -347,27 +1038,33 @@ s_t=s_{t-1}+g_t^2,
 </section>
 <section id="rmsprop" class="level3">
 <h3 class="anchored" data-anchor-id="rmsprop">RMSProp</h3>
-<p>RMSProp replaces the sum with an exponential moving average:</p>
+<p>RMSProp replaces AdaGrad’s cumulative sum with an exponential moving average:</p>
 <p><span class="math display">\[
 s_t=\beta_2s_{t-1}+(1-\beta_2)g_t^2,
 \]</span></p>
 <p><span class="math display">\[
 \theta_{t+1}
 =
-\theta_t-eta\frac{g_t}{\sqrt{s_t}+\epsilon}.
+\theta_t-\eta\frac{g_t}{\sqrt{s_t}+\epsilon}.
 \]</span></p>
-<p>Old squared gradients decay, preventing the denominator from growing forever.</p>
+<p>Old squared gradients decay, preventing the denominator from growing forever. This makes RMSProp more responsive when the gradient distribution changes.</p>
 </section>
-</section>
-<section id="adam" class="level2">
-<h2 class="anchored" data-anchor-id="adam">Adam</h2>
-<p>Adam combines a first-moment estimate with an RMSProp-like second moment:</p>
+<section id="adam" class="level3">
+<h3 class="anchored" data-anchor-id="adam">Adam</h3>
+<p>Adam adds a momentum-like exponential first moment to the RMSProp-like exponential second moment:</p>
 <p><span class="math display">\[
 m_t=\beta_1m_{t-1}+(1-\beta_1)g_t,
 \]</span></p>
 <p><span class="math display">\[
 v_t=\beta_2v_{t-1}+(1-\beta_2)g_t^2.
 \]</span></p>
+<p>The lineage shorthand is:</p>
+<p><span class="math display">\[
+\underbrace{\widehat m_t}_{\text{momentum-like direction}}
+\quad\Big/\quad
+\underbrace{(\sqrt{\widehat v_t}+\epsilon)}_{\text{RMSProp-like scale}}.
+\]</span></p>
+<p>It is only a shorthand. Momentum conventions may omit the factor <span class="math inline">\(1-\beta_1\)</span>; Adam bias-corrects both moving averages; and the numerator and denominator interact in one normalized update.</p>
 <p>Because both moving averages start at zero, early estimates are biased toward zero. Adam corrects this:</p>
 <p><span class="math display">\[
 \widehat m_t=\frac{m_t}{1-\beta_1^t},
@@ -384,8 +1081,8 @@ v_t=\beta_2v_{t-1}+(1-\beta_2)g_t^2.
 \frac{\widehat m_t}{\sqrt{\widehat v_t}+\epsilon}.
 \]</span></p>
 <p>Adam stores two state values per parameter, in addition to gradients and parameters. Optimizer state is therefore a major training-memory cost.</p>
-<section id="why-bias-correction-matters" class="level3">
-<h3 class="anchored" data-anchor-id="why-bias-correction-matters">Why bias correction matters</h3>
+<section id="why-bias-correction-matters" class="level4">
+<h4 class="anchored" data-anchor-id="why-bias-correction-matters">Why bias correction matters</h4>
 <p>If <span class="math inline">\(m_0=0\)</span> and the expected gradient is constant <span class="math inline">\(\mu\)</span>, then</p>
 <p><span class="math display">\[
 \mathbb E[m_t]=(1-\beta_1^t)\mu.
@@ -393,24 +1090,56 @@ v_t=\beta_2v_{t-1}+(1-\beta_2)g_t^2.
 <p>Dividing by <span class="math inline">\(1-\beta_1^t\)</span> recovers an unbiased first-moment estimate under this simplified assumption. The same argument applies to <span class="math inline">\(v_t\)</span>.</p>
 </section>
 </section>
-<section id="adamw-and-weight-decay" class="level2">
-<h2 class="anchored" data-anchor-id="adamw-and-weight-decay">AdamW and Weight Decay</h2>
-<section id="l2-regularization" class="level3">
-<h3 class="anchored" data-anchor-id="l2-regularization">L2 regularization</h3>
-<p>Adding an L2 penalty changes the loss:</p>
+<section id="adamw-and-weight-decay" class="level3">
+<h3 class="anchored" data-anchor-id="adamw-and-weight-decay">AdamW and Weight Decay</h3>
+<section id="coupled-l2-regularization" class="level4">
+<h4 class="anchored" data-anchor-id="coupled-l2-regularization">Coupled L2 regularization</h4>
+<p>First define the gradient of the <strong>data loss</strong>:</p>
 <p><span class="math display">\[
-L_{\text{reg}}(\theta)
+g_t=\nabla_\theta L_{\text{data}}(\theta_t).
+\]</span></p>
+<p>If an L2 penalty is explicitly added to that loss,</p>
+<p><span class="math display">\[
+L_{\text{total}}(\theta)
 =
-L(\theta)+\frac{\lambda}{2}\|\theta\|_2^2,
+L_{\text{data}}(\theta)
++\frac{\lambda}{2}\|\theta\|_2^2,
 \]</span></p>
-<p>so the gradient becomes</p>
+<p>then automatic differentiation returns</p>
 <p><span class="math display">\[
-g_t^{\text{reg}}=g_t+\lambda\theta_t.
+g_t^{\text{total}}
+=
+g_t+\lambda\theta_t.
 \]</span></p>
+<p>Ordinary Adam treats this entire quantity as its gradient. The penalty therefore enters <strong>both</strong> moment accumulators:</p>
+<p><span class="math display">\[
+m_t
+=
+\beta_1m_{t-1}
++(1-\beta_1)(g_t+\lambda\theta_t),
+\]</span></p>
+<p><span class="math display">\[
+v_t
+=
+\beta_2v_{t-1}
++(1-\beta_2)(g_t+\lambda\theta_t)^2.
+\]</span></p>
+<p>The <span class="math inline">\(\lambda\theta_t\)</span> term is mixed with the data gradient, momentum, and coordinate-wise second-moment scaling. This is called <strong>coupled</strong> L2 regularization.</p>
 </section>
-<section id="decoupled-weight-decay" class="level3">
-<h3 class="anchored" data-anchor-id="decoupled-weight-decay">Decoupled weight decay</h3>
-<p>AdamW applies parameter shrinkage separately from the adaptive gradient update:</p>
+<section id="adamw-decay-outside-the-gradient-path" class="level4">
+<h4 class="anchored" data-anchor-id="adamw-decay-outside-the-gradient-path">AdamW: decay outside the gradient path</h4>
+<p>In the defining AdamW update, the loss passed to automatic differentiation does <strong>not</strong> include the L2 weight penalty:</p>
+<p><span class="math display">\[
+g_t=\nabla_\theta L_{\text{data}}(\theta_t).
+\]</span></p>
+<p>AdamW computes its moments from this data-loss gradient alone:</p>
+<p><span class="math display">\[
+m_t=\beta_1m_{t-1}+(1-\beta_1)g_t,
+\]</span></p>
+<p><span class="math display">\[
+v_t=\beta_2v_{t-1}+(1-\beta_2)g_t^2.
+\]</span></p>
+<p>It then applies uniform parameter shrinkage as a separate optimizer operation:</p>
 <p><span class="math display">\[
 \theta_{t+1}
 =
@@ -419,14 +1148,72 @@ g_t^{\text{reg}}=g_t+\lambda\theta_t.
 \eta
 \frac{\widehat m_t}{\sqrt{\widehat v_t}+\epsilon}.
 \]</span></p>
-<p>With ordinary SGD, L2 regularization and weight decay can be equivalent under a matching convention. With Adam, adding <span class="math inline">\(\lambda\theta\)</span> to the gradient causes the penalty to be rescaled by the adaptive denominator, so it is not equivalent to uniform parameter decay. AdamW restores the decoupled interpretation.</p>
+<p>“Decoupled” means that weight decay is excluded from the loss gradient, first moment, second moment, and adaptive denominator. It does <strong>not</strong> mean that AdamW has no regularizing effect.</p>
+<p>For plain SGD, coupled L2 and weight decay are algebraically equivalent:</p>
+<p><span class="math display">\[
+\theta_{t+1}
+=
+\theta_t-\eta(g_t+\lambda\theta_t)
+=
+(1-\eta\lambda)\theta_t-\eta g_t.
+\]</span></p>
+<p>For Adam they are not equivalent because <span class="math inline">\(g_t+\lambda\theta_t\)</span> would pass through the adaptive moment machinery.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Mechanism</th>
+<th>Gradient seen by moments</th>
+<th>Separate shrinkage</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Adam + explicit L2 loss</td>
+<td><span class="math inline">\(g_t+\lambda\theta_t\)</span></td>
+<td>no</td>
+</tr>
+<tr class="even">
+<td>AdamW weight decay</td>
+<td><span class="math inline">\(g_t\)</span></td>
+<td><span class="math inline">\((1-\eta\lambda)\theta_t\)</span></td>
+</tr>
+</tbody>
+</table>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>Do not apply both accidentally
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The standard AdamW recipe computes the backward pass from the data loss and sets the weight-decay option on the optimizer. If the same parameters also receive an explicit <span class="math inline">\(\lambda\lVert\theta\rVert^2/2\)</span> term in the loss, they get <strong>both</strong> coupled L2 regularization and decoupled weight decay.</p>
+</div>
+</div>
 <p>Common practice excludes biases and normalization scale parameters from weight decay, though this remains a modeling choice rather than a mathematical law.</p>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>Weight decay is not a zeroth-order optimizer
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The shrinkage term <span class="math inline">\((1-\eta\lambda)\theta_t\)</span> does not require a new gradient evaluation, but AdamW still uses <span class="math inline">\(\nabla L\)</span> to optimize the data loss. Weight decay is a regularization/update mechanism, so it does not determine whether the underlying optimizer is zeroth-, first-, or second-order.</p>
+</div>
+</div>
 </section>
 </section>
-<section id="first-order-second-order-and-preconditioning" class="level2">
-<h2 class="anchored" data-anchor-id="first-order-second-order-and-preconditioning">First Order, Second Order, and Preconditioning</h2>
+</section>
+<section id="matrix-geometry-and-curvature-aware-methods" class="level2">
+<h2 class="anchored" data-anchor-id="matrix-geometry-and-curvature-aware-methods">Matrix Geometry and Curvature-Aware Methods</h2>
 <p>The terminology is easy to blur:</p>
 <ul>
+<li>A <strong>zeroth-order</strong> method receives objective values but no derivatives.</li>
 <li>A <strong>first-order</strong> method uses gradients <span class="math inline">\(g=\nabla L(\theta)\)</span>.</li>
 <li>A classical <strong>second-order</strong> method uses the Hessian <span class="math inline">\(H=\nabla^2L(\theta)\)</span> or an approximation to its curvature.</li>
 <li>A <strong>preconditioned</strong> method transforms the gradient with a matrix chosen to improve the optimization geometry.</li>
@@ -437,9 +1224,9 @@ g_t^{\text{reg}}=g_t+\lambda\theta_t.
 \]</span></p>
 <p>The Hessian rescales directions according to local curvature, which can correct ill-conditioning. For a model with <span class="math inline">\(P\)</span> parameters, however, a dense Hessian has <span class="math inline">\(P^2\)</span> entries and solving the Newton system is generally impractical.</p>
 <p>Modern methods therefore use structured approximations. Shampoo constructs preconditioners from gradient covariance matrices and is commonly grouped with second-order or second-order-inspired optimizers. Muon is also sometimes called second-order-inspired, but it does <strong>not</strong> estimate the loss Hessian: it orthogonalizes matrix momentum using the parameter’s matrix geometry.</p>
-</section>
-<section id="shampoo" class="level2">
-<h2 class="anchored" data-anchor-id="shampoo">Shampoo</h2>
+<p>Linearized FTRL-Proximal is first-order because it accumulates gradients. AdamW also remains first-order after decoupled weight decay. Neither classification is changed by the presence of a proximal regularizer or direct parameter shrinkage.</p>
+<section id="shampoo" class="level3">
+<h3 class="anchored" data-anchor-id="shampoo">Shampoo</h3>
 <p><a href="https://arxiv.org/abs/1802.09568">Shampoo</a> preserves the tensor structure of a parameter instead of flattening every dimension into one vector. For a matrix parameter <span class="math inline">\(W\in\mathbb R^{m\times n}\)</span> with gradient <span class="math inline">\(G_t\)</span>, it accumulates</p>
 <p><span class="math display">\[
 L_t=\epsilon I_m+\sum_{s=1}^{t}G_sG_s^T,
@@ -453,64 +1240,64 @@ R_t=\epsilon I_n+\sum_{s=1}^{t}G_s^TG_s.
 =
 L_t^{-1/4}G_tR_t^{-1/4}.
 \]</span></p>
-<section id="why-the-exponent-is--14" class="level3">
-<h3 class="anchored" data-anchor-id="why-the-exponent-is--14">Why the exponent is <span class="math inline">\(-1/4\)</span></h3>
+<section id="why-the-exponent-is--14" class="level4">
+<h4 class="anchored" data-anchor-id="why-the-exponent-is--14">Why the exponent is <span class="math inline">\(-1/4\)</span></h4>
 <p>Vector AdaGrad applies the inverse square root of one second-moment matrix. A matrix parameter has a left and right preconditioner. Giving each side a <span class="math inline">\(-1/4\)</span> power makes their combined action analogous to an inverse square root.</p>
 <p>For an order-<span class="math inline">\(k\)</span> tensor, Shampoo maintains one preconditioner per tensor axis; the corresponding exponent is <span class="math inline">\(-1/(2k)\)</span>.</p>
 </section>
-<section id="why-shampoo-is-more-structured-than-adam" class="level3">
-<h3 class="anchored" data-anchor-id="why-shampoo-is-more-structured-than-adam">Why Shampoo is more structured than Adam</h3>
+<section id="why-shampoo-is-more-structured-than-adam" class="level4">
+<h4 class="anchored" data-anchor-id="why-shampoo-is-more-structured-than-adam">Why Shampoo is more structured than Adam</h4>
 <p>Adam keeps an element-wise second moment:</p>
 <p><span class="math display">\[
 v_{ij}\approx\mathbb E[G_{ij}^2].
 \]</span></p>
 <p>Shampoo’s <span class="math inline">\(L\)</span> and <span class="math inline">\(R\)</span> retain correlations between rows and between columns. This can produce a better-conditioned update, but matrix inverse roots cost more than element-wise division.</p>
 </section>
-<section id="minimal-matrix-shampoo-direction" class="level3">
-<h3 class="anchored" data-anchor-id="minimal-matrix-shampoo-direction">Minimal matrix Shampoo direction</h3>
-<div id="1a793637" class="cell" data-execution_count="1">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> symmetric_matrix_power(matrix, power, eps<span class="op">=</span><span class="fl">1e-12</span>):</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Apply a scalar power to a symmetric positive-definite matrix."""</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    eigenvalues, eigenvectors <span class="op">=</span> torch.linalg.eigh(matrix.<span class="bu">float</span>())</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    powered <span class="op">=</span> eigenvalues.clamp_min(eps).<span class="bu">pow</span>(power)</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> (eigenvectors <span class="op">*</span> powered.unsqueeze(<span class="dv">0</span>)) <span class="op">@</span> eigenvectors.T</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> shampoo_direction(gradient, left_state, right_state, eps<span class="op">=</span><span class="fl">1e-4</span>):</span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""One educational Shampoo update for a 2D parameter gradient."""</span></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    rows, columns <span class="op">=</span> gradient.shape</span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    g <span class="op">=</span> gradient.<span class="bu">float</span>()</span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    left_state.add_(g <span class="op">@</span> g.T)</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    right_state.add_(g.T <span class="op">@</span> g)</span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>    left <span class="op">=</span> left_state <span class="op">+</span> eps <span class="op">*</span> torch.eye(rows, device<span class="op">=</span>g.device)</span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>    right <span class="op">=</span> right_state <span class="op">+</span> eps <span class="op">*</span> torch.eye(columns, device<span class="op">=</span>g.device)</span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>    left_root <span class="op">=</span> symmetric_matrix_power(left, <span class="op">-</span><span class="fl">0.25</span>)</span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>    right_root <span class="op">=</span> symmetric_matrix_power(right, <span class="op">-</span><span class="fl">0.25</span>)</span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> left_root <span class="op">@</span> g <span class="op">@</span> right_root</span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>gradient <span class="op">=</span> torch.randn(<span class="dv">8</span>, <span class="dv">4</span>)</span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>left_state <span class="op">=</span> torch.zeros(<span class="dv">8</span>, <span class="dv">8</span>)</span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>right_state <span class="op">=</span> torch.zeros(<span class="dv">4</span>, <span class="dv">4</span>)</span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>direction <span class="op">=</span> shampoo_direction(gradient, left_state, right_state)</span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> direction.shape <span class="op">==</span> gradient.shape</span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> torch.isfinite(direction).<span class="bu">all</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<section id="minimal-matrix-shampoo-direction" class="level4">
+<h4 class="anchored" data-anchor-id="minimal-matrix-shampoo-direction">Minimal matrix Shampoo direction</h4>
+<div id="0b8a6600" class="cell" data-execution_count="3">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> symmetric_matrix_power(matrix, power, eps<span class="op">=</span><span class="fl">1e-12</span>):</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Apply a scalar power to a symmetric positive-definite matrix."""</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    eigenvalues, eigenvectors <span class="op">=</span> torch.linalg.eigh(matrix.<span class="bu">float</span>())</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    powered <span class="op">=</span> eigenvalues.clamp_min(eps).<span class="bu">pow</span>(power)</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> (eigenvectors <span class="op">*</span> powered.unsqueeze(<span class="dv">0</span>)) <span class="op">@</span> eigenvectors.T</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> shampoo_direction(gradient, left_state, right_state, eps<span class="op">=</span><span class="fl">1e-4</span>):</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""One educational Shampoo update for a 2D parameter gradient."""</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>    rows, columns <span class="op">=</span> gradient.shape</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>    g <span class="op">=</span> gradient.<span class="bu">float</span>()</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>    left_state.add_(g <span class="op">@</span> g.T)</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>    right_state.add_(g.T <span class="op">@</span> g)</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>    left <span class="op">=</span> left_state <span class="op">+</span> eps <span class="op">*</span> torch.eye(rows, device<span class="op">=</span>g.device)</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>    right <span class="op">=</span> right_state <span class="op">+</span> eps <span class="op">*</span> torch.eye(columns, device<span class="op">=</span>g.device)</span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>    left_root <span class="op">=</span> symmetric_matrix_power(left, <span class="op">-</span><span class="fl">0.25</span>)</span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>    right_root <span class="op">=</span> symmetric_matrix_power(right, <span class="op">-</span><span class="fl">0.25</span>)</span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> left_root <span class="op">@</span> g <span class="op">@</span> right_root</span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>gradient <span class="op">=</span> torch.randn(<span class="dv">8</span>, <span class="dv">4</span>)</span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>left_state <span class="op">=</span> torch.zeros(<span class="dv">8</span>, <span class="dv">8</span>)</span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>right_state <span class="op">=</span> torch.zeros(<span class="dv">4</span>, <span class="dv">4</span>)</span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>direction <span class="op">=</span> shampoo_direction(gradient, left_state, right_state)</span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> direction.shape <span class="op">==</span> gradient.shape</span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> torch.isfinite(direction).<span class="bu">all</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Production Shampoo implementations typically add momentum, weight decay, blocking for large dimensions, distributed state, infrequent inverse-root updates, and <strong>grafting</strong>. Grafting borrows the update magnitude from a simpler optimizer such as SGD or AdaGrad while using Shampoo’s matrix direction.</p>
 </section>
-<section id="shampoo-costs" class="level3">
-<h3 class="anchored" data-anchor-id="shampoo-costs">Shampoo costs</h3>
+<section id="shampoo-costs" class="level4">
+<h4 class="anchored" data-anchor-id="shampoo-costs">Shampoo costs</h4>
 <p>For an <span class="math inline">\(m\times n\)</span> parameter, Shampoo stores <span class="math inline">\(m^2+n^2\)</span> preconditioner scalars, not <span class="math inline">\(m^2n^2\)</span>. This is far smaller than a full preconditioner over all <span class="math inline">\(mn\)</span> parameters, but can still be expensive for very wide matrices. Matrix inverse roots are also substantially more expensive than Adam’s element-wise update.</p>
 </section>
 </section>
-<section id="muon" class="level2">
-<h2 class="anchored" data-anchor-id="muon">Muon</h2>
+<section id="muon" class="level3">
+<h3 class="anchored" data-anchor-id="muon">Muon</h3>
 <p>Muon stands for <strong>MomentUm Orthogonalized by Newton–Schulz</strong>. For a 2D weight matrix, first form momentum</p>
 <p><span class="math display">\[
 M_t=\beta M_{t-1}+(1-\beta)G_t,
@@ -532,8 +1319,71 @@ M(M^TM)^{-1/2}.
 W_{t+1}=W_t-\eta\,s(W_t)\operatorname{orth}(M_t).
 \]</span></p>
 <p>The polar factor prevents a few large singular directions in the raw momentum matrix from dominating the update. It can also be interpreted as a steepest- descent direction under a matrix spectral-norm geometry.</p>
-<section id="newtonschulz-orthogonalization" class="level3">
-<h3 class="anchored" data-anchor-id="newtonschulz-orthogonalization">Newton–Schulz orthogonalization</h3>
+<section id="muon-versus-full-matrix-adagrad" class="level4">
+<h4 class="anchored" data-anchor-id="muon-versus-full-matrix-adagrad">Muon versus full-matrix AdaGrad</h4>
+<p>For a parameter with <span class="math inline">\(p\)</span> scalar entries, full-matrix AdaGrad flattens its gradient into <span class="math inline">\(g_t\in\mathbb R^p\)</span> and accumulates</p>
+<p><span class="math display">\[
+H_t
+=
+\epsilon I_p+\sum_{s=1}^{t}g_sg_s^T.
+\]</span></p>
+<p>It then preconditions the current gradient:</p>
+<p><span class="math display">\[
+\widetilde g_t=H_t^{-1/2}g_t.
+\]</span></p>
+<p>The inverse root uses a <strong>historical uncentered gradient second moment</strong> to reduce directions that have repeatedly carried large gradients and to rotate correlated coordinates. Its prohibitive cost is a dense <span class="math inline">\(p\times p\)</span> state. For an <span class="math inline">\(m\times n\)</span> matrix parameter, <span class="math inline">\(p=mn\)</span>, so this state contains <span class="math inline">\(m^2n^2\)</span> entries.</p>
+<p>Muon performs a superficially similar inverse-square-root operation,</p>
+<p><span class="math display">\[
+\operatorname{orth}(M_t)
+=
+M_t(M_t^TM_t)^{-1/2},
+\]</span></p>
+<p>but <span class="math inline">\(M_t\)</span> is only the current momentum matrix. The Gram matrix <span class="math inline">\(M_t^TM_t\)</span> is formed from that momentum’s matrix axes; it is <strong>not</strong> the cumulative outer product of vectorized gradients. Muon normalizes the singular values of the update direction instead of estimating a historical covariance preconditioner.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Property</th>
+<th>Full-matrix AdaGrad</th>
+<th>Muon</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Historical statistic</td>
+<td>cumulative gradient outer products</td>
+<td>EMA-like first-moment matrix</td>
+</tr>
+<tr class="even">
+<td>Matrix being inverse-rooted</td>
+<td><span class="math inline">\(p\times p\)</span> second moment over vectorized coordinates</td>
+<td>row- or column-space Gram matrix of current momentum</td>
+</tr>
+<tr class="odd">
+<td>Result</td>
+<td>rotate and scale by historical gradient geometry</td>
+<td>approximately set nonzero momentum singular values to one</td>
+</tr>
+<tr class="even">
+<td>Persistent state</td>
+<td><span class="math inline">\(O(p^2)\)</span></td>
+<td><span class="math inline">\(O(p)\)</span> momentum</td>
+</tr>
+<tr class="odd">
+<td>Main interpretation</td>
+<td>adaptive covariance preconditioning</td>
+<td>spectral-norm steepest-descent geometry</td>
+</tr>
+</tbody>
+</table>
+<p>Shampoo is the closer scalable relative of full-matrix AdaGrad: it approximates the enormous vectorized second moment through per-axis matrix statistics. Muon instead replaces second-moment tracking with a cheaper geometric transformation of momentum.</p>
+</section>
+<section id="newtonschulz-orthogonalization" class="level4">
+<h4 class="anchored" data-anchor-id="newtonschulz-orthogonalization">Newton–Schulz orthogonalization</h4>
 <p>Computing an SVD for every matrix at every step is expensive. Muon instead uses a small number of matrix-multiplication iterations. A simple Newton–Schulz polar iteration is</p>
 <p><span class="math display">\[
 X_{k+1}
@@ -549,29 +1399,29 @@ X_{k+1}
 \frac{3}{2}\sigma_k-\frac{1}{2}\sigma_k^3,
 \]</span></p>
 <p>which drives nonzero singular values toward one.</p>
-<div id="49988b7a" class="cell" data-execution_count="2">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> newton_schulz_orthogonalize(matrix, num_steps<span class="op">=</span><span class="dv">10</span>, eps<span class="op">=</span><span class="fl">1e-7</span>):</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Educational polar-factor approximation for a 2D matrix."""</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> matrix.<span class="bu">float</span>()</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> x <span class="op">/</span> (x.norm() <span class="op">+</span> eps)</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(num_steps):</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>        x <span class="op">=</span> <span class="fl">1.5</span> <span class="op">*</span> x <span class="op">-</span> <span class="fl">0.5</span> <span class="op">*</span> (x <span class="op">@</span> x.T) <span class="op">@</span> x</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> x.to(matrix.dtype)</span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>momentum <span class="op">=</span> torch.randn(<span class="dv">8</span>, <span class="dv">4</span>)</span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>orthogonal_momentum <span class="op">=</span> newton_schulz_orthogonalize(momentum)</span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="co"># For a tall full-rank matrix, columns of the polar factor are orthonormal.</span></span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>gram <span class="op">=</span> orthogonal_momentum.T <span class="op">@</span> orthogonal_momentum</span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>torch.testing.assert_close(gram, torch.eye(<span class="dv">4</span>), atol<span class="op">=</span><span class="fl">2e-3</span>, rtol<span class="op">=</span><span class="fl">2e-3</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="69577401" class="cell" data-execution_count="4">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> newton_schulz_orthogonalize(matrix, num_steps<span class="op">=</span><span class="dv">10</span>, eps<span class="op">=</span><span class="fl">1e-7</span>):</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Educational polar-factor approximation for a 2D matrix."""</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> matrix.<span class="bu">float</span>()</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> x <span class="op">/</span> (x.norm() <span class="op">+</span> eps)</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(num_steps):</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>        x <span class="op">=</span> <span class="fl">1.5</span> <span class="op">*</span> x <span class="op">-</span> <span class="fl">0.5</span> <span class="op">*</span> (x <span class="op">@</span> x.T) <span class="op">@</span> x</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> x.to(matrix.dtype)</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>momentum <span class="op">=</span> torch.randn(<span class="dv">8</span>, <span class="dv">4</span>)</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>orthogonal_momentum <span class="op">=</span> newton_schulz_orthogonalize(momentum)</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a><span class="co"># For a tall full-rank matrix, columns of the polar factor are orthonormal.</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>gram <span class="op">=</span> orthogonal_momentum.T <span class="op">@</span> orthogonal_momentum</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>torch.testing.assert_close(gram, torch.eye(<span class="dv">4</span>), atol<span class="op">=</span><span class="fl">2e-3</span>, rtol<span class="op">=</span><span class="fl">2e-3</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>The code shows the mathematical idea, not a production Muon kernel. Practical implementations often use tuned higher-order Newton–Schulz polynomials, lower- precision matrix multiplies, Nesterov-style momentum, explicit update scaling, and distributed communication strategies.</p>
 </section>
-<section id="which-parameters-use-muon" class="level3">
-<h3 class="anchored" data-anchor-id="which-parameters-use-muon">Which parameters use Muon?</h3>
+<section id="which-parameters-use-muon" class="level4">
+<h4 class="anchored" data-anchor-id="which-parameters-use-muon">Which parameters use Muon?</h4>
 <p>Muon is designed for matrix-structured hidden weights such as attention and MLP projections. A common recipe uses AdamW for:</p>
 <ul>
 <li>embedding tables</li>
@@ -582,8 +1432,8 @@ X_{k+1}
 </ul>
 <p>Thus “training with Muon” commonly means a hybrid Muon + AdamW optimizer setup.</p>
 </section>
-<section id="is-muon-a-second-order-optimizer" class="level3">
-<h3 class="anchored" data-anchor-id="is-muon-a-second-order-optimizer">Is Muon a second-order optimizer?</h3>
+<section id="is-muon-a-second-order-optimizer" class="level4">
+<h4 class="anchored" data-anchor-id="is-muon-a-second-order-optimizer">Is Muon a second-order optimizer?</h4>
 <p>There are two conventions:</p>
 <ul>
 <li>In a broad geometry-aware sense, Muon is often described as second-order or Shampoo-like because it applies a matrix inverse-square-root-style transform.</li>
@@ -591,8 +1441,8 @@ X_{k+1}
 </ul>
 <p>For interviews, state which definition you are using rather than simply calling Muon “Newton’s method.”</p>
 </section>
-<section id="shampoo-versus-muon" class="level3">
-<h3 class="anchored" data-anchor-id="shampoo-versus-muon">Shampoo versus Muon</h3>
+<section id="shampoo-versus-muon" class="level4">
+<h4 class="anchored" data-anchor-id="shampoo-versus-muon">Shampoo versus Muon</h4>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 33%">
@@ -646,8 +1496,60 @@ X_{k+1}
 </table>
 </section>
 </section>
+</section>
 <section id="optimizer-comparison" class="level2">
 <h2 class="anchored" data-anchor-id="optimizer-comparison">Optimizer Comparison</h2>
+<p>Derivative-free methods are better compared by objective evaluations and search state than by optimizer-state bytes per parameter:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Optimizer</th>
+<th>Search state / evaluations</th>
+<th>Main idea</th>
+<th>Common weakness</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Coordinate/pattern search</td>
+<td>point, step size; up to <span class="math inline">\(2d\)</span> tests per sweep</td>
+<td>accept improving directions</td>
+<td>query cost grows with dimension</td>
+</tr>
+<tr class="even">
+<td>Nelder–Mead</td>
+<td><span class="math inline">\(d+1\)</span> vertices</td>
+<td>geometrically transform a simplex</td>
+<td>poor scaling in high dimension</td>
+</tr>
+<tr class="odd">
+<td>CMA-ES</td>
+<td>population, mean, scale, covariance</td>
+<td>evolve a ranked search distribution</td>
+<td>many evaluations and potentially <span class="math inline">\(O(d^2)\)</span> covariance state</td>
+</tr>
+<tr class="even">
+<td>Bayesian optimization</td>
+<td>evaluation history and surrogate</td>
+<td>optimize an exploration–exploitation acquisition rule</td>
+<td>surrogate methods struggle in high dimension</td>
+</tr>
+<tr class="odd">
+<td>Two-point ZO</td>
+<td>two evaluations per sampled direction</td>
+<td>estimate a direction from loss differences</td>
+<td>high variance in high dimension</td>
+</tr>
+</tbody>
+</table>
+<section id="local-stochastic-methods" class="level3">
+<h3 class="anchored" data-anchor-id="local-stochastic-methods">Local stochastic methods</h3>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 23%">
@@ -659,7 +1561,7 @@ X_{k+1}
 <tr class="header">
 <th>Optimizer</th>
 <th style="text-align: right;">State per parameter</th>
-<th>Main idea</th>
+<th>How history is summarized</th>
 <th>Common weakness</th>
 </tr>
 </thead>
@@ -667,19 +1569,19 @@ X_{k+1}
 <tr class="odd">
 <td>SGD</td>
 <td style="text-align: right;">0</td>
-<td>follow current gradient</td>
+<td>only the current mini-batch gradient</td>
 <td>sensitive to conditioning and learning rate</td>
 </tr>
 <tr class="even">
 <td>SGD + momentum</td>
 <td style="text-align: right;">1</td>
-<td>average gradient direction</td>
+<td>EMA of gradient direction</td>
 <td>still uses one global learning-rate scale</td>
 </tr>
 <tr class="odd">
 <td>AdaGrad</td>
 <td style="text-align: right;">1</td>
-<td>cumulative squared-gradient scaling</td>
+<td>cumulative squared gradients</td>
 <td>effective rate can vanish</td>
 </tr>
 <tr class="even">
@@ -691,106 +1593,159 @@ X_{k+1}
 <tr class="odd">
 <td>Adam</td>
 <td style="text-align: right;">2</td>
-<td>first and second moments</td>
+<td>EMAs of gradients and squared gradients</td>
 <td>coupled L2 is not uniform weight decay</td>
 </tr>
 <tr class="even">
 <td>AdamW</td>
 <td style="text-align: right;">2</td>
-<td>Adam + decoupled decay</td>
+<td>Adam moments plus decoupled shrinkage</td>
 <td>high optimizer-state memory</td>
-</tr>
-<tr class="odd">
-<td>Shampoo</td>
-<td style="text-align: right;">structured matrices</td>
-<td>row/column covariance preconditioning</td>
-<td>inverse roots and matrix state are expensive</td>
-</tr>
-<tr class="even">
-<td>Muon</td>
-<td style="text-align: right;">1 for selected matrices</td>
-<td>orthogonalize momentum</td>
-<td>special parameter routing and matrix multiplies</td>
 </tr>
 </tbody>
 </table>
 </section>
+<section id="online-cumulative-methods" class="level3">
+<h3 class="anchored" data-anchor-id="online-cumulative-methods">Online cumulative methods</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 23%">
+<col style="width: 30%">
+<col style="width: 23%">
+<col style="width: 23%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Optimizer</th>
+<th style="text-align: right;">State per parameter</th>
+<th>How history is summarized</th>
+<th>Common weakness</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>FTRL-Proximal</td>
+<td style="text-align: right;">typically 2 for sparse coordinates</td>
+<td>cumulative prefix statistics plus proximal regularization</td>
+<td>old evidence is not forgotten automatically</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="matrix-geometry-methods" class="level3">
+<h3 class="anchored" data-anchor-id="matrix-geometry-methods">Matrix-geometry methods</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Optimizer</th>
+<th>State</th>
+<th>How history is summarized</th>
+<th>Common weakness</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Shampoo</td>
+<td>structured matrices</td>
+<td>cumulative row/column gradient covariances</td>
+<td>inverse roots and matrix state are expensive</td>
+</tr>
+<tr class="even">
+<td>Muon</td>
+<td>one buffer for selected matrices</td>
+<td>EMA-like momentum followed by orthogonalization</td>
+<td>special parameter routing and matrix multiplies</td>
+</tr>
+</tbody>
+</table>
+<p>Persistent memory alone does not identify the learning protocol. AdaGrad and FTRL both accumulate squared gradients, while Adam explicitly emphasizes recent gradients, but only online FTRL makes the predict–reveal boundary part of its objective and regret analysis.</p>
+</section>
+</section>
 <section id="minimal-adamw-implementation" class="level2">
 <h2 class="anchored" data-anchor-id="minimal-adamw-implementation">Minimal AdamW Implementation</h2>
 <p>The implementation below is educational and omits parameter groups, sparse gradients, fused kernels, capturable state, and mixed-precision concerns.</p>
-<div id="2ed73b4f" class="cell" data-execution_count="3">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> math</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> MinimalAdamW:</span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(</span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>,</span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>        parameters,</span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>        lr<span class="op">=</span><span class="fl">1e-3</span>,</span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>        betas<span class="op">=</span>(<span class="fl">0.9</span>, <span class="fl">0.999</span>),</span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>        eps<span class="op">=</span><span class="fl">1e-8</span>,</span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>        weight_decay<span class="op">=</span><span class="fl">0.0</span>,</span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>    ):</span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.parameters <span class="op">=</span> <span class="bu">list</span>(parameters)</span>
-<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.lr <span class="op">=</span> lr</span>
-<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.beta1, <span class="va">self</span>.beta2 <span class="op">=</span> betas</span>
-<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.eps <span class="op">=</span> eps</span>
-<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.weight_decay <span class="op">=</span> weight_decay</span>
-<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.step_count <span class="op">=</span> <span class="dv">0</span></span>
-<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.first_moments <span class="op">=</span> [torch.zeros_like(p) <span class="cf">for</span> p <span class="kw">in</span> <span class="va">self</span>.parameters]</span>
-<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.second_moments <span class="op">=</span> [torch.zeros_like(p) <span class="cf">for</span> p <span class="kw">in</span> <span class="va">self</span>.parameters]</span>
-<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">@torch.no_grad</span>()</span>
-<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> step(<span class="va">self</span>):</span>
-<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.step_count <span class="op">+=</span> <span class="dv">1</span></span>
-<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>        correction1 <span class="op">=</span> <span class="fl">1.0</span> <span class="op">-</span> <span class="va">self</span>.beta1 <span class="op">**</span> <span class="va">self</span>.step_count</span>
-<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>        correction2 <span class="op">=</span> <span class="fl">1.0</span> <span class="op">-</span> <span class="va">self</span>.beta2 <span class="op">**</span> <span class="va">self</span>.step_count</span>
-<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> parameter, first, second <span class="kw">in</span> <span class="bu">zip</span>(</span>
-<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>            <span class="va">self</span>.parameters, <span class="va">self</span>.first_moments, <span class="va">self</span>.second_moments</span>
-<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>        ):</span>
-<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> parameter.grad <span class="kw">is</span> <span class="va">None</span>:</span>
-<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>                <span class="cf">continue</span></span>
-<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a>            gradient <span class="op">=</span> parameter.grad</span>
-<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a>            <span class="co"># Decoupled weight decay.</span></span>
-<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a>            parameter.mul_(<span class="fl">1.0</span> <span class="op">-</span> <span class="va">self</span>.lr <span class="op">*</span> <span class="va">self</span>.weight_decay)</span>
-<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a>            first.mul_(<span class="va">self</span>.beta1).add_(gradient, alpha<span class="op">=</span><span class="fl">1.0</span> <span class="op">-</span> <span class="va">self</span>.beta1)</span>
-<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a>            second.mul_(<span class="va">self</span>.beta2).addcmul_(</span>
-<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a>                gradient, gradient, value<span class="op">=</span><span class="fl">1.0</span> <span class="op">-</span> <span class="va">self</span>.beta2</span>
-<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a>            )</span>
-<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a>            first_hat <span class="op">=</span> first <span class="op">/</span> correction1</span>
-<span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a>            second_hat <span class="op">=</span> second <span class="op">/</span> correction2</span>
-<span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a>            parameter.addcdiv_(</span>
-<span id="cb3-48"><a href="#cb3-48" aria-hidden="true" tabindex="-1"></a>                first_hat,</span>
-<span id="cb3-49"><a href="#cb3-49" aria-hidden="true" tabindex="-1"></a>                second_hat.sqrt().add_(<span class="va">self</span>.eps),</span>
-<span id="cb3-50"><a href="#cb3-50" aria-hidden="true" tabindex="-1"></a>                value<span class="op">=-</span><span class="va">self</span>.lr,</span>
-<span id="cb3-51"><a href="#cb3-51" aria-hidden="true" tabindex="-1"></a>            )</span>
-<span id="cb3-52"><a href="#cb3-52" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-53"><a href="#cb3-53" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> zero_grad(<span class="va">self</span>):</span>
-<span id="cb3-54"><a href="#cb3-54" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> parameter <span class="kw">in</span> <span class="va">self</span>.parameters:</span>
-<span id="cb3-55"><a href="#cb3-55" aria-hidden="true" tabindex="-1"></a>            parameter.grad <span class="op">=</span> <span class="va">None</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="7f1bae3f" class="cell" data-execution_count="5">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> math</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> MinimalAdamW:</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>,</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>        parameters,</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>        lr<span class="op">=</span><span class="fl">1e-3</span>,</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>        betas<span class="op">=</span>(<span class="fl">0.9</span>, <span class="fl">0.999</span>),</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>        eps<span class="op">=</span><span class="fl">1e-8</span>,</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>        weight_decay<span class="op">=</span><span class="fl">0.0</span>,</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>    ):</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.parameters <span class="op">=</span> <span class="bu">list</span>(parameters)</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.lr <span class="op">=</span> lr</span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.beta1, <span class="va">self</span>.beta2 <span class="op">=</span> betas</span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.eps <span class="op">=</span> eps</span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.weight_decay <span class="op">=</span> weight_decay</span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.step_count <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.first_moments <span class="op">=</span> [torch.zeros_like(p) <span class="cf">for</span> p <span class="kw">in</span> <span class="va">self</span>.parameters]</span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.second_moments <span class="op">=</span> [torch.zeros_like(p) <span class="cf">for</span> p <span class="kw">in</span> <span class="va">self</span>.parameters]</span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">@torch.no_grad</span>()</span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> step(<span class="va">self</span>):</span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.step_count <span class="op">+=</span> <span class="dv">1</span></span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a>        correction1 <span class="op">=</span> <span class="fl">1.0</span> <span class="op">-</span> <span class="va">self</span>.beta1 <span class="op">**</span> <span class="va">self</span>.step_count</span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a>        correction2 <span class="op">=</span> <span class="fl">1.0</span> <span class="op">-</span> <span class="va">self</span>.beta2 <span class="op">**</span> <span class="va">self</span>.step_count</span>
+<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> parameter, first, second <span class="kw">in</span> <span class="bu">zip</span>(</span>
+<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a>            <span class="va">self</span>.parameters, <span class="va">self</span>.first_moments, <span class="va">self</span>.second_moments</span>
+<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a>        ):</span>
+<span id="cb6-32"><a href="#cb6-32" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> parameter.grad <span class="kw">is</span> <span class="va">None</span>:</span>
+<span id="cb6-33"><a href="#cb6-33" aria-hidden="true" tabindex="-1"></a>                <span class="cf">continue</span></span>
+<span id="cb6-34"><a href="#cb6-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-35"><a href="#cb6-35" aria-hidden="true" tabindex="-1"></a>            <span class="co"># This gradient came from the caller's data loss. AdamW does not</span></span>
+<span id="cb6-36"><a href="#cb6-36" aria-hidden="true" tabindex="-1"></a>            <span class="co"># add weight_decay * parameter to it.</span></span>
+<span id="cb6-37"><a href="#cb6-37" aria-hidden="true" tabindex="-1"></a>            gradient <span class="op">=</span> parameter.grad</span>
+<span id="cb6-38"><a href="#cb6-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-39"><a href="#cb6-39" aria-hidden="true" tabindex="-1"></a>            <span class="co"># Shrink the parameter outside the first/second-moment updates.</span></span>
+<span id="cb6-40"><a href="#cb6-40" aria-hidden="true" tabindex="-1"></a>            parameter.mul_(<span class="fl">1.0</span> <span class="op">-</span> <span class="va">self</span>.lr <span class="op">*</span> <span class="va">self</span>.weight_decay)</span>
+<span id="cb6-41"><a href="#cb6-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-42"><a href="#cb6-42" aria-hidden="true" tabindex="-1"></a>            first.mul_(<span class="va">self</span>.beta1).add_(gradient, alpha<span class="op">=</span><span class="fl">1.0</span> <span class="op">-</span> <span class="va">self</span>.beta1)</span>
+<span id="cb6-43"><a href="#cb6-43" aria-hidden="true" tabindex="-1"></a>            second.mul_(<span class="va">self</span>.beta2).addcmul_(</span>
+<span id="cb6-44"><a href="#cb6-44" aria-hidden="true" tabindex="-1"></a>                gradient, gradient, value<span class="op">=</span><span class="fl">1.0</span> <span class="op">-</span> <span class="va">self</span>.beta2</span>
+<span id="cb6-45"><a href="#cb6-45" aria-hidden="true" tabindex="-1"></a>            )</span>
+<span id="cb6-46"><a href="#cb6-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-47"><a href="#cb6-47" aria-hidden="true" tabindex="-1"></a>            first_hat <span class="op">=</span> first <span class="op">/</span> correction1</span>
+<span id="cb6-48"><a href="#cb6-48" aria-hidden="true" tabindex="-1"></a>            second_hat <span class="op">=</span> second <span class="op">/</span> correction2</span>
+<span id="cb6-49"><a href="#cb6-49" aria-hidden="true" tabindex="-1"></a>            parameter.addcdiv_(</span>
+<span id="cb6-50"><a href="#cb6-50" aria-hidden="true" tabindex="-1"></a>                first_hat,</span>
+<span id="cb6-51"><a href="#cb6-51" aria-hidden="true" tabindex="-1"></a>                second_hat.sqrt().add_(<span class="va">self</span>.eps),</span>
+<span id="cb6-52"><a href="#cb6-52" aria-hidden="true" tabindex="-1"></a>                value<span class="op">=-</span><span class="va">self</span>.lr,</span>
+<span id="cb6-53"><a href="#cb6-53" aria-hidden="true" tabindex="-1"></a>            )</span>
+<span id="cb6-54"><a href="#cb6-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-55"><a href="#cb6-55" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> zero_grad(<span class="va">self</span>):</span>
+<span id="cb6-56"><a href="#cb6-56" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> parameter <span class="kw">in</span> <span class="va">self</span>.parameters:</span>
+<span id="cb6-57"><a href="#cb6-57" aria-hidden="true" tabindex="-1"></a>            parameter.grad <span class="op">=</span> <span class="va">None</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="d4c9e89f" class="cell" data-execution_count="4">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>parameter <span class="op">=</span> torch.nn.Parameter(torch.tensor([<span class="fl">3.0</span>, <span class="op">-</span><span class="fl">4.0</span>]))</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>optimizer <span class="op">=</span> MinimalAdamW([parameter], lr<span class="op">=</span><span class="fl">0.1</span>, weight_decay<span class="op">=</span><span class="fl">0.01</span>)</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>initial_norm <span class="op">=</span> parameter.detach().norm()</span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">100</span>):</span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    loss <span class="op">=</span> parameter.square().<span class="bu">sum</span>()</span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    loss.backward()</span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    optimizer.step()</span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    optimizer.zero_grad()</span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> parameter.norm() <span class="op">&lt;</span> <span class="fl">0.02</span> <span class="op">*</span> initial_norm</span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>parameter</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-display" data-execution_count="4">
+<div id="133b60bf" class="cell" data-execution_count="6">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>parameter <span class="op">=</span> torch.nn.Parameter(torch.tensor([<span class="fl">3.0</span>, <span class="op">-</span><span class="fl">4.0</span>]))</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>target <span class="op">=</span> torch.tensor([<span class="fl">1.0</span>, <span class="op">-</span><span class="fl">1.0</span>])</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>optimizer <span class="op">=</span> MinimalAdamW([parameter], lr<span class="op">=</span><span class="fl">0.1</span>, weight_decay<span class="op">=</span><span class="fl">0.01</span>)</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>initial_error <span class="op">=</span> (parameter.detach() <span class="op">-</span> target).norm()</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">100</span>):</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    data_loss <span class="op">=</span> (parameter <span class="op">-</span> target).square().<span class="bu">sum</span>()</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    data_loss.backward()  <span class="co"># No explicit L2 penalty is added to this loss.</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    optimizer.step()</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>    optimizer.zero_grad()</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> (parameter <span class="op">-</span> target).norm() <span class="op">&lt;</span> <span class="fl">0.02</span> <span class="op">*</span> initial_error</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>parameter</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="6">
 <pre><code>Parameter containing:
-tensor([0.0179, 0.0162], requires_grad=True)</code></pre>
+tensor([ 0.9875, -1.0084], requires_grad=True)</code></pre>
 </div>
 </div>
 </section>
@@ -847,8 +1802,22 @@ g\min\left(1,\frac{c}{\|g\|_2+\epsilon}\right).
 <h2 class="anchored" data-anchor-id="interview-questions">Interview Questions</h2>
 <ul>
 <li>Why can mini-batch gradients be useful despite being noisy?</li>
+<li>What information does a zeroth-order oracle expose?</li>
+<li>Contrast direct search with zeroth-order gradient estimation. Which classical methods never construct a gradient-like vector?</li>
+<li>When would you choose Nelder–Mead, CMA-ES, or Bayesian optimization?</li>
+<li>Why is Bayesian optimization evaluation-efficient but usually difficult to scale to a neural network’s parameter dimension?</li>
+<li>Why does derivative-free query cost tend to worsen with dimension?</li>
+<li>How do the smoothing radius and number of sampled directions affect a two-point gradient estimator?</li>
+<li>Contrast FTL over actual losses with FTRL over linearized losses.</li>
+<li>Derive the regularized running-mean solution for squared-loss FTRL.</li>
+<li>In what sense does FTRL preserve the causal data prefix, and in what sense does it compress or discard the time axis?</li>
+<li>If SGD and Adam are path-dependent, why do we still say shuffled training treats example order as a nuisance?</li>
+<li>Why does cumulative FTRL need modification under concept drift?</li>
+<li>Why is FTRL-Proximal first-order even though its update is written as a regularized argmin?</li>
+<li>Why is weight decay orthogonal to the derivative-order taxonomy?</li>
 <li>How does momentum reduce oscillation?</li>
 <li>Why does AdaGrad’s effective learning rate continually shrink?</li>
+<li>In what precise sense is Adam “RMSProp plus momentum,” and what details does that shorthand omit?</li>
 <li>Derive Adam’s bias-correction terms.</li>
 <li>Why are L2 regularization and weight decay different for Adam?</li>
 <li>How much optimizer-state memory does Adam require?</li>
@@ -859,6 +1828,7 @@ g\min\left(1,\frac{c}{\|g\|_2+\epsilon}\right).
 <li>How does Shampoo preserve matrix or tensor structure that Adam discards?</li>
 <li>Why does matrix Shampoo use <span class="math inline">\(-1/4\)</span> powers on both sides?</li>
 <li>What does Muon’s Newton–Schulz iteration compute, and why is it not Newton’s method on the training loss?</li>
+<li>Why is Muon’s <span class="math inline">\(M(M^TM)^{-1/2}\)</span> not a full-matrix AdaGrad preconditioner?</li>
 <li>Why is Muon commonly paired with AdamW for the remaining parameters?</li>
 <li>Compare the optimizer-state and computation costs of AdamW, Shampoo, and Muon.</li>
 </ul>
@@ -867,11 +1837,19 @@ g\min\left(1,\frac{c}{\|g\|_2+\epsilon}\right).
 <h2 class="anchored" data-anchor-id="exercises">Exercises</h2>
 <ul class="task-list">
 <li><label><input type="checkbox">Implement SGD with momentum using both common sign conventions.</label></li>
+<li><label><input type="checkbox">Compare coordinate pattern search and a two-point gradient estimate on a smooth quadratic and a nonsmooth objective.</label></li>
+<li><label><input type="checkbox">Use simulated annealing to escape a local minimum of a multimodal one-dimensional function.</label></li>
+<li><label><input type="checkbox">Compare a two-point zeroth-order estimate with the exact gradient as dimension increases.</label></li>
+<li><label><input type="checkbox">Implement native squared-loss FTL and verify that its prediction is the running mean of all observed targets.</label></li>
+<li><label><input type="checkbox">Compare cumulative, sliding-window, and exponentially discounted FTRL on a stream whose target mean changes halfway through.</label></li>
+<li><label><input type="checkbox">Implement sparse FTRL-Proximal and verify that L1 regularization creates exact zeros.</label></li>
 <li><label><input type="checkbox">Compare <code>MinimalAdamW</code> with <code>torch.optim.AdamW</code> for several deterministic steps.</label></li>
 <li><label><input type="checkbox">Plot the effective per-parameter learning rates in Adam.</label></li>
+<li><label><input type="checkbox">Construct Adam from separate first-moment and RMSProp-style second-moment components and compare it with the equations in the note.</label></li>
 <li><label><input type="checkbox">Derive training-memory usage for parameters, gradients, and Adam states.</label></li>
 <li><label><input type="checkbox">Implement linear warmup followed by cosine decay.</label></li>
 <li><label><input type="checkbox">Compare Shampoo’s direction with an element-wise AdaGrad direction.</label></li>
+<li><label><input type="checkbox">Compare full-matrix AdaGrad and Muon on a small matrix parameter, tracking their state sizes and singular values.</label></li>
 <li><label><input type="checkbox">Compare the Newton–Schulz polar factor against <code>torch.linalg.svd</code>.</label></li>
 <li><label><input type="checkbox">Route 2D hidden weights to Muon and all other parameters to AdamW.</label></li>
 </ul>
@@ -879,6 +1857,15 @@ g\min\left(1,\frac{c}{\|g\|_2+\epsilon}\right).
 <section id="primary-references" class="level2">
 <h2 class="anchored" data-anchor-id="primary-references">Primary References</h2>
 <ul>
+<li><a href="https://doi.org/10.1093/comjnl/7.4.308">A Simplex Method for Function Minimization</a></li>
+<li><a href="https://doi.org/10.1093/comjnl/7.2.155">An Efficient Method for Finding the Minimum of a Function of Several Variables Without Calculating Derivatives</a></li>
+<li><a href="https://arxiv.org/abs/1604.00772">The CMA Evolution Strategy: A Tutorial</a></li>
+<li><a href="https://arxiv.org/abs/1807.02811">A Tutorial on Bayesian Optimization</a></li>
+<li><a href="https://link.springer.com/article/10.1007/s10208-015-9296-2">Random Gradient-Free Minimization of Convex Functions</a></li>
+<li><a href="https://research.google.com/pubs/archive/41159.pdf">Ad Click Prediction: A View from the Trenches</a></li>
+<li><a href="https://jmlr.org/papers/v12/duchi11a.html">Adaptive Subgradient Methods for Online Learning and Stochastic Optimization</a></li>
+<li><a href="https://arxiv.org/abs/1412.6980">Adam: A Method for Stochastic Optimization</a></li>
+<li><a href="https://arxiv.org/abs/1711.05101">Decoupled Weight Decay Regularization</a></li>
 <li><a href="https://arxiv.org/abs/1802.09568">Shampoo: Preconditioned Stochastic Tensor Optimization</a></li>
 <li><a href="https://arxiv.org/abs/2502.16982">Muon Is Scalable for LLM Training</a></li>
 <li><a href="https://arxiv.org/abs/2505.02222">Practical Efficiency of Muon for Pretraining</a></li>

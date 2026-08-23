@@ -482,7 +482,7 @@ X_L W_{\text{vocab}}
 <li>learned absolute position embeddings</li>
 <li>a weight-tied language-model head</li>
 </ul>
-<div id="1251b338" class="cell" data-execution_count="1">
+<div id="e57347bd" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch.nn <span class="im">as</span> nn</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch.nn.functional <span class="im">as</span> F</span>
@@ -609,7 +609,7 @@ X_L W_{\text{vocab}}
 <span id="cb1-124"><a href="#cb1-124" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-125"><a href="#cb1-125" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">self</span>.lm_head(<span class="va">self</span>.final_norm(x))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="1480af83" class="cell" data-execution_count="2">
+<div id="a4420301" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>torch.manual_seed(<span class="dv">0</span>)</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>model <span class="op">=</span> DecoderOnlyTransformer(</span>
@@ -630,7 +630,7 @@ X_L W_{\text{vocab}}
 </div>
 </div>
 <p>For next-token training, shift the labels by one position:</p>
-<div id="3ab29dd9" class="cell" data-execution_count="3">
+<div id="a7260130" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>loss <span class="op">=</span> F.cross_entropy(</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    logits[:, :<span class="op">-</span><span class="dv">1</span>].reshape(<span class="op">-</span><span class="dv">1</span>, logits.size(<span class="op">-</span><span class="dv">1</span>)),</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    token_ids[:, <span class="dv">1</span>:].reshape(<span class="op">-</span><span class="dv">1</span>),</span>

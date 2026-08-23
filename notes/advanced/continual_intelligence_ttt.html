@@ -1,0 +1,2314 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>From Test-Time Training to Continual Intelligence – Minimal ML</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-f83c246346592b24d02aa84ae3974412.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../../styles.css">
+<link rel="stylesheet" href="../../colors.css">
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">Minimal ML</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../notes/index.html"> 
+<span class="menu-text">Notes</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../posts/index.html"> 
+<span class="menu-text">Blog</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#thesis" id="toc-thesis" class="nav-link active" data-scroll-target="#thesis">Thesis</a></li>
+  <li><a href="#ttt-started-as-adaptation-not-memory" id="toc-ttt-started-as-adaptation-not-memory" class="nav-link" data-scroll-target="#ttt-started-as-adaptation-not-memory">1. TTT started as adaptation, not memory</a></li>
+  <li><a href="#ttt-then-changed-meaning-weights-became-recurrent-state" id="toc-ttt-then-changed-meaning-weights-became-recurrent-state" class="nav-link" data-scroll-target="#ttt-then-changed-meaning-weights-became-recurrent-state">2. TTT then changed meaning: weights became recurrent state</a></li>
+  <li><a href="#why-did-ttt-use-kv-binding-auxiliary-losses" id="toc-why-did-ttt-use-kv-binding-auxiliary-losses" class="nav-link" data-scroll-target="#why-did-ttt-use-kv-binding-auxiliary-losses">3. Why did TTT use KV-binding auxiliary losses?</a></li>
+  <li><a href="#the-kvb-story-may-be-more-accidental-than-it-first-appeared" id="toc-the-kvb-story-may-be-more-accidental-than-it-first-appeared" class="nav-link" data-scroll-target="#the-kvb-story-may-be-more-accidental-than-it-first-appeared">4. The KVB story may be more accidental than it first appeared</a></li>
+  <li><a href="#why-not-use-the-actual-next-token-prediction-loss" id="toc-why-not-use-the-actual-next-token-prediction-loss" class="nav-link" data-scroll-target="#why-not-use-the-actual-next-token-prediction-loss">5. Why not use the actual next-token-prediction loss?</a>
+  <ul class="collapse">
+  <li><a href="#systems-cost" id="toc-systems-cost" class="nav-link" data-scroll-target="#systems-cost">5.1 Systems cost</a></li>
+  <li><a href="#the-trajectory-problem" id="toc-the-trajectory-problem" class="nav-link" data-scroll-target="#the-trajectory-problem">5.2 The trajectory problem</a></li>
+  </ul></li>
+  <li><a href="#ttt-done-right-fixes-a-different-problem" id="toc-ttt-done-right-fixes-a-different-problem" class="nav-link" data-scroll-target="#ttt-done-right-fixes-a-different-problem">6. “TTT Done Right” fixes a different problem</a></li>
+  <li><a href="#in-place-ttt-move-the-adaptive-state-into-the-existing-model" id="toc-in-place-ttt-move-the-adaptive-state-into-the-existing-model" class="nav-link" data-scroll-target="#in-place-ttt-move-the-adaptive-state-into-the-existing-model">7. In-Place TTT: move the adaptive state into the existing model</a></li>
+  <li><a href="#ttt-e2e-train-the-model-for-its-own-future-learning-trajectory" id="toc-ttt-e2e-train-the-model-for-its-own-future-learning-trajectory" class="nav-link" data-scroll-target="#ttt-e2e-train-the-model-for-its-own-future-learning-trajectory">8. TTT-E2E: train the model for its own future learning trajectory</a></li>
+  <li><a href="#ttt-e2e-is-really-learning-gradient-geometry" id="toc-ttt-e2e-is-really-learning-gradient-geometry" class="nav-link" data-scroll-target="#ttt-e2e-is-really-learning-gradient-geometry">9. TTT-E2E is really learning gradient geometry</a></li>
+  <li><a href="#but-long-context-memory-is-only-one-layer-of-continual-learning" id="toc-but-long-context-memory-is-only-one-layer-of-continual-learning" class="nav-link" data-scroll-target="#but-long-context-memory-is-only-one-layer-of-continual-learning">10. But long-context memory is only one layer of continual learning</a></li>
+  <li><a href="#level-i-episodic-state-what-just-happened" id="toc-level-i-episodic-state-what-just-happened" class="nav-link" data-scroll-target="#level-i-episodic-state-what-just-happened">11. Level I: episodic state — what just happened?</a></li>
+  <li><a href="#level-ii-semantic-knowledge-what-has-become-stably-true" id="toc-level-ii-semantic-knowledge-what-has-become-stably-true" class="nav-link" data-scroll-target="#level-ii-semantic-knowledge-what-has-become-stably-true">12. Level II: semantic knowledge — what has become stably true?</a></li>
+  <li><a href="#level-iii-procedural-knowledge-how-should-i-solve-this-kind-of-problem" id="toc-level-iii-procedural-knowledge-how-should-i-solve-this-kind-of-problem" class="nav-link" data-scroll-target="#level-iii-procedural-knowledge-how-should-i-solve-this-kind-of-problem">13. Level III: procedural knowledge — how should I solve this kind of problem?</a></li>
+  <li><a href="#why-ntp-is-much-weaker-for-procedural-learning" id="toc-why-ntp-is-much-weaker-for-procedural-learning" class="nav-link" data-scroll-target="#why-ntp-is-much-weaker-for-procedural-learning">14. Why NTP is much weaker for procedural learning</a></li>
+  <li><a href="#level-iv-meta-learning-how-should-i-decide-how-to-think" id="toc-level-iv-meta-learning-how-should-i-decide-how-to-think" class="nav-link" data-scroll-target="#level-iv-meta-learning-how-should-i-decide-how-to-think">15. Level IV: meta-learning — how should I decide how to think?</a></li>
+  <li><a href="#the-substrate-should-be-heterogeneous" id="toc-the-substrate-should-be-heterogeneous" class="nav-link" data-scroll-target="#the-substrate-should-be-heterogeneous">16. The substrate should be heterogeneous</a></li>
+  <li><a href="#prompts-are-usefulbut-probably-as-an-intermediate-representation" id="toc-prompts-are-usefulbut-probably-as-an-intermediate-representation" class="nav-link" data-scroll-target="#prompts-are-usefulbut-probably-as-an-intermediate-representation">17. Prompts are useful—but probably as an intermediate representation</a></li>
+  <li><a href="#reasoning-skills-should-often-be-explicit-before-they-become-weights" id="toc-reasoning-skills-should-often-be-explicit-before-they-become-weights" class="nav-link" data-scroll-target="#reasoning-skills-should-often-be-explicit-before-they-become-weights">18. Reasoning skills should often be explicit before they become weights</a></li>
+  <li><a href="#meta-reasoning-belongs-primarily-in-the-harness" id="toc-meta-reasoning-belongs-primarily-in-the-harness" class="nav-link" data-scroll-target="#meta-reasoning-belongs-primarily-in-the-harness">19. Meta-reasoning belongs primarily in the harness</a></li>
+  <li><a href="#a-handcrafted-harness-has-the-same-weakness-as-handcrafted-ttt-losses" id="toc-a-handcrafted-harness-has-the-same-weakness-as-handcrafted-ttt-losses" class="nav-link" data-scroll-target="#a-handcrafted-harness-has-the-same-weakness-as-handcrafted-ttt-losses">20. A handcrafted harness has the same weakness as handcrafted TTT losses</a></li>
+  <li><a href="#the-missing-component-credit-routing-across-substrates" id="toc-the-missing-component-credit-routing-across-substrates" class="nav-link" data-scroll-target="#the-missing-component-credit-routing-across-substrates">21. The missing component: credit routing across substrates</a>
+  <ul class="collapse">
+  <li><a href="#case-a-task-specific-episode" id="toc-case-a-task-specific-episode" class="nav-link" data-scroll-target="#case-a-task-specific-episode">Case A: task-specific episode</a></li>
+  <li><a href="#case-b-stable-external-fact" id="toc-case-b-stable-external-fact" class="nav-link" data-scroll-target="#case-b-stable-external-fact">Case B: stable external fact</a></li>
+  <li><a href="#case-c-reusable-procedure" id="toc-case-c-reusable-procedure" class="nav-link" data-scroll-target="#case-c-reusable-procedure">Case C: reusable procedure</a></li>
+  <li><a href="#case-d-reasoning-policy-failure" id="toc-case-d-reasoning-policy-failure" class="nav-link" data-scroll-target="#case-d-reasoning-policy-failure">Case D: reasoning-policy failure</a></li>
+  <li><a href="#case-e-foundational-regularity" id="toc-case-e-foundational-regularity" class="nav-link" data-scroll-target="#case-e-foundational-regularity">Case E: foundational regularity</a></li>
+  </ul></li>
+  <li><a href="#a-candidate-architecture-for-continual-intelligence" id="toc-a-candidate-architecture-for-continual-intelligence" class="nav-link" data-scroll-target="#a-candidate-architecture-for-continual-intelligence">22. A candidate architecture for continual intelligence</a></li>
+  <li><a href="#the-key-design-principle-progressive-compilation" id="toc-the-key-design-principle-progressive-compilation" class="nav-link" data-scroll-target="#the-key-design-principle-progressive-compilation">23. The key design principle: progressive compilation</a>
+  <ul class="collapse">
+  <li><a href="#stage-1-raw-episode" id="toc-stage-1-raw-episode" class="nav-link" data-scroll-target="#stage-1-raw-episode">Stage 1: raw episode</a></li>
+  <li><a href="#stage-2-verbal-abstraction" id="toc-stage-2-verbal-abstraction" class="nav-link" data-scroll-target="#stage-2-verbal-abstraction">Stage 2: verbal abstraction</a></li>
+  <li><a href="#stage-3-structured-skill" id="toc-stage-3-structured-skill" class="nav-link" data-scroll-target="#stage-3-structured-skill">Stage 3: structured skill</a></li>
+  <li><a href="#stage-4-learned-controller" id="toc-stage-4-learned-controller" class="nav-link" data-scroll-target="#stage-4-learned-controller">Stage 4: learned controller</a></li>
+  <li><a href="#stage-5-weight-consolidation" id="toc-stage-5-weight-consolidation" class="nav-link" data-scroll-target="#stage-5-weight-consolidation">Stage 5: weight consolidation</a></li>
+  </ul></li>
+  <li><a href="#this-changes-how-we-should-think-about-reasoning" id="toc-this-changes-how-we-should-think-about-reasoning" class="nav-link" data-scroll-target="#this-changes-how-we-should-think-about-reasoning">24. This changes how we should think about “reasoning”</a></li>
+  <li><a href="#long-context-ttt-may-be-the-easiest-instance-of-a-much-larger-idea" id="toc-long-context-ttt-may-be-the-easiest-instance-of-a-much-larger-idea" class="nav-link" data-scroll-target="#long-context-ttt-may-be-the-easiest-instance-of-a-much-larger-idea">25. Long-context TTT may be the easiest instance of a much larger idea</a>
+  <ul class="collapse">
+  <li><a href="#attention" id="toc-attention" class="nav-link" data-scroll-target="#attention">Attention</a></li>
+  <li><a href="#rnn" id="toc-rnn" class="nav-link" data-scroll-target="#rnn">RNN</a></li>
+  <li><a href="#ttt" id="toc-ttt" class="nav-link" data-scroll-target="#ttt">TTT</a></li>
+  </ul></li>
+  <li><a href="#a-research-agenda" id="toc-a-research-agenda" class="nav-link" data-scroll-target="#a-research-agenda">26. A research agenda</a>
+  <ul class="collapse">
+  <li><a href="#learn-the-credit-router" id="toc-learn-the-credit-router" class="nav-link" data-scroll-target="#learn-the-credit-router">26.1 Learn the credit router</a></li>
+  <li><a href="#train-update-trajectories-not-only-endpoints" id="toc-train-update-trajectories-not-only-endpoints" class="nav-link" data-scroll-target="#train-update-trajectories-not-only-endpoints">26.2 Train update trajectories, not only endpoints</a></li>
+  <li><a href="#separate-plastic-and-stable-capacities" id="toc-separate-plastic-and-stable-capacities" class="nav-link" data-scroll-target="#separate-plastic-and-stable-capacities">26.3 Separate plastic and stable capacities</a></li>
+  <li><a href="#treat-skill-formation-as-program-synthesis" id="toc-treat-skill-formation-as-program-synthesis" class="nav-link" data-scroll-target="#treat-skill-formation-as-program-synthesis">26.4 Treat skill formation as program synthesis</a></li>
+  <li><a href="#learn-when-to-compile" id="toc-learn-when-to-compile" class="nav-link" data-scroll-target="#learn-when-to-compile">26.5 Learn when to compile</a></li>
+  <li><a href="#optimize-the-harness-as-a-policy" id="toc-optimize-the-harness-as-a-policy" class="nav-link" data-scroll-target="#optimize-the-harness-as-a-policy">26.6 Optimize the harness as a policy</a></li>
+  <li><a href="#distinguish-prediction-surprise-from-decision-regret" id="toc-distinguish-prediction-surprise-from-decision-regret" class="nav-link" data-scroll-target="#distinguish-prediction-surprise-from-decision-regret">26.7 Distinguish prediction surprise from decision regret</a></li>
+  </ul></li>
+  <li><a href="#a-broader-decision-loop-interpretation" id="toc-a-broader-decision-loop-interpretation" class="nav-link" data-scroll-target="#a-broader-decision-loop-interpretation">27. A broader decision-loop interpretation</a></li>
+  <li><a href="#conclusion" id="toc-conclusion" class="nav-link" data-scroll-target="#conclusion">28. Conclusion</a></li>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">From Test-Time Training to Continual Intelligence</h1>
+<p class="subtitle lead">A research-direction note on memory, reasoning, meta-learning, and the substrate of continual adaptation</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="thesis" class="level2">
+<h2 class="anchored" data-anchor-id="thesis">Thesis</h2>
+<p>Test-time training (TTT) is usually introduced as a technique: update some model parameters during inference using a self-supervised loss. But the recent evolution of TTT suggests a more interesting interpretation.</p>
+<p>The real question is not:</p>
+<blockquote class="blockquote">
+<p><strong>Can a model update its weights at test time?</strong></p>
+</blockquote>
+<p>Of course it can.</p>
+<p>The harder question is:</p>
+<blockquote class="blockquote">
+<p><strong>Can we construct a learning system whose local updates are useful, whose update trajectory remains stable, and whose experiences are routed into the right kind of internal state?</strong></p>
+</blockquote>
+<p>Once phrased this way, TTT stops looking like a niche long-context mechanism. It becomes one instance of a much broader problem: <strong>continual intelligence</strong>.</p>
+<p>A continually learning system does not have one homogeneous memory. It has multiple kinds of state, changing at different timescales:</p>
+<p><span class="math display">\[
+\boxed{
+\text{working state}
+\rightarrow
+\text{episodic memory}
+\rightarrow
+\text{semantic knowledge}
+\rightarrow
+\text{procedural skills}
+\rightarrow
+\text{meta-learning policy}
+}
+\]</span></p>
+<p>The central architectural question is therefore not merely <em>what loss should we optimize?</em> It is also:</p>
+<blockquote class="blockquote">
+<p><strong>What should be the substrate of each level of learning?</strong></p>
+</blockquote>
+<p>Should an experience become an activation, a prompt, an external memory, a skill, a harness rule, an adapter, or a permanent weight update?</p>
+<p>My working hypothesis is that future continually learning agents will use <strong>heterogeneous substrates</strong> and progressively compile useful structure downward:</p>
+<p><span class="math display">\[
+\boxed{
+\text{explicit + plastic}
+\quad\longrightarrow\quad
+\text{implicit + efficient}
+}
+\]</span></p>
+<p>That gives a possible unifying framework for test-time training, long-context memory, skill libraries, agent harnesses, meta-learning, and eventually online RL.</p>
+<p>This note connects three other parts of the site:</p>
+<ul>
+<li><a href="../../notes/advanced/linear_attention.html">Linear Attention</a> for the algebraic view of fast-weight memory</li>
+<li><a href="../../notes/foundations/optimizers.html">Optimization</a> for SGD, Muon, and optimizer dynamics</li>
+<li><a href="../../notes/applied_ml/harness.html">Agent Harness</a> for explicit state, skills, verification, and meta-level control</li>
+</ul>
+<hr>
+</section>
+<section id="ttt-started-as-adaptation-not-memory" class="level2">
+<h2 class="anchored" data-anchor-id="ttt-started-as-adaptation-not-memory">1. TTT started as adaptation, not memory</h2>
+<p>The original formulation of Test-Time Training was motivated by <strong>distribution shift</strong>.</p>
+<p>A model is trained on one distribution but deployed on another:</p>
+<p><span class="math display">\[
+p_{\text{train}}(x) \neq p_{\text{test}}(x).
+\]</span></p>
+<p>At test time, labels are unavailable, so the model constructs a self-supervised task on the incoming example and updates some of its parameters before making the downstream prediction.</p>
+<p>Schematically,</p>
+<p><span class="math display">\[
+\theta'
+=
+\theta-\eta\nabla_\theta L_{\text{self-supervised}}(x),
+\]</span></p>
+<p>followed by</p>
+<p><span class="math display">\[
+\hat y = f_{\theta'}(x).
+\]</span></p>
+<p>The key intuition was that an auxiliary objective such as rotation prediction could provide a gradient that moved the feature extractor toward a representation more suitable for the current test distribution.</p>
+<p>This already contained the seed of the central TTT problem:</p>
+<p><span class="math display">\[
+\boxed{
+\nabla L_{\text{aux}}
+\text{ must somehow correlate with }
+\nabla L_{\text{task}}
+}
+\]</span></p>
+<p>even though the true task loss is unavailable.</p>
+<p>This is an indirect form of control. We do not optimize the thing we actually care about. We invent a locally observable objective and hope that its optimization changes the model in a useful direction.</p>
+<p>That is a very strong assumption.</p>
+<hr>
+</section>
+<section id="ttt-then-changed-meaning-weights-became-recurrent-state" class="level2">
+<h2 class="anchored" data-anchor-id="ttt-then-changed-meaning-weights-became-recurrent-state">2. TTT then changed meaning: weights became recurrent state</h2>
+<p>The newer sequence-modeling line of TTT repurposed the same mechanism for a different goal.</p>
+<p>Instead of asking:</p>
+<blockquote class="blockquote">
+<p>How do I adapt a model to a shifted distribution?</p>
+</blockquote>
+<p>it asks:</p>
+<blockquote class="blockquote">
+<p>Can parameter updates themselves act as a memory state?</p>
+</blockquote>
+<p>Consider a recurrent model:</p>
+<p><span class="math display">\[
+h_t = F(h_{t-1}, x_t).
+\]</span></p>
+<p>A TTT layer replaces the ordinary hidden state with mutable parameters:</p>
+<p><span class="math display">\[
+W_t
+=
+U(W_{t-1},x_t).
+\]</span></p>
+<p>The update operator (U) is typically implemented as an optimization step:</p>
+<p><span class="math display">\[
+W_t
+=
+W_{t-1}
+-
+\eta\nabla_W L_{\text{TTT}}(W_{t-1};x_t).
+\]</span></p>
+<p>Now the weights are not simply “the trained model.” They are also <strong>the evolving state of the sequence processor</strong>.</p>
+<p>This creates a striking reinterpretation:</p>
+<p><span class="math display">\[
+\boxed{
+\text{optimizer dynamics}
+\equiv
+\text{recurrent dynamics}
+}
+\]</span></p>
+<p>and</p>
+<p><span class="math display">\[
+\boxed{
+\text{fast weights}
+\equiv
+\text{memory state}.
+}
+\]</span></p>
+<p>This is the conceptual bridge from classical TTT to long-context TTT.</p>
+<hr>
+</section>
+<section id="why-did-ttt-use-kv-binding-auxiliary-losses" class="level2">
+<h2 class="anchored" data-anchor-id="why-did-ttt-use-kv-binding-auxiliary-losses">3. Why did TTT use KV-binding auxiliary losses?</h2>
+<p>A common long-context TTT construction uses a key-value binding objective:</p>
+<p><span class="math display">\[
+L_{\text{KVB}}
+=
+\|f_W(k)-v\|^2.
+\]</span></p>
+<p>At first glance this is confusing.</p>
+<p>Standard attention computes</p>
+<p><span class="math display">\[
+o(q)
+=
+\sum_i
+\operatorname{softmax}(q^\top k_i)v_i.
+\]</span></p>
+<p>There is no requirement that</p>
+<p><span class="math display">\[
+k_i \approx v_i,
+\]</span></p>
+<p>and no function (f) in ordinary attention that is supposed to map a key directly onto its value.</p>
+<p>The intended abstraction is different.</p>
+<p>An attention KV cache can be viewed as an explicit associative table:</p>
+<p><span class="math display">\[
+\mathcal M
+=
+\{k_i \mapsto v_i\}.
+\]</span></p>
+<p>TTT asks whether this explicit table can instead be compressed into a parameterized function:</p>
+<p><span class="math display">\[
+f_W(k_i)\approx v_i.
+\]</span></p>
+<p>Then retrieval is performed by evaluating</p>
+<p><span class="math display">\[
+f_W(q).
+\]</span></p>
+<p>Under this interpretation, the auxiliary loss is a <strong>memory-writing rule</strong>. It is not derived from the original attention equation. It is chosen because SGD on this objective is hoped to encode useful associations into (W).</p>
+<p>That difference matters.</p>
+<p>The KVB objective does not follow inevitably from the task. It is an architectural hypothesis about how gradients should implement memory.</p>
+<hr>
+</section>
+<section id="the-kvb-story-may-be-more-accidental-than-it-first-appeared" class="level2">
+<h2 class="anchored" data-anchor-id="the-kvb-story-may-be-more-accidental-than-it-first-appeared">4. The KVB story may be more accidental than it first appeared</h2>
+<p>Recent analysis complicates the literal “SGD memorizes key-value pairs” explanation.</p>
+<p>For a simplified linear fast-weight model</p>
+<p><span class="math display">\[
+f_W(x)=Wx,
+\]</span></p>
+<p>consider a loss whose gradient gives an outer-product update:</p>
+<p><span class="math display">\[
+L = -f_W(k)^\top v.
+\]</span></p>
+<p>Then</p>
+<p><span class="math display">\[
+\nabla_W L = -vk^\top,
+\]</span></p>
+<p>and SGD produces</p>
+<p><span class="math display">\[
+W_t
+=
+W_{t-1}
++
+\eta v_t k_t^\top.
+\]</span></p>
+<p>Starting from zero,</p>
+<p><span class="math display">\[
+W_t
+=
+\eta
+\sum_{i\le t}
+v_i k_i^\top.
+\]</span></p>
+<p>Querying the state gives</p>
+<p><span class="math display">\[
+W_tq
+=
+\eta
+\sum_i
+v_i(k_i^\top q).
+\]</span></p>
+<p>This is immediately recognizable as an attention-like computation:</p>
+<p><span class="math display">\[
+\boxed{
+W_tq
+=
+\sum_i
+\underbrace{(q^\top k_i)}_{\text{routing weight}}
+v_i
+}
+\]</span></p>
+<p>without explicit KV storage.</p>
+<p>The important object is therefore not necessarily the semantic statement</p>
+<p><span class="math display">\[
+f(k)\approx v.
+\]</span></p>
+<p>It may instead be the <strong>algebra induced by the gradient</strong>:</p>
+<p><span class="math display">\[
+\nabla_W L
+\rightarrow
+vk^\top.
+\]</span></p>
+<p>That makes the auxiliary objective look less like literal memory regression and more like a way to engineer a desired state-transition operator.</p>
+<p>The 2026 paper <a href="https://arxiv.org/abs/2602.21204">Test-Time Training with KV Binding Is Secretly Linear Attention</a> pushes this view further, arguing that a broad class of KV-binding TTT architectures can be rewritten as learned linear-attention operators. See <a href="../../notes/advanced/linear_attention.html">Linear Attention</a> for the underlying recurrent-state derivation.</p>
+<p>This is an important warning.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>A useful way to reinterpret auxiliary-loss TTT
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>TTT is not necessarily “finding a loss that is intrinsically meaningful.”</p>
+<p>It may instead be:</p>
+<p><span class="math display">\[
+\boxed{
+\text{choose a loss whose gradient implements a useful low-level computation}
+}
+\]</span></p>
+<p>That means success depends on our understanding of the geometry and dynamics induced by the optimizer.</p>
+</div>
+</div>
+<p>And our understanding of those dynamics is still limited.</p>
+<hr>
+</section>
+<section id="why-not-use-the-actual-next-token-prediction-loss" class="level2">
+<h2 class="anchored" data-anchor-id="why-not-use-the-actual-next-token-prediction-loss">5. Why not use the actual next-token-prediction loss?</h2>
+<p>For an autoregressive language model, we have an unusually convenient test-time learning signal.</p>
+<p>After reading a sequence,</p>
+<p><span class="math display">\[
+x_1,x_2,\ldots,x_T,
+\]</span></p>
+<p>every observed token is also a label for the previous prefix:</p>
+<p><span class="math display">\[
+L_t(\theta)
+=
+-\log p_\theta(x_t\mid x_{&lt;t}).
+\]</span></p>
+<p>So why invent</p>
+<p><span class="math display">\[
+L_{\text{KVB}}
+\]</span></p>
+<p>at all?</p>
+<p>Why not simply use</p>
+<p><span class="math display">\[
+L_{\text{NTP}}?
+\]</span></p>
+<p>There are two answers.</p>
+<section id="systems-cost" class="level3">
+<h3 class="anchored" data-anchor-id="systems-cost">5.1 Systems cost</h3>
+<p>A local auxiliary objective can update a small fast-weight module without backpropagating through the whole language model.</p>
+<p>Next-token prediction originates at the logits.</p>
+<p>If we update a parameter (W_l) in a lower layer,</p>
+<p><span class="math display">\[
+\nabla_{W_l}L_{\text{NTP}}
+\]</span></p>
+<p>requires gradients to flow through the layers above it.</p>
+<p>Inference now inherits some of the costs of training:</p>
+<ul>
+<li>backward kernels,</li>
+<li>activation storage or recomputation,</li>
+<li>mutable request-specific parameters,</li>
+<li>optimizer computation,</li>
+<li>synchronization and batching challenges.</li>
+</ul>
+<p>This is a real cost.</p>
+<p>But it is probably not the deepest obstacle.</p>
+</section>
+<section id="the-trajectory-problem" class="level3">
+<h3 class="anchored" data-anchor-id="the-trajectory-problem">5.2 The trajectory problem</h3>
+<p>Suppose we perform online SGD:</p>
+<p><span class="math display">\[
+\theta_{t+1}
+=
+\theta_t-\eta g_t,
+\qquad
+g_t=\nabla_\theta L_t(\theta_t).
+\]</span></p>
+<p>A local update may improve the loss on the current sample:</p>
+<p><span class="math display">\[
+L_t(\theta_{t+1})
+&lt;
+L_t(\theta_t),
+\]</span></p>
+<p>but this does not imply that the resulting model is better on future data.</p>
+<p>The update may:</p>
+<ul>
+<li>overfit a transient pattern,</li>
+<li>damage pretrained capabilities,</li>
+<li>distort future gradients,</li>
+<li>reinforce an incorrect local interpretation,</li>
+<li>accumulate interference over a long stream.</li>
+</ul>
+<p>Worse, the process is recursive:</p>
+<p><span class="math display">\[
+\theta_0
+\rightarrow
+\theta_1
+\rightarrow
+\theta_2
+\rightarrow
+\cdots
+\]</span></p>
+<p>with</p>
+<p><span class="math display">\[
+g_{t+1}
+=
+\nabla L_{t+1}(\theta_t).
+\]</span></p>
+<p>A bad update does not merely create an additive error. It changes the model that computes the next gradient.</p>
+<p>So continual test-time learning is a <strong>dynamical-system problem</strong>:</p>
+<p><span class="math display">\[
+\boxed{
+\theta_{t+1}
+=
+F(\theta_t,x_t)
+}
+\]</span></p>
+<p>and local correctness does not guarantee global trajectory stability.</p>
+<hr>
+</section>
+</section>
+<section id="ttt-done-right-fixes-a-different-problem" class="level2">
+<h2 class="anchored" data-anchor-id="ttt-done-right-fixes-a-different-problem">6. “TTT Done Right” fixes a different problem</h2>
+<p>Earlier TTT sequence models often updated fast weights every few tokens:</p>
+<p><span class="math display">\[
+B\approx16\text{--}64.
+\]</span></p>
+<p>This gives fine-grained causal updates but poor GPU utilization.</p>
+<p>For a 128K-token sequence, a 16-token update means</p>
+<p><span class="math display">\[
+\frac{128K}{16}
+=
+8192
+\]</span></p>
+<p>small optimizer steps.</p>
+<p>Those operations are poorly shaped for modern accelerators.</p>
+<p><a href="https://arxiv.org/abs/2505.23884">Test-Time Training Done Right</a> introduces Large Chunk TTT (LaCT), increasing update chunks from tens of tokens to thousands or even much larger blocks depending on the modality.</p>
+<p>Instead of</p>
+<p><span class="math display">\[
+x_{1:16}
+\rightarrow W_1,
+\quad
+x_{17:32}
+\rightarrow W_2,
+\]</span></p>
+<p>we may have</p>
+<p><span class="math display">\[
+x_{1:2048}
+\rightarrow W_1,
+\quad
+x_{2049:4096}
+\rightarrow W_2.
+\]</span></p>
+<p>The trick is to combine the slowly updated TTT state with local/window attention:</p>
+<p><span class="math display">\[
+\boxed{
+\text{local attention}
++
+\text{long-timescale fast weights}
+}
+\]</span></p>
+<p>so attention handles interactions within a chunk, while the fast-weight state carries information across chunks.</p>
+<p>LaCT therefore primarily attacks:</p>
+<p><span class="math display">\[
+\boxed{
+\text{temporal resolution}
+\leftrightarrow
+\text{hardware efficiency}
+}
+\]</span></p>
+<p>rather than replacing the fundamental auxiliary-loss paradigm.</p>
+<p>This distinction is useful because it separates two research questions:</p>
+<ol type="1">
+<li><strong>What update dynamics should the model use?</strong></li>
+<li><strong>How can those dynamics execute efficiently?</strong></li>
+</ol>
+<p>LaCT makes major progress on the second.</p>
+<hr>
+</section>
+<section id="in-place-ttt-move-the-adaptive-state-into-the-existing-model" class="level2">
+<h2 class="anchored" data-anchor-id="in-place-ttt-move-the-adaptive-state-into-the-existing-model">7. In-Place TTT: move the adaptive state into the existing model</h2>
+<p>Another step is to question why TTT needs a specialized fast-weight memory module at all.</p>
+<p><a href="https://arxiv.org/abs/2604.06169">In-Place Test-Time Training</a> repurposes existing MLP parameters—in particular the final projection matrix of MLP blocks—as fast weights.</p>
+<p>That changes the architecture from something like</p>
+<p><span class="math display">\[
+\text{Transformer}
++
+\text{special TTT memory layer}
+\]</span></p>
+<p>toward</p>
+<p><span class="math display">\[
+\text{ordinary Transformer whose own parameters become adaptive}.
+\]</span></p>
+<p>It also replaces the generic reconstruction target with a language-model-aligned local objective designed around next-token prediction.</p>
+<p>The significance is not that it simply performs naive full-model NTP SGD. It does not.</p>
+<p>The important conceptual steps are:</p>
+<ul>
+<li>reuse the existing model as the memory substrate,</li>
+<li>update only selected parameters,</li>
+<li>align the test-time objective more directly with language modeling,</li>
+<li>preserve chunk-wise efficiency.</li>
+</ul>
+<p>In-Place TTT therefore weakens two assumptions of classical TTT:</p>
+<ol type="1">
+<li>that a special memory architecture is necessary;</li>
+<li>that generic reconstruction is the right update objective.</li>
+</ol>
+<p>But it still carefully engineers the adaptation rule.</p>
+<hr>
+</section>
+<section id="ttt-e2e-train-the-model-for-its-own-future-learning-trajectory" class="level2">
+<h2 class="anchored" data-anchor-id="ttt-e2e-train-the-model-for-its-own-future-learning-trajectory">8. TTT-E2E: train the model for its own future learning trajectory</h2>
+<p><a href="https://arxiv.org/abs/2512.23675">End-to-End TTT</a> goes one level deeper.</p>
+<p>Instead of pretraining a static model and later applying some test-time updates, it asks:</p>
+<blockquote class="blockquote">
+<p>What initialization should we learn if we already know the model will continue learning during inference?</p>
+</blockquote>
+<p>Ordinary pretraining solves something like</p>
+<p><span class="math display">\[
+\theta^*
+=
+\arg\min_\theta
+\mathbb E[L(\theta)].
+\]</span></p>
+<p>That objective says:</p>
+<blockquote class="blockquote">
+<p><strong>Find a parameter vector that is directly good at prediction.</strong></p>
+</blockquote>
+<p>But if inference will execute an update operator (U),</p>
+<p><span class="math display">\[
+\theta_1=U(\theta_0,x_1),
+\]</span></p>
+<p><span class="math display">\[
+\theta_2=U(\theta_1,x_2),
+\]</span></p>
+<p>and so on, then the actual deployed object is not (_0).</p>
+<p>It is the entire trajectory</p>
+<p><span class="math display">\[
+\theta_0,\theta_1,\ldots,\theta_T.
+\]</span></p>
+<p>So the outer objective should optimize through those updates:</p>
+<p><span class="math display">\[
+\theta_0^*
+=
+\arg\min_{\theta_0}
+\mathbb E
+\left[
+L\left(
+U_T(
+\cdots
+U_2(
+U_1(\theta_0)
+)
+)
+\right)
+\right].
+\]</span></p>
+<p>In practice, online language modeling needs good predictions throughout the sequence, so the more revealing objective is conceptually</p>
+<p><span class="math display">\[
+L_{\text{meta}}
+=
+\sum_t
+L_t(\theta_{t-1}).
+\]</span></p>
+<p>Now every intermediate model matters.</p>
+<p>This gives a much stronger interpretation of meta-learning:</p>
+<p><span class="math display">\[
+\boxed{
+\text{do not merely learn a good initialization;}
+\quad
+\text{learn a region of parameter space in which the update trajectory stays useful}
+}
+\]</span></p>
+<p>or, more suggestively,</p>
+<p><span class="math display">\[
+\boxed{
+\text{learn a stable manifold of online adaptation}.
+}
+\]</span></p>
+<hr>
+</section>
+<section id="ttt-e2e-is-really-learning-gradient-geometry" class="level2">
+<h2 class="anchored" data-anchor-id="ttt-e2e-is-really-learning-gradient-geometry">9. TTT-E2E is really learning gradient geometry</h2>
+<p>This reframes the role of training.</p>
+<p>Suppose the model has some conceptual decomposition</p>
+<p><span class="math display">\[
+\theta
+=
+\theta_{\text{stable}}
++
+\theta_{\text{plastic}}.
+\]</span></p>
+<p>We want gradients from the current context to mostly change the plastic state:</p>
+<p><span class="math display">\[
+g_t
+=
+g_t^{\text{context}}
++
+\epsilon_t^{\text{knowledge}},
+\]</span></p>
+<p>with</p>
+<p><span class="math display">\[
+\|\epsilon_t^{\text{knowledge}}\|
+\ll
+\|g_t^{\text{context}}\|.
+\]</span></p>
+<p>Meta-training can shape the representation such that ordinary NTP gradients naturally act like memory-writing operations while avoiding destructive directions.</p>
+<p>So TTT-E2E is not only learning parameters.</p>
+<p>It is learning:</p>
+<p><span class="math display">\[
+\boxed{
+\text{what SGD means inside this representation}.
+}
+\]</span></p>
+<p>That is a much more interesting objective.</p>
+<p>Ordinary pretraining learns a function.</p>
+<p>Meta-trained TTT additionally learns a <strong>local learning geometry</strong> around that function.</p>
+<p>This is closely related to the idea of optimizer programming:</p>
+<p><span class="math display">\[
+\boxed{
+\text{representation learning}
++
+\text{optimizer dynamics}
+=
+\text{learned recurrent transition}.
+}
+\]</span></p>
+<hr>
+</section>
+<section id="but-long-context-memory-is-only-one-layer-of-continual-learning" class="level2">
+<h2 class="anchored" data-anchor-id="but-long-context-memory-is-only-one-layer-of-continual-learning">10. But long-context memory is only one layer of continual learning</h2>
+<p>At this point it becomes natural to compare TTT with human continual learning.</p>
+<p>A two-way split between</p>
+<p><span class="math display">\[
+\text{pretrained knowledge}
+\]</span></p>
+<p>and</p>
+<p><span class="math display">\[
+\text{test-time context}
+\]</span></p>
+<p>is useful, but incomplete.</p>
+<p>A more interesting hierarchy is:</p>
+<p><span class="math display">\[
+\boxed{
+\begin{aligned}
+M &amp;: \text{episodic / contextual state} \\
+K &amp;: \text{semantic knowledge} \\
+P &amp;: \text{procedural / reasoning skills} \\
+A &amp;: \text{meta-policy for reasoning and learning}
+\end{aligned}
+}
+\]</span></p>
+<p>These are not merely different amounts of memory.</p>
+<p>They encode fundamentally different things.</p>
+<hr>
+</section>
+<section id="level-i-episodic-state-what-just-happened" class="level2">
+<h2 class="anchored" data-anchor-id="level-i-episodic-state-what-just-happened">11. Level I: episodic state — what just happened?</h2>
+<p>Examples:</p>
+<ul>
+<li>a definition introduced 30K tokens ago,</li>
+<li>a repository-specific convention,</li>
+<li>an earlier failed attempt,</li>
+<li>a user’s temporary constraint,</li>
+<li>a fact relevant only to the current task.</li>
+</ul>
+<p>This state needs:</p>
+<p><span class="math display">\[
+\text{high plasticity}
+\qquad
+\text{low commitment}.
+\]</span></p>
+<p>The best substrates are likely:</p>
+<ul>
+<li>activations,</li>
+<li>attention/KV state,</li>
+<li>recurrent state,</li>
+<li>external scratch memory,</li>
+<li>request-specific fast weights.</li>
+</ul>
+<p>TTT is especially interesting here because it provides a compressed alternative to explicitly retaining all previous activations.</p>
+<p>The ideal behavior is:</p>
+<p><span class="math display">\[
+\text{experience}
+\rightarrow
+M_{\text{episode}},
+\]</span></p>
+<p>not immediately</p>
+<p><span class="math display">\[
+\text{experience}
+\rightarrow
+\Delta\theta_{\text{global}}.
+\]</span></p>
+<p>Most experiences should be cheap to forget.</p>
+<hr>
+</section>
+<section id="level-ii-semantic-knowledge-what-has-become-stably-true" class="level2">
+<h2 class="anchored" data-anchor-id="level-ii-semantic-knowledge-what-has-become-stably-true">12. Level II: semantic knowledge — what has become stably true?</h2>
+<p>Suppose the system repeatedly encounters evidence supporting a fact or abstraction.</p>
+<p>At some point it becomes inefficient to retrieve the original episodes every time.</p>
+<p>The information should be consolidated into a slower representation:</p>
+<p><span class="math display">\[
+M_{\text{episode}}
+\rightarrow
+K_{\text{semantic}}.
+\]</span></p>
+<p>Dense model weights are good at this because they provide:</p>
+<ul>
+<li>compression,</li>
+<li>abstraction,</li>
+<li>broad generalization,</li>
+<li>constant-cost implicit retrieval.</li>
+</ul>
+<p>But weights are poor at:</p>
+<ul>
+<li>provenance,</li>
+<li>very recent information,</li>
+<li>precise rare facts,</li>
+<li>reversible correction.</li>
+</ul>
+<p>So semantic knowledge probably wants a hybrid substrate:</p>
+<p><span class="math display">\[
+\boxed{
+K
+=
+\text{slow weights}
++
+\text{retrieval store}.
+}
+\]</span></p>
+<p>The retrieval store handles the fresh, rare, precise, and attributable long tail.</p>
+<p>Weights absorb stable patterns that repeatedly prove useful.</p>
+<p>This resembles consolidation:</p>
+<p><span class="math display">\[
+\text{episodes}
+\rightarrow
+\text{selection}
+\rightarrow
+\text{compression}
+\rightarrow
+\text{slow weights}.
+\]</span></p>
+<hr>
+</section>
+<section id="level-iii-procedural-knowledge-how-should-i-solve-this-kind-of-problem" class="level2">
+<h2 class="anchored" data-anchor-id="level-iii-procedural-knowledge-how-should-i-solve-this-kind-of-problem">13. Level III: procedural knowledge — how should I solve this kind of problem?</h2>
+<p>This is where a simple “memory” framing breaks down.</p>
+<p>Suppose an agent repeatedly solves a new family of problems.</p>
+<p>Initially it may reason laboriously:</p>
+<p><span class="math display">\[
+\text{try A}
+\rightarrow
+\text{fail}
+\rightarrow
+\text{try B}
+\rightarrow
+\text{notice invariant}
+\rightarrow
+\text{solve}.
+\]</span></p>
+<p>Eventually it should learn something like:</p>
+<blockquote class="blockquote">
+<p>When this structure appears, search for invariant (X), transform with (Y), then recurse.</p>
+</blockquote>
+<p>This is not a fact.</p>
+<p>It is a reusable <strong>procedure</strong>.</p>
+<p>Let the reasoning policy be</p>
+<p><span class="math display">\[
+\pi_\phi(a_t\mid s_t).
+\]</span></p>
+<p>Procedural learning changes</p>
+<p><span class="math display">\[
+\phi,
+\]</span></p>
+<p>not simply the world model.</p>
+<p>This gives an important distinction:</p>
+<p><span class="math display">\[
+\boxed{\text{knowing that}}
+\neq
+\boxed{\text{knowing how}}.
+\]</span></p>
+<p>Current LLMs contain many reasoning priors in their weights, learned through pretraining and post-training:</p>
+<p><span class="math display">\[
+\text{decompose}
+\rightarrow
+\text{solve}
+\rightarrow
+\text{verify}
+\rightarrow
+\text{backtrack}.
+\]</span></p>
+<p>At inference time those priors generate reasoning traces.</p>
+<p>But the traces usually do not permanently improve the procedure that generated them.</p>
+<p>A model can rediscover the same strategy many times without proceduralizing it.</p>
+<hr>
+</section>
+<section id="why-ntp-is-much-weaker-for-procedural-learning" class="level2">
+<h2 class="anchored" data-anchor-id="why-ntp-is-much-weaker-for-procedural-learning">14. Why NTP is much weaker for procedural learning</h2>
+<p>For contextual memory, NTP is beautifully aligned.</p>
+<p>If the context says</p>
+<blockquote class="blockquote">
+<p>Alice’s secret number is 73,</p>
+</blockquote>
+<p>then predicting future tokens can reward storing that information.</p>
+<p>But imagine a model solves a proof using a terrible 50-step reasoning process and still reaches the correct answer.</p>
+<p>Training on its trace using NTP may teach:</p>
+<p><span class="math display">\[
+\text{produce the same bad reasoning more confidently}.
+\]</span></p>
+<p>If the reasoning is wrong, naive self-training can reinforce the error.</p>
+<p>So procedural learning needs a signal closer to</p>
+<p><span class="math display">\[
+\text{reason}
+\rightarrow
+\text{act}
+\rightarrow
+\text{observe}
+\rightarrow
+R
+\rightarrow
+\Delta\pi.
+\]</span></p>
+<p>The relevant feedback may include:</p>
+<ul>
+<li>verifier results,</li>
+<li>execution outcomes,</li>
+<li>environment reward,</li>
+<li>counterexamples,</li>
+<li>efficiency,</li>
+<li>downstream task success.</li>
+</ul>
+<p>This is closer to RL and decision learning than to pure prediction.</p>
+<p>It also makes the trajectory-stability problem harder.</p>
+<p>A corrupted episodic memory can damage one task.</p>
+<p>A corrupted <strong>reasoning policy</strong> can systematically damage every later task.</p>
+<hr>
+</section>
+<section id="level-iv-meta-learning-how-should-i-decide-how-to-think" class="level2">
+<h2 class="anchored" data-anchor-id="level-iv-meta-learning-how-should-i-decide-how-to-think">15. Level IV: meta-learning — how should I decide how to think?</h2>
+<p>There is an even higher layer.</p>
+<p>A reasoning strategy might say:</p>
+<blockquote class="blockquote">
+<p>Solve this family of problems by backward induction.</p>
+</blockquote>
+<p>A meta-strategy says:</p>
+<blockquote class="blockquote">
+<p>When direct search branches exponentially and the target state is constrained, consider switching to backward reasoning.</p>
+</blockquote>
+<p>And above that:</p>
+<blockquote class="blockquote">
+<p>If several attempts fail in structurally similar ways, stop sampling variants and infer the shared assumption behind the failures.</p>
+</blockquote>
+<p>These are policies over <strong>computation itself</strong>.</p>
+<p>Let</p>
+<p><span class="math display">\[
+A(s)
+\]</span></p>
+<p>select among actions such as</p>
+<p><span class="math display">\[
+\{
+\text{answer},
+\text{retrieve},
+\text{search},
+\text{simulate},
+\text{invoke skill},
+\text{verify},
+\text{backtrack},
+\text{store},
+\text{learn}
+\}.
+\]</span></p>
+<p>This is metacognition in an engineering sense.</p>
+<p>It decides:</p>
+<ul>
+<li>how much computation to spend,</li>
+<li>what reasoning method to use,</li>
+<li>when to use tools,</li>
+<li>when to seek evidence,</li>
+<li>when to stop,</li>
+<li>what to remember,</li>
+<li>what deserves learning.</li>
+</ul>
+<p>This is not naturally represented as one static prompt.</p>
+<p>It is a <strong>control loop</strong>.</p>
+<hr>
+</section>
+<section id="the-substrate-should-be-heterogeneous" class="level2">
+<h2 class="anchored" data-anchor-id="the-substrate-should-be-heterogeneous">16. The substrate should be heterogeneous</h2>
+<p>This leads to the central architectural claim of this note.</p>
+<p>Different levels of continual learning require different properties.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 23%">
+<col style="width: 23%">
+<col style="width: 30%">
+<col style="width: 23%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Level</th>
+<th>Contents</th>
+<th style="text-align: right;">Timescale</th>
+<th>Preferred substrate</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Working state</td>
+<td>intermediate computation</td>
+<td style="text-align: right;">tokens/seconds</td>
+<td>activations</td>
+</tr>
+<tr class="even">
+<td>Episodic memory</td>
+<td>current experience/context</td>
+<td style="text-align: right;">session/hours</td>
+<td>context, external memory, fast weights</td>
+</tr>
+<tr class="odd">
+<td>Semantic knowledge</td>
+<td>stable facts and abstractions</td>
+<td style="text-align: right;">long</td>
+<td>slow weights + retrieval</td>
+</tr>
+<tr class="even">
+<td>Procedural skills</td>
+<td>reusable reasoning/tool procedures</td>
+<td style="text-align: right;">many tasks</td>
+<td>skill objects, programs, adapters</td>
+</tr>
+<tr class="odd">
+<td>Meta-policy</td>
+<td>how to reason/learn</td>
+<td style="text-align: right;">very long / continual</td>
+<td>learned controller inside explicit harness</td>
+</tr>
+</tbody>
+</table>
+<p>A single homogeneous parameter tensor is poorly matched to this structure.</p>
+<hr>
+</section>
+<section id="prompts-are-usefulbut-probably-as-an-intermediate-representation" class="level2">
+<h2 class="anchored" data-anchor-id="prompts-are-usefulbut-probably-as-an-intermediate-representation">17. Prompts are useful—but probably as an intermediate representation</h2>
+<p>Natural language prompts are currently an excellent way to represent a newly discovered procedure.</p>
+<p>For example:</p>
+<blockquote class="blockquote">
+<p>When debugging a latency regression:</p>
+<ol type="1">
+<li>separate queueing, compute, and network latency;</li>
+<li>identify which percentile changed;</li>
+<li>correlate with deploys;</li>
+<li>run the cheapest discriminative test first.</li>
+</ol>
+</blockquote>
+<p>This is already a reusable skill.</p>
+<p>But prompt text has weaknesses:</p>
+<ul>
+<li>token overhead,</li>
+<li>brittleness,</li>
+<li>weak typing,</li>
+<li>no execution guarantees,</li>
+<li>repeated parsing on every invocation.</li>
+</ul>
+<p>So I would treat prompts as something like <strong>skill bytecode</strong>.</p>
+<p>A skill could begin as natural language:</p>
+<p><span class="math display">\[
+s_{\text{text}}.
+\]</span></p>
+<p>Then become a structured object:</p>
+<p><span class="math display">\[
+s
+=
+(
+\text{trigger},
+\text{procedure},
+\text{tools},
+\text{verifier},
+\text{statistics}
+).
+\]</span></p>
+<p>Eventually it could be compiled into:</p>
+<ul>
+<li>a policy adapter,</li>
+<li>a tool DAG,</li>
+<li>a controller,</li>
+<li>a small program,</li>
+<li>or even dense weights.</li>
+</ul>
+<p>Thus:</p>
+<p><span class="math display">\[
+\boxed{
+\text{prompt is a convenient early substrate, not necessarily the final one}.
+}
+\]</span></p>
+<hr>
+</section>
+<section id="reasoning-skills-should-often-be-explicit-before-they-become-weights" class="level2">
+<h2 class="anchored" data-anchor-id="reasoning-skills-should-often-be-explicit-before-they-become-weights">18. Reasoning skills should often be explicit before they become weights</h2>
+<p>Consider a reusable debugging strategy.</p>
+<p>Instead of immediately modifying billions of model parameters, represent it explicitly:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode yaml code-with-copy"><code class="sourceCode yaml"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">skill</span><span class="kw">:</span><span class="at"> debug_latency_regression</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">trigger</span><span class="kw">:</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> latency regression</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> distributed service</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="fu">procedure</span><span class="kw">:</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> establish which percentile changed</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> decompose queue / compute / network</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> compare traces before and after</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> identify correlated deploys</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> choose the cheapest discriminative test</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="fu">verifier</span><span class="kw">:</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> proposed cause explains observed metric changes</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> intervention changes the predicted bottleneck</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>This representation has several advantages over an implicit weight change:</p>
+<ul>
+<li>inspectable,</li>
+<li>editable,</li>
+<li>compositional,</li>
+<li>attributable,</li>
+<li>easy to test,</li>
+<li>easy to revert.</li>
+</ul>
+<p>If repeated evidence shows that the skill is robust, it can later be distilled.</p>
+<p>That suggests a general compilation hierarchy:</p>
+<p><span class="math display">\[
+\boxed{
+\text{experience}
+\rightarrow
+\text{verbalized skill}
+\rightarrow
+\text{structured skill}
+\rightarrow
+\text{learned controller}
+\rightarrow
+\text{weight consolidation}
+}
+\]</span></p>
+<p>Each downward transition trades flexibility for efficiency.</p>
+<hr>
+</section>
+<section id="meta-reasoning-belongs-primarily-in-the-harness" class="level2">
+<h2 class="anchored" data-anchor-id="meta-reasoning-belongs-primarily-in-the-harness">19. Meta-reasoning belongs primarily in the harness</h2>
+<p>Questions such as</p>
+<blockquote class="blockquote">
+<p>Should I search?</p>
+</blockquote>
+<blockquote class="blockquote">
+<p>Should I think longer?</p>
+</blockquote>
+<blockquote class="blockquote">
+<p>Should I retrieve a previous skill?</p>
+</blockquote>
+<blockquote class="blockquote">
+<p>Is the current approach failing?</p>
+</blockquote>
+<blockquote class="blockquote">
+<p>Should I run code?</p>
+</blockquote>
+<blockquote class="blockquote">
+<p>Should I ask another model?</p>
+</blockquote>
+<blockquote class="blockquote">
+<p>Should this experience become permanent knowledge?</p>
+</blockquote>
+<p>are decisions about the <strong>allocation and organization of computation</strong>.</p>
+<p>These are naturally expressed as a loop:</p>
+<p><span class="math display">\[
+s_t
+\rightarrow
+a_t
+\rightarrow
+o_t
+\rightarrow
+r_t
+\rightarrow
+s_{t+1}.
+\]</span></p>
+<p>An explicit <a href="../../notes/applied_ml/harness.html">agent harness</a> can maintain state and enforce control boundaries:</p>
+<pre class="text"><code>observe
+  ↓
+estimate state
+  ↓
+select strategy / skill
+  ↓
+execute model or tool
+  ↓
+evaluate outcome
+  ↓
+detect surprise / failure
+  ↓
+decide whether to
+  ├─ continue
+  ├─ backtrack
+  ├─ retrieve
+  ├─ switch strategy
+  ├─ store episode
+  ├─ update skill
+  └─ consolidate learning</code></pre>
+<p>This does not mean the harness should remain handcrafted forever.</p>
+<p>A better endpoint is:</p>
+<p><span class="math display">\[
+\boxed{
+\text{learned policy inside an explicit execution harness}.
+}
+\]</span></p>
+<p>The boundary remains explicit, while the controller becomes learned.</p>
+<hr>
+</section>
+<section id="a-handcrafted-harness-has-the-same-weakness-as-handcrafted-ttt-losses" class="level2">
+<h2 class="anchored" data-anchor-id="a-handcrafted-harness-has-the-same-weakness-as-handcrafted-ttt-losses">20. A handcrafted harness has the same weakness as handcrafted TTT losses</h2>
+<p>There is an important symmetry here.</p>
+<p>Old auxiliary-loss TTT says:</p>
+<blockquote class="blockquote">
+<p>Human researchers will design a low-level loss whose gradient happens to produce good memory dynamics.</p>
+</blockquote>
+<p>A fully handwritten agent harness says:</p>
+<blockquote class="blockquote">
+<p>Human researchers will design a set of rules whose branching logic happens to produce good reasoning dynamics.</p>
+</blockquote>
+<p>Both assume too much human understanding.</p>
+<p>For example, hard-coded logic such as</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> uncertainty <span class="op">&gt;</span> <span class="fl">0.7</span>:</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    search()</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> failed_attempts <span class="op">&gt;=</span> <span class="dv">2</span>:</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    critique()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>is useful for bootstrapping, but unlikely to be the final form.</p>
+<p>The harness should generate trajectories, outcomes, and feedback that can train a controller:</p>
+<p><span class="math display">\[
+\pi_\phi(a\mid s).
+\]</span></p>
+<p>The controller can gradually learn:</p>
+<ul>
+<li>when search is valuable,</li>
+<li>when extra reasoning is worth the latency,</li>
+<li>which verifier is informative,</li>
+<li>which skill applies,</li>
+<li>when an experience is novel enough to store.</li>
+</ul>
+<p>So the architectural endpoint is neither “everything in weights” nor “everything in code.”</p>
+<p>It is:</p>
+<p><span class="math display">\[
+\boxed{
+\text{learned policies operating over explicit computational primitives}.
+}
+\]</span></p>
+<hr>
+</section>
+<section id="the-missing-component-credit-routing-across-substrates" class="level2">
+<h2 class="anchored" data-anchor-id="the-missing-component-credit-routing-across-substrates">21. The missing component: credit routing across substrates</h2>
+<p>Once multiple substrates exist, the most important decision may not be the optimizer step.</p>
+<p>It is:</p>
+<blockquote class="blockquote">
+<p><strong>What kind of thing did we just learn?</strong></p>
+</blockquote>
+<p>Suppose the agent encounters a surprising outcome.</p>
+<p>The same surprise could imply very different updates.</p>
+<section id="case-a-task-specific-episode" class="level3">
+<h3 class="anchored" data-anchor-id="case-a-task-specific-episode">Case A: task-specific episode</h3>
+<blockquote class="blockquote">
+<p>This repository’s test suite must be run from <code>/src</code>.</p>
+</blockquote>
+<p>Store in episodic/project memory.</p>
+</section>
+<section id="case-b-stable-external-fact" class="level3">
+<h3 class="anchored" data-anchor-id="case-b-stable-external-fact">Case B: stable external fact</h3>
+<blockquote class="blockquote">
+<p>A library API has permanently changed.</p>
+</blockquote>
+<p>Store in retrieval, perhaps later consolidate into weights.</p>
+</section>
+<section id="case-c-reusable-procedure" class="level3">
+<h3 class="anchored" data-anchor-id="case-c-reusable-procedure">Case C: reusable procedure</h3>
+<blockquote class="blockquote">
+<p>This failure class is best diagnosed by checking ownership before timing.</p>
+</blockquote>
+<p>Update or create a skill.</p>
+</section>
+<section id="case-d-reasoning-policy-failure" class="level3">
+<h3 class="anchored" data-anchor-id="case-d-reasoning-policy-failure">Case D: reasoning-policy failure</h3>
+<blockquote class="blockquote">
+<p>The agent repeatedly keeps searching even when enough evidence already exists.</p>
+</blockquote>
+<p>Update the meta-controller.</p>
+</section>
+<section id="case-e-foundational-regularity" class="level3">
+<h3 class="anchored" data-anchor-id="case-e-foundational-regularity">Case E: foundational regularity</h3>
+<blockquote class="blockquote">
+<p>A pattern is broadly useful across domains and repeatedly confirmed.</p>
+</blockquote>
+<p>Eventually distill into slow weights.</p>
+<p>Thus a continual learner requires a routing operator:</p>
+<p><span class="math display">\[
+C(e)
+\rightarrow
+\{
+M,
+K,
+S,
+\pi_{\text{meta}},
+\theta
+\}.
+\]</span></p>
+<p>where (e) is an experience.</p>
+<p>This is <strong>continual credit assignment over internal state types</strong>.</p>
+<p>I suspect this is more fundamental than choosing Adam versus SGD.</p>
+<hr>
+</section>
+</section>
+<section id="a-candidate-architecture-for-continual-intelligence" class="level2">
+<h2 class="anchored" data-anchor-id="a-candidate-architecture-for-continual-intelligence">22. A candidate architecture for continual intelligence</h2>
+<p>A useful abstraction is:</p>
+<p><span class="math display">\[
+\boxed{
+\begin{aligned}
+\theta_{\text{base}}
+&amp;: \text{general semantic and procedural priors} \\
+h_t
+&amp;: \text{current working state} \\
+M
+&amp;: \text{episodic memory} \\
+K
+&amp;: \text{retrievable semantic knowledge} \\
+S
+&amp;: \text{reusable skill library} \\
+\pi_{\text{meta}}
+&amp;: \text{learned strategy-selection policy} \\
+H
+&amp;: \text{explicit execution harness}
+\end{aligned}
+}
+\]</span></p>
+<p>The system operates as</p>
+<p><span class="math display">\[
+(x,h,M,K,S)
+\xrightarrow{\pi_{\text{meta}}}
+a
+\]</span></p>
+<p>where (a) chooses a computation.</p>
+<p>The harness executes it:</p>
+<p><span class="math display">\[
+a
+\xrightarrow{H}
+o.
+\]</span></p>
+<p>The outcome produces prediction error, task reward, verifier feedback, or surprise:</p>
+<p><span class="math display">\[
+o
+\rightarrow
+\delta.
+\]</span></p>
+<p>Then a credit router decides what to update:</p>
+<p><span class="math display">\[
+\delta
+\xrightarrow{C}
+\begin{cases}
+\Delta h \\
+\Delta M \\
+\Delta K \\
+\Delta S \\
+\Delta\pi_{\text{meta}} \\
+\Delta\theta_{\text{base}}.
+\end{cases}
+\]</span></p>
+<p>This is a much richer picture than</p>
+<p><span class="math display">\[
+\theta
+\leftarrow
+\theta-\eta\nabla L.
+\]</span></p>
+<hr>
+</section>
+<section id="the-key-design-principle-progressive-compilation" class="level2">
+<h2 class="anchored" data-anchor-id="the-key-design-principle-progressive-compilation">23. The key design principle: progressive compilation</h2>
+<p>Human skill acquisition gives an intuitive analogy.</p>
+<p>When learning to drive a manual transmission, actions may initially be explicit:</p>
+<blockquote class="blockquote">
+<p>clutch in, change gear, slowly release clutch.</p>
+</blockquote>
+<p>With practice they become automatic.</p>
+<p>Computationally:</p>
+<p><span class="math display">\[
+\text{explicit working-memory program}
+\rightarrow
+\text{procedural representation}
+\rightarrow
+\text{compiled neural policy}.
+\]</span></p>
+<p>The same principle could organize artificial continual learning.</p>
+<section id="stage-1-raw-episode" class="level3">
+<h3 class="anchored" data-anchor-id="stage-1-raw-episode">Stage 1: raw episode</h3>
+<p>A single success is stored as an experience.</p>
+</section>
+<section id="stage-2-verbal-abstraction" class="level3">
+<h3 class="anchored" data-anchor-id="stage-2-verbal-abstraction">Stage 2: verbal abstraction</h3>
+<p>After repeated successes, the system forms a hypothesis:</p>
+<blockquote class="blockquote">
+<p>Backward reasoning tends to work when the goal state is strongly constrained.</p>
+</blockquote>
+</section>
+<section id="stage-3-structured-skill" class="level3">
+<h3 class="anchored" data-anchor-id="stage-3-structured-skill">Stage 3: structured skill</h3>
+<p>The system encodes a reusable procedure:</p>
+<p><span class="math display">\[
+\text{detect constrained target}
+\rightarrow
+\text{attempt backward reasoning}.
+\]</span></p>
+</section>
+<section id="stage-4-learned-controller" class="level3">
+<h3 class="anchored" data-anchor-id="stage-4-learned-controller">Stage 4: learned controller</h3>
+<p>Repeated data trains</p>
+<p><span class="math display">\[
+\pi_\phi(
+\text{backward-reasoning}\mid s
+).
+\]</span></p>
+</section>
+<section id="stage-5-weight-consolidation" class="level3">
+<h3 class="anchored" data-anchor-id="stage-5-weight-consolidation">Stage 5: weight consolidation</h3>
+<p>If the strategy becomes universally useful, it may be absorbed into the base model.</p>
+<p>This suggests a continuum:</p>
+<p><span class="math display">\[
+\boxed{
+\text{harness}
+&gt;
+\text{skills}
+&gt;
+\text{memory}
+&gt;
+\text{weights}
+}
+\]</span></p>
+<p>where moving downward means:</p>
+<p><span class="math display">\[
+\text{less flexible}
+\quad
+\text{but}
+\quad
+\text{cheaper, faster, more automatic}.
+\]</span></p>
+<p>Moving upward means:</p>
+<p><span class="math display">\[
+\text{more explicit}
+\quad
+\text{but}
+\quad
+\text{more expensive and deliberative}.
+\]</span></p>
+<hr>
+</section>
+</section>
+<section id="this-changes-how-we-should-think-about-reasoning" class="level2">
+<h2 class="anchored" data-anchor-id="this-changes-how-we-should-think-about-reasoning">24. This changes how we should think about “reasoning”</h2>
+<p>The current discussion around reasoning models often treats reasoning as extra tokens:</p>
+<p><span class="math display">\[
+x
+\rightarrow
+\tau_{\text{CoT}}
+\rightarrow
+y.
+\]</span></p>
+<p>But this conflates three distinct things:</p>
+<ol type="1">
+<li><strong>reasoning execution</strong> — the current trajectory ();</li>
+<li><strong>reasoning skill</strong> — the reusable policy that generates good trajectories;</li>
+<li><strong>meta-reasoning</strong> — the policy that chooses which reasoning method to invoke.</li>
+</ol>
+<p>A continually learning reasoning system should improve all three at different timescales.</p>
+<p>An individual chain of thought is working state.</p>
+<p>A discovered reusable algorithm is procedural memory.</p>
+<p>The rule for deciding when to invoke that algorithm is meta-policy.</p>
+<p>This distinction suggests that simply increasing inference compute is not sufficient for continual intelligence.</p>
+<p>A system that repeatedly discovers a good strategy but never compiles it has no procedural learning.</p>
+<p>It is merely <strong>re-solving</strong>.</p>
+<hr>
+</section>
+<section id="long-context-ttt-may-be-the-easiest-instance-of-a-much-larger-idea" class="level2">
+<h2 class="anchored" data-anchor-id="long-context-ttt-may-be-the-easiest-instance-of-a-much-larger-idea">25. Long-context TTT may be the easiest instance of a much larger idea</h2>
+<p>TTT-E2E currently frames long-context language modeling as continual learning.</p>
+<p>That is a powerful conceptual shift:</p>
+<section id="attention" class="level3">
+<h3 class="anchored" data-anchor-id="attention">Attention</h3>
+<p><span class="math display">\[
+\text{remember by retaining activations}.
+\]</span></p>
+</section>
+<section id="rnn" class="level3">
+<h3 class="anchored" data-anchor-id="rnn">RNN</h3>
+<p><span class="math display">\[
+\text{remember by updating hidden state}.
+\]</span></p>
+</section>
+<section id="ttt" class="level3">
+<h3 class="anchored" data-anchor-id="ttt">TTT</h3>
+<p><span class="math display">\[
+\text{remember by continuing to learn}.
+\]</span></p>
+<p>But long-context memory may only be the lowest nontrivial level.</p>
+<p>The larger progression is:</p>
+<p><span class="math display">\[
+\boxed{
+\begin{aligned}
+\text{prediction error}
+&amp;\rightarrow
+\text{learn this context} \\
+\text{task outcome}
+&amp;\rightarrow
+\text{learn a procedure} \\
+\text{history of outcomes}
+&amp;\rightarrow
+\text{learn a better learning strategy}.
+\end{aligned}
+}
+\]</span></p>
+<p>The first can plausibly use NTP.</p>
+<p>The second requires richer feedback.</p>
+<p>The third requires meta-level credit assignment.</p>
+<p>This is where TTT reconnects with meta-learning—but in a broader form than the original literature.</p>
+<hr>
+</section>
+</section>
+<section id="a-research-agenda" class="level2">
+<h2 class="anchored" data-anchor-id="a-research-agenda">26. A research agenda</h2>
+<p>The framework above suggests several concrete research questions.</p>
+<section id="learn-the-credit-router" class="level3">
+<h3 class="anchored" data-anchor-id="learn-the-credit-router">26.1 Learn the credit router</h3>
+<p>Given an experience (e), predict:</p>
+<p><span class="math display">\[
+C(e)
+\in
+\{
+\text{discard},
+\text{episode},
+\text{knowledge},
+\text{skill},
+\text{meta-policy},
+\text{weights}
+\}.
+\]</span></p>
+<p>This might be one of the most important learned decisions in a continual agent.</p>
+<p>The objective should include not only immediate utility but the future cost of storing incorrect abstractions.</p>
+<hr>
+</section>
+<section id="train-update-trajectories-not-only-endpoints" class="level3">
+<h3 class="anchored" data-anchor-id="train-update-trajectories-not-only-endpoints">26.2 Train update trajectories, not only endpoints</h3>
+<p>For any mutable substrate,</p>
+<p><span class="math display">\[
+z_{t+1}=U(z_t,e_t),
+\]</span></p>
+<p>optimize the quality of the whole trajectory:</p>
+<p><span class="math display">\[
+J
+=
+\sum_t
+R(z_t,e_{t+1:T})
+\]</span></p>
+<p>rather than merely the final state.</p>
+<p>This is the deeper lesson of TTT-E2E.</p>
+<p>Stable continual learning requires intermediate states to remain useful.</p>
+<hr>
+</section>
+<section id="separate-plastic-and-stable-capacities" class="level3">
+<h3 class="anchored" data-anchor-id="separate-plastic-and-stable-capacities">26.3 Separate plastic and stable capacities</h3>
+<p>Rather than updating a homogeneous model, expose different timescales:</p>
+<p><span class="math display">\[
+\theta
+=
+\theta_{\text{slow}}
++
+\theta_{\text{medium}}
++
+\theta_{\text{fast}}.
+\]</span></p>
+<p>The system should learn which directions belong to each timescale.</p>
+<p>This could involve:</p>
+<ul>
+<li>adapters,</li>
+<li>low-rank fast weights,</li>
+<li>modular experts,</li>
+<li>learned parameter masks,</li>
+<li>optimizer-specific subspaces.</li>
+</ul>
+<hr>
+</section>
+<section id="treat-skill-formation-as-program-synthesis" class="level3">
+<h3 class="anchored" data-anchor-id="treat-skill-formation-as-program-synthesis">26.4 Treat skill formation as program synthesis</h3>
+<p>When multiple successful trajectories share structure, synthesize a compact reusable procedure.</p>
+<p>Input:</p>
+<p><span class="math display">\[
+\tau_1,\tau_2,\ldots,\tau_n.
+\]</span></p>
+<p>Output:</p>
+<p><span class="math display">\[
+s
+=
+\operatorname{CompressProcedure}
+(
+\tau_{1:n}
+).
+\]</span></p>
+<p>Evaluate the skill on held-out tasks before promoting it.</p>
+<p>This creates an analogue of consolidation with explicit validation.</p>
+<hr>
+</section>
+<section id="learn-when-to-compile" class="level3">
+<h3 class="anchored" data-anchor-id="learn-when-to-compile">26.5 Learn when to compile</h3>
+<p>Compilation should depend on evidence.</p>
+<p>A possible hierarchy:</p>
+<p><span class="math display">\[
+\text{episode count}
+\rightarrow
+\text{skill hypothesis}
+\rightarrow
+\text{held-out validation}
+\rightarrow
+\text{controller integration}
+\rightarrow
+\text{weight distillation}.
+\]</span></p>
+<p>Promotion should be reversible.</p>
+<p>Bad abstractions should remain cheap to delete.</p>
+<hr>
+</section>
+<section id="optimize-the-harness-as-a-policy" class="level3">
+<h3 class="anchored" data-anchor-id="optimize-the-harness-as-a-policy">26.6 Optimize the harness as a policy</h3>
+<p>Represent harness decisions explicitly but train their selection.</p>
+<p><span class="math display">\[
+\pi_\phi(a\mid s)
+\]</span></p>
+<p>could choose:</p>
+<ul>
+<li>direct answer,</li>
+<li>extended reasoning,</li>
+<li>search,</li>
+<li>tool invocation,</li>
+<li>simulation,</li>
+<li>retrieval,</li>
+<li>skill execution,</li>
+<li>critique,</li>
+<li>verification,</li>
+<li>learning.</li>
+</ul>
+<p>The execution graph remains interpretable while the choice policy becomes learned.</p>
+<hr>
+</section>
+<section id="distinguish-prediction-surprise-from-decision-regret" class="level3">
+<h3 class="anchored" data-anchor-id="distinguish-prediction-surprise-from-decision-regret">26.7 Distinguish prediction surprise from decision regret</h3>
+<p>NTP gives a useful signal:</p>
+<p><span class="math display">\[
+\delta_{\text{pred}}
+=
+-\log p(x_t\mid x_{&lt;t}).
+\]</span></p>
+<p>But a reasoning agent also observes decision-level feedback:</p>
+<p><span class="math display">\[
+\delta_{\text{decision}}
+=
+R_{\text{expected}}-R_{\text{actual}}.
+\]</span></p>
+<p>These signals should update different substrates.</p>
+<p>Prediction surprise is often evidence about the world.</p>
+<p>Decision regret is often evidence about the policy.</p>
+<p>Conflating them into one generic gradient may be fundamentally inefficient.</p>
+<hr>
+</section>
+</section>
+<section id="a-broader-decision-loop-interpretation" class="level2">
+<h2 class="anchored" data-anchor-id="a-broader-decision-loop-interpretation">27. A broader decision-loop interpretation</h2>
+<p>A static language model is approximately</p>
+<p><span class="math display">\[
+x_t
+\rightarrow
+p(x_{t+1}).
+\]</span></p>
+<p>A recurrent model is</p>
+<p><span class="math display">\[
+(h_t,x_t)
+\rightarrow
+(h_{t+1},p_t).
+\]</span></p>
+<p>A TTT-style model adds explicit learning:</p>
+<p><span class="math display">\[
+(\theta_t,x_t)
+\rightarrow
+\text{prediction}
+\rightarrow
+\text{surprise}
+\rightarrow
+\nabla L_t
+\rightarrow
+\theta_{t+1}.
+\]</span></p>
+<p>A continually intelligent agent needs the more general loop:</p>
+<p><span class="math display">\[
+\boxed{
+\text{observe}
+\rightarrow
+\text{predict}
+\rightarrow
+\text{decide}
+\rightarrow
+\text{act}
+\rightarrow
+\text{observe surprise/outcome}
+\rightarrow
+\text{assign credit}
+\rightarrow
+\text{update the appropriate substrate}.
+}
+\]</span></p>
+<p>The final step is the critical extension.</p>
+<p>Not every surprise should modify the same thing.</p>
+<p>A token prediction error may update context memory.</p>
+<p>A factual contradiction may update semantic memory.</p>
+<p>A failed proof may update a reasoning skill.</p>
+<p>Repeated strategy failure may update the meta-controller.</p>
+<p>A deeply repeated regularity may eventually update slow weights.</p>
+<p>This is a much more structured conception of learning than universal SGD.</p>
+<hr>
+</section>
+<section id="conclusion" class="level2">
+<h2 class="anchored" data-anchor-id="conclusion">28. Conclusion</h2>
+<p>The most interesting lesson from recent TTT is not that models can update their weights during inference.</p>
+<p>It is that the traditional separation</p>
+<p><span class="math display">\[
+\text{training}
+\quad|\quad
+\text{inference}
+\]</span></p>
+<p>may itself be an artifact of our current systems.</p>
+<p>Once inference includes persistent state updates, the model becomes a dynamical learner.</p>
+<p>But making this work requires more than a clever auxiliary loss.</p>
+<p>The central challenge is to design or learn update dynamics such that:</p>
+<ol type="1">
+<li>local updates are useful;</li>
+<li>trajectories remain stable;</li>
+<li>pretrained capabilities are protected;</li>
+<li>repeated experience becomes abstraction;</li>
+<li>abstractions are stored at the right level;</li>
+<li>successful reasoning becomes reusable skill;</li>
+<li>strategy selection itself continues improving.</li>
+</ol>
+<p>This leads to a broader architectural hypothesis:</p>
+<p><span class="math display">\[
+\boxed{
+\text{continual intelligence}
+\neq
+\text{one model continually changing its weights}
+}
+\]</span></p>
+<p>but rather</p>
+<p><span class="math display">\[
+\boxed{
+\text{continual intelligence}
+=
+\text{multiple learning substrates}
++
+\text{multiple timescales}
++
+\text{learned credit routing}
++
+\text{progressive compilation}.
+}
+\]</span></p>
+<p>Weights are excellent for stable compressed priors.</p>
+<p>External memory is excellent for precise episodic state.</p>
+<p>Skills are excellent for reusable procedures.</p>
+<p>Harnesses are excellent for explicit control.</p>
+<p>Meta-learning should determine how these components evolve together.</p>
+<p>The long-term research direction is therefore not merely better test-time training.</p>
+<p>It is learning <strong>what to learn, where to store it, how quickly to update it, and when to compile it into something more automatic</strong>.</p>
+<p>That may be the more useful bridge from today’s long-context TTT to genuinely continual reasoning systems.</p>
+<hr>
+</section>
+<section id="references" class="level2">
+<h2 class="anchored" data-anchor-id="references">References</h2>
+<ol type="1">
+<li><p>Sun, Y. et al.&nbsp;<em>Test-Time Training with Self-Supervision for Generalization under Distribution Shifts</em>. ICML 2020.<br>
+<a href="https://arxiv.org/abs/1909.13231" class="uri">https://arxiv.org/abs/1909.13231</a></p></li>
+<li><p>Zhang, T. et al.&nbsp;<em>Test-Time Training Done Right</em>. 2025.<br>
+<a href="https://arxiv.org/abs/2505.23884" class="uri">https://arxiv.org/abs/2505.23884</a></p></li>
+<li><p>Tandon, A. et al.&nbsp;<em>End-to-End Test-Time Training for Long Context</em>. 2025.<br>
+<a href="https://arxiv.org/abs/2512.23675" class="uri">https://arxiv.org/abs/2512.23675</a></p></li>
+<li><p>Liu, J. et al.&nbsp;<em>Test-Time Training with KV Binding Is Secretly Linear Attention</em>. 2026.<br>
+<a href="https://arxiv.org/abs/2602.21204" class="uri">https://arxiv.org/abs/2602.21204</a></p></li>
+<li><p>Feng, G. et al.&nbsp;<em>In-Place Test-Time Training</em>. 2026.<br>
+<a href="https://arxiv.org/abs/2604.06169" class="uri">https://arxiv.org/abs/2604.06169</a></p></li>
+</ol>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/threeeyelidds\.github\.io\/ml-interview-notes\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

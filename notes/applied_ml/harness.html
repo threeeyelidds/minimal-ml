@@ -1,0 +1,1518 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Agent Harness – Minimal ML</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-f83c246346592b24d02aa84ae3974412.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script src="../../site_libs/quarto-diagram/mermaid.min.js"></script>
+<script src="../../site_libs/quarto-diagram/mermaid-init.js"></script>
+<link href="../../site_libs/quarto-diagram/mermaid.css" rel="stylesheet">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../../styles.css">
+<link rel="stylesheet" href="../../colors.css">
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">Minimal ML</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../notes/index.html"> 
+<span class="menu-text">Notes</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../posts/index.html"> 
+<span class="menu-text">Blog</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#what-is-a-harness" id="toc-what-is-a-harness" class="nav-link active" data-scroll-target="#what-is-a-harness">1. What Is a Harness?</a></li>
+  <li><a href="#what-a-harness-is-not" id="toc-what-a-harness-is-not" class="nav-link" data-scroll-target="#what-a-harness-is-not">2. What a Harness Is Not</a></li>
+  <li><a href="#the-first-principles-problem" id="toc-the-first-principles-problem" class="nav-link" data-scroll-target="#the-first-principles-problem">3. The First-Principles Problem</a>
+  <ul class="collapse">
+  <li><a href="#from-predictor-to-closed-loop-decision-system" id="toc-from-predictor-to-closed-loop-decision-system" class="nav-link" data-scroll-target="#from-predictor-to-closed-loop-decision-system">From predictor to closed-loop decision system</a></li>
+  </ul></li>
+  <li><a href="#the-basic-agent-loop" id="toc-the-basic-agent-loop" class="nav-link" data-scroll-target="#the-basic-agent-loop">4. The Basic Agent Loop</a>
+  <ul class="collapse">
+  <li><a href="#model-decisions-versus-code-decisions" id="toc-model-decisions-versus-code-decisions" class="nav-link" data-scroll-target="#model-decisions-versus-code-decisions">Model decisions versus code decisions</a></li>
+  </ul></li>
+  <li><a href="#sec-harness-components" id="toc-sec-harness-components" class="nav-link" data-scroll-target="#sec-harness-components">5. Harness Components</a>
+  <ul class="collapse">
+  <li><a href="#context-compiler" id="toc-context-compiler" class="nav-link" data-scroll-target="#context-compiler">5.1 Context compiler</a></li>
+  <li><a href="#tool-registry-and-executor" id="toc-tool-registry-and-executor" class="nav-link" data-scroll-target="#tool-registry-and-executor">5.2 Tool registry and executor</a></li>
+  <li><a href="#state-and-memory" id="toc-state-and-memory" class="nav-link" data-scroll-target="#state-and-memory">5.3 State and memory</a></li>
+  <li><a href="#workflow-controller" id="toc-workflow-controller" class="nav-link" data-scroll-target="#workflow-controller">5.4 Workflow controller</a></li>
+  <li><a href="#verifiers" id="toc-verifiers" class="nav-link" data-scroll-target="#verifiers">5.5 Verifiers</a></li>
+  <li><a href="#permission-layer" id="toc-permission-layer" class="nav-link" data-scroll-target="#permission-layer">5.6 Permission layer</a></li>
+  <li><a href="#observability" id="toc-observability" class="nav-link" data-scroll-target="#observability">5.7 Observability</a></li>
+  </ul></li>
+  <li><a href="#context-engineering" id="toc-context-engineering" class="nav-link" data-scroll-target="#context-engineering">6. Context Engineering</a>
+  <ul class="collapse">
+  <li><a href="#practical-hierarchy" id="toc-practical-hierarchy" class="nav-link" data-scroll-target="#practical-hierarchy">Practical hierarchy</a></li>
+  <li><a href="#compaction" id="toc-compaction" class="nav-link" data-scroll-target="#compaction">Compaction</a></li>
+  </ul></li>
+  <li><a href="#workflow-design-patterns" id="toc-workflow-design-patterns" class="nav-link" data-scroll-target="#workflow-design-patterns">7. Workflow Design Patterns</a>
+  <ul class="collapse">
+  <li><a href="#pattern-1-workflow-automation" id="toc-pattern-1-workflow-automation" class="nav-link" data-scroll-target="#pattern-1-workflow-automation">Pattern 1: workflow automation</a></li>
+  <li><a href="#pattern-2-filesystem-as-persistent-memory" id="toc-pattern-2-filesystem-as-persistent-memory" class="nav-link" data-scroll-target="#pattern-2-filesystem-as-persistent-memory">Pattern 2: filesystem as persistent memory</a></li>
+  <li><a href="#pattern-3-subagents-and-background-jobs" id="toc-pattern-3-subagents-and-background-jobs" class="nav-link" data-scroll-target="#pattern-3-subagents-and-background-jobs">Pattern 3: subagents and background jobs</a></li>
+  </ul></li>
+  <li><a href="#a-minimal-harness-skeleton" id="toc-a-minimal-harness-skeleton" class="nav-link" data-scroll-target="#a-minimal-harness-skeleton">8. A Minimal Harness Skeleton</a></li>
+  <li><a href="#failure-handling-and-recovery" id="toc-failure-handling-and-recovery" class="nav-link" data-scroll-target="#failure-handling-and-recovery">9. Failure Handling and Recovery</a>
+  <ul class="collapse">
+  <li><a href="#reflection-should-follow-evidence" id="toc-reflection-should-follow-evidence" class="nav-link" data-scroll-target="#reflection-should-follow-evidence">Reflection should follow evidence</a></li>
+  </ul></li>
+  <li><a href="#designing-the-right-amount-of-harness" id="toc-designing-the-right-amount-of-harness" class="nav-link" data-scroll-target="#designing-the-right-amount-of-harness">10. Designing the Right Amount of Harness</a></li>
+  <li><a href="#harness-optimization" id="toc-harness-optimization" class="nav-link" data-scroll-target="#harness-optimization">11. Harness Optimization</a>
+  <ul class="collapse">
+  <li><a href="#self-improving-harnesses" id="toc-self-improving-harnesses" class="nav-link" data-scroll-target="#self-improving-harnesses">Self-improving harnesses</a></li>
+  </ul></li>
+  <li><a href="#harness-versus-core-intelligence" id="toc-harness-versus-core-intelligence" class="nav-link" data-scroll-target="#harness-versus-core-intelligence">12. Harness Versus Core Intelligence</a></li>
+  <li><a href="#core-insights" id="toc-core-insights" class="nav-link" data-scroll-target="#core-insights">13. Core Insights</a></li>
+  <li><a href="#interview-questions" id="toc-interview-questions" class="nav-link" data-scroll-target="#interview-questions">Interview Questions</a></li>
+  <li><a href="#exercises" id="toc-exercises" class="nav-link" data-scroll-target="#exercises">Exercises</a></li>
+  <li><a href="#further-reading" id="toc-further-reading" class="nav-link" data-scroll-target="#further-reading">Further Reading</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Agent Harness</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="what-is-a-harness" class="level2">
+<h2 class="anchored" data-anchor-id="what-is-a-harness">1. What Is a Harness?</h2>
+<p>A foundation model maps context to tokens or structured actions. By itself, it does not own a durable workspace, execute tools, preserve state across context windows, enforce permissions, recover from failures, or decide when external work is complete.</p>
+<p>An <strong>agent harness</strong> is the software system surrounding the model that supplies those capabilities. It determines how the model:</p>
+<ul>
+<li>receives goals, rules, context, and observations</li>
+<li>selects and invokes tools</li>
+<li>iterates through a workflow</li>
+<li>stores state and artifacts</li>
+<li>delegates or monitors background work</li>
+<li>verifies progress and completion</li>
+<li>interacts with users at permission or clarification boundaries</li>
+</ul>
+<p>Lilian Weng describes the harness as the deployment layer that orchestrates how the model thinks and plans, acts through tools, perceives and manages context, stores artifacts, and evaluates results. Her <a href="https://lilianweng.github.io/posts/2026-07-04-harness/">Harness Engineering for Self-Improvement</a> is the main reference for this note.</p>
+<p>A useful decomposition is</p>
+<p><span class="math display">\[
+\boxed{
+\text{agent system}
+=
+\text{model}
++
+\text{harness}
++
+\text{environment}
+}.
+\]</span></p>
+<p>The model supplies learned reasoning and generation. The harness supplies the runtime contract. The environment supplies files, applications, APIs, people, and consequences.</p>
+</section>
+<section id="what-a-harness-is-not" class="level2">
+<h2 class="anchored" data-anchor-id="what-a-harness-is-not">2. What a Harness Is Not</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Concept</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Foundation model</td>
+<td>predicts text, decisions, or tool calls from context</td>
+</tr>
+<tr class="even">
+<td>Agent harness</td>
+<td>turns model decisions into a controlled, stateful execution process</td>
+</tr>
+<tr class="odd">
+<td>Agent framework</td>
+<td>library used to build harnesses; it is not the configured system itself</td>
+</tr>
+<tr class="even">
+<td>Workflow</td>
+<td>one control policy or graph implemented by the harness</td>
+</tr>
+<tr class="odd">
+<td>Tool</td>
+<td>a bounded capability exposed through the harness</td>
+</tr>
+<tr class="even">
+<td>Evaluation harness</td>
+<td>runs tasks and computes measurements about a system</td>
+</tr>
+</tbody>
+</table>
+<p>An evaluation harness <strong>measures</strong> behavior. An agent harness <strong>produces and controls</strong> behavior. An agent harness may call verifiers during execution, but that does not make it merely an evaluation framework.</p>
+<p>The word “scaffold” is sometimes used similarly. “Harness” emphasizes the whole runtime boundary: execution, context, memory, permissions, observability, and workflow—not just a prompt template.</p>
+</section>
+<section id="the-first-principles-problem" class="level2">
+<h2 class="anchored" data-anchor-id="the-first-principles-problem">3. The First-Principles Problem</h2>
+<p>The harness exists because a model call is stateless and probabilistic, while a real task is stateful and governed by constraints.</p>
+<p>Let <span class="math inline">\(M\)</span> be a model, <span class="math inline">\(H\)</span> a harness, <span class="math inline">\(e\)</span> an environment, and <span class="math inline">\(x\)</span> a task. We care about system behavior</p>
+<p><span class="math display">\[
+\tau\sim P(\tau\mid M,H,e,x),
+\]</span></p>
+<p>where trajectory <span class="math inline">\(\tau\)</span> contains model decisions, tool calls, observations, state changes, and the final result. Harness design seeks to maximize expected utility:</p>
+<p><span class="math display">\[
+H^*
+=
+\arg\max_H
+\mathbb E_{\tau}
+\left[
+R_{\text{task}}(\tau)
+-\lambda_c C(\tau)
+-\lambda_t T(\tau)
+-\lambda_r R_{\text{risk}}(\tau)
+\right].
+\]</span></p>
+<p>This framing yields several important insights:</p>
+<ol type="1">
+<li>Model quality and harness quality are confounded in end-to-end results.</li>
+<li>More autonomy is not inherently better; it is useful only where adaptive decisions outperform deterministic code.</li>
+<li>Reliability must come from system invariants, not from hoping the model remembers every rule on every turn.</li>
+<li>The harness should make success observable and failure recoverable.</li>
+</ol>
+<section id="from-predictor-to-closed-loop-decision-system" class="level3">
+<h3 class="anchored" data-anchor-id="from-predictor-to-closed-loop-decision-system">From predictor to closed-loop decision system</h3>
+<p>A model call is an open-loop predictor: it maps its current context to a proposed continuation or action. A harness turns repeated calls into feedback control:</p>
+<p><span class="math display">\[
+s_t
+\xrightarrow{\text{predict and decide}}
+a_t
+\xrightarrow{\text{environment}}
+o_{t+1}
+\xrightarrow{\text{compare}}
+\delta_t
+\xrightarrow{\text{update}}
+s_{t+1},
+\]</span></p>
+<p>where <span class="math inline">\(s_t\)</span> is the harness’s current state estimate, <span class="math inline">\(o_{t+1}\)</span> is an external observation, and <span class="math inline">\(\delta_t\)</span> is the mismatch between expected and observed consequences. This is more precise than simply saying that an LLM “becomes an agent”:</p>
+<p><span class="math display">\[
+\boxed{\text{open-loop predictor}\rightarrow\text{closed-loop decision system}}.
+\]</span></p>
+<p>Most harness mechanisms can be located within this loop:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Decision-loop problem</th>
+<th>Harness mechanism</th>
+<th>Control role</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>What is currently true?</td>
+<td>context, retrieval, memory, task state</td>
+<td>state estimation</td>
+</tr>
+<tr class="even">
+<td>What might happen?</td>
+<td>reasoning, planning, candidate generation</td>
+<td>consequence prediction</td>
+</tr>
+<tr class="odd">
+<td>What should happen next?</td>
+<td>controller, routing, skills</td>
+<td>action selection and abstraction</td>
+</tr>
+<tr class="even">
+<td>How can the system intervene or learn?</td>
+<td>tools</td>
+<td>actuation and sensing</td>
+</tr>
+<tr class="odd">
+<td>Did reality disagree?</td>
+<td>tests, verifiers, critics</td>
+<td>surprise generation</td>
+</tr>
+<tr class="even">
+<td>Which assumption failed?</td>
+<td>diagnosis and reflection</td>
+<td>error attribution</td>
+</tr>
+<tr class="odd">
+<td>What must survive?</td>
+<td>artifacts, checkpoints, persistent memory</td>
+<td>state update</td>
+</tr>
+<tr class="even">
+<td>Where may the agent go?</td>
+<td>permissions and guardrails</td>
+<td>reachable-state constraints</td>
+</tr>
+<tr class="odd">
+<td>How does the system improve?</td>
+<td>traces, evaluations, failure analysis</td>
+<td>outer-loop learning</td>
+</tr>
+</tbody>
+</table>
+<p>This view asks what information closes the loop. Adding more internal reasoning cannot correct a false belief as reliably as an environmental observation that distinguishes competing hypotheses.</p>
+</section>
+</section>
+<section id="the-basic-agent-loop" class="level2">
+<h2 class="anchored" data-anchor-id="the-basic-agent-loop">4. The Basic Agent Loop</h2>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p><figure class="figure"><p></p>
+<div>
+<pre class="mermaid mermaid-js">flowchart TD
+    G[Goal and constraints] --&gt; C[Compile current context]
+    C --&gt; M[Model decision]
+    M --&gt; D{Decision type}
+    D -- Tool call --&gt; P[Validate permissions and arguments]
+    P --&gt; X[Execute tool]
+    X --&gt; O[Normalize and record observation]
+    O --&gt; S[Update state and artifacts]
+    S --&gt; V[Check progress, limits, and failures]
+    V -- Continue --&gt; C
+    D -- Candidate answer --&gt; F[Verify completion conditions]
+    F -- Incomplete --&gt; S
+    F -- Complete --&gt; A[Return result]
+    V -- Needs authority or clarification --&gt; U[Ask user]
+    U --&gt; S
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+<p>The model does not call the operating system or an API directly. It proposes an action; the harness validates, authorizes, executes, records, and returns a bounded observation. That indirection is the key control boundary.</p>
+<section id="model-decisions-versus-code-decisions" class="level3">
+<h3 class="anchored" data-anchor-id="model-decisions-versus-code-decisions">Model decisions versus code decisions</h3>
+<p>Use the model when the choice requires semantic judgment under ambiguity. Use ordinary code when the rule is known:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Better handled by the model</th>
+<th>Better handled by the harness</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>choosing a promising hypothesis</td>
+<td>enforcing a maximum tool-call count</td>
+</tr>
+<tr class="even">
+<td>deciding what evidence is missing</td>
+<td>validating JSON against a schema</td>
+</tr>
+<tr class="odd">
+<td>interpreting an unfamiliar error</td>
+<td>applying timeouts and retry limits</td>
+</tr>
+<tr class="even">
+<td>proposing a plan revision</td>
+<td>checking an exit code</td>
+</tr>
+<tr class="odd">
+<td>synthesizing several observations</td>
+<td>requiring approval for a destructive action</td>
+</tr>
+</tbody>
+</table>
+<p>Encoding deterministic invariants as prose wastes model capacity and makes them probabilistic.</p>
+</section>
+</section>
+<section id="sec-harness-components" class="level2">
+<h2 class="anchored" data-anchor-id="sec-harness-components">5. Harness Components</h2>
+<section id="context-compiler" class="level3">
+<h3 class="anchored" data-anchor-id="context-compiler">5.1 Context compiler</h3>
+<p>The context compiler decides what the model sees on the next turn. It assembles:</p>
+<ol type="1">
+<li>immutable system and safety rules</li>
+<li>task contract and user instructions</li>
+<li>available tool interfaces</li>
+<li>active plan and working state</li>
+<li>relevant persistent memory and artifacts</li>
+<li>recent observations and errors</li>
+</ol>
+<p>It must resolve ordering, priority, truncation, compaction, and provenance. Simply appending every prior token eventually produces an expensive, noisy, and contradictory context.</p>
+<p>In control terms, context and memory perform <strong>state estimation</strong>. From the full history</p>
+<p><span class="math display">\[
+h_t=(o_1,a_1,\ldots,o_t),
+\]</span></p>
+<p>the harness constructs a compact state <span class="math inline">\(s_t=\phi(h_t)\)</span> that should preserve the information needed for future decisions:</p>
+<p><span class="math display">\[
+p(o_{t+1}\mid h_t,a)
+\approx
+p(o_{t+1}\mid s_t,a).
+\]</span></p>
+<p>The goal is not maximum context. It is the smallest state for which additional history would not materially change the next good action.</p>
+</section>
+<section id="tool-registry-and-executor" class="level3">
+<h3 class="anchored" data-anchor-id="tool-registry-and-executor">5.2 Tool registry and executor</h3>
+<p>Each tool needs a contract:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Field</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Name and description</td>
+<td>help the model select the correct capability</td>
+</tr>
+<tr class="even">
+<td>Input schema</td>
+<td>constrain arguments and enable validation</td>
+</tr>
+<tr class="odd">
+<td>Output schema</td>
+<td>make observations predictable</td>
+</tr>
+<tr class="even">
+<td>Side-effect class</td>
+<td>distinguish reads, reversible writes, and irreversible actions</td>
+</tr>
+<tr class="odd">
+<td>Timeout and limits</td>
+<td>bound resource use</td>
+</tr>
+<tr class="even">
+<td>Retry semantics</td>
+<td>prevent accidental repeated side effects</td>
+</tr>
+<tr class="odd">
+<td>Permission policy</td>
+<td>determine whether execution is allowed or needs approval</td>
+</tr>
+</tbody>
+</table>
+<p>Good tool descriptions say what the tool does, when to use it, and what it does <strong>not</strong> do. Overlapping tools create selection ambiguity. Huge, raw outputs consume context and should be normalized or stored as artifacts.</p>
+<p>Tools are both <strong>actuators</strong> and <strong>sensors</strong>. An edit, deployment, or message changes the environment; a search, test, schema inspection, or diagnostic read primarily reduces uncertainty. A useful epistemic action may have little direct task reward but high information value:</p>
+<p><span class="math display">\[
+a^*
+=
+\arg\max_a
+\left[
+\mathbb E[V(a)]
++\beta I(o_{t+1};z\mid s_t,a)
+\right],
+\]</span></p>
+<p>where <span class="math inline">\(z\)</span> is an unknown fact relevant to the decision. This explains why running a cheap test often beats spending many more tokens predicting whether the code will work.</p>
+</section>
+<section id="state-and-memory" class="level3">
+<h3 class="anchored" data-anchor-id="state-and-memory">5.3 State and memory</h3>
+<p>At least four kinds of state should be distinguished:</p>
+<ul>
+<li><strong>event log:</strong> append-only record of decisions, calls, observations, and errors</li>
+<li><strong>working state:</strong> current plan, completed steps, open questions, and budgets</li>
+<li><strong>artifacts:</strong> files, patches, reports, datasets, logs, and generated outputs</li>
+<li><strong>long-term memory:</strong> durable knowledge intended for reuse across tasks</li>
+</ul>
+<p>Weng highlights the filesystem as an effective persistent-memory substrate for long-horizon work. Models already understand files, paths, diffs, and shell operations from pretraining; artifacts remain inspectable outside the context window and survive interruptions.</p>
+<p>Do not confuse persistence with relevance. A file can preserve everything, but the context compiler must still select what matters now.</p>
+</section>
+<section id="workflow-controller" class="level3">
+<h3 class="anchored" data-anchor-id="workflow-controller">5.4 Workflow controller</h3>
+<p>The controller determines the shape of execution:</p>
+<p><span class="math display">\[
+\text{plan}
+\rightarrow
+\text{act}
+\rightarrow
+\text{observe}
+\rightarrow
+\text{verify}
+\rightarrow
+\text{revise}.
+\]</span></p>
+<p>It owns:</p>
+<ul>
+<li>iteration and termination conditions</li>
+<li>token, time, monetary, and tool-call budgets</li>
+<li>clarification and approval transitions</li>
+<li>retries, fallback tools, and escalation</li>
+<li>background-job and subagent lifecycles</li>
+<li>recovery after interruption</li>
+</ul>
+<p>The workflow may be a general loop, a deterministic DAG, or a hybrid in which code fixes the outer stages and the model makes local decisions.</p>
+<p>For uncertain environments, prefer a receding-horizon pattern:</p>
+<p><span class="math display">\[
+\text{plan}
+\rightarrow
+\text{act briefly}
+\rightarrow
+\text{observe}
+\rightarrow
+\text{replan}.
+\]</span></p>
+<p>This resembles model predictive control. A long fixed plan assumes that distant future states are predictable; short execution bursts allow observations to correct the plan. The controller should also allocate compute between internal simulation and acting. When an action is cheap, reversible, and informative, act-and-observe is often preferable to extended reasoning.</p>
+</section>
+<section id="verifiers" class="level3">
+<h3 class="anchored" data-anchor-id="verifiers">5.5 Verifiers</h3>
+<p>A verifier converts “I think I am done” into observable completion evidence. Examples include:</p>
+<ul>
+<li>unit tests and static checks for code</li>
+<li>schema validation for structured outputs</li>
+<li>source-entailment checks for research</li>
+<li>row counts and invariants for data pipelines</li>
+<li>screenshots or DOM checks for interfaces</li>
+<li>explicit user confirmation for subjective decisions</li>
+</ul>
+<p>Verification should test the artifact or environment state, not merely ask the same model whether its answer looks correct.</p>
+<p>More generally, verifiers perform <strong>surprise engineering</strong>:</p>
+<p><span class="math display">\[
+\delta_t
+=
+\operatorname{Compare}
+(\text{expected consequence},\text{observed consequence}).
+\]</span></p>
+<p>A good environment makes wrong beliefs produce cheap, specific, actionable observations. Coding agents benefit from unusually dense signals—compiler errors, test failures, types, linters, and diffs—while research and open-ended work require more deliberate verifiers for coverage and correctness.</p>
+</section>
+<section id="permission-layer" class="level3">
+<h3 class="anchored" data-anchor-id="permission-layer">5.6 Permission layer</h3>
+<p>Permissions belong outside the model’s editable reasoning loop. The harness should apply least privilege and classify actions by consequence:</p>
+<ul>
+<li>read-only inspection</li>
+<li>reversible local mutation</li>
+<li>external communication or publication</li>
+<li>financial, destructive, privileged, or difficult-to-reverse action</li>
+</ul>
+<p>High-impact actions may require user approval even when the model is confident. Retrieved documents and tool outputs are untrusted data, not instructions that can modify the permission policy.</p>
+<p>Formally, the permission layer enforces</p>
+<p><span class="math display">\[
+a_t\in\mathcal A_{\text{allowed}}(s_t).
+\]</span></p>
+<p>This constrains the states the system can reach. Strong boundaries can enable greater autonomy inside the safe action set because catastrophic trajectories are excluded by code rather than discouraged only through prompting.</p>
+</section>
+<section id="observability" class="level3">
+<h3 class="anchored" data-anchor-id="observability">5.7 Observability</h3>
+<p>A production harness should make trajectories explainable after the fact:</p>
+<ul>
+<li>model and prompt versions</li>
+<li>compiled context metadata</li>
+<li>model decisions and tool calls</li>
+<li>validated arguments and normalized results</li>
+<li>state transitions and artifact versions</li>
+<li>retries, timeouts, approvals, and failures</li>
+<li>token use, latency, and monetary cost</li>
+<li>verifier outcomes and final termination reason</li>
+</ul>
+<p>Observability is not only for dashboards. Without it, harness optimization cannot distinguish a bad model decision from a bad tool description, stale state, parser bug, permission denial, or verifier failure.</p>
+<p>Tracing creates an outer feedback loop around the agent’s inner loop:</p>
+<p><span class="math display">\[
+\underbrace{s_t\rightarrow a_t\rightarrow o_{t+1}\rightarrow s_{t+1}}
+_{\text{agent loop}},
+\qquad
+\underbrace{\text{trajectories}\rightarrow\text{failure analysis}
+\rightarrow\text{harness change}\rightarrow\text{new trajectories}}
+_{\text{development loop}}.
+\]</span></p>
+<p>A final success score says whether a run failed, but the trajectory is needed to attribute why it failed.</p>
+</section>
+</section>
+<section id="context-engineering" class="level2">
+<h2 class="anchored" data-anchor-id="context-engineering">6. Context Engineering</h2>
+<p>Context is the model’s working memory and control surface. Treat it as a compiled view of state, not a transcript dump.</p>
+<p>A rough selection objective is</p>
+<p><span class="math display">\[
+\max_{c\subseteq\mathcal I}
+\frac{
+\operatorname{relevance}(c)
+\cdot
+\operatorname{reliability}(c)
+}{
+\operatorname{tokens}(c)
+}
+\]</span></p>
+<p>subject to mandatory instructions and a context budget.</p>
+<section id="practical-hierarchy" class="level3">
+<h3 class="anchored" data-anchor-id="practical-hierarchy">Practical hierarchy</h3>
+<p>Keep these layers distinguishable:</p>
+<ol type="1">
+<li><strong>rules:</strong> stable and authoritative</li>
+<li><strong>task:</strong> goal, constraints, and definition of done</li>
+<li><strong>state:</strong> plan, progress, budgets, and open failures</li>
+<li><strong>evidence:</strong> selected observations needed for the next decision</li>
+<li><strong>history:</strong> recent interactions useful for local coherence</li>
+</ol>
+</section>
+<section id="compaction" class="level3">
+<h3 class="anchored" data-anchor-id="compaction">Compaction</h3>
+<p>When context grows:</p>
+<ul>
+<li>keep full artifacts and logs outside the prompt</li>
+<li>summarize completed phases into structured state</li>
+<li>preserve unresolved errors and user constraints verbatim</li>
+<li>retain pointers from summaries to raw evidence</li>
+<li>discard duplicated tool output and obsolete plans</li>
+<li>test whether the compacted state supports resuming after interruption</li>
+</ul>
+<p>Lossy compaction is dangerous when it silently drops a constraint, failed attempt, or source attribution.</p>
+</section>
+</section>
+<section id="workflow-design-patterns" class="level2">
+<h2 class="anchored" data-anchor-id="workflow-design-patterns">7. Workflow Design Patterns</h2>
+<p>Weng identifies three recurring patterns.</p>
+<section id="pattern-1-workflow-automation" class="level3">
+<h3 class="anchored" data-anchor-id="pattern-1-workflow-automation">Pattern 1: workflow automation</h3>
+<p>Define an environment in which the model can execute, test, inspect results, and iterate. The feedback loop matters more than a single elaborate prompt.</p>
+<p>For coding:</p>
+<pre class="text"><code>inspect repository -&gt; edit -&gt; run tests -&gt; diagnose -&gt; revise -&gt; verify diff</code></pre>
+<p>For <a href="../../notes/applied_ml/agentic_search.html">agentic search</a>:</p>
+<pre class="text"><code>decompose -&gt; search -&gt; read -&gt; update evidence gaps -&gt; search again -&gt; verify</code></pre>
+</section>
+<section id="pattern-2-filesystem-as-persistent-memory" class="level3">
+<h3 class="anchored" data-anchor-id="pattern-2-filesystem-as-persistent-memory">Pattern 2: filesystem as persistent memory</h3>
+<p>Store rich state and artifacts in files while keeping only a compact index in context. This supports long-running tasks, auditability, recovery, and handoff.</p>
+<p>Useful artifacts include:</p>
+<ul>
+<li><code>plan.md</code> for mutable strategy</li>
+<li>machine-readable task state</li>
+<li>experiment configurations and results</li>
+<li>patches and source files</li>
+<li>background-job logs</li>
+<li>evidence ledgers and research summaries</li>
+<li>a concise resumption checkpoint</li>
+</ul>
+<p>The names are conventions, not requirements. Avoid creating ceremonial files that no component actually reads.</p>
+</section>
+<section id="pattern-3-subagents-and-background-jobs" class="level3">
+<h3 class="anchored" data-anchor-id="pattern-3-subagents-and-background-jobs">Pattern 3: subagents and background jobs</h3>
+<p>Parallel work helps when subtasks are independent and expensive enough to justify coordination. The harness needs process-management operations:</p>
+<ul>
+<li>start with bounded scope and inputs</li>
+<li>assign identifiers and resource budgets</li>
+<li>inspect status and logs</li>
+<li>interrupt or cancel stalled work</li>
+<li>persist outputs as shared artifacts</li>
+<li>merge results and resolve conflicts</li>
+</ul>
+<p>Subagents should not exist merely to imitate an organization chart. Every delegation adds context duplication, synchronization, and error-propagation cost.</p>
+<p>Mechanistically, multi-agent execution is conditional computation, context partitioning, and sometimes parallel search. It helps when specialists can work with mostly independent state. If their subtasks depend on heavily shared hidden context, decomposition can discard information and cost more than one coherent trajectory.</p>
+</section>
+</section>
+<section id="a-minimal-harness-skeleton" class="level2">
+<h2 class="anchored" data-anchor-id="a-minimal-harness-skeleton">8. A Minimal Harness Skeleton</h2>
+<p>The following sketch shows the control boundary. It omits provider-specific types and persistence details.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> dataclasses <span class="im">import</span> dataclass, field</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> typing <span class="im">import</span> Any, Protocol</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="at">@dataclass</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> ToolCall:</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    name: <span class="bu">str</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    arguments: <span class="bu">dict</span>[<span class="bu">str</span>, Any]</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="at">@dataclass</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> Decision:</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>    tool_call: ToolCall <span class="op">|</span> <span class="va">None</span> <span class="op">=</span> <span class="va">None</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>    final_answer: <span class="bu">str</span> <span class="op">|</span> <span class="va">None</span> <span class="op">=</span> <span class="va">None</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="at">@dataclass</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> AgentState:</span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>    goal: <span class="bu">str</span></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>    events: <span class="bu">list</span>[<span class="bu">dict</span>[<span class="bu">str</span>, Any]] <span class="op">=</span> field(default_factory<span class="op">=</span><span class="bu">list</span>)</span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>    steps: <span class="bu">int</span> <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> Model(Protocol):</span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> decide(<span class="va">self</span>, context: <span class="bu">list</span>[<span class="bu">dict</span>], tools: <span class="bu">list</span>[<span class="bu">dict</span>]) <span class="op">-&gt;</span> Decision: ...</span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> ContextCompiler(Protocol):</span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="bu">compile</span>(<span class="va">self</span>, state: AgentState) <span class="op">-&gt;</span> <span class="bu">list</span>[<span class="bu">dict</span>]: ...</span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> ToolExecutor(Protocol):</span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> schemas(<span class="va">self</span>) <span class="op">-&gt;</span> <span class="bu">list</span>[<span class="bu">dict</span>]: ...</span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> validate_and_run(<span class="va">self</span>, call: ToolCall) <span class="op">-&gt;</span> Any: ...</span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> Verifier(Protocol):</span>
+<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> accepts(<span class="va">self</span>, state: AgentState, answer: <span class="bu">str</span>) <span class="op">-&gt;</span> <span class="bu">bool</span>: ...</span>
+<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> run_agent(model, context, tools, verifier, state, max_steps<span class="op">=</span><span class="dv">30</span>):</span>
+<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span> state.steps <span class="op">&lt;</span> max_steps:</span>
+<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a>        messages <span class="op">=</span> context.<span class="bu">compile</span>(state)</span>
+<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a>        decision <span class="op">=</span> model.decide(messages, tools.schemas())</span>
+<span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a>        state.steps <span class="op">+=</span> <span class="dv">1</span></span>
+<span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> decision.final_answer <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
+<span id="cb3-48"><a href="#cb3-48" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> verifier.accepts(state, decision.final_answer):</span>
+<span id="cb3-49"><a href="#cb3-49" aria-hidden="true" tabindex="-1"></a>                <span class="cf">return</span> decision.final_answer</span>
+<span id="cb3-50"><a href="#cb3-50" aria-hidden="true" tabindex="-1"></a>            state.events.append({<span class="st">"type"</span>: <span class="st">"verification_failed"</span>})</span>
+<span id="cb3-51"><a href="#cb3-51" aria-hidden="true" tabindex="-1"></a>            <span class="cf">continue</span></span>
+<span id="cb3-52"><a href="#cb3-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-53"><a href="#cb3-53" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> decision.tool_call <span class="kw">is</span> <span class="va">None</span>:</span>
+<span id="cb3-54"><a href="#cb3-54" aria-hidden="true" tabindex="-1"></a>            state.events.append({<span class="st">"type"</span>: <span class="st">"invalid_decision"</span>})</span>
+<span id="cb3-55"><a href="#cb3-55" aria-hidden="true" tabindex="-1"></a>            <span class="cf">continue</span></span>
+<span id="cb3-56"><a href="#cb3-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-57"><a href="#cb3-57" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Authorization, schema validation, timeouts, and retry policy live here.</span></span>
+<span id="cb3-58"><a href="#cb3-58" aria-hidden="true" tabindex="-1"></a>        <span class="cf">try</span>:</span>
+<span id="cb3-59"><a href="#cb3-59" aria-hidden="true" tabindex="-1"></a>            observation <span class="op">=</span> tools.validate_and_run(decision.tool_call)</span>
+<span id="cb3-60"><a href="#cb3-60" aria-hidden="true" tabindex="-1"></a>            state.events.append(</span>
+<span id="cb3-61"><a href="#cb3-61" aria-hidden="true" tabindex="-1"></a>                {</span>
+<span id="cb3-62"><a href="#cb3-62" aria-hidden="true" tabindex="-1"></a>                    <span class="st">"type"</span>: <span class="st">"tool_result"</span>,</span>
+<span id="cb3-63"><a href="#cb3-63" aria-hidden="true" tabindex="-1"></a>                    <span class="st">"call"</span>: decision.tool_call,</span>
+<span id="cb3-64"><a href="#cb3-64" aria-hidden="true" tabindex="-1"></a>                    <span class="st">"observation"</span>: observation,</span>
+<span id="cb3-65"><a href="#cb3-65" aria-hidden="true" tabindex="-1"></a>                }</span>
+<span id="cb3-66"><a href="#cb3-66" aria-hidden="true" tabindex="-1"></a>            )</span>
+<span id="cb3-67"><a href="#cb3-67" aria-hidden="true" tabindex="-1"></a>        <span class="cf">except</span> <span class="pp">Exception</span> <span class="im">as</span> error:</span>
+<span id="cb3-68"><a href="#cb3-68" aria-hidden="true" tabindex="-1"></a>            state.events.append(</span>
+<span id="cb3-69"><a href="#cb3-69" aria-hidden="true" tabindex="-1"></a>                {</span>
+<span id="cb3-70"><a href="#cb3-70" aria-hidden="true" tabindex="-1"></a>                    <span class="st">"type"</span>: <span class="st">"tool_error"</span>,</span>
+<span id="cb3-71"><a href="#cb3-71" aria-hidden="true" tabindex="-1"></a>                    <span class="st">"call"</span>: decision.tool_call,</span>
+<span id="cb3-72"><a href="#cb3-72" aria-hidden="true" tabindex="-1"></a>                    <span class="st">"error"</span>: <span class="bu">repr</span>(error),</span>
+<span id="cb3-73"><a href="#cb3-73" aria-hidden="true" tabindex="-1"></a>                }</span>
+<span id="cb3-74"><a href="#cb3-74" aria-hidden="true" tabindex="-1"></a>            )</span>
+<span id="cb3-75"><a href="#cb3-75" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-76"><a href="#cb3-76" aria-hidden="true" tabindex="-1"></a>    <span class="cf">raise</span> <span class="pp">RuntimeError</span>(<span class="st">"agent exhausted its step budget"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The code’s value lies in what it refuses to delegate to the model: validation, authorization, event recording, hard limits, and the completion check.</p>
+</section>
+<section id="failure-handling-and-recovery" class="level2">
+<h2 class="anchored" data-anchor-id="failure-handling-and-recovery">9. Failure Handling and Recovery</h2>
+<p>Long-horizon agents should expect partial failure.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Failure</th>
+<th>Harness response</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>malformed tool arguments</td>
+<td>reject before execution and return a compact schema error</td>
+</tr>
+<tr class="even">
+<td>transient network error</td>
+<td>bounded retry with backoff and idempotency protection</td>
+</tr>
+<tr class="odd">
+<td>deterministic tool error</td>
+<td>expose diagnostic output; do not repeat unchanged calls forever</td>
+</tr>
+<tr class="even">
+<td>context overflow</td>
+<td>compact state and preserve raw artifacts externally</td>
+</tr>
+<tr class="odd">
+<td>repeated action loop</td>
+<td>detect repeated call signatures and force replanning or stop</td>
+</tr>
+<tr class="even">
+<td>background job stalls</td>
+<td>poll logs, enforce timeout, then interrupt or escalate</td>
+</tr>
+<tr class="odd">
+<td>verifier fails</td>
+<td>attach exact failed condition and resume work</td>
+</tr>
+<tr class="even">
+<td>authority missing</td>
+<td>stop and ask the user rather than inventing permission</td>
+</tr>
+<tr class="odd">
+<td>process interruption</td>
+<td>reload durable state and resume from the last consistent checkpoint</td>
+</tr>
+</tbody>
+</table>
+<p>Retries are especially dangerous for non-idempotent tools. Repeating a timed-out payment, message, or deployment may duplicate the side effect even when the first response was lost.</p>
+<section id="reflection-should-follow-evidence" class="level3">
+<h3 class="anchored" data-anchor-id="reflection-should-follow-evidence">Reflection should follow evidence</h3>
+<p>Asking the same model to “reflect” without a new observation may provide useful extra inference, but it does not change the evidence. The stronger loop is</p>
+<p><span class="math display">\[
+a_t
+\rightarrow
+o_{t+1}
+\rightarrow
+\delta_t
+\rightarrow
+\text{root-cause attribution}
+\rightarrow
+s_{t+1}.
+\]</span></p>
+<p>Reflection should identify which assumption, plan step, tool interpretation, or completion criterion the observation falsified. Without this attribution, an agent may respond to a failed test by making unrelated changes or repeating the same action in different words.</p>
+</section>
+</section>
+<section id="designing-the-right-amount-of-harness" class="level2">
+<h2 class="anchored" data-anchor-id="designing-the-right-amount-of-harness">10. Designing the Right Amount of Harness</h2>
+<p>There is a spectrum:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Style</th>
+<th>Strength</th>
+<th>Weakness</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Minimal general loop</td>
+<td>adapts broadly and benefits directly from stronger models</td>
+<td>may wander or miss domain invariants</td>
+</tr>
+<tr class="even">
+<td>Prompt-heavy scaffold</td>
+<td>fast to prototype</td>
+<td>brittle, opaque, and difficult to test</td>
+</tr>
+<tr class="odd">
+<td>Deterministic workflow</td>
+<td>predictable and easy to observe</td>
+<td>inflexible when the path depends on new evidence</td>
+</tr>
+<tr class="even">
+<td>Hybrid harness</td>
+<td>code enforces stages and invariants; model handles judgment</td>
+<td>requires careful interface design</td>
+</tr>
+<tr class="odd">
+<td>Multi-agent organization</td>
+<td>parallelism and specialized contexts</td>
+<td>high coordination and duplication cost</td>
+</tr>
+</tbody>
+</table>
+<p>Prefer the simplest harness that exposes the necessary environment, feedback, and invariants. Overengineering often compensates for one model’s weakness with rules that become harmful or redundant as models improve.</p>
+</section>
+<section id="harness-optimization" class="level2">
+<h2 class="anchored" data-anchor-id="harness-optimization">11. Harness Optimization</h2>
+<p>Harness changes should be treated like changes to any other learned-system pipeline:</p>
+<ol type="1">
+<li>collect complete trajectories and verifier outcomes</li>
+<li>cluster failures by causal mechanism</li>
+<li>map each failure to a harness component</li>
+<li>propose the smallest targeted change</li>
+<li>predict both improvements and possible regressions</li>
+<li>evaluate on held-in and held-out tasks</li>
+<li>accept only evidence-supported changes</li>
+</ol>
+<p>Useful failure labels follow the closed-loop decomposition: state-estimation, prediction, planning, tool, verification, permission, and state-update failure. This provides better credit assignment than treating every unsuccessful trajectory as a generic model failure.</p>
+<p>Possible optimization targets include:</p>
+<ul>
+<li>system instructions and tool descriptions</li>
+<li>tool schemas and implementations</li>
+<li>context selection and compaction</li>
+<li>workflow topology and stopping rules</li>
+<li>memory read/write policies</li>
+<li>subagent configuration</li>
+<li>recovery and verification logic</li>
+</ul>
+<p>Always compare against simple baselines. A more elaborate harness may consume more test-time compute rather than make better decisions.</p>
+<p>Harness configuration can also be part of the model’s training distribution. For example, Kimi K3 varies tools, system prompts, context strategies, skills, memory, and subagent configurations during agentic RL instead of optimizing for one fixed scaffold. This teaches robustness across runtimes, but does not remove the need for task-specific environments and verifiers. See <a href="../../notes/applied_ml/agentic_search.html#sec-deep-research-training">How SOTA systems train deep research</a> for the relationship between harness variation, specialist policies, and a consolidated research/coding/general-agent model.</p>
+<section id="self-improving-harnesses" class="level3">
+<h3 class="anchored" data-anchor-id="self-improving-harnesses">Self-improving harnesses</h3>
+<p>A model can propose edits to its own harness, forming a loop:</p>
+<p><span class="math display">\[
+h_t
+\xrightarrow{\text{run}}
+\text{trajectories}
+\xrightarrow{\text{diagnose}}
+\Delta h
+\xrightarrow{\text{evaluate}}
+h_{t+1}.
+\]</span></p>
+<p>This expands the optimization surface beyond prompts to executable workflows, tools, memory, and middleware. It also creates a Goodhart problem: an optimizer may improve the measured score by weakening the verifier, increasing the budget, leaking test answers, or changing the task.</p>
+<p>Keep these surfaces outside the editable loop:</p>
+<ul>
+<li>evaluator and held-out tasks</li>
+<li>permission and security policy</li>
+<li>model identity and resource budget</li>
+<li>audit log and experiment runner</li>
+<li>acceptance and rollback mechanism</li>
+</ul>
+<p>Every accepted harness edit should be attributable to evidence from failures and expressed as a falsifiable prediction.</p>
+</section>
+</section>
+<section id="harness-versus-core-intelligence" class="level2">
+<h2 class="anchored" data-anchor-id="harness-versus-core-intelligence">12. Harness Versus Core Intelligence</h2>
+<p>Some behavior currently implemented in harness code may eventually become a native model capability. Stronger models need fewer prompt tricks and recover from tool errors more naturally.</p>
+<p>But several responsibilities remain external by nature:</p>
+<ul>
+<li>connecting to the current environment</li>
+<li>enforcing organizational permissions</li>
+<li>owning durable artifacts and state</li>
+<li>applying resource limits</li>
+<li>validating external side effects</li>
+<li>observing and auditing execution</li>
+</ul>
+<p>The boundary will move, but it will not disappear. Better models reduce the need for brittle scaffolding; they do not eliminate the runtime contract.</p>
+</section>
+<section id="core-insights" class="level2">
+<h2 class="anchored" data-anchor-id="core-insights">13. Core Insights</h2>
+<ol type="1">
+<li><strong>A harness converts model capability into system capability.</strong> End-to-end performance cannot be attributed to model weights alone.</li>
+<li><strong>Context should be compiled from state, not accumulated as a transcript.</strong></li>
+<li><strong>Use models for judgment and code for invariants.</strong></li>
+<li><strong>Artifacts outlive context.</strong> Files and logs make long-horizon work durable, inspectable, and resumable.</li>
+<li><strong>Verification closes the loop.</strong> A generated answer is only a candidate completion.</li>
+<li><strong>Permissions must live outside self-modification.</strong> The agent cannot grant itself authority.</li>
+<li><strong>Observability enables improvement.</strong> If failure cannot be localized, a harness edit is guesswork.</li>
+<li><strong>The simplest sufficient harness usually generalizes best.</strong> Add structure in response to measured failure, not aesthetic preference.</li>
+<li><strong>Tools are sensors as well as actuators.</strong> Information-gathering actions can be more valuable than premature execution.</li>
+<li><strong>Useful reflection begins with surprise.</strong> New external evidence enables belief revision; repeated introspection alone does not.</li>
+<li><strong>Planning should remain feedback-sensitive.</strong> Plan, act briefly, observe, and replan when the environment is uncertain.</li>
+</ol>
+</section>
+<section id="interview-questions" class="level2">
+<h2 class="anchored" data-anchor-id="interview-questions">Interview Questions</h2>
+<ul>
+<li>What is the difference between a model, an agent harness, and an agent framework?</li>
+<li>Which decisions should be delegated to a model, and which should remain code?</li>
+<li>How would you design an idempotent tool interface?</li>
+<li>What should be stored in context, working state, artifacts, and long-term memory?</li>
+<li>Why does a pre-norm-like “always append history” strategy fail for agents?</li>
+<li>What makes a verifier independent enough to be useful?</li>
+<li>When do subagents improve performance rather than add coordination overhead?</li>
+<li>How should a harness recover after a process interruption?</li>
+<li>Which components must remain immutable in a self-improving harness?</li>
+<li>How would you determine whether a gain came from the harness or additional test-time compute?</li>
+<li>Why are tools both actuators and sensors? Give an example of an epistemic tool action.</li>
+<li>What makes a verifier produce useful surprise rather than merely another model opinion?</li>
+<li>When is receding-horizon planning preferable to committing to a complete plan?</li>
+<li>Why is reflection after a failed test more useful than reflection with no new evidence?</li>
+</ul>
+</section>
+<section id="exercises" class="level2">
+<h2 class="anchored" data-anchor-id="exercises">Exercises</h2>
+<ul class="task-list">
+<li><label><input type="checkbox">Implement the minimal loop with one read-only tool and a step budget.</label></li>
+<li><label><input type="checkbox">Add schema validation, timeouts, and repeated-call detection.</label></li>
+<li><label><input type="checkbox">Persist event logs and resumable state to files.</label></li>
+<li><label><input type="checkbox">Design a context compiler that retains unresolved errors while compacting completed work.</label></li>
+<li><label><input type="checkbox">Add a verifier whose result cannot be overwritten by the agent.</label></li>
+<li><label><input type="checkbox">Classify tools by side-effect risk and design approval policies.</label></li>
+<li><label><input type="checkbox">Compare a minimal loop with a deterministic workflow on the same tasks.</label></li>
+<li><label><input type="checkbox">Cluster failed trajectories and propose one falsifiable harness change.</label></li>
+</ul>
+</section>
+<section id="further-reading" class="level2">
+<h2 class="anchored" data-anchor-id="further-reading">Further Reading</h2>
+<ul>
+<li><a href="https://lilianweng.github.io/posts/2026-07-04-harness/">Harness Engineering for Self-Improvement — Lilian Weng</a></li>
+<li><a href="https://lilianweng.github.io/posts/2023-06-23-agent/">LLM Powered Autonomous Agents — Lilian Weng</a></li>
+<li><a href="../../notes/applied_ml/agentic_search.html">Agentic Search</a></li>
+<li><a href="../../notes/advanced/continual_intelligence_ttt.html">From Test-Time Training to Continual Intelligence</a></li>
+</ul>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/threeeyelidds\.github\.io\/ml-interview-notes\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

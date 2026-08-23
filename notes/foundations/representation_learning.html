@@ -1,0 +1,1479 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Representation Learning from First Principles – Minimal ML</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-f83c246346592b24d02aa84ae3974412.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../../styles.css">
+<link rel="stylesheet" href="../../colors.css">
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">Minimal ML</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../notes/index.html"> 
+<span class="menu-text">Notes</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../posts/index.html"> 
+<span class="menu-text">Blog</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#the-problem" id="toc-the-problem" class="nav-link active" data-scroll-target="#the-problem">The Problem</a>
+  <ul class="collapse">
+  <li><a href="#what-should-a-useful-representation-provide" id="toc-what-should-a-useful-representation-provide" class="nav-link" data-scroll-target="#what-should-a-useful-representation-provide">What should a useful representation provide?</a></li>
+  </ul></li>
+  <li><a href="#a-generative-view-signal-and-nuisance" id="toc-a-generative-view-signal-and-nuisance" class="nav-link" data-scroll-target="#a-generative-view-signal-and-nuisance">A Generative View: Signal and Nuisance</a></li>
+  <li><a href="#three-first-principles-objectives" id="toc-three-first-principles-objectives" class="nav-link" data-scroll-target="#three-first-principles-objectives">Three First-Principles Objectives</a>
+  <ul class="collapse">
+  <li><a href="#preserve-task-relevant-information" id="toc-preserve-task-relevant-information" class="nav-link" data-scroll-target="#preserve-task-relevant-information">Preserve task-relevant information</a></li>
+  <li><a href="#remove-nuisance-information" id="toc-remove-nuisance-information" class="nav-link" data-scroll-target="#remove-nuisance-information">Remove nuisance information</a></li>
+  <li><a href="#keep-the-representation-non-degenerate" id="toc-keep-the-representation-non-degenerate" class="nav-link" data-scroll-target="#keep-the-representation-non-degenerate">Keep the representation non-degenerate</a></li>
+  </ul></li>
+  <li><a href="#geometry-first-graph-and-spectral-representations" id="toc-geometry-first-graph-and-spectral-representations" class="nav-link" data-scroll-target="#geometry-first-graph-and-spectral-representations">Geometry First: Graph and Spectral Representations</a>
+  <ul class="collapse">
+  <li><a href="#what-the-derivation-teaches" id="toc-what-the-derivation-teaches" class="nav-link" data-scroll-target="#what-the-derivation-teaches">What the derivation teaches</a></li>
+  </ul></li>
+  <li><a href="#reconstruction-pca-to-autoencoders" id="toc-reconstruction-pca-to-autoencoders" class="nav-link" data-scroll-target="#reconstruction-pca-to-autoencoders">Reconstruction: PCA to Autoencoders</a>
+  <ul class="collapse">
+  <li><a href="#nonlinear-autoencoders" id="toc-nonlinear-autoencoders" class="nav-link" data-scroll-target="#nonlinear-autoencoders">Nonlinear autoencoders</a></li>
+  </ul></li>
+  <li><a href="#information-is-not-the-same-as-usefulness" id="toc-information-is-not-the-same-as-usefulness" class="nav-link" data-scroll-target="#information-is-not-the-same-as-usefulness">Information Is Not the Same as Usefulness</a></li>
+  <li><a href="#where-does-the-learning-signal-come-from" id="toc-where-does-the-learning-signal-come-from" class="nav-link" data-scroll-target="#where-does-the-learning-signal-come-from">Where Does the Learning Signal Come From?</a>
+  <ul class="collapse">
+  <li><a href="#the-same-abstraction-across-fields" id="toc-the-same-abstraction-across-fields" class="nav-link" data-scroll-target="#the-same-abstraction-across-fields">The same abstraction across fields</a></li>
+  <li><a href="#supervised-representations" id="toc-supervised-representations" class="nav-link" data-scroll-target="#supervised-representations">Supervised representations</a></li>
+  </ul></li>
+  <li><a href="#contrastive-learning" id="toc-contrastive-learning" class="nav-link" data-scroll-target="#contrastive-learning">Contrastive Learning</a>
+  <ul class="collapse">
+  <li><a href="#augmentations-define-semantics" id="toc-augmentations-define-semantics" class="nav-link" data-scroll-target="#augmentations-define-semantics">Augmentations define semantics</a></li>
+  </ul></li>
+  <li><a href="#learning-without-negatives" id="toc-learning-without-negatives" class="nav-link" data-scroll-target="#learning-without-negatives">Learning Without Negatives</a></li>
+  <li><a href="#masked-and-predictive-representations" id="toc-masked-and-predictive-representations" class="nav-link" data-scroll-target="#masked-and-predictive-representations">Masked and Predictive Representations</a>
+  <ul class="collapse">
+  <li><a href="#masked-observation-prediction" id="toc-masked-observation-prediction" class="nav-link" data-scroll-target="#masked-observation-prediction">Masked observation prediction</a></li>
+  <li><a href="#predict-in-representation-space" id="toc-predict-in-representation-space" class="nav-link" data-scroll-target="#predict-in-representation-space">Predict in representation space</a></li>
+  <li><a href="#autoregressive-prediction" id="toc-autoregressive-prediction" class="nav-link" data-scroll-target="#autoregressive-prediction">Autoregressive prediction</a></li>
+  </ul></li>
+  <li><a href="#cross-modal-alignment" id="toc-cross-modal-alignment" class="nav-link" data-scroll-target="#cross-modal-alignment">Cross-Modal Alignment</a></li>
+  <li><a href="#the-modern-view-objective-mixtures-and-data" id="toc-the-modern-view-objective-mixtures-and-data" class="nav-link" data-scroll-target="#the-modern-view-objective-mixtures-and-data">The Modern View: Objective Mixtures and Data</a>
+  <ul class="collapse">
+  <li><a href="#representation-capacity-is-also-a-systems-choice" id="toc-representation-capacity-is-also-a-systems-choice" class="nav-link" data-scroll-target="#representation-capacity-is-also-a-systems-choice">Representation capacity is also a systems choice</a></li>
+  </ul></li>
+  <li><a href="#identifiability-and-what-the-coordinates-mean" id="toc-identifiability-and-what-the-coordinates-mean" class="nav-link" data-scroll-target="#identifiability-and-what-the-coordinates-mean">Identifiability and What the Coordinates Mean</a></li>
+  <li><a href="#how-to-evaluate-a-representation" id="toc-how-to-evaluate-a-representation" class="nav-link" data-scroll-target="#how-to-evaluate-a-representation">How to Evaluate a Representation</a></li>
+  <li><a href="#a-design-checklist" id="toc-a-design-checklist" class="nav-link" data-scroll-target="#a-design-checklist">A Design Checklist</a></li>
+  <li><a href="#interview-questions" id="toc-interview-questions" class="nav-link" data-scroll-target="#interview-questions">Interview Questions</a></li>
+  <li><a href="#exercises" id="toc-exercises" class="nav-link" data-scroll-target="#exercises">Exercises</a></li>
+  <li><a href="#primary-references" id="toc-primary-references" class="nav-link" data-scroll-target="#primary-references">Primary References</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Representation Learning from First Principles</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="the-problem" class="level2">
+<h2 class="anchored" data-anchor-id="the-problem">The Problem</h2>
+<p>Raw observations are rarely presented in the coordinates that make a useful decision easy. An image is an array of pixels, a sentence is a sequence of token IDs, and a user history is a sequence of sparse item IDs. A representation learner constructs</p>
+<p><span class="math display">\[
+z=f_\theta(x),
+\]</span></p>
+<p>so that another model can solve useful tasks from <span class="math inline">\(z\)</span> more easily than from the raw input <span class="math inline">\(x\)</span>.</p>
+<p>A representation is therefore not merely a smaller input. It is a choice of what information to preserve, what variation to ignore, and which relationships should become simple in the new space.</p>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>There is no universally best representation
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Without a task, environment, or structural assumption, every invertible transformation of <span class="math inline">\(x\)</span> preserves the same information. Representation learning becomes meaningful only after specifying which distinctions matter and which transformations should not matter.</p>
+</div>
+</div>
+<p>For a family of downstream tasks <span class="math inline">\(\mathcal T\)</span>, one operational objective is</p>
+<p><span class="math display">\[
+\min_f\;
+\mathbb E_{T\sim\mathcal T}
+\left[
+\min_{h\in\mathcal H_{  ext{simple}}}
+R_T(h\circ f)
+\right].
+\]</span></p>
+<p>The readout class <span class="math inline">\(\mathcal H_{ ext{simple}}\)</span> is deliberately restricted—for example, to linear models or shallow networks. If an arbitrarily powerful readout is allowed, it can relearn the structure that the representation failed to expose.</p>
+<section id="what-should-a-useful-representation-provide" class="level3">
+<h3 class="anchored" data-anchor-id="what-should-a-useful-representation-provide">What should a useful representation provide?</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Property</th>
+<th>Desired behavior</th>
+<th>Why it helps</th>
+<th>Failure mode</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Sufficiency</td>
+<td>retain information needed for the task</td>
+<td>accurate downstream prediction</td>
+<td>useful signal is discarded</td>
+</tr>
+<tr class="even">
+<td>Invariance</td>
+<td>ignore specified nuisance transformations</td>
+<td>sample efficiency and robustness</td>
+<td>a meaningful distinction is erased</td>
+</tr>
+<tr class="odd">
+<td>Equivariance</td>
+<td>transform predictably when the input transforms</td>
+<td>preserves pose, location, time, or order</td>
+<td>spatial structure disappears</td>
+</tr>
+<tr class="even">
+<td>Smoothness</td>
+<td>nearby or related inputs have nearby representations</td>
+<td>interpolation and simple decision boundaries</td>
+<td>shortcuts define the neighborhood</td>
+</tr>
+<tr class="odd">
+<td>Non-collapse</td>
+<td>use multiple examples and dimensions</td>
+<td>preserves diversity</td>
+<td>every input or dimension becomes identical</td>
+</tr>
+<tr class="even">
+<td>Compression</td>
+<td>discard irrelevant detail</td>
+<td>regularization and efficiency</td>
+<td>excessive compression loses task signal</td>
+</tr>
+<tr class="odd">
+<td>Accessibility</td>
+<td>make useful factors easy for a simple readout to recover</td>
+<td>few labels and cheap adaptation</td>
+<td>information exists but is entangled</td>
+</tr>
+</tbody>
+</table>
+<p>These properties compete. Classification benefits from invariance to object position, while detection needs position to remain recoverable. A global image embedding may transfer well to classification but poorly to dense prediction.</p>
+</section>
+</section>
+<section id="a-generative-view-signal-and-nuisance" class="level2">
+<h2 class="anchored" data-anchor-id="a-generative-view-signal-and-nuisance">A Generative View: Signal and Nuisance</h2>
+<p>Suppose an observation is generated from semantic factors <span class="math inline">\(s\)</span> and nuisance factors <span class="math inline">\(n\)</span>:</p>
+<p><span class="math display">\[
+x=g(s,n).
+\]</span></p>
+<p>If downstream targets depend on <span class="math inline">\(s\)</span> but not <span class="math inline">\(n\)</span>, we want <span class="math inline">\(z\)</span> to retain <span class="math inline">\(s\)</span> and discard <span class="math inline">\(n\)</span>. This simple statement exposes the central difficulty: without labels or prior knowledge, the learner does not know which factor is semantic.</p>
+<p>We inject that knowledge through a <strong>learning signal</strong>:</p>
+<ul>
+<li>labels declare which examples should share a decision</li>
+<li>augmentations declare which transformations preserve identity</li>
+<li>temporal or spatial context declares what should be predictable</li>
+<li>reconstruction declares which parts of the input must be retained</li>
+<li>paired modalities declare that two observations describe shared content</li>
+<li>an architecture encodes locality, order, symmetry, or capacity constraints</li>
+</ul>
+<p>Representation learning is therefore the design of an information bottleneck and the supervision that shapes it—not just the choice of encoder.</p>
+</section>
+<section id="three-first-principles-objectives" class="level2">
+<h2 class="anchored" data-anchor-id="three-first-principles-objectives">Three First-Principles Objectives</h2>
+<p>Most representation-learning methods combine three pressures.</p>
+<section id="preserve-task-relevant-information" class="level3">
+<h3 class="anchored" data-anchor-id="preserve-task-relevant-information">Preserve task-relevant information</h3>
+<p>For a known target <span class="math inline">\(Y\)</span>, sufficiency asks that</p>
+<p><span class="math display">\[
+P(Y\mid Z)=P(Y\mid X),
+\]</span></p>
+<p>or equivalently, in information-theoretic language,</p>
+<p><span class="math display">\[
+I(Z;Y)=I(X;Y).
+\]</span></p>
+<p>Supervised cross-entropy directly encourages this property for one label space. It may discard information useful to other tasks.</p>
+</section>
+<section id="remove-nuisance-information" class="level3">
+<h3 class="anchored" data-anchor-id="remove-nuisance-information">Remove nuisance information</h3>
+<p>If <span class="math inline">\(t\)</span> is a transformation known to preserve semantics, invariance asks for</p>
+<p><span class="math display">\[
+f(t(x))\approx f(x).
+\]</span></p>
+<p>For transformations whose effect matters, equivariance is more appropriate:</p>
+<p><span class="math display">\[
+f(t(x))\approx \rho(t)f(x),
+\]</span></p>
+<p>where <span class="math inline">\(\rho(t)\)</span> is the corresponding transformation in representation space. The distinction is crucial: color jitter might be a safe invariance for shape recognition, while spatial translation should remain equivariant for localization.</p>
+</section>
+<section id="keep-the-representation-non-degenerate" class="level3">
+<h3 class="anchored" data-anchor-id="keep-the-representation-non-degenerate">Keep the representation non-degenerate</h3>
+<p>The invariance objective alone has the trivial optimum <span class="math inline">\(f(x)=c\)</span>. A useful objective therefore needs a counterforce that preserves diversity, such as:</p>
+<ul>
+<li>reconstructing or predicting held-out information</li>
+<li>separating unrelated examples with negatives</li>
+<li>maintaining variance across examples</li>
+<li>decorrelating dimensions</li>
+<li>using an asymmetric teacher–student optimization path</li>
+</ul>
+<p>Modern self-supervised methods differ substantially in how they supply this counterforce.</p>
+</section>
+</section>
+<section id="geometry-first-graph-and-spectral-representations" class="level2">
+<h2 class="anchored" data-anchor-id="geometry-first-graph-and-spectral-representations">Geometry First: Graph and Spectral Representations</h2>
+<p>The supplied <em>Representation Learning</em> course notes begin from a useful non-neural perspective: define which observations are related, then find coordinates that vary slowly across those relationships.</p>
+<p>Given samples <span class="math inline">\(x_1,\ldots,x_n\)</span>, construct a symmetric similarity matrix <span class="math inline">\(W\)</span>. For example,</p>
+<p><span class="math display">\[
+W_{ij}
+=
+\begin{cases}
+\exp\left(-\dfrac{\lVert x_i-x_j\rVert^2}{2\sigma^2}\right), &amp; i\ne j,\\
+0, &amp; i=j.
+\end{cases}
+\]</span></p>
+<p>Let <span class="math inline">\(D_{ii}=\sum_j W_{ij}\)</span> and define the unnormalized graph Laplacian <span class="math inline">\(L=D-W\)</span>. For any scalar feature vector <span class="math inline">\(v\in\mathbb R^n\)</span>,</p>
+<p><span class="math display">\[
+v^TLv
+=
+\frac12
+\sum_{i,j}W_{ij}(v_i-v_j)^2.
+\]</span></p>
+<p>Minimizing this energy makes strongly connected examples receive similar coordinates. Constant vectors minimize it trivially, so Laplacian eigenmaps add normalization and orthogonality constraints. One common formulation is</p>
+<p><span class="math display">\[
+\min_Z \operatorname{tr}(Z^TLZ)
+\quad\text{subject to}\quad
+Z^TDZ=I,
+\qquad Z^TD\mathbf 1=0.
+\]</span></p>
+<p>The solution is given by the nontrivial generalized eigenvectors</p>
+<p><span class="math display">\[
+Lv=\lambda Dv.
+\]</span></p>
+<p>This is representation learning by an explicitly chosen geometry. Spectral clustering uses the embedding to expose clusters; Laplacian eigenmaps interpret the same low-frequency eigenvectors as smooth coordinates on an underlying manifold.</p>
+<section id="what-the-derivation-teaches" class="level3">
+<h3 class="anchored" data-anchor-id="what-the-derivation-teaches">What the derivation teaches</h3>
+<ul>
+<li>A distance metric or similarity graph is already an inductive bias.</li>
+<li>The bandwidth and neighborhood rule decide which local relationships exist.</li>
+<li>Eigenvectors are identifiable only up to sign, and a repeated eigenspace is identifiable only up to a rotation.</li>
+<li>Local geometry can reveal structure that Euclidean coordinates obscure, but constructing an <span class="math inline">\(n\times n\)</span> graph does not scale naively.</li>
+</ul>
+</section>
+</section>
+<section id="reconstruction-pca-to-autoencoders" class="level2">
+<h2 class="anchored" data-anchor-id="reconstruction-pca-to-autoencoders">Reconstruction: PCA to Autoencoders</h2>
+<p>Another principle is to encode <span class="math inline">\(x\)</span> so that it can be reconstructed. Let centered <span class="math inline">\(x\in\mathbb R^d\)</span> be encoded into <span class="math inline">\(k&lt;d\)</span> dimensions by</p>
+<p><span class="math display">\[
+z=W^Tx,
+\qquad W^TW=I,
+\]</span></p>
+<p>and reconstructed as <span class="math inline">\(\hat x=Wz\)</span>. PCA solves</p>
+<p><span class="math display">\[
+\min_W
+\mathbb E\lVert x-WW^Tx\rVert_2^2.
+\]</span></p>
+<p>Expanding the square shows that this is equivalent to maximizing retained variance:</p>
+<p><span class="math display">\[
+\max_{W^TW=I}
+\operatorname{tr}(W^T\Sigma W).
+\]</span></p>
+<p>Thus the columns of <span class="math inline">\(W\)</span> are the top eigenvectors of the covariance matrix <span class="math inline">\(\Sigma\)</span>. The minimum reconstruction error is the sum of discarded eigenvalues:</p>
+<p><span class="math display">\[
+R(k)=\sum_{j=k+1}^{d}\lambda_j.
+\]</span></p>
+<p>A linear autoencoder with squared-error loss learns the same principal subspace as PCA, although its coordinates can differ by an invertible change of basis.</p>
+<div id="0cacc90d" class="cell" data-execution_count="1">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> fit_pca(x, num_components):</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Return the mean, principal directions, and low-dimensional codes."""</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    mean <span class="op">=</span> x.mean(dim<span class="op">=</span><span class="dv">0</span>, keepdim<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    centered <span class="op">=</span> x <span class="op">-</span> mean</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    _, _, right_vectors <span class="op">=</span> torch.linalg.svd(centered, full_matrices<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    directions <span class="op">=</span> right_vectors[:num_components].T</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    codes <span class="op">=</span> centered <span class="op">@</span> directions</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> mean, directions, codes</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>torch.manual_seed(<span class="dv">0</span>)</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>latent <span class="op">=</span> torch.randn(<span class="dv">512</span>, <span class="dv">2</span>)</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>mixing <span class="op">=</span> torch.randn(<span class="dv">2</span>, <span class="dv">8</span>)</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>samples <span class="op">=</span> latent <span class="op">@</span> mixing <span class="op">+</span> <span class="fl">0.02</span> <span class="op">*</span> torch.randn(<span class="dv">512</span>, <span class="dv">8</span>)</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>mean, directions, codes <span class="op">=</span> fit_pca(samples, num_components<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>reconstruction <span class="op">=</span> codes <span class="op">@</span> directions.T <span class="op">+</span> mean</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>relative_error <span class="op">=</span> (samples <span class="op">-</span> reconstruction).norm() <span class="op">/</span> samples.norm()</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> relative_error <span class="op">&lt;</span> <span class="fl">0.03</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<section id="nonlinear-autoencoders" class="level3">
+<h3 class="anchored" data-anchor-id="nonlinear-autoencoders">Nonlinear autoencoders</h3>
+<p>A nonlinear encoder <span class="math inline">\(f_\theta\)</span> and decoder <span class="math inline">\(g_\phi\)</span> minimize</p>
+<p><span class="math display">\[
+\mathcal L_{\text{AE}}
+=
+\mathbb E_x
+\left[
+d\bigl(x,g_\phi(f_\theta(x))\bigr)
+\right].
+\]</span></p>
+<p>The reconstruction metric <span class="math inline">\(d\)</span> determines what “information” means. Pixel MSE rewards exact texture and color; a likelihood models a full observation distribution; a perceptual or latent target emphasizes different structure.</p>
+<p>Flexible autoencoders reveal two limitations:</p>
+<ol type="1">
+<li>With enough capacity, they can learn an identity map without discovering a useful abstraction.</li>
+<li>For any invertible <span class="math inline">\(h\)</span>, the pair <span class="math inline">\(h\circ f\)</span> and <span class="math inline">\(g\circ h^{-1}\)</span> reconstructs equally well. The latent coordinates are therefore not identifiable from reconstruction alone.</li>
+</ol>
+<p>Bottlenecks, noise, sparsity, masking, quantization, and probabilistic priors change what information is economical to retain.</p>
+</section>
+</section>
+<section id="information-is-not-the-same-as-usefulness" class="level2">
+<h2 class="anchored" data-anchor-id="information-is-not-the-same-as-usefulness">Information Is Not the Same as Usefulness</h2>
+<p>One might try to maximize <span class="math inline">\(I(X;Z)\)</span>. But a deterministic invertible encoder can retain all information while producing coordinates that are awkward for every simple downstream model. Conversely, an invariant representation intentionally throws information away.</p>
+<p>The information-bottleneck ideal makes the trade-off explicit:</p>
+<p><span class="math display">\[
+\max_f
+I(Z;Y)-\beta I(Z;X).
+\]</span></p>
+<p>The first term seeks target sufficiency; the second penalizes unnecessary input information. This is a conceptual guide rather than a complete recipe: mutual information is hard to estimate in high dimensions, and the correct target <span class="math inline">\(Y\)</span> may be unavailable during pretraining.</p>
+<p>The more operational question is:</p>
+<blockquote class="blockquote">
+<p>Which information becomes recoverable by a simple learner, with few labels, under the distribution shifts we care about?</p>
+</blockquote>
+</section>
+<section id="where-does-the-learning-signal-come-from" class="level2">
+<h2 class="anchored" data-anchor-id="where-does-the-learning-signal-come-from">Where Does the Learning Signal Come From?</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Signal</th>
+<th>Positive relation supplied by data</th>
+<th>Typical objective</th>
+<th>What it tends to preserve</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Labels</td>
+<td>examples with the same target</td>
+<td>cross-entropy, supervised contrastive loss</td>
+<td>label-predictive factors</td>
+</tr>
+<tr class="even">
+<td>Reconstruction</td>
+<td>input and its missing/corrupted content</td>
+<td>autoencoding, masked modeling</td>
+<td>information needed for the chosen target</td>
+</tr>
+<tr class="odd">
+<td>Augmented views</td>
+<td>two transformations of one instance</td>
+<td>contrastive or joint embedding</td>
+<td>augmentation-invariant identity</td>
+</tr>
+<tr class="even">
+<td>Context</td>
+<td>past/context and future/hidden region</td>
+<td>predictive coding, JEPA</td>
+<td>predictable structure</td>
+</tr>
+<tr class="odd">
+<td>Paired modalities</td>
+<td>image–text, audio–text, user–item</td>
+<td>cross-modal contrastive loss</td>
+<td>shared semantics</td>
+</tr>
+<tr class="even">
+<td>Interaction</td>
+<td>state, action, next state, reward</td>
+<td>dynamics or control prediction</td>
+<td>decision-relevant state</td>
+</tr>
+</tbody>
+</table>
+<section id="the-same-abstraction-across-fields" class="level3">
+<h3 class="anchored" data-anchor-id="the-same-abstraction-across-fields">The same abstraction across fields</h3>
+<p><a href="../../notes/tokenization.html">Tokenization</a> chooses the discrete or continuous units an encoder consumes; representation learning chooses the geometry and information carried by their contextual states. The same principles then recur across domains:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Domain</th>
+<th>Observation</th>
+<th>Useful equivalence or prediction</th>
+<th>Typical representation</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Language</td>
+<td>token sequence</td>
+<td>masked/next token, paraphrase, document–query relevance</td>
+<td>contextual token states or pooled text embedding</td>
+</tr>
+<tr class="even">
+<td>Vision</td>
+<td>patches or pixels</td>
+<td>augmented views, masked regions, image–caption pairing</td>
+<td>global image vector plus local patch features</td>
+</tr>
+<tr class="odd">
+<td>Audio/video</td>
+<td>waveform, frames, or codes</td>
+<td>masked spans, temporal continuation, synchronized modalities</td>
+<td>time-indexed features and pooled clip embedding</td>
+</tr>
+<tr class="even">
+<td>Recommendation</td>
+<td>sparse user/item IDs and event sequence</td>
+<td>click/purchase pairs, next item, co-consumption</td>
+<td>user and item vectors in a retrieval space</td>
+</tr>
+<tr class="odd">
+<td>Graphs</td>
+<td>nodes, edges, and attributes</td>
+<td>neighborhoods, masked nodes/edges, graph identity</td>
+<td>node, edge, or whole-graph embedding</td>
+</tr>
+<tr class="even">
+<td>Control</td>
+<td>state/action trajectory</td>
+<td>next state, reward, reachability, behavioral similarity</td>
+<td>compact decision-relevant state</td>
+</tr>
+</tbody>
+</table>
+<p>The equivalence relation must match the product. In a two-tower recommender, dot-product geometry is chosen because approximate nearest-neighbor retrieval must cheaply recover relevant items. In control, two observations that look different may deserve the same state representation if they imply the same rewards and transition behavior.</p>
+</section>
+<section id="supervised-representations" class="level3">
+<h3 class="anchored" data-anchor-id="supervised-representations">Supervised representations</h3>
+<p>If <span class="math inline">\(z=f_\theta(x)\)</span> feeds a classifier <span class="math inline">\(p_\phi(y\mid z)\)</span>, minimizing</p>
+<p><span class="math display">\[
+-\mathbb E\log p_\phi(y\mid f_\theta(x))
+\]</span></p>
+<p>encourages <span class="math inline">\(z\)</span> to make the training labels predictable. The labels define the equivalence classes. This is powerful but narrow: two dog breeds are encouraged to separate even when another task only needs “dog,” and variations within one class can disappear even when they matter elsewhere.</p>
+<p>Metric-learning losses instead directly specify local geometry. A triplet loss, for example, requires an anchor <span class="math inline">\(a\)</span> to be closer to a positive <span class="math inline">\(p\)</span> than a negative <span class="math inline">\(n\)</span> by a margin <span class="math inline">\(m\)</span>:</p>
+<p><span class="math display">\[
+\mathcal L_{\text{triplet}}
+=
+\left[
+d(z_a,z_p)-d(z_a,z_n)+m
+\right]_+.
+\]</span></p>
+<p>The sampling policy often matters as much as the formula because easy negatives provide little signal and false negatives teach the wrong geometry.</p>
+</section>
+</section>
+<section id="contrastive-learning" class="level2">
+<h2 class="anchored" data-anchor-id="contrastive-learning">Contrastive Learning</h2>
+<p>Let <span class="math inline">\(z_i\)</span> and <span class="math inline">\(z_i^+\)</span> be embeddings of two views declared equivalent, and let the other examples in a batch act as negatives. An InfoNCE loss is</p>
+<p><span class="math display">\[
+\mathcal L_i
+=
+-\log
+\frac{\exp(\operatorname{sim}(z_i,z_i^+)/\tau)}
+{\sum_j\exp(\operatorname{sim}(z_i,z_j)/\tau)}.
+\]</span></p>
+<p>It combines:</p>
+<ul>
+<li><strong>alignment:</strong> positive views should be close</li>
+<li><strong>uniformity/separation:</strong> the population should not collapse to one point</li>
+</ul>
+<p>Under its sampling assumptions, InfoNCE also gives the mutual-information lower bound <span class="math inline">\(I\ge \log N-\mathcal L_{\text{NCE}}\)</span>, where <span class="math inline">\(N\)</span> is the number of candidates. This interpretation is useful but incomplete: downstream quality depends on the view construction and representation geometry, not just on making the bound large.</p>
+<div id="868a4549" class="cell" data-execution_count="2">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch.nn.functional <span class="im">as</span> F</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> symmetric_info_nce(view_a, view_b, temperature<span class="op">=</span><span class="fl">0.1</span>):</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Minimal in-batch contrastive loss for paired representations."""</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    view_a <span class="op">=</span> F.normalize(view_a, dim<span class="op">=-</span><span class="dv">1</span>)</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    view_b <span class="op">=</span> F.normalize(view_b, dim<span class="op">=-</span><span class="dv">1</span>)</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    logits <span class="op">=</span> view_a <span class="op">@</span> view_b.T <span class="op">/</span> temperature</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    labels <span class="op">=</span> torch.arange(logits.shape[<span class="dv">0</span>], device<span class="op">=</span>logits.device)</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fl">0.5</span> <span class="op">*</span> (</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>        F.cross_entropy(logits, labels)</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>        <span class="op">+</span> F.cross_entropy(logits.T, labels)</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>base <span class="op">=</span> F.normalize(torch.randn(<span class="dv">16</span>, <span class="dv">32</span>), dim<span class="op">=-</span><span class="dv">1</span>)</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>matching <span class="op">=</span> base <span class="op">+</span> <span class="fl">0.01</span> <span class="op">*</span> torch.randn_like(base)</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>shuffled <span class="op">=</span> matching[torch.randperm(matching.shape[<span class="dv">0</span>])]</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> symmetric_info_nce(base, matching) <span class="op">&lt;</span> symmetric_info_nce(base, shuffled)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<section id="augmentations-define-semantics" class="level3">
+<h3 class="anchored" data-anchor-id="augmentations-define-semantics">Augmentations define semantics</h3>
+<p>SimCLR made this especially visible: augmentation composition is not incidental regularization; it defines the pretext task. If cropping removes the object or if color is label-relevant, forcing invariance creates a false positive. If two different instances share semantics, treating all other batch items as negatives creates false negatives.</p>
+<p>The correct positive-pair policy is an assumption about the world.</p>
+</section>
+</section>
+<section id="learning-without-negatives" class="level2">
+<h2 class="anchored" data-anchor-id="learning-without-negatives">Learning Without Negatives</h2>
+<p>If two views are merely pulled together, the constant representation is a global optimum. Negative-free methods prevent collapse in different ways:</p>
+<ul>
+<li><strong>BYOL:</strong> an online network predicts a stop-gradient target generated by a slowly moving teacher; predictor and update asymmetry are essential parts of the system.</li>
+<li><strong>Barlow Twins:</strong> makes the cross-correlation of two views approach the identity, combining invariance with redundancy reduction.</li>
+<li><strong>VICReg:</strong> explicitly combines view invariance, per-dimension variance, and covariance regularization.</li>
+<li><strong>DINO-style self-distillation:</strong> centers and sharpens teacher distributions while using a momentum teacher and multi-crop views.</li>
+</ul>
+<p>For a batch representation <span class="math inline">\(Z\in\mathbb R^{B\times d}\)</span>, VICReg can be summarized as</p>
+<p><span class="math display">\[
+\mathcal L
+=
+\lambda\mathcal L_{\text{inv}}
++\mu\mathcal L_{\text{var}}
++\nu\mathcal L_{\text{cov}}.
+\]</span></p>
+<p>The terms respectively align paired views, keep each dimension’s batch standard deviation above a threshold, and penalize off-diagonal covariance.</p>
+<div id="68381d05" class="cell" data-execution_count="3">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> off_diagonal(matrix):</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    size <span class="op">=</span> matrix.shape[<span class="dv">0</span>]</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> matrix.flatten()[:<span class="op">-</span><span class="dv">1</span>].view(size <span class="op">-</span> <span class="dv">1</span>, size <span class="op">+</span> <span class="dv">1</span>)[:, <span class="dv">1</span>:].flatten()</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> vicreg_loss(view_a, view_b, variance_target<span class="op">=</span><span class="fl">1.0</span>, eps<span class="op">=</span><span class="fl">1e-4</span>):</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Compact VICReg objective with equal weights for exposition."""</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    invariance <span class="op">=</span> F.mse_loss(view_a, view_b)</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    std_a <span class="op">=</span> torch.sqrt(view_a.var(dim<span class="op">=</span><span class="dv">0</span>) <span class="op">+</span> eps)</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    std_b <span class="op">=</span> torch.sqrt(view_b.var(dim<span class="op">=</span><span class="dv">0</span>) <span class="op">+</span> eps)</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>    variance <span class="op">=</span> F.relu(variance_target <span class="op">-</span> std_a).mean()</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>    variance <span class="op">+=</span> F.relu(variance_target <span class="op">-</span> std_b).mean()</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>    centered_a <span class="op">=</span> view_a <span class="op">-</span> view_a.mean(dim<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>    centered_b <span class="op">=</span> view_b <span class="op">-</span> view_b.mean(dim<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>    covariance_a <span class="op">=</span> centered_a.T <span class="op">@</span> centered_a <span class="op">/</span> (view_a.shape[<span class="dv">0</span>] <span class="op">-</span> <span class="dv">1</span>)</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>    covariance_b <span class="op">=</span> centered_b.T <span class="op">@</span> centered_b <span class="op">/</span> (view_b.shape[<span class="dv">0</span>] <span class="op">-</span> <span class="dv">1</span>)</span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>    covariance <span class="op">=</span> off_diagonal(covariance_a).square().mean()</span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>    covariance <span class="op">+=</span> off_diagonal(covariance_b).square().mean()</span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> invariance <span class="op">+</span> variance <span class="op">+</span> covariance</span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>noncollapsed <span class="op">=</span> torch.randn(<span class="dv">64</span>, <span class="dv">16</span>)</span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>constant <span class="op">=</span> torch.zeros_like(noncollapsed)</span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> vicreg_loss(constant, constant) <span class="op">&gt;</span> vicreg_loss(</span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>    noncollapsed, noncollapsed <span class="op">+</span> <span class="fl">0.01</span> <span class="op">*</span> torch.randn_like(noncollapsed)</span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Collapse has more than one form
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><strong>Complete collapse</strong> maps every example to the same vector. <strong>Dimensional collapse</strong> uses only a low-rank subspace. A representation can also avoid both while learning a shortcut that transfers poorly. Batch variance alone therefore does not prove semantic quality.</p>
+</div>
+</div>
+</section>
+<section id="masked-and-predictive-representations" class="level2">
+<h2 class="anchored" data-anchor-id="masked-and-predictive-representations">Masked and Predictive Representations</h2>
+<p>Reconstruction becomes a stronger abstraction pressure when the model sees only partial context.</p>
+<section id="masked-observation-prediction" class="level3">
+<h3 class="anchored" data-anchor-id="masked-observation-prediction">Masked observation prediction</h3>
+<p>BERT predicts masked tokens from bidirectional context. MAE masks a high fraction of image patches, encodes only visible patches, and uses a lightweight decoder to reconstruct missing pixels. In general,</p>
+<p><span class="math display">\[
+\mathcal L_{\text{mask}}
+=
+\sum_{i\in\mathcal M}
+d\left(y_i,
+g_\phi(f_\theta(x_{\setminus\mathcal M}),i)
+\right).
+\]</span></p>
+<p>The target <span class="math inline">\(y_i\)</span> matters. Pixels emphasize appearance; discrete tokens depend on the tokenizer; learned latent targets can emphasize more predictable semantic structure. Mask ratio and mask shape determine how much context must be integrated rather than copied.</p>
+</section>
+<section id="predict-in-representation-space" class="level3">
+<h3 class="anchored" data-anchor-id="predict-in-representation-space">Predict in representation space</h3>
+<p>Joint-embedding predictive architectures avoid reconstructing every observation detail. I-JEPA encodes a context region and predicts the teacher representation of masked target blocks:</p>
+<p><span class="math display">\[
+\mathcal L_{\text{JEPA}}
+=
+\sum_{j}
+d\left(
+p_\psi(f_\theta(x_{\text{context}}),m_j),
+\operatorname{sg}\left[f_{\bar\theta}(x_{\text{target},j})\right]
+\right).
+\]</span></p>
+<p>Predicting in latent space says that unpredictable pixel-level detail need not be modeled. The masking strategy still defines the abstraction: large target blocks and spatially distributed context encourage semantic, nonlocal features.</p>
+</section>
+<section id="autoregressive-prediction" class="level3">
+<h3 class="anchored" data-anchor-id="autoregressive-prediction">Autoregressive prediction</h3>
+<p>Next-token prediction is also representation learning. Hidden states must encode information that helps predict the continuation:</p>
+<p><span class="math display">\[
+\mathcal L_{\text{NTP}}
+=
+-\sum_t\log p(x_t\mid x_{&lt;t}).
+\]</span></p>
+<p>Its great advantage is a universal training signal over raw sequences. Its representation is shaped by tokenization, causal direction, and the demands of generation; the last layer is not automatically the best frozen embedding for every downstream task.</p>
+</section>
+</section>
+<section id="cross-modal-alignment" class="level2">
+<h2 class="anchored" data-anchor-id="cross-modal-alignment">Cross-Modal Alignment</h2>
+<p>Paired modalities provide supervision about shared latent causes. CLIP learns image and text encoders by identifying matching pairs in a batch. This replaces a fixed class vocabulary with concepts expressible through language and enables zero-shot classification and retrieval.</p>
+<p>SigLIP replaces batch-normalized softmax competition with an independent binary classification loss for each image–text pair:</p>
+<p><span class="math display">\[
+\mathcal L_{\text{sigmoid}}
+=
+\sum_{i,j}
+\log\left(
+1+\exp[-y_{ij}(t\,z_i^Tv_j+b)]
+\right),
+\]</span></p>
+<p>where <span class="math inline">\(y_{ij}=1\)</span> for a matched pair and <span class="math inline">\(-1\)</span> otherwise. This removes the need for a global softmax over all pairs.</p>
+<p>Cross-modal alignment preserves the intersection of what the modalities make predictable. Caption supervision gives strong semantics, but captions may omit precise geometry, texture, or unmentioned objects. Recent systems therefore mix objectives rather than expect one loss to provide every property.</p>
+</section>
+<section id="the-modern-view-objective-mixtures-and-data" class="level2">
+<h2 class="anchored" data-anchor-id="the-modern-view-objective-mixtures-and-data">The Modern View: Objective Mixtures and Data</h2>
+<p>The field has moved from searching for one universal self-supervised loss toward assembling complementary learning signals.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Method family</th>
+<th>Core pressure</th>
+<th>Anti-collapse / information mechanism</th>
+<th>Characteristic bias</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>SimCLR / CPC</td>
+<td>distinguish a positive from negatives</td>
+<td>negative examples</td>
+<td>augmentation- or context-defined invariance</td>
+</tr>
+<tr class="even">
+<td>BYOL / DINO</td>
+<td>match a teacher across views</td>
+<td>optimization asymmetry and teacher dynamics</td>
+<td>global semantic similarity</td>
+</tr>
+<tr class="odd">
+<td>VICReg / Barlow Twins</td>
+<td>align views</td>
+<td>explicit variance and decorrelation</td>
+<td>nonredundant batch features</td>
+</tr>
+<tr class="even">
+<td>MAE</td>
+<td>reconstruct masked observations</td>
+<td>reconstruction target</td>
+<td>retains information useful for filling gaps</td>
+</tr>
+<tr class="odd">
+<td>I-JEPA</td>
+<td>predict masked latent targets</td>
+<td>teacher targets and context prediction</td>
+<td>predictable semantic structure</td>
+</tr>
+<tr class="even">
+<td>CLIP / SigLIP</td>
+<td>align paired modalities</td>
+<td>cross-example or pairwise discrimination</td>
+<td>shared language–vision semantics</td>
+</tr>
+<tr class="odd">
+<td>DINOv2</td>
+<td>scaled self-distillation and masked objectives</td>
+<td>teacher–student recipe plus curated data</td>
+<td>general global and dense visual features</td>
+</tr>
+<tr class="even">
+<td>SigLIP 2</td>
+<td>image–text alignment plus captioning, self-distillation, and masked prediction</td>
+<td>complementary objectives and online curation</td>
+<td>multilingual, semantic, and localized features</td>
+</tr>
+</tbody>
+</table>
+<p>Two current lessons are easy to miss:</p>
+<ol type="1">
+<li><strong>The dataset defines the representation.</strong> DINOv2 emphasizes a diverse, curated image pipeline; modern contrastive systems increasingly treat filtering, deduplication, and mixture design as part of the learning method.</li>
+<li><strong>Global and local features need different pressure.</strong> Classification, retrieval, localization, and dense prediction do not reward identical invariances. DINOv2 and SigLIP 2 explicitly target broader transfer than a single global benchmark.</li>
+</ol>
+<section id="representation-capacity-is-also-a-systems-choice" class="level3">
+<h3 class="anchored" data-anchor-id="representation-capacity-is-also-a-systems-choice">Representation capacity is also a systems choice</h3>
+<p>A fixed embedding dimension forces every downstream application to pay the same storage, communication, and retrieval cost. Matryoshka Representation Learning trains multiple nested prefixes of one vector to be useful:</p>
+<p><span class="math display">\[
+\mathcal L_{\text{MRL}}
+=
+\sum_{m\in\mathcal M}
+\alpha_m
+\mathcal L\bigl(z_{1:m}\bigr).
+\]</span></p>
+<p>The first dimensions learn a coarse representation, while longer prefixes add detail. One model can therefore trade accuracy for latency or index size at deployment without training an independent encoder for every dimension. This is a modern example of designing a representation jointly with its downstream systems constraints.</p>
+</section>
+</section>
+<section id="identifiability-and-what-the-coordinates-mean" class="level2">
+<h2 class="anchored" data-anchor-id="identifiability-and-what-the-coordinates-mean">Identifiability and What the Coordinates Mean</h2>
+<p>If an objective uses only a decoder <span class="math inline">\(g(f(x))\)</span>, an invertible transformation of the latent may leave the objective unchanged. Contrastive objectives based on dot products have their own rotational symmetries. Consequently:</p>
+<ul>
+<li>a latent dimension is not automatically a human concept</li>
+<li>two independently trained models can encode similar structure in different bases</li>
+<li>probing a coordinate does not establish a causal or disentangled factor</li>
+<li>high downstream accuracy does not prove that nuisance information is absent</li>
+</ul>
+<p>Disentanglement cannot generally be recovered from observational data without inductive biases or supervision. Interpretability claims must state which equivalences the training objective leaves unresolved.</p>
+</section>
+<section id="how-to-evaluate-a-representation" class="level2">
+<h2 class="anchored" data-anchor-id="how-to-evaluate-a-representation">How to Evaluate a Representation</h2>
+<p>No single score establishes representation quality.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Evaluation</th>
+<th>What is held fixed?</th>
+<th>What it tests</th>
+<th>Caveat</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Linear probe</td>
+<td>encoder</td>
+<td>linear accessibility</td>
+<td>sensitive to optimization and feature normalization</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(k\)</span>-NN</td>
+<td>encoder and nearly all learning capacity</td>
+<td>local geometry</td>
+<td>distance metric and <span class="math inline">\(k\)</span> matter</td>
+</tr>
+<tr class="odd">
+<td>Few-shot probe</td>
+<td>encoder</td>
+<td>label efficiency</td>
+<td>high variance across task samples</td>
+</tr>
+<tr class="even">
+<td>Full fine-tuning</td>
+<td>little</td>
+<td>initialization and adaptability</td>
+<td>can hide weak frozen features</td>
+</tr>
+<tr class="odd">
+<td>Retrieval</td>
+<td>encoder</td>
+<td>cross-example or cross-modal geometry</td>
+<td>benchmark negatives may be unrepresentative</td>
+</tr>
+<tr class="even">
+<td>Dense prediction</td>
+<td>often encoder initially</td>
+<td>local spatial information</td>
+<td>global embeddings may look deceptively strong elsewhere</td>
+</tr>
+<tr class="odd">
+<td>Shift/robustness tests</td>
+<td>training distribution</td>
+<td>stability of claimed invariances</td>
+<td>shifts must reflect the deployment setting</td>
+</tr>
+</tbody>
+</table>
+<p>Also inspect the representation itself:</p>
+<ul>
+<li>per-dimension variance and covariance</li>
+<li>singular-value spectrum and effective rank</li>
+<li>positive-pair alignment and population spread</li>
+<li>nearest neighbors and failure cases</li>
+<li>sensitivity to transformations that should be invariant or equivariant</li>
+<li>leakage of nuisance or protected attributes</li>
+</ul>
+<p>The best evaluation is a matrix of tasks, data regimes, and adaptation budgets that matches the intended use.</p>
+</section>
+<section id="a-design-checklist" class="level2">
+<h2 class="anchored" data-anchor-id="a-design-checklist">A Design Checklist</h2>
+<p>Before choosing an objective, answer:</p>
+<ol type="1">
+<li><strong>What future decisions should <span class="math inline">\(z\)</span> support?</strong> This defines sufficiency.</li>
+<li><strong>Which transformations preserve meaning?</strong> These define invariances.</li>
+<li><strong>Which transformations must remain observable?</strong> These call for equivariance or local features.</li>
+<li><strong>Where do positive relations come from?</strong> Labels, views, context, time, or paired modalities each encode different assumptions.</li>
+<li><strong>What prevents collapse or trivial copying?</strong> Negatives, bottlenecks, prediction, variance, or teacher asymmetry must do real work.</li>
+<li><strong>Which target is predicted?</strong> Pixels, tokens, latent codes, and future states preserve different information.</li>
+<li><strong>How will transfer be measured?</strong> Use the same adaptation and distribution conditions expected downstream.</li>
+</ol>
+</section>
+<section id="interview-questions" class="level2">
+<h2 class="anchored" data-anchor-id="interview-questions">Interview Questions</h2>
+<ul>
+<li>Why is an invertible encoding not automatically a useful representation?</li>
+<li>Derive the graph-Laplacian smoothness identity <span class="math inline">\(v^TLv\)</span>.</li>
+<li>How do spectral embeddings turn a similarity assumption into coordinates?</li>
+<li>Show why linear squared-error autoencoders recover the PCA subspace.</li>
+<li>Why are nonlinear autoencoder latents non-identifiable?</li>
+<li>Contrast invariance and equivariance with an example where invariance is harmful.</li>
+<li>Why does positive-pair alignment alone collapse?</li>
+<li>How do InfoNCE, BYOL, and VICReg prevent collapse differently?</li>
+<li>What assumptions are required to interpret InfoNCE as a mutual-information lower bound?</li>
+<li>Why are augmentations a form of supervision?</li>
+<li>Compare reconstructing pixels with predicting latent targets.</li>
+<li>Why might an image–text model underperform a vision-only model on dense localization despite stronger semantic alignment?</li>
+<li>What does a linear probe measure, and what does it fail to measure?</li>
+<li>Why can two equally useful representations disagree coordinate by coordinate?</li>
+</ul>
+</section>
+<section id="exercises" class="level2">
+<h2 class="anchored" data-anchor-id="exercises">Exercises</h2>
+<ul class="task-list">
+<li><label><input type="checkbox">Derive PCA from both reconstruction error and maximum retained variance.</label></li>
+<li><label><input type="checkbox">Build a nearest-neighbor graph for two concentric circles and visualize its first nontrivial Laplacian eigenvectors.</label></li>
+<li><label><input type="checkbox">Train a small autoencoder with and without a bottleneck and inspect whether reconstruction quality predicts linear-probe quality.</label></li>
+<li><label><input type="checkbox">Vary InfoNCE temperature and batch size; inspect alignment, effective rank, and retrieval accuracy separately.</label></li>
+<li><label><input type="checkbox">Construct a harmful augmentation that erases the downstream label.</label></li>
+<li><label><input type="checkbox">Remove each VICReg term and diagnose complete or dimensional collapse.</label></li>
+<li><label><input type="checkbox">Compare pixel reconstruction, masked-token prediction, and latent prediction using the same encoder and downstream protocol.</label></li>
+</ul>
+</section>
+<section id="primary-references" class="level2">
+<h2 class="anchored" data-anchor-id="primary-references">Primary References</h2>
+<ul>
+<li>Pradeep Ravikumar, <em>Representation Learning</em>, 10-716 Advanced Machine Learning course notes (the supplied <code>Representation_Learning.pdf</code>)</li>
+<li><a href="https://arxiv.org/abs/0711.0189">A Tutorial on Spectral Clustering</a></li>
+<li><a href="https://arxiv.org/abs/1807.03748">Representation Learning with Contrastive Predictive Coding</a></li>
+<li><a href="https://arxiv.org/abs/1810.04805">BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding</a></li>
+<li><a href="https://arxiv.org/abs/2002.05709">A Simple Framework for Contrastive Learning of Visual Representations</a></li>
+<li><a href="https://arxiv.org/abs/2006.07733">Bootstrap Your Own Latent</a></li>
+<li><a href="https://arxiv.org/abs/2103.00020">Learning Transferable Visual Models From Natural Language Supervision</a></li>
+<li><a href="https://arxiv.org/abs/2103.03230">Barlow Twins: Self-Supervised Learning via Redundancy Reduction</a></li>
+<li><a href="https://arxiv.org/abs/2105.04906">VICReg</a></li>
+<li><a href="https://arxiv.org/abs/2111.06377">Masked Autoencoders Are Scalable Vision Learners</a></li>
+<li><a href="https://arxiv.org/abs/2205.13147">Matryoshka Representation Learning</a></li>
+<li><a href="https://arxiv.org/abs/2212.03533">Text Embeddings by Weakly-Supervised Contrastive Pre-training</a></li>
+<li><a href="https://arxiv.org/abs/2301.08243">Self-Supervised Learning from Images with a Joint-Embedding Predictive Architecture</a></li>
+<li><a href="https://arxiv.org/abs/2303.15343">Sigmoid Loss for Language Image Pre-Training</a></li>
+<li><a href="https://arxiv.org/abs/2304.07193">DINOv2: Learning Robust Visual Features without Supervision</a></li>
+<li><a href="https://arxiv.org/abs/2502.14786">SigLIP 2</a></li>
+</ul>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/threeeyelidds\.github\.io\/ml-interview-notes\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

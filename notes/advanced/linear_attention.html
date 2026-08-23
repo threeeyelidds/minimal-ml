@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Linear Attention – Minimal ML</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-f83c246346592b24d02aa84ae3974412.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../../styles.css">
+<link rel="stylesheet" href="../../colors.css">
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">Minimal ML</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../notes/index.html"> 
+<span class="menu-text">Notes</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../posts/index.html"> 
+<span class="menu-text">Blog</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#motivation" id="toc-motivation" class="nav-link active" data-scroll-target="#motivation">Motivation</a></li>
+  <li><a href="#why-softmax-attention-cannot-simply-be-reordered" id="toc-why-softmax-attention-cannot-simply-be-reordered" class="nav-link" data-scroll-target="#why-softmax-attention-cannot-simply-be-reordered">Why Softmax Attention Cannot Simply Be Reordered</a></li>
+  <li><a href="#kernel-factorization" id="toc-kernel-factorization" class="nav-link" data-scroll-target="#kernel-factorization">Kernel Factorization</a></li>
+  <li><a href="#causal-linear-attention-as-a-recurrence" id="toc-causal-linear-attention-as-a-recurrence" class="nav-link" data-scroll-target="#causal-linear-attention-as-a-recurrence">Causal Linear Attention as a Recurrence</a></li>
+  <li><a href="#complexity" id="toc-complexity" class="nav-link" data-scroll-target="#complexity">Complexity</a></li>
+  <li><a href="#minimal-causal-implementation" id="toc-minimal-causal-implementation" class="nav-link" data-scroll-target="#minimal-causal-implementation">Minimal Causal Implementation</a></li>
+  <li><a href="#choosing-the-feature-map" id="toc-choosing-the-feature-map" class="nav-link" data-scroll-target="#choosing-the-feature-map">Choosing the Feature Map</a></li>
+  <li><a href="#what-is-gained-and-lost" id="toc-what-is-gained-and-lost" class="nav-link" data-scroll-target="#what-is-gained-and-lost">What Is Gained and Lost?</a>
+  <ul class="collapse">
+  <li><a href="#advantages" id="toc-advantages" class="nav-link" data-scroll-target="#advantages">Advantages</a></li>
+  <li><a href="#limitations" id="toc-limitations" class="nav-link" data-scroll-target="#limitations">Limitations</a></li>
+  </ul></li>
+  <li><a href="#interview-questions" id="toc-interview-questions" class="nav-link" data-scroll-target="#interview-questions">Interview Questions</a></li>
+  <li><a href="#exercises" id="toc-exercises" class="nav-link" data-scroll-target="#exercises">Exercises</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Linear Attention</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="motivation" class="level2">
+<h2 class="anchored" data-anchor-id="motivation">Motivation</h2>
+<p>Standard attention for one head is</p>
+<p><span class="math display">\[
+\operatorname{Attention}(Q,K,V)
+=
+\operatorname{softmax}(QK^T)V.
+\]</span></p>
+<p>For sequence length <span class="math inline">\(T\)</span>, forming the score matrix requires <span class="math inline">\(O(T^2)\)</span> pairwise interactions and <span class="math inline">\(O(T^2)\)</span> attention storage in a straightforward implementation. FlashAttention avoids materializing this matrix in high-bandwidth memory, but it does not change the quadratic arithmetic of dense attention.</p>
+<p><strong>Linear attention</strong> changes the attention function so computation can be reassociated. Its cost becomes linear in sequence length when the feature dimension is treated as fixed.</p>
+</section>
+<section id="why-softmax-attention-cannot-simply-be-reordered" class="level2">
+<h2 class="anchored" data-anchor-id="why-softmax-attention-cannot-simply-be-reordered">Why Softmax Attention Cannot Simply Be Reordered</h2>
+<p>Matrix multiplication is associative:</p>
+<p><span class="math display">\[
+(QK^T)V=Q(K^TV).
+\]</span></p>
+<p>But row-wise softmax sits between the two products:</p>
+<p><span class="math display">\[
+\operatorname{softmax}(QK^T)V
+\neq
+Q\operatorname{softmax}(K^TV).
+\]</span></p>
+<p>The softmax normalization for query <span class="math inline">\(q_i\)</span> depends on all of its scores against the keys. Moving parentheses alone therefore does not produce linear softmax attention.</p>
+</section>
+<section id="kernel-factorization" class="level2">
+<h2 class="anchored" data-anchor-id="kernel-factorization">Kernel Factorization</h2>
+<p>Generalized attention can use a non-negative similarity function:</p>
+<p><span class="math display">\[
+o_i
+=
+\frac{
+\sum_{j=1}^{T}\operatorname{sim}(q_i,k_j)v_j
+}{
+\sum_{j=1}^{T}\operatorname{sim}(q_i,k_j)
+}.
+\]</span></p>
+<p>Suppose the similarity factorizes through a feature map <span class="math inline">\(\phi:\mathbb R^{d_h}\rightarrow\mathbb R^r\)</span>:</p>
+<p><span class="math display">\[
+\operatorname{sim}(q,k)=\phi(q)^T\phi(k).
+\]</span></p>
+<p>Then the numerator can be reassociated:</p>
+<p><span class="math display">\[
+\begin{aligned}
+\sum_j \left[\phi(q_i)^T\phi(k_j)\right]v_j
+&amp;=
+\phi(q_i)^T
+\left(\sum_j\phi(k_j)v_j^T\right).
+\end{aligned}
+\]</span></p>
+<p>Define the sequence summaries</p>
+<p><span class="math display">\[
+S=\sum_j\phi(k_j)v_j^T
+\in\mathbb R^{r\times d_v},
+\qquad
+z=\sum_j\phi(k_j)
+\in\mathbb R^r.
+\]</span></p>
+<p>The output is</p>
+<p><span class="math display">\[
+\boxed{
+o_i
+=
+\frac{\phi(q_i)^TS}{\phi(q_i)^Tz}
+}.
+\]</span></p>
+<p>No <span class="math inline">\(T\times T\)</span> matrix is required.</p>
+</section>
+<section id="causal-linear-attention-as-a-recurrence" class="level2">
+<h2 class="anchored" data-anchor-id="causal-linear-attention-as-a-recurrence">Causal Linear Attention as a Recurrence</h2>
+<p>For causal attention, query position <span class="math inline">\(i\)</span> may use only keys and values at <span class="math inline">\(j\leq i\)</span>. Replace the full summaries with prefix states:</p>
+<p><span class="math display">\[
+S_i=S_{i-1}+\phi(k_i)v_i^T,
+\]</span></p>
+<p><span class="math display">\[
+z_i=z_{i-1}+\phi(k_i),
+\]</span></p>
+<p><span class="math display">\[
+o_i
+=
+\frac{\phi(q_i)^TS_i}{\phi(q_i)^Tz_i+\varepsilon}.
+\]</span></p>
+<p>The causal mask is enforced by the update order, not by constructing a mask matrix. During autoregressive decoding, <span class="math inline">\((S_i,z_i)\)</span> is a fixed-size recurrent state. This makes the connection to an RNN explicit: the sequence history is compressed into state rather than retained as a growing KV cache.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Inclusive versus exclusive recurrence
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The equations update the state with <span class="math inline">\((k_i,v_i)\)</span> before reading it, so token <span class="math inline">\(i\)</span> can attend to itself. Reading before updating would implement a strictly previous-token convention.</p>
+</div>
+</div>
+</section>
+<section id="complexity" class="level2">
+<h2 class="anchored" data-anchor-id="complexity">Complexity</h2>
+<p>Let query/key feature width be <span class="math inline">\(r\)</span> and value width be <span class="math inline">\(d_v\)</span>.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 27%">
+<col style="width: 36%">
+<col style="width: 36%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Method</th>
+<th style="text-align: right;">Sequence work per head</th>
+<th style="text-align: right;">Attention state</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Dense softmax attention</td>
+<td style="text-align: right;"><span class="math inline">\(O(T^2(d_h+d_v))\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(O(T^2)\)</span> naïvely; tiled by FlashAttention</td>
+</tr>
+<tr class="even">
+<td>Linear attention</td>
+<td style="text-align: right;"><span class="math inline">\(O(Trd_v)\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(O(rd_v+r)\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>Linear dependence on <span class="math inline">\(T\)</span> is not automatically faster. If <span class="math inline">\(r d_v\)</span> is large, sequences are short, or the implementation uses a slow sequential loop, dense attention with optimized kernels may win in wall-clock time.</p>
+</section>
+<section id="minimal-causal-implementation" class="level2">
+<h2 class="anchored" data-anchor-id="minimal-causal-implementation">Minimal Causal Implementation</h2>
+<p>The positive feature map</p>
+<p><span class="math display">\[
+\phi(x)=\operatorname{ELU}(x)+1
+\]</span></p>
+<p>makes every kernel score non-negative. This is a pedagogical kernel attention implementation, not an approximation of ordinary softmax attention.</p>
+<div id="109054ad" class="cell" data-execution_count="1">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch.nn.functional <span class="im">as</span> F</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> positive_feature_map(x):</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> F.elu(x) <span class="op">+</span> <span class="fl">1.0</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> causal_linear_attention(q, k, v, eps<span class="op">=</span><span class="fl">1e-6</span>):</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co">    q, k: [batch, heads, time, feature_dim]</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="co">    v:    [batch, heads, time, value_dim]</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="co">    """</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    q_features <span class="op">=</span> positive_feature_map(q)</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    k_features <span class="op">=</span> positive_feature_map(k)</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    batch, heads, time, feature_dim <span class="op">=</span> q_features.shape</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    value_dim <span class="op">=</span> v.shape[<span class="op">-</span><span class="dv">1</span>]</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>    state <span class="op">=</span> q.new_zeros(batch, heads, feature_dim, value_dim)</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>    normalizer_state <span class="op">=</span> q.new_zeros(batch, heads, feature_dim)</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>    outputs <span class="op">=</span> []</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> index <span class="kw">in</span> <span class="bu">range</span>(time):</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>        k_t <span class="op">=</span> k_features[:, :, index]</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>        v_t <span class="op">=</span> v[:, :, index]</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>        q_t <span class="op">=</span> q_features[:, :, index]</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>        state <span class="op">=</span> state <span class="op">+</span> torch.einsum(<span class="st">"bhr,bhd-&gt;bhrd"</span>, k_t, v_t)</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>        normalizer_state <span class="op">=</span> normalizer_state <span class="op">+</span> k_t</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>        numerator <span class="op">=</span> torch.einsum(<span class="st">"bhr,bhrd-&gt;bhd"</span>, q_t, state)</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>        denominator <span class="op">=</span> torch.einsum(</span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>            <span class="st">"bhr,bhr-&gt;bh"</span>, q_t, normalizer_state</span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>        ).unsqueeze(<span class="op">-</span><span class="dv">1</span>)</span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>        outputs.append(numerator <span class="op">/</span> denominator.clamp_min(eps))</span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> torch.stack(outputs, dim<span class="op">=</span><span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Verify the recurrence against a quadratic implementation of the <strong>same kernel</strong>, not against softmax attention:</p>
+<div id="28b000d4" class="cell" data-execution_count="2">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>torch.manual_seed(<span class="dv">0</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>q <span class="op">=</span> torch.randn(<span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">5</span>, <span class="dv">4</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>k <span class="op">=</span> torch.randn(<span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">5</span>, <span class="dv">4</span>)</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>v <span class="op">=</span> torch.randn(<span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">5</span>, <span class="dv">6</span>)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>q_features <span class="op">=</span> positive_feature_map(q)</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>k_features <span class="op">=</span> positive_feature_map(k)</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>scores <span class="op">=</span> torch.einsum(<span class="st">"bhir,bhjr-&gt;bhij"</span>, q_features, k_features)</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>causal <span class="op">=</span> torch.ones(<span class="dv">5</span>, <span class="dv">5</span>, dtype<span class="op">=</span>torch.<span class="bu">bool</span>).tril()</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>scores <span class="op">=</span> scores.masked_fill(<span class="op">~</span>causal, <span class="fl">0.0</span>)</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>expected <span class="op">=</span> torch.einsum(<span class="st">"bhij,bhjd-&gt;bhid"</span>, scores, v)</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>expected <span class="op">=</span> expected <span class="op">/</span> scores.<span class="bu">sum</span>(dim<span class="op">=-</span><span class="dv">1</span>, keepdim<span class="op">=</span><span class="va">True</span>).clamp_min(<span class="fl">1e-6</span>)</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>actual <span class="op">=</span> causal_linear_attention(q, k, v)</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>torch.testing.assert_close(actual, expected)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The Python loop makes the recurrence easy to see but prevents efficient parallel training. Production implementations use chunking, prefix scans, or specialized recurrent kernels.</p>
+</section>
+<section id="choosing-the-feature-map" class="level2">
+<h2 class="anchored" data-anchor-id="choosing-the-feature-map">Choosing the Feature Map</h2>
+<p>The feature map defines the attention kernel.</p>
+<ul>
+<li>Simple positive maps such as <code>ELU(x) + 1</code> are cheap but define a different similarity from softmax.</li>
+<li>Random-feature methods approximate the exponential softmax kernel. Increasing feature width can improve the approximation but increases compute and state.</li>
+<li>Learned features can adapt the kernel but add parameters and training dynamics.</li>
+<li>Gated or decayed variants control how old information contributes to the fixed-size state.</li>
+</ul>
+<p>The denominator matters. Omitting it produces unnormalized aggregation whose magnitude can grow with sequence length. Non-negative features make the normalizer interpretable and reduce the risk of cancellation near zero.</p>
+</section>
+<section id="what-is-gained-and-lost" class="level2">
+<h2 class="anchored" data-anchor-id="what-is-gained-and-lost">What Is Gained and Lost?</h2>
+<section id="advantages" class="level3">
+<h3 class="anchored" data-anchor-id="advantages">Advantages</h3>
+<ul>
+<li>linear sequence scaling for fixed <span class="math inline">\(r\)</span> and <span class="math inline">\(d_v\)</span></li>
+<li>constant-size decoding state instead of a KV cache that grows with context</li>
+<li>natural recurrent, streaming interpretation</li>
+<li>causal masking is implicit in the state update</li>
+</ul>
+</section>
+<section id="limitations" class="level3">
+<h3 class="anchored" data-anchor-id="limitations">Limitations</h3>
+<ul>
+<li>most feature maps do not reproduce exact softmax attention</li>
+<li>a fixed-size state can overwrite or entangle information from many tokens</li>
+<li>prefix sums can accumulate numerical error over long sequences</li>
+<li>efficient parallel training needs more than the simple recurrent loop</li>
+<li>positional information, locality, forgetting, and state capacity require explicit architectural choices</li>
+</ul>
+<p>FlashAttention and linear attention therefore solve different problems: FlashAttention computes ordinary dense attention with better memory movement; linear attention changes the operator to avoid quadratic pairwise computation.</p>
+<p><a href="../../notes/advanced/continual_intelligence_ttt.html">From Test-Time Training to Continual Intelligence</a> develops the related view that learned fast-weight updates can implement a linear-attention-like recurrent state rather than literal key-value regression.</p>
+</section>
+</section>
+<section id="interview-questions" class="level2">
+<h2 class="anchored" data-anchor-id="interview-questions">Interview Questions</h2>
+<ul>
+<li>Why can <span class="math inline">\((QK^T)V\)</span> be reassociated while <span class="math inline">\(\operatorname{softmax}(QK^T)V\)</span> cannot?</li>
+<li>Derive the <span class="math inline">\(S_i\)</span> and <span class="math inline">\(z_i\)</span> causal recurrences.</li>
+<li>In what sense is causal linear attention an RNN?</li>
+<li>Why must a quadratic reference use the same kernel for a correctness test?</li>
+<li>How does feature width trade approximation quality for state and compute?</li>
+<li>Compare the decoding state of softmax attention, linear attention, and an RNN.</li>
+<li>Why might FlashAttention outperform linear attention at moderate lengths?</li>
+</ul>
+</section>
+<section id="exercises" class="level2">
+<h2 class="anchored" data-anchor-id="exercises">Exercises</h2>
+<ul class="task-list">
+<li><label><input type="checkbox">Implement the non-causal vectorized form without a Python loop.</label></li>
+<li><label><input type="checkbox">Change the code to read state before updating it and explain the mask.</label></li>
+<li><label><input type="checkbox">Compare outputs from the ELU kernel and softmax attention.</label></li>
+<li><label><input type="checkbox">Add an exponential decay to the recurrent state.</label></li>
+<li><label><input type="checkbox">Measure runtime and memory as sequence length grows.</label></li>
+</ul>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/threeeyelidds\.github\.io\/ml-interview-notes\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

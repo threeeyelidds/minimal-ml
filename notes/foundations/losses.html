@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Loss Functions – Minimal ML</title>
+<title>Discriminative Losses from First Principles – Minimal ML</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -188,18 +188,39 @@ window.Quarto = {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#logits-probabilities-and-numerical-stability" id="toc-logits-probabilities-and-numerical-stability" class="nav-link active" data-scroll-target="#logits-probabilities-and-numerical-stability">Logits, Probabilities, and Numerical Stability</a></li>
-  <li><a href="#multiclass-cross-entropy" id="toc-multiclass-cross-entropy" class="nav-link" data-scroll-target="#multiclass-cross-entropy">Multiclass Cross-Entropy</a>
+  <li><a href="#a-loss-encodes-a-statistical-decision" id="toc-a-loss-encodes-a-statistical-decision" class="nav-link active" data-scroll-target="#a-loss-encodes-a-statistical-decision">1. A Loss Encodes a Statistical Decision</a>
   <ul class="collapse">
-  <li><a href="#minimal-stable-implementation" id="toc-minimal-stable-implementation" class="nav-link" data-scroll-target="#minimal-stable-implementation">Minimal stable implementation</a></li>
+  <li><a href="#a-design-checklist" id="toc-a-design-checklist" class="nav-link" data-scroll-target="#a-design-checklist">A design checklist</a></li>
   </ul></li>
-  <li><a href="#binary-cross-entropy" id="toc-binary-cross-entropy" class="nav-link" data-scroll-target="#binary-cross-entropy">Binary Cross-Entropy</a>
+  <li><a href="#likelihood-turns-statistical-assumptions-into-losses" id="toc-likelihood-turns-statistical-assumptions-into-losses" class="nav-link" data-scroll-target="#likelihood-turns-statistical-assumptions-into-losses">2. Likelihood Turns Statistical Assumptions into Losses</a></li>
+  <li><a href="#classification-as-probability-estimation" id="toc-classification-as-probability-estimation" class="nav-link" data-scroll-target="#classification-as-probability-estimation">3. Classification as Probability Estimation</a>
   <ul class="collapse">
-  <li><a href="#minimal-stable-implementation-1" id="toc-minimal-stable-implementation-1" class="nav-link" data-scroll-target="#minimal-stable-implementation-1">Minimal stable implementation</a></li>
+  <li><a href="#multiclass-cross-entropy" id="toc-multiclass-cross-entropy" class="nav-link" data-scroll-target="#multiclass-cross-entropy">3.1 Multiclass cross-entropy</a></li>
+  <li><a href="#binary-and-multilabel-cross-entropy" id="toc-binary-and-multilabel-cross-entropy" class="nav-link" data-scroll-target="#binary-and-multilabel-cross-entropy">3.2 Binary and multilabel cross-entropy</a></li>
+  <li><a href="#label-smoothing" id="toc-label-smoothing" class="nav-link" data-scroll-target="#label-smoothing">3.3 Label smoothing</a></li>
   </ul></li>
-  <li><a href="#common-loss-pairings" id="toc-common-loss-pairings" class="nav-link" data-scroll-target="#common-loss-pairings">Common Loss Pairings</a></li>
+  <li><a href="#class-imbalance-cost-and-focal-loss" id="toc-class-imbalance-cost-and-focal-loss" class="nav-link" data-scroll-target="#class-imbalance-cost-and-focal-loss">4. Class Imbalance, Cost, and Focal Loss</a></li>
+  <li><a href="#margin-losses-learn-a-boundary-not-a-distribution" id="toc-margin-losses-learn-a-boundary-not-a-distribution" class="nav-link" data-scroll-target="#margin-losses-learn-a-boundary-not-a-distribution">5. Margin Losses: Learn a Boundary, Not a Distribution</a></li>
+  <li><a href="#ranking-and-metric-learning" id="toc-ranking-and-metric-learning" class="nav-link" data-scroll-target="#ranking-and-metric-learning">6. Ranking and Metric Learning</a></li>
+  <li><a href="#regression-losses-from-noise-models" id="toc-regression-losses-from-noise-models" class="nav-link" data-scroll-target="#regression-losses-from-noise-models">7. Regression Losses from Noise Models</a>
+  <ul class="collapse">
+  <li><a href="#mse-and-the-conditional-mean" id="toc-mse-and-the-conditional-mean" class="nav-link" data-scroll-target="#mse-and-the-conditional-mean">7.1 MSE and the conditional mean</a></li>
+  <li><a href="#mae-and-the-conditional-median" id="toc-mae-and-the-conditional-median" class="nav-link" data-scroll-target="#mae-and-the-conditional-median">7.2 MAE and the conditional median</a></li>
+  <li><a href="#huber-loss" id="toc-huber-loss" class="nav-link" data-scroll-target="#huber-loss">7.3 Huber loss</a></li>
+  <li><a href="#heteroscedastic-uncertainty" id="toc-heteroscedastic-uncertainty" class="nav-link" data-scroll-target="#heteroscedastic-uncertainty">7.4 Heteroscedastic uncertainty</a></li>
+  <li><a href="#quantiles-and-counts" id="toc-quantiles-and-counts" class="nav-link" data-scroll-target="#quantiles-and-counts">7.5 Quantiles and counts</a></li>
+  </ul></li>
+  <li><a href="#numerical-stability-and-reduction" id="toc-numerical-stability-and-reduction" class="nav-link" data-scroll-target="#numerical-stability-and-reduction">8. Numerical Stability and Reduction</a></li>
+  <li><a href="#design-examples" id="toc-design-examples" class="nav-link" data-scroll-target="#design-examples">9. Design Examples</a>
+  <ul class="collapse">
+  <li><a href="#rare-event-classification" id="toc-rare-event-classification" class="nav-link" data-scroll-target="#rare-event-classification">Rare-event classification</a></li>
+  <li><a href="#regression-with-corrupt-targets" id="toc-regression-with-corrupt-targets" class="nav-link" data-scroll-target="#regression-with-corrupt-targets">Regression with corrupt targets</a></li>
+  <li><a href="#retrieval" id="toc-retrieval" class="nav-link" data-scroll-target="#retrieval">Retrieval</a></li>
+  </ul></li>
+  <li><a href="#common-failure-modes" id="toc-common-failure-modes" class="nav-link" data-scroll-target="#common-failure-modes">10. Common Failure Modes</a></li>
   <li><a href="#interview-questions" id="toc-interview-questions" class="nav-link" data-scroll-target="#interview-questions">Interview Questions</a></li>
   <li><a href="#exercises" id="toc-exercises" class="nav-link" data-scroll-target="#exercises">Exercises</a></li>
+  <li><a href="#primary-references" id="toc-primary-references" class="nav-link" data-scroll-target="#primary-references">Primary References</a></li>
   </ul>
 </nav>
     </div>
@@ -208,7 +229,7 @@ window.Quarto = {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Loss Functions</h1>
+<h1 class="title">Discriminative Losses from First Principles</h1>
 </div>
 
 
@@ -225,170 +246,76 @@ window.Quarto = {
 </header>
 
 
-<section id="logits-probabilities-and-numerical-stability" class="level2">
-<h2 class="anchored" data-anchor-id="logits-probabilities-and-numerical-stability">Logits, Probabilities, and Numerical Stability</h2>
-<p>A <strong>logit</strong> is an unrestricted score produced by a model before an output activation. For multiclass classification, logits</p>
-<p><span class="math display">\[
-z\in\mathbb{R}^{C}
-\]</span></p>
-<p>become a categorical distribution through softmax. For binary classification, a logit <span class="math inline">\(z\in\mathbb{R}\)</span> becomes a Bernoulli probability through sigmoid.</p>
-<p>Conceptually, training could perform these steps separately:</p>
+<section id="a-loss-encodes-a-statistical-decision" class="level2">
+<h2 class="anchored" data-anchor-id="a-loss-encodes-a-statistical-decision">1. A Loss Encodes a Statistical Decision</h2>
+<p>A loss is the interface between:</p>
 <ol type="1">
-<li>convert logits to probabilities</li>
-<li>take the logarithm of the relevant probability</li>
-<li>compute the loss</li>
+<li><strong>statistical knowledge:</strong> what uncertainty generated the target?</li>
+<li><strong>problem abstraction:</strong> must the model estimate a probability, value, boundary, order, or representation?</li>
+<li><strong>optimization:</strong> what differentiable signal is aligned with the real metric?</li>
 </ol>
-<p>That direct implementation is fragile. Exponentiating a large positive logit can overflow, while a very small probability can round to zero and make <span class="math inline">\(\log(0)=-\infty\)</span>. Stable loss functions combine the activation and logarithm algebraically so those problematic intermediate probabilities never need to be materialized.</p>
+<p>Let <span class="math inline">\((X,Y)\sim p^*\)</span>, let <span class="math inline">\(a_\theta(X)\)</span> be a prediction, and let <span class="math inline">\(C(a,Y)\)</span> be the real cost. The ideal Bayes decision is</p>
+<p><span class="math display">\[
+a^*(x)
+=
+\arg\min_a
+\mathbb E_{Y\sim p^*(\cdot\mid x)}[C(a,Y)].
+\]</span></p>
+<p>Training replaces the unknown population expectation with empirical risk and usually replaces the real cost with a tractable surrogate:</p>
+<p><span class="math display">\[
+\widehat R(\theta)
+=
+\frac1N\sum_{i=1}^{N}
+\ell(a_\theta(x_i),y_i).
+\]</span></p>
+<p>The first-principles question is:</p>
+<blockquote class="blockquote">
+<p>Which surrogate has an optimum and gradient geometry aligned with the decision we actually care about?</p>
+</blockquote>
+<p>For latent-variable and data-generation objectives, see <a href="../../notes/foundations/generative_losses.html">Generative Losses from First Principles</a>.</p>
+<section id="a-design-checklist" class="level3">
+<h3 class="anchored" data-anchor-id="a-design-checklist">A design checklist</h3>
+<p>Before choosing a formula, ask:</p>
+<ol type="1">
+<li>What is the target: categorical, binary, continuous, count, ordinal, or a pairwise preference?</li>
+<li>Do calibrated probabilities matter, or only the final boundary/ranking?</li>
+<li>What support and noise model should predictions respect?</li>
+<li>Are examples genuinely unequal in cost, or merely unequal in frequency?</li>
+<li>What is the evaluation metric, and is the loss a consistent surrogate?</li>
+<li>What sampling and reduction define the effective training population?</li>
+</ol>
 <div class="callout callout-style-default callout-important callout-titled">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
 <i class="callout-icon"></i>
 </div>
 <div class="callout-title-container flex-fill">
-Important
+<span class="screen-reader-only">Important</span>Loss and metric are different
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>Pass raw logits to <code>torch.nn.CrossEntropyLoss</code> and <code>torch.nn.BCEWithLogitsLoss</code>. Do not apply softmax or sigmoid first.</p>
+<p>Accuracy, F1, recall, and ranking metrics can be nondifferentiable or nondecomposable. A loss is a surrogate. Lower loss matters only insofar as it improves the target decision or gives useful probability estimates.</p>
 </div>
 </div>
-<p>At inference time, applying softmax or sigmoid is appropriate when calibrated probabilities are actually needed. For an <code>argmax</code> prediction, softmax is unnecessary because it preserves the ordering of the logits.</p>
-</section>
-<section id="multiclass-cross-entropy" class="level2">
-<h2 class="anchored" data-anchor-id="multiclass-cross-entropy">Multiclass Cross-Entropy</h2>
-<p>For one example with class logits <span class="math inline">\(z_1,\ldots,z_C\)</span> and target class <span class="math inline">\(y\)</span>,</p>
-<p><span class="math display">\[
-p_j=\frac{e^{z_j}}{\sum_{k=1}^{C}e^{z_k}},
-\]</span></p>
-<p>and the negative log-likelihood is</p>
-<p><span class="math display">\[
-\mathcal L_{\mathrm{CE}}
-=
--\log p_y.
-\]</span></p>
-<p>Substituting softmax into the loss gives</p>
-<p><span class="math display">\[
-\mathcal L_{\mathrm{CE}}
-=
--z_y+\log\sum_{k=1}^{C}e^{z_k}.
-\]</span></p>
-<p>This is the <strong>log-sum-exp</strong> form. If <span class="math inline">\(m=\max_k z_k\)</span>, then</p>
-<p><span class="math display">\[
-\log\sum_k e^{z_k}
-=
-m+\log\sum_k e^{z_k-m}.
-\]</span></p>
-<p>Every shifted logit satisfies <span class="math inline">\(z_k-m\leq0\)</span>, so its exponential cannot overflow. The subtraction does not change softmax because adding or subtracting the same constant from every logit leaves the distribution unchanged.</p>
-<p>For one-hot targets, the gradient has a particularly simple form:</p>
-<p><span class="math display">\[
-\frac{\partial\mathcal L_{\mathrm{CE}}}{\partial z_j}
-=p_j-\mathbb{1}[j=y].
-\]</span></p>
-<section id="minimal-stable-implementation" class="level3">
-<h3 class="anchored" data-anchor-id="minimal-stable-implementation">Minimal stable implementation</h3>
-<div id="b7c3a219" class="cell" data-execution_count="1">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch.nn.functional <span class="im">as</span> F</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> cross_entropy_from_logits(logits, targets, reduction<span class="op">=</span><span class="st">"mean"</span>):</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Cross-entropy for logits [..., classes] and integer targets [...]."""</span></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    largest <span class="op">=</span> logits.<span class="bu">max</span>(dim<span class="op">=-</span><span class="dv">1</span>, keepdim<span class="op">=</span><span class="va">True</span>).values</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    log_normalizer <span class="op">=</span> largest.squeeze(<span class="op">-</span><span class="dv">1</span>) <span class="op">+</span> torch.log(</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>        torch.exp(logits <span class="op">-</span> largest).<span class="bu">sum</span>(dim<span class="op">=-</span><span class="dv">1</span>)</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    target_logits <span class="op">=</span> logits.gather(</span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>        dim<span class="op">=-</span><span class="dv">1</span>, index<span class="op">=</span>targets.unsqueeze(<span class="op">-</span><span class="dv">1</span>)</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    ).squeeze(<span class="op">-</span><span class="dv">1</span>)</span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    losses <span class="op">=</span> log_normalizer <span class="op">-</span> target_logits</span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> reduction <span class="op">==</span> <span class="st">"none"</span>:</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> losses</span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> reduction <span class="op">==</span> <span class="st">"sum"</span>:</span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> losses.<span class="bu">sum</span>()</span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> reduction <span class="op">==</span> <span class="st">"mean"</span>:</span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> losses.mean()</span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>    <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="ss">f"unknown reduction: </span><span class="sc">{</span>reduction<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>logits <span class="op">=</span> torch.tensor([[<span class="fl">1000.0</span>, <span class="fl">1001.0</span>, <span class="fl">999.0</span>], [<span class="op">-</span><span class="fl">2.0</span>, <span class="fl">0.5</span>, <span class="fl">3.0</span>]])</span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>targets <span class="op">=</span> torch.tensor([<span class="dv">1</span>, <span class="dv">2</span>])</span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>ours <span class="op">=</span> cross_entropy_from_logits(logits, targets)</span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>pytorch <span class="op">=</span> F.cross_entropy(logits, targets)</span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(ours, pytorch)</span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>torch.testing.assert_close(ours, pytorch)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>tensor(0.2463) tensor(0.2464)</code></pre>
-</div>
-</div>
-<p>The implementation uses the same stable identity as <code>logsumexp</code>. Production code should normally use <code>F.cross_entropy</code>, which also supports optimized kernels, class weights, label smoothing, ignored targets, and additional input shapes.</p>
 </section>
 </section>
-<section id="binary-cross-entropy" class="level2">
-<h2 class="anchored" data-anchor-id="binary-cross-entropy">Binary Cross-Entropy</h2>
-<p>For binary target <span class="math inline">\(y\in\{0,1\}\)</span> and predicted probability <span class="math inline">\(p\)</span>, binary cross-entropy is</p>
+<section id="likelihood-turns-statistical-assumptions-into-losses" class="level2">
+<h2 class="anchored" data-anchor-id="likelihood-turns-statistical-assumptions-into-losses">2. Likelihood Turns Statistical Assumptions into Losses</h2>
+<p>If the model defines <span class="math inline">\(p_\theta(y\mid x)\)</span>, maximum likelihood minimizes</p>
 <p><span class="math display">\[
-\mathcal L_{\mathrm{BCE}}
+\mathcal L_{\mathrm{NLL}}
 =
--y\log p-(1-y)\log(1-p).
+-\mathbb E_{(x,y)\sim p^*}
+\log p_\theta(y\mid x).
 \]</span></p>
-<p>With <span class="math inline">\(p=\sigma(z)\)</span>, directly computing <code>log(sigmoid(z))</code> and <code>log(1 - sigmoid(z))</code> is unstable for extreme logits. Substitution and simplification give</p>
+<p>For fixed <span class="math inline">\(x\)</span>,</p>
 <p><span class="math display">\[
-\mathcal L_{\mathrm{BCE}}(z,y)
+\mathbb E_{y\sim p^*}[-\log p_\theta(y\mid x)]
 =
-\operatorname{softplus}(z)-yz
-=
-\log(1+e^z)-yz.
+H(p^*)+\mathrm{KL}(p^*\|p_\theta).
 \]</span></p>
-<p>Equivalently,</p>
-<p><span class="math display">\[
-\mathcal L_{\mathrm{BCE}}(z,y)
-=
-\max(z,0)-yz+\log(1+e^{-|z|}).
-\]</span></p>
-<p>The exponent is now non-positive, preventing overflow. The gradient with respect to the logit is</p>
-<p><span class="math display">\[
-\frac{\partial\mathcal L_{\mathrm{BCE}}}{\partial z}
-=
-\sigma(z)-y.
-\]</span></p>
-<section id="minimal-stable-implementation-1" class="level3">
-<h3 class="anchored" data-anchor-id="minimal-stable-implementation-1">Minimal stable implementation</h3>
-<div id="2c63d9d4" class="cell" data-execution_count="2">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> binary_cross_entropy_with_logits(logits, targets, reduction<span class="op">=</span><span class="st">"mean"</span>):</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Binary cross-entropy on raw logits; targets have the same shape."""</span></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    targets <span class="op">=</span> targets.to(dtype<span class="op">=</span>logits.dtype)</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    <span class="co"># logaddexp(0, z) is a stable implementation of softplus(z).</span></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    softplus <span class="op">=</span> torch.logaddexp(torch.zeros_like(logits), logits)</span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    losses <span class="op">=</span> softplus <span class="op">-</span> targets <span class="op">*</span> logits</span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> reduction <span class="op">==</span> <span class="st">"none"</span>:</span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> losses</span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> reduction <span class="op">==</span> <span class="st">"sum"</span>:</span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> losses.<span class="bu">sum</span>()</span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> reduction <span class="op">==</span> <span class="st">"mean"</span>:</span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> losses.mean()</span>
-<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="ss">f"unknown reduction: </span><span class="sc">{</span>reduction<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>binary_logits <span class="op">=</span> torch.tensor([<span class="op">-</span><span class="fl">1000.0</span>, <span class="op">-</span><span class="fl">2.0</span>, <span class="fl">0.0</span>, <span class="fl">2.0</span>, <span class="fl">1000.0</span>])</span>
-<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>binary_targets <span class="op">=</span> torch.tensor([<span class="fl">0.0</span>, <span class="fl">1.0</span>, <span class="fl">1.0</span>, <span class="fl">0.0</span>, <span class="fl">1.0</span>])</span>
-<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>ours <span class="op">=</span> binary_cross_entropy_with_logits(binary_logits, binary_targets)</span>
-<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>pytorch <span class="op">=</span> F.binary_cross_entropy_with_logits(binary_logits, binary_targets)</span>
-<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(ours, pytorch)</span>
-<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>torch.testing.assert_close(ours, pytorch)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>tensor(0.9894) tensor(0.9894)</code></pre>
-</div>
-</div>
-<p>Use one logit and BCE for a binary event or for multiple independent labels. Use <span class="math inline">\(C\)</span> logits and multiclass cross-entropy when exactly one of <span class="math inline">\(C\)</span> classes is the target. Two-class softmax is mathematically redundant but still valid.</p>
-</section>
-</section>
-<section id="common-loss-pairings" class="level2">
-<h2 class="anchored" data-anchor-id="common-loss-pairings">Common Loss Pairings</h2>
+<p>The entropy term is constant in <span class="math inline">\(\theta\)</span>, so the population optimum is the true conditional distribution. Log loss is therefore a <strong>proper scoring rule</strong>.</p>
+<p>Many standard losses are simply NLL under different observation models:</p>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 33%">
@@ -397,41 +324,402 @@ m+\log\sum_k e^{z_k-m}.
 </colgroup>
 <thead>
 <tr class="header">
-<th>Task</th>
-<th>Model output during training</th>
-<th>Typical loss</th>
+<th>Assumption for <span class="math inline">\(Y\mid X\)</span></th>
+<th>Output</th>
+<th>NLL, ignoring constants</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td>Multiclass classification</td>
-<td><span class="math inline">\(C\)</span> raw logits</td>
+<td>Categorical</td>
+<td>class logits</td>
 <td>cross-entropy</td>
 </tr>
 <tr class="even">
-<td>Binary classification</td>
-<td>one raw logit</td>
-<td>binary cross-entropy with logits</td>
+<td>Bernoulli</td>
+<td>one logit</td>
+<td>binary cross-entropy</td>
 </tr>
 <tr class="odd">
-<td>Multilabel classification</td>
-<td>one raw logit per independent label</td>
-<td>elementwise BCE with logits</td>
+<td>Gaussian, fixed variance</td>
+<td>mean</td>
+<td>squared error</td>
 </tr>
 <tr class="even">
-<td>Unbounded regression</td>
-<td>linear output</td>
-<td>MSE, MAE, or a likelihood loss</td>
+<td>Gaussian, learned variance</td>
+<td>mean and log variance</td>
+<td>scaled MSE + log variance</td>
 </tr>
 <tr class="odd">
-<td>Positive scalar</td>
-<td>unconstrained parameter transformed by softplus or exponential</td>
-<td>task-dependent</td>
+<td>Laplace</td>
+<td>location</td>
+<td>absolute error</td>
 </tr>
 <tr class="even">
-<td>Bounded scalar</td>
-<td>scaled sigmoid or tanh parameterization</td>
-<td>task-dependent</td>
+<td>Poisson count</td>
+<td>log-rate</td>
+<td><span class="math inline">\(e^\eta-y\eta\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>The clever step is not memorizing the last column. It is choosing a distribution whose support, sufficient statistics, and noise assumptions fit the task.</p>
+</section>
+<section id="classification-as-probability-estimation" class="level2">
+<h2 class="anchored" data-anchor-id="classification-as-probability-estimation">3. Classification as Probability Estimation</h2>
+<section id="multiclass-cross-entropy" class="level3">
+<h3 class="anchored" data-anchor-id="multiclass-cross-entropy">3.1 Multiclass cross-entropy</h3>
+<p>For one of <span class="math inline">\(C\)</span> mutually exclusive classes with logits <span class="math inline">\(z\)</span>,</p>
+<p><span class="math display">\[
+p_j=\frac{e^{z_j}}{\sum_k e^{z_k}},
+\qquad
+\mathcal L_{\mathrm{CE}}
+=
+-\log p_y
+=
+-z_y+\log\sum_k e^{z_k}.
+\]</span></p>
+<p>Its logit gradient is especially interpretable:</p>
+<p><span class="math display">\[
+\frac{\partial\mathcal L_{\mathrm{CE}}}{\partial z_j}
+=
+p_j-\mathbb 1[j=y].
+\]</span></p>
+<p>The target logit rises; competing logits fall in proportion to their predicted probability.</p>
+<section id="minimal-stable-implementation" class="level4">
+<h4 class="anchored" data-anchor-id="minimal-stable-implementation">Minimal stable implementation</h4>
+<div id="7789f56b" class="cell" data-execution_count="1">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch.nn.functional <span class="im">as</span> F</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> cross_entropy_from_logits(logits, targets, reduction<span class="op">=</span><span class="st">"mean"</span>):</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    log_normalizer <span class="op">=</span> torch.logsumexp(logits, dim<span class="op">=-</span><span class="dv">1</span>)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    target_logits <span class="op">=</span> logits.gather(</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>        <span class="op">-</span><span class="dv">1</span>, targets.unsqueeze(<span class="op">-</span><span class="dv">1</span>)</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    ).squeeze(<span class="op">-</span><span class="dv">1</span>)</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    losses <span class="op">=</span> log_normalizer <span class="op">-</span> target_logits</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> reduction <span class="op">==</span> <span class="st">"none"</span>:</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> losses</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> reduction <span class="op">==</span> <span class="st">"sum"</span>:</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> losses.<span class="bu">sum</span>()</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> reduction <span class="op">==</span> <span class="st">"mean"</span>:</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> losses.mean()</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="ss">f"unknown reduction: </span><span class="sc">{</span>reduction<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>logits <span class="op">=</span> torch.tensor([[<span class="fl">1000.0</span>, <span class="fl">1001.0</span>, <span class="fl">999.0</span>], [<span class="op">-</span><span class="fl">2.0</span>, <span class="fl">0.5</span>, <span class="fl">3.0</span>]])</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>targets <span class="op">=</span> torch.tensor([<span class="dv">1</span>, <span class="dv">2</span>])</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>torch.testing.assert_close(</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>    cross_entropy_from_logits(logits, targets),</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>    F.cross_entropy(logits, targets),</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+</section>
+<section id="binary-and-multilabel-cross-entropy" class="level3">
+<h3 class="anchored" data-anchor-id="binary-and-multilabel-cross-entropy">3.2 Binary and multilabel cross-entropy</h3>
+<p>For <span class="math inline">\(y\in\{0,1\}\)</span> and <span class="math inline">\(p=\sigma(z)\)</span>,</p>
+<p><span class="math display">\[
+\mathcal L_{\mathrm{BCE}}
+=
+-y\log p-(1-y)\log(1-p).
+\]</span></p>
+<p>The stable logits form is</p>
+<p><span class="math display">\[
+\mathcal L_{\mathrm{BCE}}(z,y)
+=
+\max(z,0)-yz+\log(1+e^{-|z|}),
+\]</span></p>
+<p>with derivative <span class="math inline">\(\sigma(z)-y\)</span>.</p>
+<div id="3186de1d" class="cell" data-execution_count="2">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> binary_cross_entropy_with_logits(logits, targets, reduction<span class="op">=</span><span class="st">"mean"</span>):</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    targets <span class="op">=</span> targets.to(logits.dtype)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    losses <span class="op">=</span> torch.logaddexp(torch.zeros_like(logits), logits) <span class="op">-</span> targets <span class="op">*</span> logits</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> reduction <span class="op">==</span> <span class="st">"none"</span>:</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> losses</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> reduction <span class="op">==</span> <span class="st">"sum"</span>:</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> losses.<span class="bu">sum</span>()</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> reduction <span class="op">==</span> <span class="st">"mean"</span>:</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> losses.mean()</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="ss">f"unknown reduction: </span><span class="sc">{</span>reduction<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>binary_logits <span class="op">=</span> torch.tensor([<span class="op">-</span><span class="fl">1000.0</span>, <span class="op">-</span><span class="fl">2.0</span>, <span class="fl">0.0</span>, <span class="fl">2.0</span>, <span class="fl">1000.0</span>])</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>binary_targets <span class="op">=</span> torch.tensor([<span class="fl">0.0</span>, <span class="fl">1.0</span>, <span class="fl">1.0</span>, <span class="fl">0.0</span>, <span class="fl">1.0</span>])</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>torch.testing.assert_close(</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>    binary_cross_entropy_with_logits(binary_logits, binary_targets),</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>    F.binary_cross_entropy_with_logits(binary_logits, binary_targets),</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Use independent BCE logits for multilabel outcomes. Use softmax CE when exactly one class must occur. Independent BCE does not enforce probabilities summing to one.</p>
+</section>
+<section id="label-smoothing" class="level3">
+<h3 class="anchored" data-anchor-id="label-smoothing">3.3 Label smoothing</h3>
+<p>Replace a one-hot target by</p>
+<p><span class="math display">\[
+q_j
+=
+(1-\varepsilon)\mathbb 1[j=y]+\frac{\varepsilon}{C}
+\]</span></p>
+<p>and minimize <span class="math inline">\(-\sum_jq_j\log p_j\)</span>. This regularizes extreme confidence but also changes the population target. It is a prior about target uncertainty, not a universal fix for mislabeled data.</p>
+</section>
+</section>
+<section id="class-imbalance-cost-and-focal-loss" class="level2">
+<h2 class="anchored" data-anchor-id="class-imbalance-cost-and-focal-loss">4. Class Imbalance, Cost, and Focal Loss</h2>
+<p>Three problems are often conflated:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Problem</th>
+<th>Appropriate intervention</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>unequal real-world error costs</td>
+<td>cost-sensitive loss or decision threshold</td>
+</tr>
+<tr class="even">
+<td>minority examples rarely sampled</td>
+<td>resampling or importance weighting</td>
+</tr>
+<tr class="odd">
+<td>easy examples dominate total gradient</td>
+<td>hard-example mining or focal modulation</td>
+</tr>
+</tbody>
+</table>
+<p>Weighted BCE, for example,</p>
+<p><span class="math display">\[
+\mathcal L
+=
+-w_+y\log p-w_-(1-y)\log(1-p),
+\]</span></p>
+<p>changes the risk being optimized. If the deployment population is unchanged, the resulting probabilities may need recalibration.</p>
+<p><a href="https://arxiv.org/abs/1708.02002">Focal loss</a> starts from cross-entropy and downweights already-correct examples. Define</p>
+<p><span class="math display">\[
+p_t=
+\begin{cases}
+p,&amp;y=1,\\
+1-p,&amp;y=0,
+\end{cases}
+\]</span></p>
+<p>then</p>
+<p><span class="math display">\[
+\mathcal L_{\mathrm{focal}}
+=
+-\alpha_t(1-p_t)^\gamma\log p_t.
+\]</span></p>
+<p>At <span class="math inline">\(\gamma=0\)</span> it becomes weighted CE. For <span class="math inline">\(\gamma&gt;0\)</span>, the vast population of easy examples contributes less gradient. This helped dense detection where easy background anchors overwhelmed rare foreground examples. It can hurt probability calibration, so use it for gradient allocation—not merely because a dataset is imbalanced.</p>
+<div id="27f4c3a6" class="cell" data-execution_count="3">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> binary_focal_loss(logits, targets, gamma<span class="op">=</span><span class="fl">2.0</span>, alpha<span class="op">=</span><span class="va">None</span>):</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    targets <span class="op">=</span> targets.to(logits.dtype)</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    bce <span class="op">=</span> F.binary_cross_entropy_with_logits(logits, targets, reduction<span class="op">=</span><span class="st">"none"</span>)</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    p_t <span class="op">=</span> torch.exp(<span class="op">-</span>bce)</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    weights <span class="op">=</span> (<span class="fl">1.0</span> <span class="op">-</span> p_t).<span class="bu">pow</span>(gamma)</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> alpha <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>        alpha_t <span class="op">=</span> alpha <span class="op">*</span> targets <span class="op">+</span> (<span class="fl">1.0</span> <span class="op">-</span> alpha) <span class="op">*</span> (<span class="fl">1.0</span> <span class="op">-</span> targets)</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>        weights <span class="op">=</span> weights <span class="op">*</span> alpha_t</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> (weights <span class="op">*</span> bce).mean()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="margin-losses-learn-a-boundary-not-a-distribution" class="level2">
+<h2 class="anchored" data-anchor-id="margin-losses-learn-a-boundary-not-a-distribution">5. Margin Losses: Learn a Boundary, Not a Distribution</h2>
+<p>If only the decision boundary matters, calibrated probabilities may be excess structure. For <span class="math inline">\(y\in\{-1,+1\}\)</span> and score <span class="math inline">\(f_\theta(x)\)</span>, hinge loss is</p>
+<p><span class="math display">\[
+\mathcal L_{\mathrm{hinge}}
+=
+\max(0,1-yf_\theta(x)).
+\]</span></p>
+<p>Correct examples receive a gradient until they lie beyond margin one, then contribute zero. Cross-entropy continues increasing confidence. This is a choice between <strong>separation geometry</strong> and <strong>probability estimation</strong>.</p>
+<p>For multiclass scores, one structured hinge form is</p>
+<p><span class="math display">\[
+\mathcal L
+=
+\max_{j\ne y}
+\left[0,m+z_j-z_y\right].
+\]</span></p>
+<p>The margin <span class="math inline">\(m\)</span> defines how much score separation counts as sufficient; score scale and regularization determine what that statement means geometrically.</p>
+</section>
+<section id="ranking-and-metric-learning" class="level2">
+<h2 class="anchored" data-anchor-id="ranking-and-metric-learning">6. Ranking and Metric Learning</h2>
+<p>When supervision says “<span class="math inline">\(i\)</span> should rank above <span class="math inline">\(j\)</span>,” predicting absolute labels solves a harder and possibly ill-posed problem. Use a pairwise abstraction:</p>
+<p><span class="math display">\[
+\mathcal L_{\mathrm{pairwise\ hinge}}
+=
+\max(0,m-s_i+s_j),
+\]</span></p>
+<p>or the smooth BPR/logistic loss</p>
+<p><span class="math display">\[
+\mathcal L_{\mathrm{BPR}}
+=
+-\log\sigma(s_i-s_j).
+\]</span></p>
+<p>Triplet loss applies the same idea to embeddings:</p>
+<p><span class="math display">\[
+\mathcal L_{\mathrm{triplet}}
+=
+\max\left(
+0,
+d(e_a,e_p)-d(e_a,e_n)+m
+\right).
+\]</span></p>
+<p>Negative sampling is part of the objective. Easy negatives provide no margin signal; false or excessively hard negatives can teach incorrect geometry. The sampling distribution should match which confusions matter at retrieval time.</p>
+</section>
+<section id="regression-losses-from-noise-models" class="level2">
+<h2 class="anchored" data-anchor-id="regression-losses-from-noise-models">7. Regression Losses from Noise Models</h2>
+<section id="mse-and-the-conditional-mean" class="level3">
+<h3 class="anchored" data-anchor-id="mse-and-the-conditional-mean">7.1 MSE and the conditional mean</h3>
+<p>If</p>
+<p><span class="math display">\[
+Y\mid X=x\sim\mathcal N(\mu_\theta(x),\sigma^2)
+\]</span></p>
+<p>with fixed variance, NLL reduces to scaled squared error. More generally,</p>
+<p><span class="math display">\[
+\arg\min_f\mathbb E[(Y-f(X))^2\mid X=x]
+=
+\mathbb E[Y\mid X=x].
+\]</span></p>
+<p>MSE targets the conditional mean. Its residual gradient grows linearly, so outliers can dominate.</p>
+</section>
+<section id="mae-and-the-conditional-median" class="level3">
+<h3 class="anchored" data-anchor-id="mae-and-the-conditional-median">7.2 MAE and the conditional median</h3>
+<p>A Laplace likelihood produces</p>
+<p><span class="math display">\[
+\mathcal L_{\mathrm{MAE}}=|y-\widehat y|.
+\]</span></p>
+<p>MAE targets a conditional median and has bounded residual-gradient magnitude. It is robust to large errors but nonsmooth at zero.</p>
+</section>
+<section id="huber-loss" class="level3">
+<h3 class="anchored" data-anchor-id="huber-loss">7.3 Huber loss</h3>
+<p>For residual <span class="math inline">\(r=y-\widehat y\)</span>,</p>
+<p><span class="math display">\[
+\mathcal L_\delta(r)
+=
+\begin{cases}
+\frac12r^2,&amp;|r|\le\delta,\\
+\delta\left(|r|-\frac12\delta\right),&amp;|r|&gt;\delta.
+\end{cases}
+\]</span></p>
+<p>Huber is quadratic for small residuals and linear in the tails. The threshold <span class="math inline">\(\delta\)</span> states what residual scale counts as an outlier, so it must be chosen relative to target normalization.</p>
+</section>
+<section id="heteroscedastic-uncertainty" class="level3">
+<h3 class="anchored" data-anchor-id="heteroscedastic-uncertainty">7.4 Heteroscedastic uncertainty</h3>
+<p>If noise varies with <span class="math inline">\(x\)</span>, predict mean <span class="math inline">\(\mu_\theta(x)\)</span> and log variance <span class="math inline">\(s_\theta(x)=\log\sigma_\theta^2(x)\)</span>:</p>
+<p><span class="math display">\[
+\mathcal L
+=
+\frac12
+\left[
+e^{-s_\theta(x)}(y-\mu_\theta(x))^2+s_\theta(x)
+\right].
+\]</span></p>
+<p>The first term discounts uncertain examples; the second prevents infinite variance. A seemingly clever learned weight follows directly from a normalized Gaussian likelihood.</p>
+</section>
+<section id="quantiles-and-counts" class="level3">
+<h3 class="anchored" data-anchor-id="quantiles-and-counts">7.5 Quantiles and counts</h3>
+<p>Conditional quantile <span class="math inline">\(q_\tau(x)\)</span> is elicited by pinball loss</p>
+<p><span class="math display">\[
+\rho_\tau(r)
+=
+\begin{cases}
+\tau r,&amp;r\ge0,\\
+(\tau-1)r,&amp;r&lt;0,
+\end{cases}
+\qquad r=y-q_\tau(x).
+\]</span></p>
+<p>For nonnegative counts, a Poisson model with log-rate <span class="math inline">\(\eta\)</span> gives</p>
+<p><span class="math display">\[
+\mathcal L_{\mathrm{Poisson}}
+=
+e^\eta-y\eta+\log(y!).
+\]</span></p>
+<p>Unlike Gaussian regression, the likelihood respects count support and ties variance to the mean. If real counts are overdispersed, a negative-binomial model may be more appropriate.</p>
+</section>
+</section>
+<section id="numerical-stability-and-reduction" class="level2">
+<h2 class="anchored" data-anchor-id="numerical-stability-and-reduction">8. Numerical Stability and Reduction</h2>
+<p>Pass raw logits to <code>CrossEntropyLoss</code> and <code>BCEWithLogitsLoss</code>. Do not materialize softmax/sigmoid probabilities and then take logs.</p>
+<p>For CE, use</p>
+<p><span class="math display">\[
+\log\sum_k e^{z_k}
+=
+m+\log\sum_k e^{z_k-m},
+\qquad m=\max_k z_k.
+\]</span></p>
+<p>Also inspect the reduction:</p>
+<ul>
+<li>mean over examples versus sum</li>
+<li>mean over valid labels versus all padded positions</li>
+<li>mean per group versus mean over a population with unequal group size</li>
+<li>interaction between sample weights and the denominator</li>
+</ul>
+<p>The denominator silently defines which population receives equal importance.</p>
+</section>
+<section id="design-examples" class="level2">
+<h2 class="anchored" data-anchor-id="design-examples">9. Design Examples</h2>
+<section id="rare-event-classification" class="level3">
+<h3 class="anchored" data-anchor-id="rare-event-classification">Rare-event classification</h3>
+<p>Start with Bernoulli NLL. If false negatives have higher decision cost, adjust the loss or threshold using that cost. If easy negatives dominate gradient compute, consider focal loss. If probabilities drive downstream decisions, measure and repair calibration.</p>
+</section>
+<section id="regression-with-corrupt-targets" class="level3">
+<h3 class="anchored" data-anchor-id="regression-with-corrupt-targets">Regression with corrupt targets</h3>
+<p>Inspect residual tails. MSE is efficient for clean, light-tailed noise; Huber or Laplace NLL is more robust. If uncertainty varies by example, predict a distribution rather than only a robust point.</p>
+</section>
+<section id="retrieval" class="level3">
+<h3 class="anchored" data-anchor-id="retrieval">Retrieval</h3>
+<p>If evaluation depends only on order, a pairwise or contrastive abstraction is more direct than absolute regression. Design negative sampling around realistic retrieval confusions and audit for false negatives.</p>
+</section>
+</section>
+<section id="common-failure-modes" class="level2">
+<h2 class="anchored" data-anchor-id="common-failure-modes">10. Common Failure Modes</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Failure</th>
+<th>Diagnostic question</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>optimizing the wrong population</td>
+<td>What sampling and weights define this expectation?</td>
+</tr>
+<tr class="even">
+<td>surrogate mismatch</td>
+<td>Is this loss calibrated/consistent for the target decision?</td>
+</tr>
+<tr class="odd">
+<td>shortcut learning</td>
+<td>Can an unintended feature satisfy the target?</td>
+</tr>
+<tr class="even">
+<td>gradient domination</td>
+<td>Which class, task, or group supplies most gradient norm?</td>
+</tr>
+<tr class="odd">
+<td>bad noise model</td>
+<td>Does the likelihood have the right support and tail behavior?</td>
+</tr>
+<tr class="even">
+<td>reduction bug</td>
+<td>What exactly is divided by what?</td>
+</tr>
+<tr class="odd">
+<td>numerical failure</td>
+<td>Can the objective be computed directly in logits or log space?</td>
 </tr>
 </tbody>
 </table>
@@ -439,21 +727,33 @@ m+\log\sum_k e^{z_k-m}.
 <section id="interview-questions" class="level2">
 <h2 class="anchored" data-anchor-id="interview-questions">Interview Questions</h2>
 <ul>
-<li>Why is <code>log(softmax(z))</code> less stable than <code>log_softmax(z)</code>?</li>
-<li>Derive cross-entropy directly from softmax and negative log-likelihood.</li>
-<li>Why can subtracting the maximum logit not change softmax?</li>
-<li>Derive the stable BCE-with-logits expression.</li>
-<li>What are the gradients of cross-entropy and BCE with respect to their logits?</li>
-<li>When should a problem use multiclass cross-entropy rather than independent binary cross-entropies?</li>
+<li>Derive CE, BCE, MSE, MAE, and Poisson loss from likelihood assumptions.</li>
+<li>Why is log loss a proper scoring rule?</li>
+<li>When should imbalance change the loss, sampling, or only the threshold?</li>
+<li>How does focal loss allocate gradients, and why can it affect calibration?</li>
+<li>Compare cross-entropy and hinge loss.</li>
+<li>Why is negative sampling part of a ranking objective?</li>
+<li>Which statistics do MSE, MAE, and quantile loss estimate?</li>
+<li>Derive heteroscedastic Gaussian NLL and explain both terms.</li>
+<li>How can reduction change the effective data distribution?</li>
 </ul>
 </section>
 <section id="exercises" class="level2">
 <h2 class="anchored" data-anchor-id="exercises">Exercises</h2>
 <ul class="task-list">
-<li><label><input type="checkbox">Evaluate the naïve and stable losses on logits <span class="math inline">\([-1000,0,1000]\)</span>.</label></li>
-<li><label><input type="checkbox">Extend cross-entropy with label smoothing.</label></li>
-<li><label><input type="checkbox">Add class weights to both implementations.</label></li>
-<li><label><input type="checkbox">Implement mean squared error and Huber loss, including their gradients.</label></li>
+<li><label><input type="checkbox">Plot CE, focal, and hinge losses and their logit derivatives.</label></li>
+<li><label><input type="checkbox">Compare weighted BCE and threshold adjustment on an imbalanced dataset.</label></li>
+<li><label><input type="checkbox">Fit MSE, MAE, Huber, and heteroscedastic models to contaminated data.</label></li>
+<li><label><input type="checkbox">Compare random, hard, and false-negative sampling for a ranking loss.</label></li>
+<li><label><input type="checkbox">Audit a weighted loss by computing each example’s effective coefficient.</label></li>
+</ul>
+</section>
+<section id="primary-references" class="level2">
+<h2 class="anchored" data-anchor-id="primary-references">Primary References</h2>
+<ul>
+<li><a href="https://arxiv.org/abs/1708.02002">Focal Loss for Dense Object Detection</a></li>
+<li><a href="https://link.springer.com/article/10.1007/BF00994018">Support Vector Networks</a></li>
+<li><a href="https://arxiv.org/abs/1205.2618">BPR: Bayesian Personalized Ranking from Implicit Feedback</a></li>
 </ul>
 
 

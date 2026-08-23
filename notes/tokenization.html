@@ -108,6 +108,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     "search-label": "Search"
   }
 }</script>
+<script src="../site_libs/quarto-diagram/mermaid.min.js"></script>
+<script src="../site_libs/quarto-diagram/mermaid-init.js"></script>
+<link href="../site_libs/quarto-diagram/mermaid.css" rel="stylesheet">
 
   <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
   <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
@@ -190,6 +193,10 @@ window.Quarto = {
   <ul>
   <li><a href="#core-idea" id="toc-core-idea" class="nav-link active" data-scroll-target="#core-idea">Core Idea</a>
   <ul class="collapse">
+  <li><a href="#why-tokenization-is-needed-beyond-language" id="toc-why-tokenization-is-needed-beyond-language" class="nav-link" data-scroll-target="#why-tokenization-is-needed-beyond-language">Why tokenization is needed beyond language</a></li>
+  <li><a href="#what-the-tokenizer-decides" id="toc-what-the-tokenizer-decides" class="nav-link" data-scroll-target="#what-the-tokenizer-decides">What the tokenizer decides</a></li>
+  <li><a href="#why-large-sparse-ids-are-a-tokenization-problem" id="toc-why-large-sparse-ids-are-a-tokenization-problem" class="nav-link" data-scroll-target="#why-large-sparse-ids-are-a-tokenization-problem">Why large sparse IDs are a tokenization problem</a></li>
+  <li><a href="#when-tokenization-is-not-necessary" id="toc-when-tokenization-is-not-necessary" class="nav-link" data-scroll-target="#when-tokenization-is-not-necessary">When tokenization is not necessary</a></li>
   <li><a href="#a-shared-view-across-modalities" id="toc-a-shared-view-across-modalities" class="nav-link" data-scroll-target="#a-shared-view-across-modalities">A shared view across modalities</a></li>
   </ul></li>
   <li><a href="#text-tokenization" id="toc-text-tokenization" class="nav-link" data-scroll-target="#text-tokenization">Text Tokenization</a>
@@ -266,6 +273,117 @@ x
 <li>a <strong>continuous vector</strong> produced by a linear layer or neural encoder.</li>
 </ul>
 <p>This distinction is important. A ViT image patch is commonly called a token, but it is usually projected directly into a continuous vector rather than assigned a discrete vocabulary ID.</p>
+<section id="why-tokenization-is-needed-beyond-language" class="level3">
+<h3 class="anchored" data-anchor-id="why-tokenization-is-needed-beyond-language">Why tokenization is needed beyond language</h3>
+<p>A neural network does not directly consume a word, photograph, sound, video, or catalog item. Its kernels consume finite tensors with known dimensions. The raw domains, however, have very different structure:</p>
+<ul>
+<li>text is variable-length and drawn from an effectively open symbol space</li>
+<li>images are dense two-dimensional arrays with millions of correlated values</li>
+<li>audio and video are high-rate signals that would produce enormous sequences</li>
+<li>recommendation catalogs contain millions or billions of sparse categorical IDs with little inherent geometry</li>
+</ul>
+<p>Tokenization is the interface that reconciles this mismatch. In its broadest sense, it <strong>compiles a domain object into a bounded sequence of model-facing units</strong>:</p>
+<p><span class="math display">\[
+\tau(x)
+=
+\big((z_1,p_1,m_1),\ldots,(z_T,p_T,m_T)\big),
+\]</span></p>
+<p>where <span class="math inline">\(z_t\)</span> is a discrete ID or continuous feature, <span class="math inline">\(p_t\)</span> describes position or structure, and <span class="math inline">\(m_t\)</span> can identify the modality or token type. A general sequence model then operates on this interface rather than on the original representation.</p>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p><figure class="figure"><p></p>
+<div>
+<pre class="mermaid mermaid-js">flowchart LR
+    L[Text] --&gt; TL[Subwords or bytes]
+    I[Images] --&gt; TI[Patches or VQ codes]
+    A[Audio] --&gt; TA[Frames or codec codes]
+    V[Video] --&gt; TV[Tubelets or video codes]
+    R[Catalog items] --&gt; TR[Atomic or semantic IDs]
+
+    TL --&gt; E[Token embeddings + structure]
+    TI --&gt; E
+    TA --&gt; E
+    TV --&gt; E
+    TR --&gt; E
+
+    E --&gt; M[General sequence model]
+    M --&gt; O[Prediction, retrieval, generation, or control]
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+<p>This is why tokenization is not intrinsically an LLM component. It is an <strong>abstraction boundary</strong> between domain-specific perception or identity and a model that expects a sequence of vectors. The same Transformer can process different fields once their tokenizers produce compatible shapes and attach the right positional and modality information.</p>
+</section>
+<section id="what-the-tokenizer-decides" class="level3">
+<h3 class="anchored" data-anchor-id="what-the-tokenizer-decides">What the tokenizer decides</h3>
+<p>The tokenizer does more than change a data type. It makes several modeling decisions before the backbone sees the input:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Decision</th>
+<th>Question</th>
+<th>Consequence</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Units</td>
+<td>What should count as one token?</td>
+<td>determines the primitive patterns the model can combine</td>
+</tr>
+<tr class="even">
+<td>Compression</td>
+<td>How much raw information enters each token?</td>
+<td>trades sequence length and compute against lost detail</td>
+</tr>
+<tr class="odd">
+<td>Parameter sharing</td>
+<td>Which observations reuse an ID, code, or encoder?</td>
+<td>determines how statistical strength transfers between examples</td>
+</tr>
+<tr class="even">
+<td>Structure</td>
+<td>How are space, time, hierarchy, and modality represented?</td>
+<td>supplies ordering and neighborhood information absent from token values</td>
+</tr>
+<tr class="odd">
+<td>Reversibility</td>
+<td>Must the original input be reconstructed?</td>
+<td>separates semantic representations from generation-quality codecs</td>
+</tr>
+</tbody>
+</table>
+<p>The token sequence is therefore an information and compute budget. For dense attention with <span class="math inline">\(T\)</span> tokens, the attention-score matrix costs <span class="math inline">\(O(T^2)\)</span>. Reducing image patch size, audio hop size, or video tubelet size may preserve more detail, but can make the backbone dramatically more expensive.</p>
+<p>Tokenization also defines inductive bias. Subwords encourage reuse across related words; image patches encode locality; codec tokens favor reconstructability; semantic item IDs encourage related items to share code embeddings. A downstream model cannot reliably recover information that its tokenizer discarded.</p>
+</section>
+<section id="why-large-sparse-ids-are-a-tokenization-problem" class="level3">
+<h3 class="anchored" data-anchor-id="why-large-sparse-ids-are-a-tokenization-problem">Why large sparse IDs are a tokenization problem</h3>
+<p>An atomic recommendation ID is already a discrete token, but it is an arbitrary name. With <span class="math inline">\(N\)</span> items and embedding dimension <span class="math inline">\(d\)</span>, a direct item table requires <span class="math inline">\(O(Nd)\)</span> parameters, and two similar items share no representation unless the training data teaches their embeddings to be similar.</p>
+<p>A semantic tokenizer can replace one huge categorical space with a composition of <span class="math inline">\(M\)</span> codes drawn from codebooks of size <span class="math inline">\(K\)</span>:</p>
+<p><span class="math display">\[
+i
+\longrightarrow
+(c_1,\ldots,c_M),
+\qquad c_m\in\{1,\ldots,K\}.
+\]</span></p>
+<p>The code embeddings require roughly <span class="math inline">\(O(MKd)\)</span> parameters while the code tuples can represent up to <span class="math inline">\(K^M\)</span> combinations. More importantly, rare or new items can reuse codes learned by related items. This is analogous to representing a rare word with reusable subwords, although recommendation systems must additionally preserve exact item identity and prevent invalid or colliding code sequences.</p>
+</section>
+<section id="when-tokenization-is-not-necessary" class="level3">
+<h3 class="anchored" data-anchor-id="when-tokenization-is-not-necessary">When tokenization is not necessary</h3>
+<p>Tokenization is most valuable for inputs that are variable-sized, high-dimensional, high-rate, sparse categorical, or intended to share a sequence backbone. A small, fixed-length dense feature vector can usually be fed directly to an MLP; calling every numeric feature a token adds no inherent value.</p>
+<p>The useful first-principles question is therefore not “How do I tokenize this modality?” but:</p>
+<blockquote class="blockquote">
+<p>What representation exposes the task-relevant structure at a token rate and parameter cost the model can afford?</p>
+</blockquote>
+</section>
 <section id="a-shared-view-across-modalities" class="level3">
 <h3 class="anchored" data-anchor-id="a-shared-view-across-modalities">A shared view across modalities</h3>
 <table class="caption-top table">
@@ -415,7 +533,7 @@ special tokens + token IDs</code></pre>
 <section id="minimal-byte-tokenizer" class="level3">
 <h3 class="anchored" data-anchor-id="minimal-byte-tokenizer">Minimal byte tokenizer</h3>
 <p>This is lossless for valid UTF-8 text and has no learned vocabulary. It is educational rather than a complete production tokenizer.</p>
-<div id="d064f702" class="cell" data-execution_count="1">
+<div id="95a38572" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> ByteTokenizer:</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    vocab_size <span class="op">=</span> <span class="dv">256</span></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -460,7 +578,7 @@ X \in \mathbb{R}^{C \times H \times W},
 T = \frac{H}{P}\frac{W}{P},
 \]</span></p>
 <p>and each flattened patch has dimension <span class="math inline">\(CP^2\)</span>. A learned projection maps it to <span class="math inline">\(d_{\text{model}}\)</span>. This is the continuous-token approach used by <a href="https://arxiv.org/abs/2010.11929">Vision Transformer</a>.</p>
-<div id="aea1f3ee" class="cell" data-execution_count="2">
+<div id="0e5c0636" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch.nn.functional <span class="im">as</span> F</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -524,7 +642,7 @@ k_{ij}
 <p><span class="math display">\[
 T = 1 + \left\lfloor\frac{L-W}{H_s}\right\rfloor.
 \]</span></p>
-<div id="6626e0a9" class="cell" data-execution_count="3">
+<div id="1c7efe67" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> frame_audio(waveforms, frame_size, hop_size):</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Convert (B, samples) waveforms to (B, frames, frame_size)."""</span></span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> waveforms.shape[<span class="op">-</span><span class="dv">1</span>] <span class="op">&lt;</span> frame_size:</span>
@@ -577,7 +695,7 @@ N
 \frac{H}{P_h}
 \frac{W}{P_w}.
 \]</span></p>
-<div id="a891d726" class="cell" data-execution_count="4">
+<div id="522170e5" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch.nn <span class="im">as</span> nn</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -660,7 +778,7 @@ r_m = r_{m-1}-e_{c_m}^{(m)}.
 </section>
 <section id="minimal-residual-quantizer" class="level3">
 <h3 class="anchored" data-anchor-id="minimal-residual-quantizer">Minimal residual quantizer</h3>
-<div id="06e3a9d4" class="cell" data-execution_count="5">
+<div id="89b164e6" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> residual_quantize(vectors, codebooks):</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""</span></span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="co">    Args:</span></span>
