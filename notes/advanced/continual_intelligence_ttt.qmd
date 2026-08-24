@@ -1000,6 +1000,12 @@ The relevant feedback may include:
 
 This is closer to RL and decision learning than to pure prediction.
 
+Cursor Tab and Composer provide a concrete product-scale example: frequent
+on-policy RL improves action utility, but KL anchoring, task breadth, and
+regression gates—not RL by itself—provide partial protection against policy
+regression. See
+[Cursor's Continual Training Loop](../applied_ml/cursor_continual_training.qmd).
+
 It also makes the trajectory-stability problem harder.
 
 A corrupted episodic memory can damage one task.

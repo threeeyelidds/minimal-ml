@@ -30,6 +30,7 @@ title: "Notes"
 
 - [Agentic Search: is it a fake problem](applied_ml/agentic_search.qmd)
 - [Agent Harness: turning prediction into decision](applied_ml/harness.qmd)
+- [Case Study: Cursor's Continual Training Loop](applied_ml/cursor_continual_training.qmd)
 - [Codex: anatomy of an open-source coding agent](applied_ml/codex.qmd)
 
 ## Coming next

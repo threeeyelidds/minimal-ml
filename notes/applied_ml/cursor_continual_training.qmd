@@ -1,0 +1,382 @@
+---
+title: "Case Study: Cursor's Continual Training Loop"
+---
+
+## The Question
+
+Cursor frequently updates Tab and Composer from production interaction data.
+This makes them useful case studies for three questions:
+
+1. How can a deployed model generate its next round of training data?
+2. Why use reinforcement learning instead of only next-token prediction?
+3. Does changing the objective to RL solve catastrophic forgetting?
+
+The short answer to the third question is **no**. RL improves alignment between
+training signal and product utility. Retention still depends on the task
+mixture, replay or anchoring distribution, regularization, and regression
+evaluation.
+
+This note reconstructs only what Cursor has publicly disclosed. Details such as
+the complete data mixture, reward weights, replay policy, and all
+anti-forgetting mechanisms remain private.
+
+## Two Meanings of Continual Learning
+
+Cursor's public loops implement **population-level online model improvement**:
+
+$$
+\text{deploy checkpoint}
+\rightarrow
+\text{collect population feedback}
+\rightarrow
+\text{train next checkpoint}
+\rightarrow
+\text{evaluate and redeploy}.
+$$
+
+This differs from a model updating private weights during one user's lifetime:
+
+| Form | Persistent state | Timescale |
+|---|---|---|
+| Cursor's real-time training | shared model checkpoint | hours to model releases |
+| within-session adaptation | context, cache, files, or memory | seconds to hours |
+| lifelong personalized learning | user-specific persistent memory or weights | months to years |
+
+The distinction matters when connecting this case to
+[continual intelligence](../advanced/continual_intelligence_ttt.qmd). Cursor is
+closing the outer product-training loop, not claiming to solve every layer of
+lifelong memory.
+
+## Cursor Tab: Learn Whether an Action Is Worth Showing
+
+Tab observes a state $s$ containing the codebase, cursor location, and recent
+interaction. Its action is not merely a token continuation. It can:
+
+- propose an edit
+- propose a cursor jump or subsequent edit
+- abstain and show nothing
+
+User acceptance or rejection supplies a reward. Cursor repeatedly deploys a
+checkpoint, collects fresh actions and outcomes, applies a policy-gradient
+update, and deploys the next checkpoint:
+
+```{mermaid}
+flowchart LR
+    P[Current Tab policy] --> D[Deploy]
+    D --> I[User interactions]
+    I --> R[Accept / reject / abstain rewards]
+    R --> U[Policy-gradient update]
+    U --> E[Regression and product evaluation]
+    E --> P2[Next policy]
+```
+
+### Why abstention makes this a decision problem
+
+Suppose the illustrative rewards are
+
+$$
+R(\text{accept})=0.75,
+\qquad
+R(\text{reject})=-0.25,
+\qquad
+R(\text{abstain})=0.
+$$
+
+If a suggestion has acceptance probability $p$, showing it has expected reward
+
+$$
+0.75p-0.25(1-p)=p-0.25.
+$$
+
+The optimal policy therefore shows the suggestion only when $p>0.25$. Changing
+the reward changes the implicit threshold. The model learns generation and
+filtering as one policy rather than relying only on a separately trained
+acceptance classifier.
+
+Cursor reports collecting a new checkpoint's on-policy data in roughly
+1.5--2 hours. Its disclosed result made fewer suggestions while increasing the
+acceptance rate. See
+[Improving Cursor Tab with online RL](https://cursor.com/blog/tab-rl).
+
+### Why not train only on the user's next edit?
+
+NTP or behavior cloning would answer:
+
+> Given this context, what action did the user take?
+
+Tab's product objective is closer to:
+
+> Given the action this policy would propose, was showing it useful enough to
+> interrupt the user?
+
+One logged user edit is not the only acceptable continuation. It also does not
+directly label the counterfactual value of showing a particular model-generated
+suggestion. Acceptance, rejection, suggestion length, jumps, and abstention are
+more naturally expressed as action-dependent utility.
+
+## Composer: Knowledge First, Agent Policy Second
+
+Composer does not replace language-model training with RL. Composer 2 uses a
+staged pipeline:
+
+```{mermaid}
+flowchart LR
+    B[Kimi K2.5 base] --> C[Code-heavy continued pretraining]
+    C --> L[Long-context extension]
+    L --> S[Targeted SFT]
+    S --> R[Asynchronous agentic RL]
+    R --> O[Real-time production RL]
+```
+
+The stages solve different problems:
+
+| Stage | Primary role |
+|---|---|
+| continued pretraining | acquire code knowledge and lower code perplexity |
+| long-context training | operate on larger codebases and histories |
+| targeted SFT | initialize useful instruction and tool behavior |
+| simulated agent RL | optimize multi-step problem solving in a controlled harness |
+| production RL | reduce simulator–user mismatch using real outcomes |
+
+Cursor reports that lower continued-pretraining cross-entropy predicts better
+downstream RL performance. This is evidence against the idea that agentic RL
+makes NTP obsolete. A knowledgeable base makes a better policy learner. See the
+[Composer 2 technical report](https://cursor.com/resources/Composer2.pdf).
+
+### Simulated agentic RL
+
+Composer receives realistic coding tasks and the same classes of tools used in
+the deployed [agent harness](harness.qmd): file reading and editing, terminal
+commands, grep, semantic search, and web search. Multiple trajectories are
+sampled, executed in sandboxed environments, and updated according to solution
+quality.
+
+The disclosed task distribution includes new features, debugging, refactoring,
+codebase understanding, documentation, testing, review, optimization, DevOps,
+migration, and deletion. Task breadth is important: a narrow stream of one task
+type would make specialization and forgetting much harder to distinguish.
+
+Composer 2 updates the full parameter set, operates in a single-epoch regime,
+uses KL regularization, and tries to keep asynchronous rollouts close to the
+current policy through frequent weight synchronization and MoE-routing replay.
+
+### Real-time RL
+
+Cursor later closes the loop with production use:
+
+$$
+\text{billions of interaction tokens}
+\rightarrow
+\text{derived reward signals}
+\rightarrow
+\text{full-weight update}
+\rightarrow
+\text{regression suites}
+\rightarrow
+\text{deployment}.
+$$
+
+Cursor reports that this cycle can produce a candidate checkpoint in about five
+hours. Before deployment, the model is checked against CursorBench and other
+evaluation suites. Production monitoring revealed reward hacks such as
+intentionally invalid tool calls and excessive clarification instead of editing;
+the reward and data pipeline then had to be corrected. See
+[Improving Composer through real-time RL](https://cursor.com/blog/real-time-rl-for-composer).
+
+This is best understood as a **closed-loop product optimizer**. The reward is
+not a fact about the world; it is an evolving measurement system built from user
+behavior, environment outcomes, latency, persistence of edits, and product
+judgment.
+
+## Composer 2.5: RL and Distillation Are Composed {#sec-composer-distillation}
+
+Long trajectories make credit assignment difficult: a final reward may reveal
+that the rollout was poor without identifying the bad turn. Composer 2.5 adds
+targeted textual feedback:
+
+1. locate a problematic message or tool decision
+2. insert a short corrective hint into that local context
+3. treat the hint-conditioned model distribution as a teacher
+4. apply an on-policy KL loss from the original-context student toward that
+   teacher
+5. retain the broader trajectory-level RL objective
+
+This combines sparse outcome optimization with dense local supervision:
+
+$$
+\mathcal L
+=
+\mathcal L_{\mathrm{RL}}
++
+\lambda
+\operatorname{KL}
+\left(
+\pi_{\text{teacher with hint}}
+\middle\|
+\pi_{\theta,\text{original context}}
+\right).
+$$
+
+It is a concrete instance of the distinction in
+[Distillation: Learning from a Teacher](../foundations/distillation.qmd): the
+state distribution, teacher construction, KL direction, and trajectory reward
+are separate design choices. See
+[Introducing Composer 2.5](https://cursor.com/blog/composer-2-5).
+
+## RL and NTP Differ in Credit, Not Memory Safety
+
+For a demonstrated action $a^*$, NTP/SFT applies
+
+$$
+\nabla_\theta\mathcal L_{\mathrm{NTP}}
+=
+-\mathbb E
+\left[
+\nabla_\theta\log\pi_\theta(a^*\mid s)
+\right].
+$$
+
+A policy gradient applies
+
+$$
+\nabla_\theta J
+=
+\mathbb E_{s,a\sim\pi_\theta}
+\left[
+A(s,a)\nabla_\theta\log\pi_\theta(a\mid s)
+\right].
+$$
+
+Both change log probabilities in the same shared parameters. RL changes which
+actions receive positive or negative weight and permits sequence-level,
+action-dependent credit. Nothing in this equation automatically protects an
+old capability whose states are absent from the new training distribution.
+
+This illustrates the four-axis framework in
+[Losses from First Principles](../foundations/losses.qmd):
+
+| Axis | NTP/SFT | Online RL |
+|---|---|---|
+| learned object | conditional next-action distribution | utility-maximizing policy |
+| supervision | observed target action | environment or user reward |
+| discrepancy | log loss | advantage-weighted log probability |
+| state distribution | usually logged/static contexts | current policy's encountered states |
+
+## Why RL Does Not Solve Catastrophic Forgetting
+
+Catastrophic forgetting occurs when updates that improve the current training
+distribution damage behavior required on earlier or absent distributions. Both
+NTP and RL can cause it:
+
+$$
+\nabla L_{\text{new}}^T\nabla L_{\text{old}}<0
+$$
+
+indicates local gradient interference. RL can make the problem worse when its
+reward is narrow, noisy, or exploitable: policy entropy can collapse, a single
+tool strategy can dominate, or measurable behavior can displace unmeasured
+skills.
+
+A KL penalty can limit behavioral drift:
+
+$$
+\max_\theta
+\mathbb E_{\tau\sim\pi_\theta}[R(\tau)]
+-
+\beta
+\mathbb E_{s\sim\mu}
+\operatorname{KL}
+\left(
+\pi_\theta(\cdot\mid s)
+\|\pi_{\mathrm{ref}}(\cdot\mid s)
+\right).
+$$
+
+But this protects behavior only on anchor states $s\sim\mu$. If an old skill is
+missing from $\mu$, the KL term does not directly test it. KL is a trust region,
+not a complete memory system.
+
+## What Actually Provides Retention?
+
+Cursor has not disclosed or claimed a complete solution to catastrophic
+forgetting. The public recipe exposes several practical defenses:
+
+| Mechanism | What it protects | What it cannot guarantee |
+|---|---|---|
+| broad task distribution | coverage across common coding workflows | unrelated or rare skills |
+| KL to a reference policy | local behavioral stability on anchor states | retention off the anchor distribution |
+| small, frequent on-policy cycles | lower policy lag and easier diagnosis | absence of long-run feedback loops |
+| single-epoch RL prompts | less memorization of individual tasks | no interference across tasks |
+| regression and held-out evaluations | measured capabilities before deployment | unmeasured capabilities |
+| reward monitoring and A/B tests | production regressions and reward hacks | delayed or weakly observed harms |
+
+A more general continual-learning system may additionally need:
+
+- replay mixing historical, general, and current data
+- teacher-logit distillation on a stable anchor suite
+- adapters or separated plastic/stable parameters
+- explicit gradient-conflict management
+- checkpoint rollback and population-level canaries
+- a policy for deciding which episodes deserve weight consolidation
+
+The exact replay and retention mixture used internally by Cursor is not public,
+so it should not be inferred from the existence of online RL.
+
+## The First-Principles Interpretation
+
+Cursor's main innovation is not “RL remembers better.” It is a tight match among
+four components:
+
+```{mermaid}
+flowchart LR
+    P[Production state distribution]
+    A[Current policy actions]
+    F[Real user and environment feedback]
+    G[Frequent guarded updates]
+    P --> A --> F --> G --> P
+```
+
+The loop reduces three mismatches:
+
+1. **state mismatch:** train on states the deployed policy actually encounters
+2. **action mismatch:** evaluate the model's own suggestions and trajectories
+3. **objective mismatch:** optimize acceptance and task outcome rather than only
+   imitation likelihood
+
+It simultaneously creates three risks:
+
+1. **feedback loops:** the policy changes the data it later observes
+2. **reward hacking:** measured proxies become optimization targets
+3. **forgetting:** current high-volume behaviors can dominate older or rarer
+   capabilities
+
+Thus continual product learning requires a second, slower loop that audits the
+fast learning loop. This is where harness observability, regression suites,
+reward design, replay, and rollback become part of the learning algorithm.
+
+## Interview Questions
+
+- Why is Tab's abstention decision difficult to express as ordinary NTP?
+- Derive the acceptance threshold implied by positive, negative, and abstention
+  rewards.
+- Why must Tab refresh its data after updating the policy?
+- Separate Composer's continued pretraining, SFT, simulated RL, and real-time RL
+  objectives.
+- Why does lower code perplexity still help downstream agentic RL?
+- Why does RL not inherently prevent catastrophic forgetting?
+- What does a KL penalty preserve, and how does its state distribution limit the
+  guarantee?
+- How does Composer 2.5 combine trajectory reward with localized on-policy
+  distillation?
+- Which regression suite would detect a policy becoming better at editing but
+  worse at explanation, planning, or abstention?
+- Is Cursor's loop lifelong learning, online learning, or continual product
+  optimization? State the timescale and persistent state in your answer.
+
+## Primary Sources
+
+- [Improving Cursor Tab with online RL](https://cursor.com/blog/tab-rl)
+- [Composer: Building a fast frontier model with RL](https://cursor.com/blog/composer)
+- [Composer 2 Technical Report](https://cursor.com/resources/Composer2.pdf)
+- [Improving Composer through real-time RL](https://cursor.com/blog/real-time-rl-for-composer)
+- [Introducing Composer 2.5](https://cursor.com/blog/composer-2-5)

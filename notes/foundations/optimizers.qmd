@@ -1228,6 +1228,13 @@ projections. A common recipe uses AdamW for:
 
 Thus “training with Muon” commonly means a hybrid Muon + AdamW optimizer setup.
 
+As a production example, Cursor reports using distributed Muon during Composer
+2.5 continued pretraining, orthogonalizing attention projections per head and
+stacked MoE weights per expert. This is an optimizer/system choice inside the
+pretraining phase; the subsequent online policy objective remains conceptually
+separate. See
+[Cursor's Continual Training Loop](../applied_ml/cursor_continual_training.qmd).
+
 #### Is Muon a second-order optimizer?
 
 There are two conventions:

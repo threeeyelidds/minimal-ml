@@ -148,6 +148,11 @@ comes from another model. Distillation can train a classifier, generator,
 representation, or policy, so it is a cross-cutting supervision mechanism—not
 a subtype of generative modeling.
 
+The [Cursor continual-training case study](../applied_ml/cursor_continual_training.qmd)
+shows all four axes changing together: production supplies states, the current
+policy supplies actions, users and tools supply reward, and a reference policy
+or feedback-conditioned teacher supplies KL anchors.
+
 ## A Loss-Design Procedure
 
 Given a new problem:

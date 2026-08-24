@@ -731,6 +731,13 @@ the need for task-specific environments and verifiers. See
 for the relationship between harness variation, specialist policies, and a
 consolidated research/coding/general-agent model.
 
+Cursor closes this loop from the other direction: it trains Composer in a
+simulation of the production harness, then uses real interactions and product
+outcomes to update the deployed policy every few hours. The case exposes why
+harness instrumentation, reward construction, regression gates, and rollback
+are parts of the learning algorithm rather than only serving infrastructure.
+See [Cursor's Continual Training Loop](cursor_continual_training.qmd).
+
 ### Self-improving harnesses
 
 A model can propose edits to its own harness, forming a loop:

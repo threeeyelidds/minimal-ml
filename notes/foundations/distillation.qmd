@@ -201,6 +201,11 @@ distillation for generative language models. More recent trust-region methods
 such as [TrOPD](https://arxiv.org/abs/2606.01249) restrict unreliable updates and
 can mix forward-KL guidance into uncertain regions.
 
+For a production case, Composer 2.5 constructs a local teacher by inserting
+textual corrective feedback at a problematic turn, then adds an on-policy KL
+loss while retaining the trajectory-level RL objective. See
+[Cursor's Continual Training Loop](../applied_ml/cursor_continual_training.qmd#sec-composer-distillation).
+
 ## Sequence Distillation
 
 When teacher logits are unavailable or expensive to store, generate teacher
@@ -320,4 +325,3 @@ compression but preventing representational collapse.
 - [On-Policy Distillation of Language Models](https://arxiv.org/abs/2306.13649)
 - [MiniLLM: Knowledge Distillation of Large Language Models](https://arxiv.org/abs/2306.08543)
 - [Trust Region On-Policy Distillation](https://arxiv.org/abs/2606.01249)
-
