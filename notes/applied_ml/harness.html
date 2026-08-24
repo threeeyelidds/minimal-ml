@@ -1021,6 +1021,7 @@ s_{t+1}.
 </ul>
 <p>Always compare against simple baselines. A more elaborate harness may consume more test-time compute rather than make better decisions.</p>
 <p>Harness configuration can also be part of the model’s training distribution. For example, Kimi K3 varies tools, system prompts, context strategies, skills, memory, and subagent configurations during agentic RL instead of optimizing for one fixed scaffold. This teaches robustness across runtimes, but does not remove the need for task-specific environments and verifiers. See <a href="../../notes/applied_ml/agentic_search.html#sec-deep-research-training">How SOTA systems train deep research</a> for the relationship between harness variation, specialist policies, and a consolidated research/coding/general-agent model.</p>
+<p>Cursor closes this loop from the other direction: it trains Composer in a simulation of the production harness, then uses real interactions and product outcomes to update the deployed policy every few hours. The case exposes why harness instrumentation, reward construction, regression gates, and rollback are parts of the learning algorithm rather than only serving infrastructure. See <a href="../../notes/applied_ml/cursor_continual_training.html">Cursor’s Continual Training Loop</a>.</p>
 <section id="self-improving-harnesses" class="level3">
 <h3 class="anchored" data-anchor-id="self-improving-harnesses">Self-improving harnesses</h3>
 <p>A model can propose edits to its own harness, forming a loop:</p>

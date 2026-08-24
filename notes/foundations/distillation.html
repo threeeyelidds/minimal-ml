@@ -288,7 +288,7 @@ p_{\theta,\tau}(i\mid x)
 <p>The hard label anchors the student to observed outcomes; the soft target transfers the teacher’s richer geometry. A teacher can also be wrong, biased, or miscalibrated, so the mixture is not automatically better than either term.</p>
 <section id="minimal-implementation" class="level3">
 <h3 class="anchored" data-anchor-id="minimal-implementation">Minimal implementation</h3>
-<div id="81d4eeb7" class="cell" data-execution_count="1">
+<div id="42d0ea07" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch.nn.functional <span class="im">as</span> F</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -414,6 +414,7 @@ r_t
 <li>locally imitating next-token probabilities does not preserve sequence-level behavior</li>
 </ul>
 <p><a href="https://arxiv.org/abs/2306.13649">On-Policy Distillation</a> develops the state- distribution view. <a href="https://arxiv.org/abs/2306.08543">MiniLLM</a> studies reverse-KL distillation for generative language models. More recent trust-region methods such as <a href="https://arxiv.org/abs/2606.01249">TrOPD</a> restrict unreliable updates and can mix forward-KL guidance into uncertain regions.</p>
+<p>For a production case, Composer 2.5 constructs a local teacher by inserting textual corrective feedback at a problematic turn, then adds an on-policy KL loss while retaining the trajectory-level RL objective. See <a href="../../notes/applied_ml/cursor_continual_training.html#sec-composer-distillation">Cursor’s Continual Training Loop</a>.</p>
 </section>
 <section id="sequence-distillation" class="level2">
 <h2 class="anchored" data-anchor-id="sequence-distillation">Sequence Distillation</h2>

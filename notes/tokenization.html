@@ -534,7 +534,7 @@ special tokens + token IDs</code></pre>
 <section id="minimal-byte-tokenizer" class="level3">
 <h3 class="anchored" data-anchor-id="minimal-byte-tokenizer">Minimal byte tokenizer</h3>
 <p>This is lossless for valid UTF-8 text and has no learned vocabulary. It is educational rather than a complete production tokenizer.</p>
-<div id="c75a8b97" class="cell" data-execution_count="1">
+<div id="636993aa" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> ByteTokenizer:</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    vocab_size <span class="op">=</span> <span class="dv">256</span></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -579,7 +579,7 @@ X \in \mathbb{R}^{C \times H \times W},
 T = \frac{H}{P}\frac{W}{P},
 \]</span></p>
 <p>and each flattened patch has dimension <span class="math inline">\(CP^2\)</span>. A learned projection maps it to <span class="math inline">\(d_{\text{model}}\)</span>. This is the continuous-token approach used by <a href="https://arxiv.org/abs/2010.11929">Vision Transformer</a>.</p>
-<div id="d78f1a0f" class="cell" data-execution_count="2">
+<div id="428f9661" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch.nn.functional <span class="im">as</span> F</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -643,7 +643,7 @@ k_{ij}
 <p><span class="math display">\[
 T = 1 + \left\lfloor\frac{L-W}{H_s}\right\rfloor.
 \]</span></p>
-<div id="bbcdbea3" class="cell" data-execution_count="3">
+<div id="3dbed660" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> frame_audio(waveforms, frame_size, hop_size):</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Convert (B, samples) waveforms to (B, frames, frame_size)."""</span></span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> waveforms.shape[<span class="op">-</span><span class="dv">1</span>] <span class="op">&lt;</span> frame_size:</span>
@@ -696,7 +696,7 @@ N
 \frac{H}{P_h}
 \frac{W}{P_w}.
 \]</span></p>
-<div id="65bf7a2e" class="cell" data-execution_count="4">
+<div id="f1eaaf2d" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch.nn <span class="im">as</span> nn</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -779,7 +779,7 @@ r_m = r_{m-1}-e_{c_m}^{(m)}.
 </section>
 <section id="minimal-residual-quantizer" class="level3">
 <h3 class="anchored" data-anchor-id="minimal-residual-quantizer">Minimal residual quantizer</h3>
-<div id="dafbccff" class="cell" data-execution_count="5">
+<div id="29038660" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> residual_quantize(vectors, codebooks):</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""</span></span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="co">    Args:</span></span>

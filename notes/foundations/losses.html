@@ -367,6 +367,7 @@ Y\mid X=x\sim\mathcal N(f_\theta(x),\sigma^2),
 <section id="teacher-supervised-objectives" class="level3">
 <h3 class="anchored" data-anchor-id="teacher-supervised-objectives">Teacher-supervised objectives</h3>
 <p>Use <a href="../../notes/foundations/distillation.html">Distillation: Learning from a Teacher</a> when supervision comes from another model. Distillation can train a classifier, generator, representation, or policy, so it is a cross-cutting supervision mechanism—not a subtype of generative modeling.</p>
+<p>The <a href="../../notes/applied_ml/cursor_continual_training.html">Cursor continual-training case study</a> shows all four axes changing together: production supplies states, the current policy supplies actions, users and tools supply reward, and a reference policy or feedback-conditioned teacher supplies KL anchors.</p>
 </section>
 </section>
 <section id="a-loss-design-procedure" class="level2">
