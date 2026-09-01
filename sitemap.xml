@@ -1,95 +1,103 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
+    <loc>https://threeeyelidds.github.io/minimal-ml/notes/algorithms/dynamic_programming_and_graph_algorithms.html</loc>
+    <lastmod>2026-09-01T18:33:22.201Z</lastmod>
+  </url>
+  <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/notes/applied_ml/agentic_search.html</loc>
-    <lastmod>2026-08-24T22:21:25.186Z</lastmod>
+    <lastmod>2026-09-01T18:33:22.202Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/notes/applied_ml/harness.html</loc>
-    <lastmod>2026-08-24T22:21:25.187Z</lastmod>
+    <lastmod>2026-09-01T18:33:22.202Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/notes/foundations/optimizers.html</loc>
-    <lastmod>2026-08-24T22:21:25.188Z</lastmod>
+    <lastmod>2026-09-01T18:33:22.204Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/notes/foundations/representation_learning.html</loc>
-    <lastmod>2026-08-24T22:21:25.188Z</lastmod>
+    <lastmod>2026-09-01T18:33:22.204Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/notes/foundations/losses.html</loc>
-    <lastmod>2026-08-24T22:21:25.187Z</lastmod>
+    <lastmod>2026-09-01T18:33:22.203Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/notes/foundations/activations.html</loc>
-    <lastmod>2026-08-24T22:21:25.187Z</lastmod>
+    <lastmod>2026-09-01T18:33:22.202Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/notes/tokenization.html</loc>
-    <lastmod>2026-08-24T22:21:25.188Z</lastmod>
+    <lastmod>2026-09-01T18:33:22.204Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/notes/transformers/positional_encoding.html</loc>
-    <lastmod>2026-08-24T22:21:25.189Z</lastmod>
+    <lastmod>2026-09-01T18:33:22.205Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/notes/transformers/transformer.html</loc>
-    <lastmod>2026-08-24T22:21:25.189Z</lastmod>
+    <lastmod>2026-09-01T18:33:22.205Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/notes/advanced/continual_intelligence_ttt.html</loc>
-    <lastmod>2026-08-24T22:21:25.186Z</lastmod>
+    <lastmod>2026-09-01T18:33:22.201Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/essays/index.html</loc>
-    <lastmod>2026-08-24T22:21:25.186Z</lastmod>
+    <lastmod>2026-09-01T18:33:22.201Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/index.html</loc>
-    <lastmod>2026-08-24T22:21:25.186Z</lastmod>
+    <lastmod>2026-09-01T18:33:22.201Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/essays/ai-gdp-productivity-purpose.html</loc>
-    <lastmod>2026-08-24T22:21:25.185Z</lastmod>
+    <lastmod>2026-09-01T18:33:22.200Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/notes/advanced/linear_attention.html</loc>
-    <lastmod>2026-08-24T22:21:25.186Z</lastmod>
+    <lastmod>2026-09-01T18:33:22.201Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/notes/advanced/advanced_attention.html</loc>
-    <lastmod>2026-08-24T22:21:25.186Z</lastmod>
+    <lastmod>2026-09-01T18:33:22.201Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/notes/transformers/attention.html</loc>
-    <lastmod>2026-08-24T22:21:25.189Z</lastmod>
+    <lastmod>2026-09-01T18:33:22.204Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/notes/index.html</loc>
-    <lastmod>2026-08-24T22:21:25.188Z</lastmod>
+    <lastmod>2026-09-01T18:33:22.204Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/notes/foundations/prediction_decision_losses.html</loc>
-    <lastmod>2026-08-24T22:21:25.188Z</lastmod>
+    <lastmod>2026-09-01T18:33:22.204Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/notes/foundations/generative_losses.html</loc>
-    <lastmod>2026-08-24T22:21:25.187Z</lastmod>
+    <lastmod>2026-09-01T18:33:22.203Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/notes/foundations/rnn_lstm.html</loc>
-    <lastmod>2026-08-24T22:21:25.188Z</lastmod>
+    <lastmod>2026-09-01T18:33:22.204Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/notes/foundations/distillation.html</loc>
-    <lastmod>2026-08-24T22:21:25.187Z</lastmod>
+    <lastmod>2026-09-01T18:33:22.203Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/notes/applied_ml/codex.html</loc>
-    <lastmod>2026-08-24T22:21:25.187Z</lastmod>
+    <lastmod>2026-09-01T18:33:22.202Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/notes/applied_ml/cursor_continual_training.html</loc>
-    <lastmod>2026-08-24T22:21:25.187Z</lastmod>
+    <lastmod>2026-09-01T18:33:22.202Z</lastmod>
+  </url>
+  <url>
+    <loc>https://threeeyelidds.github.io/minimal-ml/notes/algorithms/probabilistic_modeling_tricks.html</loc>
+    <lastmod>2026-09-01T18:33:22.202Z</lastmod>
   </url>
 </urlset>

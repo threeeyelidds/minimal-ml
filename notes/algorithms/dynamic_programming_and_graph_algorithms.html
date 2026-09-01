@@ -1,0 +1,3118 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Dynamic Programming and Graph Algorithms from First Principles – Minimal ML</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-f83c246346592b24d02aa84ae3974412.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<meta name="google-site-verification" content="Ztjr25pGaioeZP-mkoIn_MkNmmsFXWcU6I6W2tEPli0">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../../styles.css">
+<link rel="stylesheet" href="../../colors.css">
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">Minimal ML</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../notes/index.html"> 
+<span class="menu-text">Notes</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../essays/index.html"> 
+<span class="menu-text">Essays</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#the-unifying-idea" id="toc-the-unifying-idea" class="nav-link active" data-scroll-target="#the-unifying-idea">The unifying idea</a></li>
+  <li><a href="#dynamic-programming" id="toc-dynamic-programming" class="nav-link" data-scroll-target="#dynamic-programming">Dynamic Programming</a>
+  <ul class="collapse">
+  <li><a href="#dynamic-programming-from-first-principles" id="toc-dynamic-programming-from-first-principles" class="nav-link" data-scroll-target="#dynamic-programming-from-first-principles">1. Dynamic programming from first principles</a>
+  <ul class="collapse">
+  <li><a href="#what-makes-a-problem-dp" id="toc-what-makes-a-problem-dp" class="nav-link" data-scroll-target="#what-makes-a-problem-dp">1.1 What makes a problem DP?</a></li>
+  <li><a href="#the-real-task-designing-the-state" id="toc-the-real-task-designing-the-state" class="nav-link" data-scroll-target="#the-real-task-designing-the-state">1.2 The real task: designing the state</a></li>
+  </ul></li>
+  <li><a href="#a-mechanical-dp-derivation-procedure" id="toc-a-mechanical-dp-derivation-procedure" class="nav-link" data-scroll-target="#a-mechanical-dp-derivation-procedure">2. A mechanical DP derivation procedure</a>
+  <ul class="collapse">
+  <li><a href="#step-1-write-the-brute-force-decision-process" id="toc-step-1-write-the-brute-force-decision-process" class="nav-link" data-scroll-target="#step-1-write-the-brute-force-decision-process">Step 1: Write the brute-force decision process</a></li>
+  <li><a href="#step-2-identify-repeated-subproblems" id="toc-step-2-identify-repeated-subproblems" class="nav-link" data-scroll-target="#step-2-identify-repeated-subproblems">Step 2: Identify repeated subproblems</a></li>
+  <li><a href="#step-3-define-exactly-what-dpstate-means" id="toc-step-3-define-exactly-what-dpstate-means" class="nav-link" data-scroll-target="#step-3-define-exactly-what-dpstate-means">Step 3: Define exactly what <code>dp[state]</code> means</a></li>
+  <li><a href="#step-4-derive-the-recurrence-from-one-decision" id="toc-step-4-derive-the-recurrence-from-one-decision" class="nav-link" data-scroll-target="#step-4-derive-the-recurrence-from-one-decision">Step 4: Derive the recurrence from one decision</a></li>
+  <li><a href="#step-5-find-base-cases" id="toc-step-5-find-base-cases" class="nav-link" data-scroll-target="#step-5-find-base-cases">Step 5: Find base cases</a></li>
+  <li><a href="#step-6-determine-dependency-order" id="toc-step-6-determine-dependency-order" class="nav-link" data-scroll-target="#step-6-determine-dependency-order">Step 6: Determine dependency order</a></li>
+  </ul></li>
+  <li><a href="#top-down-and-bottom-up-dp" id="toc-top-down-and-bottom-up-dp" class="nav-link" data-scroll-target="#top-down-and-bottom-up-dp">3. Top-down and bottom-up DP</a>
+  <ul class="collapse">
+  <li><a href="#top-down-memoized-recursion" id="toc-top-down-memoized-recursion" class="nav-link" data-scroll-target="#top-down-memoized-recursion">Top-down: memoized recursion</a></li>
+  <li><a href="#bottom-up-tabulation" id="toc-bottom-up-tabulation" class="nav-link" data-scroll-target="#bottom-up-tabulation">Bottom-up: tabulation</a></li>
+  </ul></li>
+  <li><a href="#the-generic-dp-template" id="toc-the-generic-dp-template" class="nav-link" data-scroll-target="#the-generic-dp-template">4. The generic DP template</a></li>
+  <li><a href="#dp-as-a-graph-problem" id="toc-dp-as-a-graph-problem" class="nav-link" data-scroll-target="#dp-as-a-graph-problem">5. DP as a graph problem</a></li>
+  <li><a href="#processing-order-is-the-hidden-algorithm" id="toc-processing-order-is-the-hidden-algorithm" class="nav-link" data-scroll-target="#processing-order-is-the-hidden-algorithm">6. Processing order is the hidden algorithm</a>
+  <ul class="collapse">
+  <li><a href="#known-acyclic-order" id="toc-known-acyclic-order" class="nav-link" data-scroll-target="#known-acyclic-order">Known acyclic order</a></li>
+  <li><a href="#unit-weight-graph" id="toc-unit-weight-graph" class="nav-link" data-scroll-target="#unit-weight-graph">Unit-weight graph</a></li>
+  <li><a href="#nonnegative-weighted-graph" id="toc-nonnegative-weighted-graph" class="nav-link" data-scroll-target="#nonnegative-weighted-graph">Nonnegative weighted graph</a></li>
+  <li><a href="#negative-edges" id="toc-negative-edges" class="nav-link" data-scroll-target="#negative-edges">Negative edges</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#graph-algorithms" id="toc-graph-algorithms" class="nav-link" data-scroll-target="#graph-algorithms">Graph Algorithms</a>
+  <ul class="collapse">
+  <li><a href="#bfs-from-first-principles" id="toc-bfs-from-first-principles" class="nav-link" data-scroll-target="#bfs-from-first-principles">7. BFS from first principles</a>
+  <ul class="collapse">
+  <li><a href="#template" id="toc-template" class="nav-link" data-scroll-target="#template">Template</a></li>
+  <li><a href="#important-invariant" id="toc-important-invariant" class="nav-link" data-scroll-target="#important-invariant">Important invariant</a></li>
+  </ul></li>
+  <li><a href="#bfs-on-an-implicit-state-space" id="toc-bfs-on-an-implicit-state-space" class="nav-link" data-scroll-target="#bfs-on-an-implicit-state-space">8. BFS on an implicit state space</a></li>
+  <li><a href="#dfs-from-first-principles" id="toc-dfs-from-first-principles" class="nav-link" data-scroll-target="#dfs-from-first-principles">9. DFS from first principles</a>
+  <ul class="collapse">
+  <li><a href="#recursive-template" id="toc-recursive-template" class="nav-link" data-scroll-target="#recursive-template">Recursive template</a></li>
+  </ul></li>
+  <li><a href="#cycle-detection-three-color-dfs" id="toc-cycle-detection-three-color-dfs" class="nav-link" data-scroll-target="#cycle-detection-three-color-dfs">10. Cycle Detection: Three-color DFS</a>
+  <ul class="collapse">
+  <li><a href="#undirected-cycle-detection-with-dfs" id="toc-undirected-cycle-detection-with-dfs" class="nav-link" data-scroll-target="#undirected-cycle-detection-with-dfs">Undirected cycle detection with DFS</a></li>
+  </ul></li>
+  <li><a href="#topological-sort" id="toc-topological-sort" class="nav-link" data-scroll-target="#topological-sort">11. Topological sort</a>
+  <ul class="collapse">
+  <li><a href="#kahns-algorithm" id="toc-kahns-algorithm" class="nav-link" data-scroll-target="#kahns-algorithm">Kahn’s algorithm</a></li>
+  </ul></li>
+  <li><a href="#topological-dp" id="toc-topological-dp" class="nav-link" data-scroll-target="#topological-dp">12. Topological DP</a></li>
+  </ul></li>
+  <li><a href="#shortest-paths" id="toc-shortest-paths" class="nav-link" data-scroll-target="#shortest-paths">Shortest Paths</a>
+  <ul class="collapse">
+  <li><a href="#dijkstra-from-first-principles" id="toc-dijkstra-from-first-principles" class="nav-link" data-scroll-target="#dijkstra-from-first-principles">13. Dijkstra from first principles</a>
+  <ul class="collapse">
+  <li><a href="#template-1" id="toc-template-1" class="nav-link" data-scroll-target="#template-1">Template</a></li>
+  </ul></li>
+  <li><a href="#why-dijkstra-feels-like-dp" id="toc-why-dijkstra-feels-like-dp" class="nav-link" data-scroll-target="#why-dijkstra-feels-like-dp">14. Why Dijkstra feels like DP</a>
+  <ul class="collapse">
+  <li><a href="#dag-dp" id="toc-dag-dp" class="nav-link" data-scroll-target="#dag-dp">DAG DP</a></li>
+  <li><a href="#dijkstra" id="toc-dijkstra" class="nav-link" data-scroll-target="#dijkstra">Dijkstra</a></li>
+  </ul></li>
+  <li><a href="#why-negative-edges-break-dijkstra" id="toc-why-negative-edges-break-dijkstra" class="nav-link" data-scroll-target="#why-negative-edges-break-dijkstra">15. Why negative edges break Dijkstra</a></li>
+  <li><a href="#bellman-ford-as-explicit-dp" id="toc-bellman-ford-as-explicit-dp" class="nav-link" data-scroll-target="#bellman-ford-as-explicit-dp">16. Bellman-Ford as explicit DP</a>
+  <ul class="collapse">
+  <li><a href="#bellmanford-as-dynamic-programming-on-an-expanded-dag" id="toc-bellmanford-as-dynamic-programming-on-an-expanded-dag" class="nav-link" data-scroll-target="#bellmanford-as-dynamic-programming-on-an-expanded-dag">Bellman–Ford as Dynamic Programming on an Expanded DAG</a></li>
+  </ul></li>
+  <li><a href="#negative-cycle-detection" id="toc-negative-cycle-detection" class="nav-link" data-scroll-target="#negative-cycle-detection">17. Negative-cycle detection</a></li>
+  <li><a href="#bfs" id="toc-bfs" class="nav-link" data-scroll-target="#bfs">18. 0-1 BFS</a></li>
+  <li><a href="#the-shortest-path-decision-tree" id="toc-the-shortest-path-decision-tree" class="nav-link" data-scroll-target="#the-shortest-path-decision-tree">19. The shortest-path decision tree</a></li>
+  </ul></li>
+  <li><a href="#multidimensional-dp" id="toc-multidimensional-dp" class="nav-link" data-scroll-target="#multidimensional-dp">Multidimensional DP</a>
+  <ul class="collapse">
+  <li><a href="#multi-dimensional-state-constraints-become-coordinates" id="toc-multi-dimensional-state-constraints-become-coordinates" class="nav-link" data-scroll-target="#multi-dimensional-state-constraints-become-coordinates">20. Multi-dimensional state: constraints become coordinates</a>
+  <ul class="collapse">
+  <li><a href="#common-expanded-states" id="toc-common-expanded-states" class="nav-link" data-scroll-target="#common-expanded-states">Common expanded states</a></li>
+  </ul></li>
+  <li><a href="#when-state-dimensions-become-too-large" id="toc-when-state-dimensions-become-too-large" class="nav-link" data-scroll-target="#when-state-dimensions-become-too-large">21. When state dimensions become too large</a></li>
+  <li><a href="#grid-problems-are-graph-problems" id="toc-grid-problems-are-graph-problems" class="nav-link" data-scroll-target="#grid-problems-are-graph-problems">22. Grid problems are graph problems</a>
+  <ul class="collapse">
+  <li><a href="#example-shortest-path-in-binary-matrix" id="toc-example-shortest-path-in-binary-matrix" class="nav-link" data-scroll-target="#example-shortest-path-in-binary-matrix">Example: shortest path in binary matrix</a></li>
+  <li><a href="#example-minimum-path-sum" id="toc-example-minimum-path-sum" class="nav-link" data-scroll-target="#example-minimum-path-sum">Example: minimum path sum</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#classical-dp-patterns" id="toc-classical-dp-patterns" class="nav-link" data-scroll-target="#classical-dp-patterns">Classical DP Patterns</a>
+  <ul class="collapse">
+  <li><a href="#sequence-dp" id="toc-sequence-dp" class="nav-link" data-scroll-target="#sequence-dp">23. Sequence DP</a>
+  <ul class="collapse">
+  <li><a href="#longest-common-subsequence" id="toc-longest-common-subsequence" class="nav-link" data-scroll-target="#longest-common-subsequence">Longest common subsequence</a></li>
+  </ul></li>
+  <li><a href="#knapsack-style-dp" id="toc-knapsack-style-dp" class="nav-link" data-scroll-target="#knapsack-style-dp">24. Knapsack-style DP</a></li>
+  <li><a href="#interval-dp" id="toc-interval-dp" class="nav-link" data-scroll-target="#interval-dp">25. Interval DP</a></li>
+  <li><a href="#bitmask-dp" id="toc-bitmask-dp" class="nav-link" data-scroll-target="#bitmask-dp">26. Bitmask DP</a></li>
+  </ul></li>
+  <li><a href="#connectivity-and-spanning-trees" id="toc-connectivity-and-spanning-trees" class="nav-link" data-scroll-target="#connectivity-and-spanning-trees">Connectivity and Spanning Trees</a>
+  <ul class="collapse">
+  <li><a href="#union-find-from-first-principles" id="toc-union-find-from-first-principles" class="nav-link" data-scroll-target="#union-find-from-first-principles">27. Union-Find from first principles</a></li>
+  <li><a href="#minimum-spanning-tree" id="toc-minimum-spanning-tree" class="nav-link" data-scroll-target="#minimum-spanning-tree">28. Minimum spanning tree</a>
+  <ul class="collapse">
+  <li><a href="#kruskal" id="toc-kruskal" class="nav-link" data-scroll-target="#kruskal">Kruskal</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#interview-problem-solving-framework" id="toc-interview-problem-solving-framework" class="nav-link" data-scroll-target="#interview-problem-solving-framework">Interview Problem-Solving Framework</a>
+  <ul class="collapse">
+  <li><a href="#a-compact-recognition-framework" id="toc-a-compact-recognition-framework" class="nav-link" data-scroll-target="#a-compact-recognition-framework">29. A compact recognition framework</a>
+  <ul class="collapse">
+  <li><a href="#question-1-what-is-a-state" id="toc-question-1-what-is-a-state" class="nav-link" data-scroll-target="#question-1-what-is-a-state">Question 1: What is a state?</a></li>
+  <li><a href="#question-2-what-are-the-transitions" id="toc-question-2-what-are-the-transitions" class="nav-link" data-scroll-target="#question-2-what-are-the-transitions">Question 2: What are the transitions?</a></li>
+  <li><a href="#question-3-is-the-state-transition-graph-acyclic" id="toc-question-3-is-the-state-transition-graph-acyclic" class="nav-link" data-scroll-target="#question-3-is-the-state-transition-graph-acyclic">Question 3: Is the state-transition graph acyclic?</a></li>
+  <li><a href="#question-4-if-cyclic-what-are-the-edge-costs" id="toc-question-4-if-cyclic-what-are-the-edge-costs" class="nav-link" data-scroll-target="#question-4-if-cyclic-what-are-the-edge-costs">Question 4: If cyclic, what are the edge costs?</a></li>
+  <li><a href="#question-5-do-we-need-optimization-reachability-or-connectivity" id="toc-question-5-do-we-need-optimization-reachability-or-connectivity" class="nav-link" data-scroll-target="#question-5-do-we-need-optimization-reachability-or-connectivity">Question 5: Do we need optimization, reachability, or connectivity?</a></li>
+  <li><a href="#question-6-is-an-extra-constraint-affecting-the-future" id="toc-question-6-is-an-extra-constraint-affecting-the-future" class="nav-link" data-scroll-target="#question-6-is-an-extra-constraint-affecting-the-future">Question 6: Is an extra constraint affecting the future?</a></li>
+  </ul></li>
+  <li><a href="#interview-template-derive-before-coding" id="toc-interview-template-derive-before-coding" class="nav-link" data-scroll-target="#interview-template-derive-before-coding">30. Interview template: derive before coding</a></li>
+  <li><a href="#complexity-from-the-state-graph" id="toc-complexity-from-the-state-graph" class="nav-link" data-scroll-target="#complexity-from-the-state-graph">31. Complexity from the state graph</a>
+  <ul class="collapse">
+  <li><a href="#d-dp" id="toc-d-dp" class="nav-link" data-scroll-target="#d-dp">1D DP</a></li>
+  <li><a href="#lcs" id="toc-lcs" class="nav-link" data-scroll-target="#lcs">LCS</a></li>
+  <li><a href="#bitmask-tsp" id="toc-bitmask-tsp" class="nav-link" data-scroll-target="#bitmask-tsp">Bitmask TSP</a></li>
+  <li><a href="#bfs-dfs" id="toc-bfs-dfs" class="nav-link" data-scroll-target="#bfs-dfs">BFS / DFS</a></li>
+  <li><a href="#dijkstra-with-binary-heap" id="toc-dijkstra-with-binary-heap" class="nav-link" data-scroll-target="#dijkstra-with-binary-heap">Dijkstra with binary heap</a></li>
+  <li><a href="#bellman-ford" id="toc-bellman-ford" class="nav-link" data-scroll-target="#bellman-ford">Bellman-Ford</a></li>
+  </ul></li>
+  <li><a href="#common-interview-failure-modes" id="toc-common-interview-failure-modes" class="nav-link" data-scroll-target="#common-interview-failure-modes">32. Common interview failure modes</a>
+  <ul class="collapse">
+  <li><a href="#failure-1-adding-too-little-to-the-state" id="toc-failure-1-adding-too-little-to-the-state" class="nav-link" data-scroll-target="#failure-1-adding-too-little-to-the-state">Failure 1: Adding too little to the state</a></li>
+  <li><a href="#failure-2-adding-too-much-to-the-state" id="toc-failure-2-adding-too-much-to-the-state" class="nav-link" data-scroll-target="#failure-2-adding-too-much-to-the-state">Failure 2: Adding too much to the state</a></li>
+  <li><a href="#failure-3-choosing-bfs-because-the-input-is-a-graph" id="toc-failure-3-choosing-bfs-because-the-input-is-a-graph" class="nav-link" data-scroll-target="#failure-3-choosing-bfs-because-the-input-is-a-graph">Failure 3: Choosing BFS because the input is a graph</a></li>
+  <li><a href="#failure-4-using-dijkstra-with-negative-edges" id="toc-failure-4-using-dijkstra-with-negative-edges" class="nav-link" data-scroll-target="#failure-4-using-dijkstra-with-negative-edges">Failure 4: Using Dijkstra with negative edges</a></li>
+  <li><a href="#failure-5-memorizing-a-recurrence-without-its-state-meaning" id="toc-failure-5-memorizing-a-recurrence-without-its-state-meaning" class="nav-link" data-scroll-target="#failure-5-memorizing-a-recurrence-without-its-state-meaning">Failure 5: Memorizing a recurrence without its state meaning</a></li>
+  <li><a href="#failure-6-confusing-visited-with-finalized" id="toc-failure-6-confusing-visited-with-finalized" class="nav-link" data-scroll-target="#failure-6-confusing-visited-with-finalized">Failure 6: Confusing visited with finalized</a></li>
+  </ul></li>
+  <li><a href="#reusable-code-templates" id="toc-reusable-code-templates" class="nav-link" data-scroll-target="#reusable-code-templates">33. Reusable code templates</a>
+  <ul class="collapse">
+  <li><a href="#memoized-dp" id="toc-memoized-dp" class="nav-link" data-scroll-target="#memoized-dp">Memoized DP</a></li>
+  <li><a href="#d-bottom-up-dp" id="toc-d-bottom-up-dp" class="nav-link" data-scroll-target="#d-bottom-up-dp">2D bottom-up DP</a></li>
+  <li><a href="#bfs-1" id="toc-bfs-1" class="nav-link" data-scroll-target="#bfs-1">BFS</a></li>
+  <li><a href="#dfs" id="toc-dfs" class="nav-link" data-scroll-target="#dfs">DFS</a></li>
+  <li><a href="#dijkstra-1" id="toc-dijkstra-1" class="nav-link" data-scroll-target="#dijkstra-1">Dijkstra</a></li>
+  <li><a href="#topological-sort-1" id="toc-topological-sort-1" class="nav-link" data-scroll-target="#topological-sort-1">Topological sort</a></li>
+  <li><a href="#union-find" id="toc-union-find" class="nav-link" data-scroll-target="#union-find">Union-Find</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#practice-problems" id="toc-practice-problems" class="nav-link" data-scroll-target="#practice-problems">Practice Problems</a>
+  <ul class="collapse">
+  <li><a href="#practice-problems-dp-foundations" id="toc-practice-problems-dp-foundations" class="nav-link" data-scroll-target="#practice-problems-dp-foundations">34. Practice problems: DP foundations</a>
+  <ul class="collapse">
+  <li><a href="#level-1-learn-to-identify-states" id="toc-level-1-learn-to-identify-states" class="nav-link" data-scroll-target="#level-1-learn-to-identify-states">Level 1 — Learn to identify states</a></li>
+  <li><a href="#level-2-add-a-resource-dimension" id="toc-level-2-add-a-resource-dimension" class="nav-link" data-scroll-target="#level-2-add-a-resource-dimension">Level 2 — Add a resource dimension</a></li>
+  </ul></li>
+  <li><a href="#practice-problems-sequence-dp" id="toc-practice-problems-sequence-dp" class="nav-link" data-scroll-target="#practice-problems-sequence-dp">35. Practice problems: sequence DP</a>
+  <ul class="collapse">
+  <li><a href="#longest-increasing-subsequence-leetcode-300" id="toc-longest-increasing-subsequence-leetcode-300" class="nav-link" data-scroll-target="#longest-increasing-subsequence-leetcode-300">7. Longest Increasing Subsequence — LeetCode 300</a></li>
+  <li><a href="#longest-common-subsequence-leetcode-1143" id="toc-longest-common-subsequence-leetcode-1143" class="nav-link" data-scroll-target="#longest-common-subsequence-leetcode-1143">8. Longest Common Subsequence — LeetCode 1143</a></li>
+  <li><a href="#edit-distance-leetcode-72" id="toc-edit-distance-leetcode-72" class="nav-link" data-scroll-target="#edit-distance-leetcode-72">9. Edit Distance — LeetCode 72</a></li>
+  </ul></li>
+  <li><a href="#practice-problems-grid-implicit-graph" id="toc-practice-problems-grid-implicit-graph" class="nav-link" data-scroll-target="#practice-problems-grid-implicit-graph">36. Practice problems: grid = implicit graph</a>
+  <ul class="collapse">
+  <li><a href="#unique-paths-leetcode-62" id="toc-unique-paths-leetcode-62" class="nav-link" data-scroll-target="#unique-paths-leetcode-62">10. Unique Paths — LeetCode 62</a></li>
+  <li><a href="#minimum-path-sum-leetcode-64" id="toc-minimum-path-sum-leetcode-64" class="nav-link" data-scroll-target="#minimum-path-sum-leetcode-64">11. Minimum Path Sum — LeetCode 64</a></li>
+  <li><a href="#number-of-islands-leetcode-200" id="toc-number-of-islands-leetcode-200" class="nav-link" data-scroll-target="#number-of-islands-leetcode-200">12. Number of Islands — LeetCode 200</a></li>
+  <li><a href="#rotting-oranges-leetcode-994" id="toc-rotting-oranges-leetcode-994" class="nav-link" data-scroll-target="#rotting-oranges-leetcode-994">13. Rotting Oranges — LeetCode 994</a></li>
+  <li><a href="#shortest-path-in-binary-matrix-leetcode-1091" id="toc-shortest-path-in-binary-matrix-leetcode-1091" class="nav-link" data-scroll-target="#shortest-path-in-binary-matrix-leetcode-1091">14. Shortest Path in Binary Matrix — LeetCode 1091</a></li>
+  </ul></li>
+  <li><a href="#practice-problems-topology-and-dependency-graphs" id="toc-practice-problems-topology-and-dependency-graphs" class="nav-link" data-scroll-target="#practice-problems-topology-and-dependency-graphs">37. Practice problems: topology and dependency graphs</a>
+  <ul class="collapse">
+  <li><a href="#course-schedule-leetcode-207" id="toc-course-schedule-leetcode-207" class="nav-link" data-scroll-target="#course-schedule-leetcode-207">15. Course Schedule — LeetCode 207</a></li>
+  <li><a href="#course-schedule-ii-leetcode-210" id="toc-course-schedule-ii-leetcode-210" class="nav-link" data-scroll-target="#course-schedule-ii-leetcode-210">16. Course Schedule II — LeetCode 210</a></li>
+  <li><a href="#alien-dictionary-leetcode-269" id="toc-alien-dictionary-leetcode-269" class="nav-link" data-scroll-target="#alien-dictionary-leetcode-269">17. Alien Dictionary — LeetCode 269</a></li>
+  </ul></li>
+  <li><a href="#practice-problems-shortest-paths" id="toc-practice-problems-shortest-paths" class="nav-link" data-scroll-target="#practice-problems-shortest-paths">38. Practice problems: shortest paths</a>
+  <ul class="collapse">
+  <li><a href="#network-delay-time-leetcode-743" id="toc-network-delay-time-leetcode-743" class="nav-link" data-scroll-target="#network-delay-time-leetcode-743">18. Network Delay Time — LeetCode 743</a></li>
+  <li><a href="#path-with-minimum-effort-leetcode-1631" id="toc-path-with-minimum-effort-leetcode-1631" class="nav-link" data-scroll-target="#path-with-minimum-effort-leetcode-1631">19. Path With Minimum Effort — LeetCode 1631</a></li>
+  <li><a href="#cheapest-flights-within-k-stops-leetcode-787" id="toc-cheapest-flights-within-k-stops-leetcode-787" class="nav-link" data-scroll-target="#cheapest-flights-within-k-stops-leetcode-787">20. Cheapest Flights Within K Stops — LeetCode 787</a></li>
+  </ul></li>
+  <li><a href="#practice-problems-0-1-bfs-and-state-expansion" id="toc-practice-problems-0-1-bfs-and-state-expansion" class="nav-link" data-scroll-target="#practice-problems-0-1-bfs-and-state-expansion">39. Practice problems: 0-1 BFS and state expansion</a>
+  <ul class="collapse">
+  <li><a href="#minimum-cost-to-make-at-least-one-valid-path-in-a-grid-leetcode-1368" id="toc-minimum-cost-to-make-at-least-one-valid-path-in-a-grid-leetcode-1368" class="nav-link" data-scroll-target="#minimum-cost-to-make-at-least-one-valid-path-in-a-grid-leetcode-1368">21. Minimum Cost to Make at Least One Valid Path in a Grid — LeetCode 1368</a></li>
+  <li><a href="#shortest-path-in-a-grid-with-obstacles-elimination-leetcode-1293" id="toc-shortest-path-in-a-grid-with-obstacles-elimination-leetcode-1293" class="nav-link" data-scroll-target="#shortest-path-in-a-grid-with-obstacles-elimination-leetcode-1293">22. Shortest Path in a Grid with Obstacles Elimination — LeetCode 1293</a></li>
+  <li><a href="#state-compression-key-collection-problems" id="toc-state-compression-key-collection-problems" class="nav-link" data-scroll-target="#state-compression-key-collection-problems">23. State compression / key collection problems</a></li>
+  </ul></li>
+  <li><a href="#practice-problems-union-find-mst" id="toc-practice-problems-union-find-mst" class="nav-link" data-scroll-target="#practice-problems-union-find-mst">40. Practice problems: Union-Find / MST</a>
+  <ul class="collapse">
+  <li><a href="#number-of-provinces-leetcode-547" id="toc-number-of-provinces-leetcode-547" class="nav-link" data-scroll-target="#number-of-provinces-leetcode-547">24. Number of Provinces — LeetCode 547</a></li>
+  <li><a href="#redundant-connection-leetcode-684" id="toc-redundant-connection-leetcode-684" class="nav-link" data-scroll-target="#redundant-connection-leetcode-684">25. Redundant Connection — LeetCode 684</a></li>
+  <li><a href="#min-cost-to-connect-all-points-leetcode-1584" id="toc-min-cost-to-connect-all-points-leetcode-1584" class="nav-link" data-scroll-target="#min-cost-to-connect-all-points-leetcode-1584">26. Min Cost to Connect All Points — LeetCode 1584</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#synthesis-and-study-strategy" id="toc-synthesis-and-study-strategy" class="nav-link" data-scroll-target="#synthesis-and-study-strategy">Synthesis and Study Strategy</a>
+  <ul class="collapse">
+  <li><a href="#higher-value-synthesis-problems" id="toc-higher-value-synthesis-problems" class="nav-link" data-scroll-target="#higher-value-synthesis-problems">41. Higher-value synthesis problems</a>
+  <ul class="collapse">
+  <li><a href="#word-ladder-leetcode-127" id="toc-word-ladder-leetcode-127" class="nav-link" data-scroll-target="#word-ladder-leetcode-127">Word Ladder — LeetCode 127</a></li>
+  <li><a href="#decode-ways-leetcode-91" id="toc-decode-ways-leetcode-91" class="nav-link" data-scroll-target="#decode-ways-leetcode-91">Decode Ways — LeetCode 91</a></li>
+  <li><a href="#burst-balloons-leetcode-312" id="toc-burst-balloons-leetcode-312" class="nav-link" data-scroll-target="#burst-balloons-leetcode-312">Burst Balloons — LeetCode 312</a></li>
+  <li><a href="#regular-expression-matching-leetcode-10" id="toc-regular-expression-matching-leetcode-10" class="nav-link" data-scroll-target="#regular-expression-matching-leetcode-10">Regular Expression Matching — LeetCode 10</a></li>
+  <li><a href="#minimum-cost-to-reach-destination-with-constraints" id="toc-minimum-cost-to-reach-destination-with-constraints" class="nav-link" data-scroll-target="#minimum-cost-to-reach-destination-with-constraints">Minimum Cost to Reach Destination with Constraints</a></li>
+  </ul></li>
+  <li><a href="#recommended-practice-order" id="toc-recommended-practice-order" class="nav-link" data-scroll-target="#recommended-practice-order">42. Recommended practice order</a>
+  <ul class="collapse">
+  <li><a href="#pair-1-same-grid-different-structure" id="toc-pair-1-same-grid-different-structure" class="nav-link" data-scroll-target="#pair-1-same-grid-different-structure">Pair 1: same grid, different structure</a></li>
+  <li><a href="#pair-2-same-relaxation-different-processing-order" id="toc-pair-2-same-relaxation-different-processing-order" class="nav-link" data-scroll-target="#pair-2-same-relaxation-different-processing-order">Pair 2: same relaxation, different processing order</a></li>
+  <li><a href="#pair-3-same-node-different-state" id="toc-pair-3-same-node-different-state" class="nav-link" data-scroll-target="#pair-3-same-node-different-state">Pair 3: same node, different state</a></li>
+  <li><a href="#pair-4-same-graph-different-objective" id="toc-pair-4-same-graph-different-objective" class="nav-link" data-scroll-target="#pair-4-same-graph-different-objective">Pair 4: same graph, different objective</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#final-synthesis" id="toc-final-synthesis" class="nav-link" data-scroll-target="#final-synthesis">Final Synthesis</a>
+  <ul class="collapse">
+  <li><a href="#the-most-important-conceptual-distinctions" id="toc-the-most-important-conceptual-distinctions" class="nav-link" data-scroll-target="#the-most-important-conceptual-distinctions">43. The most important conceptual distinctions</a>
+  <ul class="collapse">
+  <li><a href="#dp-vs-backtracking" id="toc-dp-vs-backtracking" class="nav-link" data-scroll-target="#dp-vs-backtracking">DP vs backtracking</a></li>
+  <li><a href="#dp-vs-greedy" id="toc-dp-vs-greedy" class="nav-link" data-scroll-target="#dp-vs-greedy">DP vs greedy</a></li>
+  <li><a href="#bfs-vs-dijkstra" id="toc-bfs-vs-dijkstra" class="nav-link" data-scroll-target="#bfs-vs-dijkstra">BFS vs Dijkstra</a></li>
+  <li><a href="#dijkstra-vs-bellman-ford" id="toc-dijkstra-vs-bellman-ford" class="nav-link" data-scroll-target="#dijkstra-vs-bellman-ford">Dijkstra vs Bellman-Ford</a></li>
+  <li><a href="#graph-algorithm-vs-dp" id="toc-graph-algorithm-vs-dp" class="nav-link" data-scroll-target="#graph-algorithm-vs-dp">Graph algorithm vs DP</a></li>
+  </ul></li>
+  <li><a href="#a-60-second-interview-reasoning-script" id="toc-a-60-second-interview-reasoning-script" class="nav-link" data-scroll-target="#a-60-second-interview-reasoning-script">44. A 60-second interview reasoning script</a></li>
+  <li><a href="#final-mental-model" id="toc-final-mental-model" class="nav-link" data-scroll-target="#final-mental-model">45. Final mental model</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Dynamic Programming and Graph Algorithms from First Principles</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="the-unifying-idea" class="level1">
+<h1>The unifying idea</h1>
+<p>Dynamic programming and graph algorithms often look like separate interview topics, but the same abstraction explains most of both:</p>
+<blockquote class="blockquote">
+<p><strong>A problem defines a state space, transitions between states, and some quantity to propagate through those transitions.</strong></p>
+</blockquote>
+<p><strong>DP is essentially structured value propagation over a state/ dependency DAG</strong></p>
+<p>Examples:</p>
+<ul>
+<li><code>dp[i]</code> is a state.</li>
+<li><code>(r, c)</code> in a grid is a state.</li>
+<li><code>(node, remaining_stops)</code> is a state.</li>
+<li><code>(index, current_sum)</code> is a state.</li>
+<li>A graph vertex is literally a state.</li>
+</ul>
+<p>Once states and transitions are identified, most problems reduce to:</p>
+<ol type="1">
+<li><strong>What information must a state remember?</strong></li>
+<li><strong>What transition connects one state to another?</strong></li>
+<li><strong>What value are we propagating?</strong></li>
+<li><strong>In what order can states be processed safely?</strong></li>
+</ol>
+<p>The fourth question is what separates many familiar algorithms.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 30%">
+<col style="width: 40%">
+<col style="width: 30%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>State graph structure</th>
+<th style="text-align: right;">Edge cost</th>
+<th>Typical algorithm</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>DAG / known acyclic dependency order</td>
+<td style="text-align: right;">arbitrary</td>
+<td>DP / topological DP</td>
+</tr>
+<tr class="even">
+<td>arbitrary graph</td>
+<td style="text-align: right;">all edges = 1</td>
+<td>BFS</td>
+</tr>
+<tr class="odd">
+<td>arbitrary graph</td>
+<td style="text-align: right;">edges in <code>{0,1}</code></td>
+<td>0-1 BFS</td>
+</tr>
+<tr class="even">
+<td>arbitrary graph</td>
+<td style="text-align: right;">nonnegative</td>
+<td>Dijkstra</td>
+</tr>
+<tr class="odd">
+<td>arbitrary graph</td>
+<td style="text-align: right;">negative allowed</td>
+<td>Bellman-Ford</td>
+</tr>
+<tr class="even">
+<td>graph reachability only</td>
+<td style="text-align: right;">irrelevant</td>
+<td>DFS / BFS</td>
+</tr>
+</tbody>
+</table>
+<div class="callout callout-style-default callout-tip callout-titled" title="A useful interview mental model is therefore:">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>A useful interview mental model is therefore:
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>DP = relaxation over states when <strong>the processing order is already known.</strong><br>
+Graph shortest-path algorithms = relaxation when the state graph is more general and <strong>the order must be discovered or repeatedly corrected.</strong></p>
+</div>
+</div>
+</section>
+<section id="dynamic-programming" class="level1">
+<h1>Dynamic Programming</h1>
+<section id="dynamic-programming-from-first-principles" class="level2">
+<h2 class="anchored" data-anchor-id="dynamic-programming-from-first-principles">1. Dynamic programming from first principles</h2>
+<section id="what-makes-a-problem-dp" class="level3">
+<h3 class="anchored" data-anchor-id="what-makes-a-problem-dp">1.1 What makes a problem DP?</h3>
+<p>A problem is a good DP candidate when:</p>
+<ol type="1">
+<li>The answer can be expressed in terms of answers to smaller states.</li>
+<li>The same states would otherwise be recomputed.</li>
+<li>The state contains enough information that the future no longer needs the full history.</li>
+</ol>
+<p>The third point is the most important.</p>
+<p>A DP state should satisfy a Markov-like property:</p>
+<p><span class="math display">\[
+P(\text{future} \mid \text{entire history})
+=
+P(\text{future} \mid \text{state})
+\]</span></p>
+<p>Not probabilistically, necessarily—the idea is simply:</p>
+<blockquote class="blockquote">
+<p>once I know the state, nothing else about how I arrived there matters.</p>
+</blockquote>
+</section>
+<section id="the-real-task-designing-the-state" class="level3">
+<h3 class="anchored" data-anchor-id="the-real-task-designing-the-state">1.2 The real task: designing the state</h3>
+<p>Suppose the recursive problem is</p>
+<p><span class="math display">\[
+F(\text{history})
+\]</span></p>
+<p>If two different histories always have exactly the same set of legal futures and future rewards, they should collapse into the same state.</p>
+<p>For example, in climbing stairs:</p>
+<pre class="text"><code>history A: 0 -&gt; 1 -&gt; 3 -&gt; 4
+history B: 0 -&gt; 2 -&gt; 3 -&gt; 4</code></pre>
+<p>Once we are at stair <code>4</code>, the previous path no longer matters.</p>
+<p>So:</p>
+<p><span class="math display">\[
+\text{state} = i
+\]</span></p>
+<p>rather than the whole path.</p>
+<p>This compression is the essence of DP.</p>
+</section>
+</section>
+<section id="a-mechanical-dp-derivation-procedure" class="level2">
+<h2 class="anchored" data-anchor-id="a-mechanical-dp-derivation-procedure">2. A mechanical DP derivation procedure</h2>
+<p>For an interview problem, use this sequence.</p>
+<section id="step-1-write-the-brute-force-decision-process" class="level3">
+<h3 class="anchored" data-anchor-id="step-1-write-the-brute-force-decision-process">Step 1: Write the brute-force decision process</h3>
+<p>Ask:</p>
+<blockquote class="blockquote">
+<p>If I solved this recursively without worrying about efficiency, what choices would I make?</p>
+</blockquote>
+<p>Example: House Robber.</p>
+<p>At house <code>i</code>:</p>
+<ul>
+<li>skip it;</li>
+<li>rob it, then move to <code>i + 2</code>.</li>
+</ul>
+<p>So:</p>
+<p><span class="math display">\[
+F(i)=\max(F(i+1), nums_i + F(i+2))
+\]</span></p>
+<p>This already contains the DP recurrence.</p>
+</section>
+<section id="step-2-identify-repeated-subproblems" class="level3">
+<h3 class="anchored" data-anchor-id="step-2-identify-repeated-subproblems">Step 2: Identify repeated subproblems</h3>
+<p>A recursion tree might contain:</p>
+<pre class="text"><code>F(0)
+├── F(1)
+│   ├── F(2)
+│   └── F(3)
+└── F(2)</code></pre>
+<p><code>F(2)</code> is recomputed.</p>
+<p>Memoization turns the recursion tree into a state DAG.</p>
+</section>
+<section id="step-3-define-exactly-what-dpstate-means" class="level3">
+<h3 class="anchored" data-anchor-id="step-3-define-exactly-what-dpstate-means">Step 3: Define exactly what <code>dp[state]</code> means</h3>
+<p>A weak definition:</p>
+<blockquote class="blockquote">
+<p><code>dp[i]</code> is the answer around <code>i</code>.</p>
+</blockquote>
+<p>A good definition:</p>
+<blockquote class="blockquote">
+<p><code>dp[i]</code> = maximum money obtainable from houses <code>i...n-1</code>.</p>
+</blockquote>
+<p>Every recurrence should follow naturally from the English definition.</p>
+</section>
+<section id="step-4-derive-the-recurrence-from-one-decision" class="level3">
+<h3 class="anchored" data-anchor-id="step-4-derive-the-recurrence-from-one-decision">Step 4: Derive the recurrence from one decision</h3>
+<p>For House Robber:</p>
+<p><span class="math display">\[
+dp[i]
+=
+\max(
+dp[i+1],
+nums[i] + dp[i+2]
+)
+\]</span></p>
+<p>Do not memorize the equation first.</p>
+<p>Derive it from:</p>
+<pre class="text"><code>state
+  -&gt; legal decisions
+      -&gt; next states
+          -&gt; combine their answers</code></pre>
+</section>
+<section id="step-5-find-base-cases" class="level3">
+<h3 class="anchored" data-anchor-id="step-5-find-base-cases">Step 5: Find base cases</h3>
+<p>Ask:</p>
+<blockquote class="blockquote">
+<p>What happens when there are no decisions left?</p>
+</blockquote>
+<p><span class="math display">\[
+dp[n] = 0
+\]</span></p>
+<p>and often</p>
+<p><span class="math display">\[
+dp[n+1]=0.
+\]</span></p>
+</section>
+<section id="step-6-determine-dependency-order" class="level3">
+<h3 class="anchored" data-anchor-id="step-6-determine-dependency-order">Step 6: Determine dependency order</h3>
+<p>If</p>
+<p><span class="math display">\[
+dp[i]
+\]</span></p>
+<p>depends on</p>
+<p><span class="math display">\[
+dp[i+1], dp[i+2],
+\]</span></p>
+<p>then iterate backward.</p>
+<p>If</p>
+<p><span class="math display">\[
+dp[i]
+\]</span></p>
+<p>depends on earlier states, iterate forward.</p>
+</section>
+</section>
+<section id="top-down-and-bottom-up-dp" class="level2">
+<h2 class="anchored" data-anchor-id="top-down-and-bottom-up-dp">3. Top-down and bottom-up DP</h2>
+<section id="top-down-memoized-recursion" class="level3">
+<h3 class="anchored" data-anchor-id="top-down-memoized-recursion">Top-down: memoized recursion</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> functools <span class="im">import</span> cache</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> solve(nums):</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    n <span class="op">=</span> <span class="bu">len</span>(nums)</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">@cache</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> dp(i):</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> i <span class="op">&gt;=</span> n:</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> <span class="dv">0</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>        skip <span class="op">=</span> dp(i <span class="op">+</span> <span class="dv">1</span>)</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>        take <span class="op">=</span> nums[i] <span class="op">+</span> dp(i <span class="op">+</span> <span class="dv">2</span>)</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="bu">max</span>(skip, take)</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> dp(<span class="dv">0</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Advantages:</p>
+<ul>
+<li>closest to mathematical recurrence;</li>
+<li>often easiest to derive correctly;</li>
+<li>computes only reachable states.</li>
+</ul>
+<p>Disadvantages:</p>
+<ul>
+<li>recursion overhead;</li>
+<li>stack-depth limits;</li>
+<li>state transitions can be less explicit.</li>
+</ul>
+</section>
+<section id="bottom-up-tabulation" class="level3">
+<h3 class="anchored" data-anchor-id="bottom-up-tabulation">Bottom-up: tabulation</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> solve(nums):</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    n <span class="op">=</span> <span class="bu">len</span>(nums)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    dp <span class="op">=</span> [<span class="dv">0</span>] <span class="op">*</span> (n <span class="op">+</span> <span class="dv">2</span>)</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(n <span class="op">-</span> <span class="dv">1</span>, <span class="op">-</span><span class="dv">1</span>, <span class="op">-</span><span class="dv">1</span>):</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>        dp[i] <span class="op">=</span> <span class="bu">max</span>(</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>            dp[i <span class="op">+</span> <span class="dv">1</span>],</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>            nums[i] <span class="op">+</span> dp[i <span class="op">+</span> <span class="dv">2</span>],</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> dp[<span class="dv">0</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Advantages:</p>
+<ul>
+<li>explicit dependency order;</li>
+<li>easy space optimization;</li>
+<li>usually less overhead.</li>
+</ul>
+</section>
+</section>
+<section id="the-generic-dp-template" class="level2">
+<h2 class="anchored" data-anchor-id="the-generic-dp-template">4. The generic DP template</h2>
+<p>The most useful generic abstraction is:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> dp(state):</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> state <span class="kw">is</span> terminal:</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> base_value</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> state <span class="kw">in</span> memo:</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> memo[state]</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    answer <span class="op">=</span> identity</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> action <span class="kw">in</span> legal_actions(state):</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>        next_state <span class="op">=</span> transition(state, action)</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>        candidate <span class="op">=</span> immediate_value(state, action) <span class="op">+</span> dp(next_state)</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>        answer <span class="op">=</span> combine(answer, candidate)</span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>    memo[state] <span class="op">=</span> answer</span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> answer</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Different problems merely change:</p>
+<ul>
+<li><code>state</code></li>
+<li><code>legal_actions</code></li>
+<li><code>transition</code></li>
+<li><code>candidate</code></li>
+<li><code>combine</code></li>
+</ul>
+<p>For minimization:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>answer <span class="op">=</span> <span class="bu">float</span>(<span class="st">"inf"</span>)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>answer <span class="op">=</span> <span class="bu">min</span>(answer, candidate)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>For maximization:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>answer <span class="op">=</span> <span class="bu">float</span>(<span class="st">"-inf"</span>)</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>answer <span class="op">=</span> <span class="bu">max</span>(answer, candidate)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>For counting:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>answer <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>answer <span class="op">+=</span> dp(next_state)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>For boolean feasibility:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>answer <span class="op">=</span> <span class="va">False</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>answer <span class="op">|=</span> dp(next_state)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>This is much more useful than memorizing dozens of named DP types.</p>
+</section>
+<section id="dp-as-a-graph-problem" class="level2">
+<h2 class="anchored" data-anchor-id="dp-as-a-graph-problem">5. DP as a graph problem</h2>
+<p>Suppose:</p>
+<p><span class="math display">\[
+dp[v]
+=
+\min_{u\rightarrow v}
+\left(dp[u] + w(u,v)\right)
+\]</span></p>
+<p>This is exactly shortest-path relaxation.</p>
+<p>Each DP state is a node.</p>
+<p>Each recurrence dependency is an edge.</p>
+<p>For example:</p>
+<p><span class="math display">\[
+dp[i]
+=
+\min(dp[i-1]+a_i,\ dp[i-2]+b_i)
+\]</span></p>
+<p>corresponds to:</p>
+<pre class="text"><code>i-1 ----a_i----&gt; i
+i-2 ----b_i----&gt; i</code></pre>
+<p>If transitions only move from smaller indices to larger indices, this implicit graph is a DAG.</p>
+<p>Then ordinary bottom-up DP is simply shortest-path computation in topological order.</p>
+<p>This gives a powerful equivalence:</p>
+<blockquote class="blockquote">
+<p><strong>Topological DP is shortest path on a DAG.</strong></p>
+</blockquote>
+</section>
+<section id="processing-order-is-the-hidden-algorithm" class="level2">
+<h2 class="anchored" data-anchor-id="processing-order-is-the-hidden-algorithm">6. Processing order is the hidden algorithm</h2>
+<p>Once we adopt the relaxation view, many algorithms differ only in <strong>how they choose the next state to process</strong>.</p>
+<section id="known-acyclic-order" class="level3">
+<h3 class="anchored" data-anchor-id="known-acyclic-order">Known acyclic order</h3>
+<p>Use ordinary DP.</p>
+<pre class="text"><code>state 0 -&gt; state 1 -&gt; state 2 -&gt; ...</code></pre>
+<p>or run a topological sort.</p>
+</section>
+<section id="unit-weight-graph" class="level3">
+<h3 class="anchored" data-anchor-id="unit-weight-graph">Unit-weight graph</h3>
+<p>Use BFS.</p>
+<p>Why?</p>
+<p>After processing distance layer <code>d</code>, every newly discovered node is at distance <code>d+1</code>.</p>
+<p>The queue therefore processes states in nondecreasing shortest-path distance.</p>
+</section>
+<section id="nonnegative-weighted-graph" class="level3">
+<h3 class="anchored" data-anchor-id="nonnegative-weighted-graph">Nonnegative weighted graph</h3>
+<p>Use Dijkstra.</p>
+<p>A FIFO queue is no longer enough because an edge may cost 100 while another costs 1.</p>
+<p>Instead process the state with smallest tentative distance.</p>
+<p>That is what the min-heap does.</p>
+</section>
+<section id="negative-edges" class="level3">
+<h3 class="anchored" data-anchor-id="negative-edges">Negative edges</h3>
+<p>Dijkstra’s finalization argument breaks.</p>
+<p>Use Bellman-Ford or another algorithm designed for negative edges.</p>
+</section>
+</section>
+</section>
+<section id="graph-algorithms" class="level1">
+<h1>Graph Algorithms</h1>
+<div class="callout callout-style-default callout-tip callout-titled" title="Think of graph algorithms as frontier scheduling">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Think of graph algorithms as frontier scheduling
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Many graph algorithms can be decomposed into</p>
+<p><span class="math display">\[
+\boxed{
+\text{state transitions}
++
+\text{frontier scheduling policy}
+}
+\]</span></p>
+<p>The graph determines <strong>which states can be reached next</strong>.<br>
+The frontier data structure determines <strong>which discovered state gets processed next</strong>.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Scheduling rule</th>
+<th>Data structure</th>
+<th>Typical algorithms</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>earliest discovered</td>
+<td>queue</td>
+<td>BFS, Kahn’s topo sort</td>
+</tr>
+<tr class="even">
+<td>most recently discovered</td>
+<td>stack / recursion</td>
+<td>DFS</td>
+</tr>
+<tr class="odd">
+<td>smallest tentative cost</td>
+<td>min-heap</td>
+<td>Dijkstra, A*, Prim</td>
+</tr>
+<tr class="even">
+<td>priority differs by only <span class="math inline">\(0\)</span> or <span class="math inline">\(1\)</span></td>
+<td>deque</td>
+<td>0–1 BFS</td>
+</tr>
+</tbody>
+</table>
+<p>For shortest paths, this gives a useful progression:</p>
+<p><span class="math display">\[
+\text{equal edge weights}
+\Rightarrow
+\text{queue}
+\]</span></p>
+<p><span class="math display">\[
+\text{weights in }\{0,1\}
+\Rightarrow
+\text{deque}
+\]</span></p>
+<p><span class="math display">\[
+\text{arbitrary nonnegative weights}
+\Rightarrow
+\text{min-heap}
+\]</span></p>
+<p>So BFS, 0–1 BFS, and Dijkstra are conceptually very similar algorithms with increasingly general <strong>frontier-ordering rules</strong>.</p>
+</div>
+</div>
+<section id="bfs-from-first-principles" class="level2">
+<h2 class="anchored" data-anchor-id="bfs-from-first-principles">7. BFS from first principles</h2>
+<p>Suppose every edge has cost 1.</p>
+<p>Then:</p>
+<p><span class="math display">\[
+dist[v] = \min_{u\rightarrow v}(dist[u] + 1)
+\]</span></p>
+<p>BFS explores:</p>
+<pre class="text"><code>distance 0
+distance 1
+distance 2
+distance 3
+...</code></pre>
+<p>The queue automatically enforces this order.</p>
+<section id="template" class="level3">
+<h3 class="anchored" data-anchor-id="template">Template</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> collections <span class="im">import</span> deque</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> bfs(graph, start):</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    q <span class="op">=</span> deque([start])</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>    dist <span class="op">=</span> {start: <span class="dv">0</span>}</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span> q:</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>        u <span class="op">=</span> q.popleft()</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> v <span class="kw">in</span> graph[u]:</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> v <span class="kw">in</span> dist:</span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>                <span class="cf">continue</span></span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>            dist[v] <span class="op">=</span> dist[u] <span class="op">+</span> <span class="dv">1</span></span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>            q.append(v)</span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> dist</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="important-invariant" class="level3">
+<h3 class="anchored" data-anchor-id="important-invariant">Important invariant</h3>
+<p>When a node is first inserted into the queue:</p>
+<blockquote class="blockquote">
+<p>its shortest distance has already been found.</p>
+</blockquote>
+<p>This is true because every edge has identical cost.</p>
+</section>
+</section>
+<section id="bfs-on-an-implicit-state-space" class="level2">
+<h2 class="anchored" data-anchor-id="bfs-on-an-implicit-state-space">8. BFS on an implicit state space</h2>
+<p>Many problems that do not look like graphs are BFS problems.</p>
+<p>Example: transform number <code>x</code> using operations</p>
+<pre class="text"><code>x -&gt; x + 1
+x -&gt; 2x
+x -&gt; x - 1</code></pre>
+<p>State:</p>
+<p><span class="math display">\[
+x
+\]</span></p>
+<p>Transitions:</p>
+<p><span class="math display">\[
+x\rightarrow x+1,\quad
+x\rightarrow2x,\quad
+x\rightarrow x-1
+\]</span></p>
+<p>If every operation costs one move, BFS gives the minimum number of operations.</p>
+<p>The graph never needs to be constructed explicitly.</p>
+<p>This is a recurring interview pattern:</p>
+<blockquote class="blockquote">
+<p><strong>Graph = states + legal transitions.</strong></p>
+</blockquote>
+</section>
+<section id="dfs-from-first-principles" class="level2">
+<h2 class="anchored" data-anchor-id="dfs-from-first-principles">9. DFS from first principles</h2>
+<p>DFS answers a different fundamental question:</p>
+<blockquote class="blockquote">
+<p>What happens if I completely explore one branch before exploring its siblings?</p>
+</blockquote>
+<p>It is useful for:</p>
+<ul>
+<li>reachability;</li>
+<li>connected components;</li>
+<li>cycle detection;</li>
+<li>topological ordering;</li>
+<li>tree recursion;</li>
+<li>enumerating paths;</li>
+<li>backtracking.</li>
+</ul>
+<section id="recursive-template" class="level3">
+<h3 class="anchored" data-anchor-id="recursive-template">Recursive template</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> dfs(u):</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>    visited.add(u)</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> v <span class="kw">in</span> graph[u]:</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> v <span class="kw">not</span> <span class="kw">in</span> visited:</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>            dfs(v)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+</section>
+<section id="cycle-detection-three-color-dfs" class="level2">
+<h2 class="anchored" data-anchor-id="cycle-detection-three-color-dfs">10. Cycle Detection: Three-color DFS</h2>
+<p>For directed graphs, use:</p>
+<pre class="text"><code>0 = unseen
+1 = currently in recursion stack
+2 = completely processed</code></pre>
+<p>A transition</p>
+<pre class="text"><code>u -&gt; v</code></pre>
+<p>where <code>v</code> is color <code>1</code> means a directed cycle.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> has_cycle(graph):</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>    n <span class="op">=</span> <span class="bu">len</span>(graph)</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    color <span class="op">=</span> [<span class="dv">0</span>] <span class="op">*</span> n</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> dfs(u):</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>        color[u] <span class="op">=</span> <span class="dv">1</span></span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> v <span class="kw">in</span> graph[u]:</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> color[v] <span class="op">==</span> <span class="dv">1</span>:</span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>                <span class="cf">return</span> <span class="va">True</span></span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> color[v] <span class="op">==</span> <span class="dv">0</span> <span class="kw">and</span> dfs(v):</span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>                <span class="cf">return</span> <span class="va">True</span></span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a>        color[u] <span class="op">=</span> <span class="dv">2</span></span>
+<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">False</span></span>
+<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">any</span>(color[u] <span class="op">==</span> <span class="dv">0</span> <span class="kw">and</span> dfs(u) <span class="cf">for</span> u <span class="kw">in</span> <span class="bu">range</span>(n))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Why color <code>1</code> matters:</p>
+<p>A visited node is not necessarily evidence of a cycle.</p>
+<p>Only an edge back into the <strong>current unresolved dependency chain</strong> creates a cycle.</p>
+<section id="undirected-cycle-detection-with-dfs" class="level3">
+<h3 class="anchored" data-anchor-id="undirected-cycle-detection-with-dfs">Undirected cycle detection with DFS</h3>
+<p>For an undirected graph, track the node we came from:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> has_cycle(graph):</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>    n <span class="op">=</span> <span class="bu">len</span>(graph)</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>    visited <span class="op">=</span> [<span class="va">False</span>] <span class="op">*</span> n</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> dfs(u, parent):</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>        visited[u] <span class="op">=</span> <span class="va">True</span></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> v <span class="kw">in</span> graph[u]:</span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> <span class="kw">not</span> visited[v]:</span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>                <span class="cf">if</span> dfs(v, u):</span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>                    <span class="cf">return</span> <span class="va">True</span></span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>            <span class="cf">elif</span> v <span class="op">!=</span> parent:</span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>                <span class="cf">return</span> <span class="va">True</span></span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">False</span></span>
+<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">any</span>(</span>
+<span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a>        <span class="kw">not</span> visited[u] <span class="kw">and</span> dfs(u, <span class="op">-</span><span class="dv">1</span>)</span>
+<span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> u <span class="kw">in</span> <span class="bu">range</span>(n)</span>
+<span id="cb20-20"><a href="#cb20-20" aria-hidden="true" tabindex="-1"></a>    )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+</section>
+<section id="topological-sort" class="level2">
+<h2 class="anchored" data-anchor-id="topological-sort">11. Topological sort</h2>
+<p>A topological ordering guarantees:</p>
+<p><span class="math display">\[
+u\rightarrow v
+\implies
+u \text{ appears before } v
+\]</span></p>
+<p>This gives exactly the order needed for DAG DP.</p>
+<section id="kahns-algorithm" class="level3">
+<h3 class="anchored" data-anchor-id="kahns-algorithm">Kahn’s algorithm</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> collections <span class="im">import</span> deque</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> topo_sort(n, graph):</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>    indegree <span class="op">=</span> [<span class="dv">0</span>] <span class="op">*</span> n</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> u <span class="kw">in</span> <span class="bu">range</span>(n):</span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> v <span class="kw">in</span> graph[u]:</span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>            indegree[v] <span class="op">+=</span> <span class="dv">1</span></span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a>    q <span class="op">=</span> deque(</span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a>        u <span class="cf">for</span> u <span class="kw">in</span> <span class="bu">range</span>(n)</span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> indegree[u] <span class="op">==</span> <span class="dv">0</span></span>
+<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-15"><a href="#cb21-15" aria-hidden="true" tabindex="-1"></a>    order <span class="op">=</span> []</span>
+<span id="cb21-16"><a href="#cb21-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-17"><a href="#cb21-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span> q:</span>
+<span id="cb21-18"><a href="#cb21-18" aria-hidden="true" tabindex="-1"></a>        u <span class="op">=</span> q.popleft()</span>
+<span id="cb21-19"><a href="#cb21-19" aria-hidden="true" tabindex="-1"></a>        order.append(u)</span>
+<span id="cb21-20"><a href="#cb21-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-21"><a href="#cb21-21" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> v <span class="kw">in</span> graph[u]:</span>
+<span id="cb21-22"><a href="#cb21-22" aria-hidden="true" tabindex="-1"></a>            indegree[v] <span class="op">-=</span> <span class="dv">1</span></span>
+<span id="cb21-23"><a href="#cb21-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-24"><a href="#cb21-24" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> indegree[v] <span class="op">==</span> <span class="dv">0</span>:</span>
+<span id="cb21-25"><a href="#cb21-25" aria-hidden="true" tabindex="-1"></a>                q.append(v)</span>
+<span id="cb21-26"><a href="#cb21-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-27"><a href="#cb21-27" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">len</span>(order) <span class="op">!=</span> n:</span>
+<span id="cb21-28"><a href="#cb21-28" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">None</span></span>
+<span id="cb21-29"><a href="#cb21-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-30"><a href="#cb21-30" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> order</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Interpretation:</p>
+<p>A node with indegree zero has no unresolved prerequisites.</p>
+<p>Once it is processed, we remove its outgoing dependencies.</p>
+</section>
+</section>
+<section id="topological-dp" class="level2">
+<h2 class="anchored" data-anchor-id="topological-dp">12. Topological DP</h2>
+<p>Suppose each edge <code>u -&gt; v</code> has cost <code>w</code>.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> dag_shortest_path(n, graph, start):</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>    order <span class="op">=</span> topo_sort(n, graph)</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>    INF <span class="op">=</span> <span class="bu">float</span>(<span class="st">"inf"</span>)</span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>    dist <span class="op">=</span> [INF] <span class="op">*</span> n</span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>    dist[start] <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> u <span class="kw">in</span> order:</span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> dist[u] <span class="op">==</span> INF:</span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>            <span class="cf">continue</span></span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> v, w <span class="kw">in</span> graph[u]:</span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a>            dist[v] <span class="op">=</span> <span class="bu">min</span>(</span>
+<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a>                dist[v],</span>
+<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a>                dist[u] <span class="op">+</span> w,</span>
+<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a>            )</span>
+<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> dist</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>This is structurally identical to ordinary DP.</p>
+</section>
+</section>
+<section id="shortest-paths" class="level1">
+<h1>Shortest Paths</h1>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Tip
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 20%">
+<col style="width: 26%">
+<col style="width: 26%">
+<col style="width: 26%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Algorithm</th>
+<th style="text-align: right;">Frontier structure</th>
+<th style="text-align: right;">Per operation</th>
+<th style="text-align: right;">Total time</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>BFS</td>
+<td style="text-align: right;">queue</td>
+<td style="text-align: right;"><span class="math inline">\(O(1)\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(O(V + E)\)</span></td>
+</tr>
+<tr class="even">
+<td>0–1 BFS</td>
+<td style="text-align: right;">deque</td>
+<td style="text-align: right;"><span class="math inline">\(O(1)\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(O(V + E)\)</span></td>
+</tr>
+<tr class="odd">
+<td>Dijkstra</td>
+<td style="text-align: right;">min-heap</td>
+<td style="text-align: right;"><span class="math inline">\(O(\log V)\)</span></td>
+<td style="text-align: right;"><span class="math inline">\(O((V + E)\log V)\)</span></td>
+</tr>
+<tr class="even">
+<td>Bellman–Ford</td>
+<td style="text-align: right;">usually no queue; repeated edge scans</td>
+<td style="text-align: right;"><span class="math inline">\(O(1)\)</span> relaxation</td>
+<td style="text-align: right;"><span class="math inline">\(O(VE)\)</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<section id="dijkstra-from-first-principles" class="level2">
+<h2 class="anchored" data-anchor-id="dijkstra-from-first-principles">13. Dijkstra from first principles</h2>
+<p>Suppose:</p>
+<p><span class="math display">\[
+dist[v]
+=
+\min_{u\rightarrow v}
+(dist[u] + w(u,v))
+\]</span></p>
+<p>but the graph may contain cycles.</p>
+<p>We no longer have a static topological order.</p>
+<p>If all weights satisfy:</p>
+<p><span class="math display">\[
+w(u,v)\ge 0,
+\]</span></p>
+<p>Dijkstra discovers a safe order dynamically.</p>
+<p>At each step, select the unprocessed node with the smallest tentative distance.</p>
+<p>Suppose that node is <code>u</code>.</p>
+<p>Could some future path produce a shorter route to <code>u</code>?</p>
+<p>Any future path would first reach some unprocessed node <code>x</code>.</p>
+<p>But:</p>
+<p><span class="math display">\[
+dist[x] \ge dist[u]
+\]</span></p>
+<p>because <code>u</code> was the minimum.</p>
+<p>And every remaining edge has nonnegative cost.</p>
+<p>Therefore any path through <code>x</code> costs at least:</p>
+<p><span class="math display">\[
+dist[x] + \text{nonnegative}
+\ge dist[u].
+\]</span></p>
+<p>So <code>dist[u]</code> is final.</p>
+<p>This is the greedy correctness argument.</p>
+<section id="template-1" class="level3">
+<h3 class="anchored" data-anchor-id="template-1">Template</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> heapq</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> dijkstra(n, graph, start):</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>    INF <span class="op">=</span> <span class="bu">float</span>(<span class="st">"inf"</span>)</span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>    dist <span class="op">=</span> [INF] <span class="op">*</span> n</span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>    dist[start] <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>    pq <span class="op">=</span> [(<span class="dv">0</span>, start)]</span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span> pq:</span>
+<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a>        d, u <span class="op">=</span> heapq.heappop(pq)</span>
+<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> d <span class="op">!=</span> dist[u]:</span>
+<span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a>            <span class="cf">continue</span></span>
+<span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-16"><a href="#cb23-16" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> v, w <span class="kw">in</span> graph[u]:</span>
+<span id="cb23-17"><a href="#cb23-17" aria-hidden="true" tabindex="-1"></a>            nd <span class="op">=</span> d <span class="op">+</span> w</span>
+<span id="cb23-18"><a href="#cb23-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-19"><a href="#cb23-19" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> nd <span class="op">&lt;</span> dist[v]:</span>
+<span id="cb23-20"><a href="#cb23-20" aria-hidden="true" tabindex="-1"></a>                dist[v] <span class="op">=</span> nd</span>
+<span id="cb23-21"><a href="#cb23-21" aria-hidden="true" tabindex="-1"></a>                heapq.heappush(pq, (nd, v))</span>
+<span id="cb23-22"><a href="#cb23-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-23"><a href="#cb23-23" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> dist</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+</section>
+<section id="why-dijkstra-feels-like-dp" class="level2">
+<h2 class="anchored" data-anchor-id="why-dijkstra-feels-like-dp">14. Why Dijkstra feels like DP</h2>
+<p>The relaxation is still:</p>
+<p><span class="math display">\[
+dist[v]
+=
+\min(dist[v], dist[u]+w(u,v)).
+\]</span></p>
+<p>This looks exactly like DP.</p>
+<p>The difference is processing order.</p>
+<section id="dag-dp" class="level3">
+<h3 class="anchored" data-anchor-id="dag-dp">DAG DP</h3>
+<p>The order is known from graph structure.</p>
+</section>
+<section id="dijkstra" class="level3">
+<h3 class="anchored" data-anchor-id="dijkstra">Dijkstra</h3>
+<p>The order is discovered greedily using current distances.</p>
+<p>A useful mental model from our earlier discussion:</p>
+<blockquote class="blockquote">
+<p><strong>Dijkstra is essentially DP whose evaluation order is generated online by a priority queue.</strong></p>
+</blockquote>
+<p>This should not be taken as a formal textbook definition, but it is an excellent reasoning model.</p>
+</section>
+</section>
+<section id="why-negative-edges-break-dijkstra" class="level2">
+<h2 class="anchored" data-anchor-id="why-negative-edges-break-dijkstra">15. Why negative edges break Dijkstra</h2>
+<p>Suppose Dijkstra finalizes node <code>u</code>.</p>
+<p>Later there may be:</p>
+<pre class="text"><code>start -&gt; x -&gt; u</code></pre>
+<p>with a negative edge:</p>
+<p><span class="math display">\[
+w(x,u)&lt;0.
+\]</span></p>
+<p>Then even though</p>
+<p><span class="math display">\[
+dist[x] &gt; dist[u],
+\]</span></p>
+<p>we could have</p>
+<p><span class="math display">\[
+dist[x]+w(x,u)&lt;dist[u].
+\]</span></p>
+<p>So a state that appeared final can become better later.</p>
+<p>The entire greedy-finalization argument disappears.</p>
+</section>
+<section id="bellman-ford-as-explicit-dp" class="level2">
+<h2 class="anchored" data-anchor-id="bellman-ford-as-explicit-dp">16. Bellman-Ford as explicit DP</h2>
+<section id="bellmanford-as-dynamic-programming-on-an-expanded-dag" class="level3">
+<h3 class="anchored" data-anchor-id="bellmanford-as-dynamic-programming-on-an-expanded-dag">Bellman–Ford as Dynamic Programming on an Expanded DAG</h3>
+<p>A useful way to understand Bellman–Ford is:</p>
+<p><span class="math display">\[
+\boxed{\text{The original graph may be cyclic, but the DP dependency graph is acyclic.}}
+\]</span></p>
+<p>Define</p>
+<p><span class="math display">\[
+dp[k][v]
+=
+\text{minimum cost to reach } v \text{ using at most } k \text{ edges}.
+\]</span></p>
+<p>Then</p>
+<p><span class="math display">\[
+dp[k][v]
+=
+\min\left(
+dp[k-1][v],
+\min_{(u,v)\in E}
+\left(dp[k-1][u]+w(u,v)\right)
+\right).
+\]</span></p>
+<p>Although the original graph (G) may contain cycles, each DP state ((k,v)) depends only on states in the previous layer:</p>
+<p><span class="math display">\[
+(k-1,u)\rightarrow(k,v).
+\]</span></p>
+<p>Since (k) always increases, the dependency graph over DP states is a DAG.</p>
+<p>This gives a more general view of dynamic programming:</p>
+<p><span class="math display">\[
+\boxed{\text{DP does not require the original problem graph to be acyclic.}}
+\]</span></p>
+<p>It requires that we can define a state representation whose <strong>dependency graph is acyclic</strong>.</p>
+<p>For DAG shortest path:</p>
+<p><span class="math display">\[
+\text{state}=v.
+\]</span></p>
+<p>For Bellman–Ford:</p>
+<p><span class="math display">\[
+\text{state}=(k,v).
+\]</span></p>
+<p>The extra dimension (k) effectively <strong>unrolls cycles over path length</strong>.</p>
+<p>This is a common DP technique: when the natural state graph has cycles, add a monotonic dimension such as</p>
+<p><span class="math display">\[
+\text{time},\quad
+\text{steps used},\quad
+\text{items processed},\quad
+\text{remaining budget}
+\]</span></p>
+<p>so that dependencies move in only one direction.</p>
+<p>Bellman-Ford makes the path-length dimension explicit.</p>
+<p>Define:</p>
+<p><span class="math display">\[
+dp[k][v]
+=
+\text{shortest distance to }v
+\text{ using at most }k\text{ edges}.
+\]</span></p>
+<p>Then:</p>
+<p><span class="math display">\[
+dp[k][v]
+=
+\min
+\left(
+dp[k-1][v],
+\min_{u\rightarrow v}
+dp[k-1][u]+w(u,v)
+\right)
+\]</span></p>
+<p>Any simple shortest path contains at most:</p>
+<p><span class="math display">\[
+|V|-1
+\]</span></p>
+<p>edges.</p>
+<p>Therefore evaluate <code>|V|-1</code> rounds.</p>
+<p>The optimized implementation stores only one distance array.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> bellman_ford(n, edges, start):</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>    INF <span class="op">=</span> <span class="bu">float</span>(<span class="st">"inf"</span>)</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>    dist <span class="op">=</span> [INF] <span class="op">*</span> n</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>    dist[start] <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(n <span class="op">-</span> <span class="dv">1</span>):</span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>        changed <span class="op">=</span> <span class="va">False</span></span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>        new_dist <span class="op">=</span> dist.copy()</span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> u, v, w <span class="kw">in</span> edges:</span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> dist[u] <span class="op">==</span> INF:</span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a>                <span class="cf">continue</span></span>
+<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> dist[u] <span class="op">+</span> w <span class="op">&lt;</span> new_dist[v]:</span>
+<span id="cb25-15"><a href="#cb25-15" aria-hidden="true" tabindex="-1"></a>                new_dist[v] <span class="op">=</span> dist[u] <span class="op">+</span> w</span>
+<span id="cb25-16"><a href="#cb25-16" aria-hidden="true" tabindex="-1"></a>                changed <span class="op">=</span> <span class="va">True</span></span>
+<span id="cb25-17"><a href="#cb25-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-18"><a href="#cb25-18" aria-hidden="true" tabindex="-1"></a>        dist <span class="op">=</span> new_dist</span>
+<span id="cb25-19"><a href="#cb25-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-20"><a href="#cb25-20" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="kw">not</span> changed:</span>
+<span id="cb25-21"><a href="#cb25-21" aria-hidden="true" tabindex="-1"></a>            <span class="cf">break</span></span>
+<span id="cb25-22"><a href="#cb25-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-23"><a href="#cb25-23" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> dist</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Bellman-Ford therefore looks much more obviously like conventional DP than Dijkstra.</p>
+</section>
+</section>
+<section id="negative-cycle-detection" class="level2">
+<h2 class="anchored" data-anchor-id="negative-cycle-detection">17. Negative-cycle detection</h2>
+<p>After <code>V-1</code> rounds, perform one more relaxation pass.</p>
+<p>If some distance can still improve:</p>
+<p><span class="math display">\[
+dist[u]+w(u,v)&lt;dist[v],
+\]</span></p>
+<p>then a reachable negative cycle exists.</p>
+<p>Why?</p>
+<p>Any cycle-free path contains at most <code>V-1</code> edges.</p>
+<p>An improving path with at least <code>V</code> edges must repeat a vertex.</p>
+<p>If repeating that cycle reduces cost, the cycle has negative total weight.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> collections <span class="im">import</span> deque</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a><span class="co"># normal Bellman-Ford</span></span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(V <span class="op">-</span> <span class="dv">1</span>):</span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>    changed <span class="op">=</span> <span class="va">False</span></span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> u, v, w <span class="kw">in</span> edges:</span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> dist[u] <span class="op">!=</span> INF <span class="kw">and</span> dist[u] <span class="op">+</span> w <span class="op">&lt;</span> dist[v]:</span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>            dist[v] <span class="op">=</span> dist[u] <span class="op">+</span> w</span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a>            changed <span class="op">=</span> <span class="va">True</span></span>
+<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> changed:</span>
+<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a>        <span class="cf">break</span></span>
+<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-13"><a href="#cb26-13" aria-hidden="true" tabindex="-1"></a><span class="co"># detect negative-cycle influence</span></span>
+<span id="cb26-14"><a href="#cb26-14" aria-hidden="true" tabindex="-1"></a>q <span class="op">=</span> deque()</span>
+<span id="cb26-15"><a href="#cb26-15" aria-hidden="true" tabindex="-1"></a>neg <span class="op">=</span> [<span class="va">False</span>] <span class="op">*</span> V</span>
+<span id="cb26-16"><a href="#cb26-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-17"><a href="#cb26-17" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> u, v, w <span class="kw">in</span> edges:</span>
+<span id="cb26-18"><a href="#cb26-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> dist[u] <span class="op">!=</span> INF <span class="kw">and</span> dist[u] <span class="op">+</span> w <span class="op">&lt;</span> dist[v]:</span>
+<span id="cb26-19"><a href="#cb26-19" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="kw">not</span> neg[v]:</span>
+<span id="cb26-20"><a href="#cb26-20" aria-hidden="true" tabindex="-1"></a>            neg[v] <span class="op">=</span> <span class="va">True</span></span>
+<span id="cb26-21"><a href="#cb26-21" aria-hidden="true" tabindex="-1"></a>            q.append(v)</span>
+<span id="cb26-22"><a href="#cb26-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-23"><a href="#cb26-23" aria-hidden="true" tabindex="-1"></a><span class="co"># propagate to everything reachable from those vertices</span></span>
+<span id="cb26-24"><a href="#cb26-24" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> q:</span>
+<span id="cb26-25"><a href="#cb26-25" aria-hidden="true" tabindex="-1"></a>    u <span class="op">=</span> q.popleft()</span>
+<span id="cb26-26"><a href="#cb26-26" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> v, _ <span class="kw">in</span> graph[u]:</span>
+<span id="cb26-27"><a href="#cb26-27" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="kw">not</span> neg[v]:</span>
+<span id="cb26-28"><a href="#cb26-28" aria-hidden="true" tabindex="-1"></a>            neg[v] <span class="op">=</span> <span class="va">True</span></span>
+<span id="cb26-29"><a href="#cb26-29" aria-hidden="true" tabindex="-1"></a>            q.append(v)</span>
+<span id="cb26-30"><a href="#cb26-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-31"><a href="#cb26-31" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> v <span class="kw">in</span> <span class="bu">range</span>(V):</span>
+<span id="cb26-32"><a href="#cb26-32" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> neg[v]:</span>
+<span id="cb26-33"><a href="#cb26-33" aria-hidden="true" tabindex="-1"></a>        dist[v] <span class="op">=</span> <span class="bu">float</span>(<span class="st">"-inf"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="bfs" class="level2">
+<h2 class="anchored" data-anchor-id="bfs">18. 0-1 BFS</h2>
+<p>When edge weights are only:</p>
+<p><span class="math display">\[
+w\in\{0,1\},
+\]</span></p>
+<p>we can avoid a heap.</p>
+<p>For cost <code>0</code>, push the next state to the front.</p>
+<p>For cost <code>1</code>, push it to the back.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> collections <span class="im">import</span> deque</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> zero_one_bfs(n, graph, start):</span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>    INF <span class="op">=</span> <span class="bu">float</span>(<span class="st">"inf"</span>)</span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>    dist <span class="op">=</span> [INF] <span class="op">*</span> n</span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>    dist[start] <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>    dq <span class="op">=</span> deque([start])</span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span> dq:</span>
+<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a>        u <span class="op">=</span> dq.popleft()</span>
+<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> v, w <span class="kw">in</span> graph[u]:</span>
+<span id="cb27-14"><a href="#cb27-14" aria-hidden="true" tabindex="-1"></a>            nd <span class="op">=</span> dist[u] <span class="op">+</span> w</span>
+<span id="cb27-15"><a href="#cb27-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-16"><a href="#cb27-16" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> nd <span class="op">&lt;</span> dist[v]:</span>
+<span id="cb27-17"><a href="#cb27-17" aria-hidden="true" tabindex="-1"></a>                dist[v] <span class="op">=</span> nd</span>
+<span id="cb27-18"><a href="#cb27-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-19"><a href="#cb27-19" aria-hidden="true" tabindex="-1"></a>                <span class="cf">if</span> w <span class="op">==</span> <span class="dv">0</span>:</span>
+<span id="cb27-20"><a href="#cb27-20" aria-hidden="true" tabindex="-1"></a>                    dq.appendleft(v)</span>
+<span id="cb27-21"><a href="#cb27-21" aria-hidden="true" tabindex="-1"></a>                <span class="cf">else</span>:</span>
+<span id="cb27-22"><a href="#cb27-22" aria-hidden="true" tabindex="-1"></a>                    dq.append(v)</span>
+<span id="cb27-23"><a href="#cb27-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-24"><a href="#cb27-24" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> dist</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Conceptually this is Dijkstra with a specialized two-level priority structure.</p>
+</section>
+<section id="the-shortest-path-decision-tree" class="level2">
+<h2 class="anchored" data-anchor-id="the-shortest-path-decision-tree">19. The shortest-path decision tree</h2>
+<p>When you see a minimum-cost graph/state-space problem:</p>
+<pre class="text"><code>Is the dependency graph acyclic?
+|
++-- yes --&gt; DP / topological shortest path
+|
++-- no
+    |
+    +-- all edges cost 1? --&gt; BFS
+    |
+    +-- weights only 0 or 1? --&gt; 0-1 BFS
+    |
+    +-- all weights nonnegative? --&gt; Dijkstra
+    |
+    +-- negative edges? --&gt; Bellman-Ford</code></pre>
+<p>This is far more robust than memorizing algorithms independently.</p>
+</section>
+</section>
+<section id="multidimensional-dp" class="level1">
+<h1>Multidimensional DP</h1>
+<section id="multi-dimensional-state-constraints-become-coordinates" class="level2">
+<h2 class="anchored" data-anchor-id="multi-dimensional-state-constraints-become-coordinates">20. Multi-dimensional state: constraints become coordinates</h2>
+<p>A particularly important pattern is:</p>
+<blockquote class="blockquote">
+<p>A graph problem with extra constraints often becomes an ordinary graph problem on an expanded state space.</p>
+</blockquote>
+<p>Suppose we need the cheapest route while using at most <code>K</code> flights.</p>
+<p>A node alone is insufficient.</p>
+<p>Arriving at city <code>u</code> after 2 flights is different from arriving after 7 flights.</p>
+<p>State:</p>
+<p><span class="math display">\[
+(u,k)
+\]</span></p>
+<p>where:</p>
+<ul>
+<li><code>u</code> = city;</li>
+<li><code>k</code> = flights used.</li>
+</ul>
+<p>Then:</p>
+<p><span class="math display">\[
+dp[k][u]
+=
+\text{best cost reaching }u
+\text{ using }k\text{ transitions}.
+\]</span></p>
+<p>This principle generalizes.</p>
+<section id="common-expanded-states" class="level3">
+<h3 class="anchored" data-anchor-id="common-expanded-states">Common expanded states</h3>
+<section id="limited-stops" class="level4">
+<h4 class="anchored" data-anchor-id="limited-stops">Limited stops</h4>
+<p><span class="math display">\[
+(node,\ stops)
+\]</span></p>
+</section>
+<section id="fuel" class="level4">
+<h4 class="anchored" data-anchor-id="fuel">Fuel</h4>
+<p><span class="math display">\[
+(node,\ fuel)
+\]</span></p>
+</section>
+<section id="number-of-obstacles-removed" class="level4">
+<h4 class="anchored" data-anchor-id="number-of-obstacles-removed">Number of obstacles removed</h4>
+<p><span class="math display">\[
+(r,c,k)
+\]</span></p>
+</section>
+<section id="whether-a-coupon-has-been-used" class="level4">
+<h4 class="anchored" data-anchor-id="whether-a-coupon-has-been-used">Whether a coupon has been used</h4>
+<p><span class="math display">\[
+(node,\ used)
+\]</span></p>
+</section>
+<section id="bitmask-of-visited-targets" class="level4">
+<h4 class="anchored" data-anchor-id="bitmask-of-visited-targets">Bitmask of visited targets</h4>
+<p><span class="math display">\[
+(node,\ mask)
+\]</span></p>
+</section>
+<section id="multiple-resources" class="level4">
+<h4 class="anchored" data-anchor-id="multiple-resources">Multiple resources</h4>
+<p><span class="math display">\[
+(node,\ time,\ fuel)
+\]</span></p>
+<p>The key insight:</p>
+<blockquote class="blockquote">
+<p><strong>Constraints that affect future options belong in the state.</strong></p>
+</blockquote>
+</section>
+</section>
+</section>
+<section id="when-state-dimensions-become-too-large" class="level2">
+<h2 class="anchored" data-anchor-id="when-state-dimensions-become-too-large">21. When state dimensions become too large</h2>
+<p>Suppose the state is:</p>
+<p><span class="math display">\[
+(node,\ time,\ cost)
+\]</span></p>
+<p>A full DP table may be enormous.</p>
+<p>But many states are dominated.</p>
+<p>Consider two states at the same node:</p>
+<pre class="text"><code>A = (time=10, cost=50)
+B = (time=12, cost=60)</code></pre>
+<p>If lower time and lower cost are both better, <code>B</code> can never be useful.</p>
+<p><code>A</code> dominates <code>B</code>.</p>
+<p>This motivates Pareto-frontier pruning.</p>
+<p>Keep only nondominated states.</p>
+<p>This is often the bridge from textbook DP to practical constrained shortest-path algorithms.</p>
+</section>
+<section id="grid-problems-are-graph-problems" class="level2">
+<h2 class="anchored" data-anchor-id="grid-problems-are-graph-problems">22. Grid problems are graph problems</h2>
+<p>A grid is simply a graph where:</p>
+<p><span class="math display">\[
+(r,c)
+\]</span></p>
+<p>is a node.</p>
+<p>Typical transitions:</p>
+<p><span class="math display">\[
+(r,c)\rightarrow
+(r+1,c),
+(r-1,c),
+(r,c+1),
+(r,c-1)
+\]</span></p>
+<p>The algorithm depends on allowed movement and costs.</p>
+<section id="example-shortest-path-in-binary-matrix" class="level3">
+<h3 class="anchored" data-anchor-id="example-shortest-path-in-binary-matrix">Example: shortest path in binary matrix</h3>
+<p>Each move costs one.</p>
+<p>Use BFS.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> collections <span class="im">import</span> deque</span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> shortest_path(grid):</span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>    rows, cols <span class="op">=</span> <span class="bu">len</span>(grid), <span class="bu">len</span>(grid[<span class="dv">0</span>])</span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>    q <span class="op">=</span> deque([(<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">1</span>)])</span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a>    seen <span class="op">=</span> {(<span class="dv">0</span>, <span class="dv">0</span>)}</span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span> q:</span>
+<span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a>        r, c, d <span class="op">=</span> q.popleft()</span>
+<span id="cb30-11"><a href="#cb30-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-12"><a href="#cb30-12" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> (r, c) <span class="op">==</span> (rows <span class="op">-</span> <span class="dv">1</span>, cols <span class="op">-</span> <span class="dv">1</span>):</span>
+<span id="cb30-13"><a href="#cb30-13" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> d</span>
+<span id="cb30-14"><a href="#cb30-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-15"><a href="#cb30-15" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> dr, dc <span class="kw">in</span> directions:</span>
+<span id="cb30-16"><a href="#cb30-16" aria-hidden="true" tabindex="-1"></a>            nr, nc <span class="op">=</span> r <span class="op">+</span> dr, c <span class="op">+</span> dc</span>
+<span id="cb30-17"><a href="#cb30-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-18"><a href="#cb30-18" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> (</span>
+<span id="cb30-19"><a href="#cb30-19" aria-hidden="true" tabindex="-1"></a>                <span class="dv">0</span> <span class="op">&lt;=</span> nr <span class="op">&lt;</span> rows</span>
+<span id="cb30-20"><a href="#cb30-20" aria-hidden="true" tabindex="-1"></a>                <span class="kw">and</span> <span class="dv">0</span> <span class="op">&lt;=</span> nc <span class="op">&lt;</span> cols</span>
+<span id="cb30-21"><a href="#cb30-21" aria-hidden="true" tabindex="-1"></a>                <span class="kw">and</span> grid[nr][nc] <span class="op">==</span> <span class="dv">0</span></span>
+<span id="cb30-22"><a href="#cb30-22" aria-hidden="true" tabindex="-1"></a>                <span class="kw">and</span> (nr, nc) <span class="kw">not</span> <span class="kw">in</span> seen</span>
+<span id="cb30-23"><a href="#cb30-23" aria-hidden="true" tabindex="-1"></a>            ):</span>
+<span id="cb30-24"><a href="#cb30-24" aria-hidden="true" tabindex="-1"></a>                seen.add((nr, nc))</span>
+<span id="cb30-25"><a href="#cb30-25" aria-hidden="true" tabindex="-1"></a>                q.append((nr, nc, d <span class="op">+</span> <span class="dv">1</span>))</span>
+<span id="cb30-26"><a href="#cb30-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-27"><a href="#cb30-27" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="op">-</span><span class="dv">1</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="example-minimum-path-sum" class="level3">
+<h3 class="anchored" data-anchor-id="example-minimum-path-sum">Example: minimum path sum</h3>
+<p>If movement is only:</p>
+<pre class="text"><code>right
+down</code></pre>
+<p>then dependencies are acyclic.</p>
+<p>Use DP.</p>
+<p><span class="math display">\[
+dp[r][c]
+=
+grid[r][c]
++
+\min(
+dp[r-1][c],
+dp[r][c-1]
+)
+\]</span></p>
+<p>The difference from the BFS problem is not that one is a “grid problem” and one is a “DP problem.”</p>
+<p>The real difference is the transition graph.</p>
+</section>
+</section>
+</section>
+<section id="classical-dp-patterns" class="level1">
+<h1>Classical DP Patterns</h1>
+<section id="sequence-dp" class="level2">
+<h2 class="anchored" data-anchor-id="sequence-dp">23. Sequence DP</h2>
+<p>Sequence DP often has states such as:</p>
+<p><span class="math display">\[
+dp[i]
+\]</span></p>
+<p>or</p>
+<p><span class="math display">\[
+dp[i][j].
+\]</span></p>
+<p>The first question should be:</p>
+<blockquote class="blockquote">
+<p>What prefix/subsequence/subarray does this state summarize?</p>
+</blockquote>
+<section id="longest-common-subsequence" class="level3">
+<h3 class="anchored" data-anchor-id="longest-common-subsequence">Longest common subsequence</h3>
+<p>State:</p>
+<p><span class="math display">\[
+dp[i][j]
+=
+\text{LCS length of }
+a[i:]
+\text{ and }
+b[j:].
+\]</span></p>
+<p>If characters match:</p>
+<p><span class="math display">\[
+dp[i][j]
+=
+1+dp[i+1][j+1]
+\]</span></p>
+<p>otherwise:</p>
+<p><span class="math display">\[
+dp[i][j]
+=
+\max(
+dp[i+1][j],
+dp[i][j+1]
+)
+\]</span></p>
+<p>Template:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> longest_common_subsequence(a, b):</span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>    m, n <span class="op">=</span> <span class="bu">len</span>(a), <span class="bu">len</span>(b)</span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>    dp <span class="op">=</span> [[<span class="dv">0</span>] <span class="op">*</span> (n <span class="op">+</span> <span class="dv">1</span>) <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(m <span class="op">+</span> <span class="dv">1</span>)]</span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(m <span class="op">-</span> <span class="dv">1</span>, <span class="op">-</span><span class="dv">1</span>, <span class="op">-</span><span class="dv">1</span>):</span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(n <span class="op">-</span> <span class="dv">1</span>, <span class="op">-</span><span class="dv">1</span>, <span class="op">-</span><span class="dv">1</span>):</span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> a[i] <span class="op">==</span> b[j]:</span>
+<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a>                dp[i][j] <span class="op">=</span> <span class="dv">1</span> <span class="op">+</span> dp[i <span class="op">+</span> <span class="dv">1</span>][j <span class="op">+</span> <span class="dv">1</span>]</span>
+<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a>            <span class="cf">else</span>:</span>
+<span id="cb32-11"><a href="#cb32-11" aria-hidden="true" tabindex="-1"></a>                dp[i][j] <span class="op">=</span> <span class="bu">max</span>(</span>
+<span id="cb32-12"><a href="#cb32-12" aria-hidden="true" tabindex="-1"></a>                    dp[i <span class="op">+</span> <span class="dv">1</span>][j],</span>
+<span id="cb32-13"><a href="#cb32-13" aria-hidden="true" tabindex="-1"></a>                    dp[i][j <span class="op">+</span> <span class="dv">1</span>],</span>
+<span id="cb32-14"><a href="#cb32-14" aria-hidden="true" tabindex="-1"></a>                )</span>
+<span id="cb32-15"><a href="#cb32-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-16"><a href="#cb32-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> dp[<span class="dv">0</span>][<span class="dv">0</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+</section>
+<section id="knapsack-style-dp" class="level2">
+<h2 class="anchored" data-anchor-id="knapsack-style-dp">24. Knapsack-style DP</h2>
+<p>A common state:</p>
+<p><span class="math display">\[
+dp[i][c]
+=
+\text{best answer using items }i...
+\text{ with capacity }c.
+\]</span></p>
+<p>Decision:</p>
+<pre class="text"><code>skip item i
+take item i</code></pre>
+<p>Recurrence:</p>
+<p><span class="math display">\[
+dp[i][c]
+=
+\max
+\left(
+dp[i+1][c],
+value_i + dp[i+1][c-weight_i]
+\right)
+\]</span></p>
+<p>when the item fits.</p>
+<p>The deeper idea is not “knapsack.”</p>
+<p>It is:</p>
+<blockquote class="blockquote">
+<p><strong>state = decision position + remaining resource.</strong></p>
+</blockquote>
+</section>
+<section id="interval-dp" class="level2">
+<h2 class="anchored" data-anchor-id="interval-dp">25. Interval DP</h2>
+<p>Sometimes the subproblem is not a prefix but an interval.</p>
+<p>State:</p>
+<p><span class="math display">\[
+dp[l][r]
+=
+\text{answer for interval }[l,r].
+\]</span></p>
+<p>Typical recurrence:</p>
+<p><span class="math display">\[
+dp[l][r]
+=
+\min_{k\in[l,r)}
+\left(
+dp[l][k]
++
+dp[k+1][r]
++
+cost(l,k,r)
+\right)
+\]</span></p>
+<p>Process intervals from short to long.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> length <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1</span>, n <span class="op">+</span> <span class="dv">1</span>):</span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> l <span class="kw">in</span> <span class="bu">range</span>(n <span class="op">-</span> length <span class="op">+</span> <span class="dv">1</span>):</span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>        r <span class="op">=</span> l <span class="op">+</span> length <span class="op">-</span> <span class="dv">1</span></span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>        ...</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Recognize this when the decision <strong>splits one interval into smaller intervals</strong>.</p>
+</section>
+<section id="bitmask-dp" class="level2">
+<h2 class="anchored" data-anchor-id="bitmask-dp">26. Bitmask DP</h2>
+<p>When the problem asks about subsets of a small set, encode the subset as bits.</p>
+<p><span class="math display">\[
+mask\in[0,2^n)
+\]</span></p>
+<p>For traveling-salesman-like problems:</p>
+<p><span class="math display">\[
+dp[mask][u]
+=
+\text{best cost after visiting }mask
+\text{ and ending at }u.
+\]</span></p>
+<p>Transition:</p>
+<p><span class="math display">\[
+dp[mask\cup\{v\}][v]
+=
+\min(
+dp[mask\cup\{v\}][v],
+dp[mask][u]+w(u,v)
+)
+\]</span></p>
+<p>Complexity is often:</p>
+<p><span class="math display">\[
+O(2^n n^2).
+\]</span></p>
+<p>This is practical only when <code>n</code> is relatively small.</p>
+</section>
+</section>
+<section id="connectivity-and-spanning-trees" class="level1">
+<h1>Connectivity and Spanning Trees</h1>
+<section id="union-find-from-first-principles" class="level2">
+<h2 class="anchored" data-anchor-id="union-find-from-first-principles">27. Union-Find from first principles</h2>
+<p>Some graph problems do not care about paths at all.</p>
+<p>They only ask:</p>
+<blockquote class="blockquote">
+<p>Are two nodes currently in the same connected component?</p>
+</blockquote>
+<p>Union-Find maintains a partition of elements under repeated merging.</p>
+<p>Operations:</p>
+<pre class="text"><code>find(x)
+union(x, y)</code></pre>
+<p>Template:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> DSU:</span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, n):</span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.parent <span class="op">=</span> <span class="bu">list</span>(<span class="bu">range</span>(n))</span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.size <span class="op">=</span> [<span class="dv">1</span>] <span class="op">*</span> n</span>
+<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> find(<span class="va">self</span>, x):</span>
+<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a>        <span class="cf">while</span> x <span class="op">!=</span> <span class="va">self</span>.parent[x]:</span>
+<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a>            <span class="va">self</span>.parent[x] <span class="op">=</span> <span class="va">self</span>.parent[<span class="va">self</span>.parent[x]]</span>
+<span id="cb36-9"><a href="#cb36-9" aria-hidden="true" tabindex="-1"></a>            x <span class="op">=</span> <span class="va">self</span>.parent[x]</span>
+<span id="cb36-10"><a href="#cb36-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-11"><a href="#cb36-11" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> x</span>
+<span id="cb36-12"><a href="#cb36-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-13"><a href="#cb36-13" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> union(<span class="va">self</span>, a, b):</span>
+<span id="cb36-14"><a href="#cb36-14" aria-hidden="true" tabindex="-1"></a>        ra <span class="op">=</span> <span class="va">self</span>.find(a)</span>
+<span id="cb36-15"><a href="#cb36-15" aria-hidden="true" tabindex="-1"></a>        rb <span class="op">=</span> <span class="va">self</span>.find(b)</span>
+<span id="cb36-16"><a href="#cb36-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-17"><a href="#cb36-17" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> ra <span class="op">==</span> rb:</span>
+<span id="cb36-18"><a href="#cb36-18" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> <span class="va">False</span></span>
+<span id="cb36-19"><a href="#cb36-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-20"><a href="#cb36-20" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="va">self</span>.size[ra] <span class="op">&lt;</span> <span class="va">self</span>.size[rb]:</span>
+<span id="cb36-21"><a href="#cb36-21" aria-hidden="true" tabindex="-1"></a>            ra, rb <span class="op">=</span> rb, ra</span>
+<span id="cb36-22"><a href="#cb36-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-23"><a href="#cb36-23" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.parent[rb] <span class="op">=</span> ra</span>
+<span id="cb36-24"><a href="#cb36-24" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.size[ra] <span class="op">+=</span> <span class="va">self</span>.size[rb]</span>
+<span id="cb36-25"><a href="#cb36-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-26"><a href="#cb36-26" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">True</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Two optimizations:</p>
+<ul>
+<li>path compression;</li>
+<li>union by size/rank.</li>
+</ul>
+<p>Together they give nearly constant amortized complexity:</p>
+<p><span class="math display">\[
+O(\alpha(n)).
+\]</span></p>
+</section>
+<section id="minimum-spanning-tree" class="level2">
+<h2 class="anchored" data-anchor-id="minimum-spanning-tree">28. Minimum spanning tree</h2>
+<p>An MST asks for:</p>
+<blockquote class="blockquote">
+<p>the minimum-total-weight set of edges connecting all vertices.</p>
+</blockquote>
+<p>This is different from shortest path.</p>
+<p>Shortest path minimizes distance from a source.</p>
+<p>MST minimizes total network construction cost.</p>
+<section id="kruskal" class="level3">
+<h3 class="anchored" data-anchor-id="kruskal">Kruskal</h3>
+<p>Process edges from cheapest to most expensive.</p>
+<p>Take an edge unless it creates a cycle.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> kruskal(n, edges):</span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>    edges.sort(key<span class="op">=</span><span class="kw">lambda</span> e: e[<span class="dv">2</span>])</span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>    dsu <span class="op">=</span> DSU(n)</span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a>    total <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a>    used <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> u, v, w <span class="kw">in</span> edges:</span>
+<span id="cb37-9"><a href="#cb37-9" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> dsu.union(u, v):</span>
+<span id="cb37-10"><a href="#cb37-10" aria-hidden="true" tabindex="-1"></a>            total <span class="op">+=</span> w</span>
+<span id="cb37-11"><a href="#cb37-11" aria-hidden="true" tabindex="-1"></a>            used <span class="op">+=</span> <span class="dv">1</span></span>
+<span id="cb37-12"><a href="#cb37-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-13"><a href="#cb37-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> total <span class="cf">if</span> used <span class="op">==</span> n <span class="op">-</span> <span class="dv">1</span> <span class="cf">else</span> <span class="va">None</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Why the greedy step works is captured by the cut property:</p>
+<blockquote class="blockquote">
+<p>For any cut, a minimum-weight edge crossing that cut can safely belong to an MST.</p>
+</blockquote>
+</section>
+</section>
+</section>
+<section id="interview-problem-solving-framework" class="level1">
+<h1>Interview Problem-Solving Framework</h1>
+<section id="a-compact-recognition-framework" class="level2">
+<h2 class="anchored" data-anchor-id="a-compact-recognition-framework">29. A compact recognition framework</h2>
+<p>When reading a problem, ask these questions in order.</p>
+<section id="question-1-what-is-a-state" class="level3">
+<h3 class="anchored" data-anchor-id="question-1-what-is-a-state">Question 1: What is a state?</h3>
+<p>What information determines future legal decisions and future cost?</p>
+</section>
+<section id="question-2-what-are-the-transitions" class="level3">
+<h3 class="anchored" data-anchor-id="question-2-what-are-the-transitions">Question 2: What are the transitions?</h3>
+<p>What decisions move us to another state?</p>
+</section>
+<section id="question-3-is-the-state-transition-graph-acyclic" class="level3">
+<h3 class="anchored" data-anchor-id="question-3-is-the-state-transition-graph-acyclic">Question 3: Is the state-transition graph acyclic?</h3>
+<p>If yes:</p>
+<blockquote class="blockquote">
+<p>use DP / topological DP.</p>
+</blockquote>
+</section>
+<section id="question-4-if-cyclic-what-are-the-edge-costs" class="level3">
+<h3 class="anchored" data-anchor-id="question-4-if-cyclic-what-are-the-edge-costs">Question 4: If cyclic, what are the edge costs?</h3>
+<ul>
+<li>all <code>1</code> → BFS;</li>
+<li><code>0/1</code> → 0-1 BFS;</li>
+<li>nonnegative → Dijkstra;</li>
+<li>negative → Bellman-Ford.</li>
+</ul>
+</section>
+<section id="question-5-do-we-need-optimization-reachability-or-connectivity" class="level3">
+<h3 class="anchored" data-anchor-id="question-5-do-we-need-optimization-reachability-or-connectivity">Question 5: Do we need optimization, reachability, or connectivity?</h3>
+<ul>
+<li>reachability → DFS/BFS;</li>
+<li>shortest path → BFS/Dijkstra/etc.;</li>
+<li>dependency ordering → topological sort;</li>
+<li>dynamic connectivity/components → Union-Find;</li>
+<li>cheapest connecting network → MST.</li>
+</ul>
+</section>
+<section id="question-6-is-an-extra-constraint-affecting-the-future" class="level3">
+<h3 class="anchored" data-anchor-id="question-6-is-an-extra-constraint-affecting-the-future">Question 6: Is an extra constraint affecting the future?</h3>
+<p>Add it to the state.</p>
+<p>Examples:</p>
+<pre class="text"><code>(node, stops)
+(node, fuel)
+(node, mask)
+(row, col, obstacles_used)</code></pre>
+</section>
+</section>
+<section id="interview-template-derive-before-coding" class="level2">
+<h2 class="anchored" data-anchor-id="interview-template-derive-before-coding">30. Interview template: derive before coding</h2>
+<p>A useful scratchpad is:</p>
+<pre class="text"><code>State:
+    What minimum information describes the future?
+
+Transition:
+    What choices move to another state?
+
+Objective:
+    min / max / count / boolean?
+
+Base case:
+    What happens at terminal states?
+
+Dependency structure:
+    DAG or cyclic?
+
+Processing order:
+    index order / topological / queue / deque / heap /
+    repeated relaxation?
+
+Complexity:
+    #states × transitions per state</code></pre>
+<p>For graph-state problems:</p>
+<pre class="text"><code>Node/state:
+Edges/transitions:
+Edge cost:
+Source:
+Target:
+Extra state dimensions:
+Algorithm:</code></pre>
+</section>
+<section id="complexity-from-the-state-graph" class="level2">
+<h2 class="anchored" data-anchor-id="complexity-from-the-state-graph">31. Complexity from the state graph</h2>
+<p>For DP, a reliable rule is:</p>
+<p><span class="math display">\[
+T
+=
+O(
+\#\text{states}
+\times
+\text{transitions per state}
+)
+\]</span></p>
+<p>Examples:</p>
+<section id="d-dp" class="level3">
+<h3 class="anchored" data-anchor-id="d-dp">1D DP</h3>
+<p><span class="math display">\[
+n\text{ states}\times O(1)
+=
+O(n)
+\]</span></p>
+</section>
+<section id="lcs" class="level3">
+<h3 class="anchored" data-anchor-id="lcs">LCS</h3>
+<p><span class="math display">\[
+mn\text{ states}\times O(1)
+=
+O(mn)
+\]</span></p>
+</section>
+<section id="bitmask-tsp" class="level3">
+<h3 class="anchored" data-anchor-id="bitmask-tsp">Bitmask TSP</h3>
+<p><span class="math display">\[
+2^n n\text{ states}\times O(n)
+=
+O(2^n n^2)
+\]</span></p>
+<p>For graph algorithms:</p>
+</section>
+<section id="bfs-dfs" class="level3">
+<h3 class="anchored" data-anchor-id="bfs-dfs">BFS / DFS</h3>
+<p><span class="math display">\[
+O(V+E)
+\]</span></p>
+</section>
+<section id="dijkstra-with-binary-heap" class="level3">
+<h3 class="anchored" data-anchor-id="dijkstra-with-binary-heap">Dijkstra with binary heap</h3>
+<p><span class="math display">\[
+O((V+E)\log V)
+\]</span></p>
+<p>usually written:</p>
+<p><span class="math display">\[
+O(E\log V)
+\]</span></p>
+<p>for connected sparse graphs.</p>
+</section>
+<section id="bellman-ford" class="level3">
+<h3 class="anchored" data-anchor-id="bellman-ford">Bellman-Ford</h3>
+<p><span class="math display">\[
+O(VE)
+\]</span></p>
+</section>
+</section>
+<section id="common-interview-failure-modes" class="level2">
+<h2 class="anchored" data-anchor-id="common-interview-failure-modes">32. Common interview failure modes</h2>
+<section id="failure-1-adding-too-little-to-the-state" class="level3">
+<h3 class="anchored" data-anchor-id="failure-1-adding-too-little-to-the-state">Failure 1: Adding too little to the state</h3>
+<p>Example:</p>
+<pre class="text"><code>dp[node]</code></pre>
+<p>when the future also depends on remaining fuel.</p>
+<p>Two arrivals at the same node are not equivalent.</p>
+<p>Correct state:</p>
+<pre class="text"><code>dp[node][fuel]</code></pre>
+</section>
+<section id="failure-2-adding-too-much-to-the-state" class="level3">
+<h3 class="anchored" data-anchor-id="failure-2-adding-too-much-to-the-state">Failure 2: Adding too much to the state</h3>
+<p>Storing the entire path often creates exponential states unnecessarily.</p>
+<p>Ask:</p>
+<blockquote class="blockquote">
+<p>Which parts of the history can no longer affect future decisions?</p>
+</blockquote>
+<p>Discard them.</p>
+</section>
+<section id="failure-3-choosing-bfs-because-the-input-is-a-graph" class="level3">
+<h3 class="anchored" data-anchor-id="failure-3-choosing-bfs-because-the-input-is-a-graph">Failure 3: Choosing BFS because the input is a graph</h3>
+<p>BFS is not “the graph algorithm.”</p>
+<p>It is shortest path specifically when transitions have equal cost.</p>
+</section>
+<section id="failure-4-using-dijkstra-with-negative-edges" class="level3">
+<h3 class="anchored" data-anchor-id="failure-4-using-dijkstra-with-negative-edges">Failure 4: Using Dijkstra with negative edges</h3>
+<p>The issue is not implementation.</p>
+<p>The greedy invariant itself becomes false.</p>
+</section>
+<section id="failure-5-memorizing-a-recurrence-without-its-state-meaning" class="level3">
+<h3 class="anchored" data-anchor-id="failure-5-memorizing-a-recurrence-without-its-state-meaning">Failure 5: Memorizing a recurrence without its state meaning</h3>
+<p>If you cannot say exactly what</p>
+<p><span class="math display">\[
+dp[i][j]
+\]</span></p>
+<p>means in English, the recurrence is fragile.</p>
+</section>
+<section id="failure-6-confusing-visited-with-finalized" class="level3">
+<h3 class="anchored" data-anchor-id="failure-6-confusing-visited-with-finalized">Failure 6: Confusing visited with finalized</h3>
+<p>In BFS, first discovery is sufficient.</p>
+<p>In Dijkstra, a node may enter the heap many times.</p>
+<p>Use:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb43"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> d <span class="op">!=</span> dist[u]:</span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">continue</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>to discard stale entries.</p>
+</section>
+</section>
+<section id="reusable-code-templates" class="level2">
+<h2 class="anchored" data-anchor-id="reusable-code-templates">33. Reusable code templates</h2>
+<section id="memoized-dp" class="level3">
+<h3 class="anchored" data-anchor-id="memoized-dp">Memoized DP</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb44"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> functools <span class="im">import</span> cache</span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a><span class="at">@cache</span></span>
+<span id="cb44-4"><a href="#cb44-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> dp(state):</span>
+<span id="cb44-5"><a href="#cb44-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> terminal(state):</span>
+<span id="cb44-6"><a href="#cb44-6" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> base</span>
+<span id="cb44-7"><a href="#cb44-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb44-8"><a href="#cb44-8" aria-hidden="true" tabindex="-1"></a>    ans <span class="op">=</span> ...</span>
+<span id="cb44-9"><a href="#cb44-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb44-10"><a href="#cb44-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> next_state <span class="kw">in</span> transitions(state):</span>
+<span id="cb44-11"><a href="#cb44-11" aria-hidden="true" tabindex="-1"></a>        ans <span class="op">=</span> combine(ans, dp(next_state))</span>
+<span id="cb44-12"><a href="#cb44-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb44-13"><a href="#cb44-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> ans</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="d-bottom-up-dp" class="level3">
+<h3 class="anchored" data-anchor-id="d-bottom-up-dp">2D bottom-up DP</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb45"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>dp <span class="op">=</span> [[...] <span class="op">*</span> (m <span class="op">+</span> <span class="dv">1</span>) <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(n <span class="op">+</span> <span class="dv">1</span>)]</span>
+<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(...):</span>
+<span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(...):</span>
+<span id="cb45-5"><a href="#cb45-5" aria-hidden="true" tabindex="-1"></a>        dp[i][j] <span class="op">=</span> ...</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="bfs-1" class="level3">
+<h3 class="anchored" data-anchor-id="bfs-1">BFS</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb46"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> collections <span class="im">import</span> deque</span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>q <span class="op">=</span> deque([start])</span>
+<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a>seen <span class="op">=</span> {start}</span>
+<span id="cb46-5"><a href="#cb46-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-6"><a href="#cb46-6" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> q:</span>
+<span id="cb46-7"><a href="#cb46-7" aria-hidden="true" tabindex="-1"></a>    u <span class="op">=</span> q.popleft()</span>
+<span id="cb46-8"><a href="#cb46-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-9"><a href="#cb46-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> v <span class="kw">in</span> neighbors(u):</span>
+<span id="cb46-10"><a href="#cb46-10" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> v <span class="kw">in</span> seen:</span>
+<span id="cb46-11"><a href="#cb46-11" aria-hidden="true" tabindex="-1"></a>            <span class="cf">continue</span></span>
+<span id="cb46-12"><a href="#cb46-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-13"><a href="#cb46-13" aria-hidden="true" tabindex="-1"></a>        seen.add(v)</span>
+<span id="cb46-14"><a href="#cb46-14" aria-hidden="true" tabindex="-1"></a>        q.append(v)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="dfs" class="level3">
+<h3 class="anchored" data-anchor-id="dfs">DFS</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb47"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> dfs(u):</span>
+<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a>    seen.add(u)</span>
+<span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb47-4"><a href="#cb47-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> v <span class="kw">in</span> neighbors(u):</span>
+<span id="cb47-5"><a href="#cb47-5" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> v <span class="kw">not</span> <span class="kw">in</span> seen:</span>
+<span id="cb47-6"><a href="#cb47-6" aria-hidden="true" tabindex="-1"></a>            dfs(v)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="dijkstra-1" class="level3">
+<h3 class="anchored" data-anchor-id="dijkstra-1">Dijkstra</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb48"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> heapq</span>
+<span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a>dist <span class="op">=</span> {start: <span class="dv">0</span>}</span>
+<span id="cb48-4"><a href="#cb48-4" aria-hidden="true" tabindex="-1"></a>pq <span class="op">=</span> [(<span class="dv">0</span>, start)]</span>
+<span id="cb48-5"><a href="#cb48-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-6"><a href="#cb48-6" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> pq:</span>
+<span id="cb48-7"><a href="#cb48-7" aria-hidden="true" tabindex="-1"></a>    d, u <span class="op">=</span> heapq.heappop(pq)</span>
+<span id="cb48-8"><a href="#cb48-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-9"><a href="#cb48-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> d <span class="op">!=</span> dist[u]:</span>
+<span id="cb48-10"><a href="#cb48-10" aria-hidden="true" tabindex="-1"></a>        <span class="cf">continue</span></span>
+<span id="cb48-11"><a href="#cb48-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-12"><a href="#cb48-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> v, w <span class="kw">in</span> neighbors(u):</span>
+<span id="cb48-13"><a href="#cb48-13" aria-hidden="true" tabindex="-1"></a>        nd <span class="op">=</span> d <span class="op">+</span> w</span>
+<span id="cb48-14"><a href="#cb48-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-15"><a href="#cb48-15" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> nd <span class="op">&lt;</span> dist.get(v, <span class="bu">float</span>(<span class="st">"inf"</span>)):</span>
+<span id="cb48-16"><a href="#cb48-16" aria-hidden="true" tabindex="-1"></a>            dist[v] <span class="op">=</span> nd</span>
+<span id="cb48-17"><a href="#cb48-17" aria-hidden="true" tabindex="-1"></a>            heapq.heappush(pq, (nd, v))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="topological-sort-1" class="level3">
+<h3 class="anchored" data-anchor-id="topological-sort-1">Topological sort</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb49"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> collections <span class="im">import</span> deque</span>
+<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a>indegree <span class="op">=</span> [<span class="dv">0</span>] <span class="op">*</span> n</span>
+<span id="cb49-4"><a href="#cb49-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-5"><a href="#cb49-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> u <span class="kw">in</span> <span class="bu">range</span>(n):</span>
+<span id="cb49-6"><a href="#cb49-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> v <span class="kw">in</span> graph[u]:</span>
+<span id="cb49-7"><a href="#cb49-7" aria-hidden="true" tabindex="-1"></a>        indegree[v] <span class="op">+=</span> <span class="dv">1</span></span>
+<span id="cb49-8"><a href="#cb49-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-9"><a href="#cb49-9" aria-hidden="true" tabindex="-1"></a>q <span class="op">=</span> deque(</span>
+<span id="cb49-10"><a href="#cb49-10" aria-hidden="true" tabindex="-1"></a>    i <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(n)</span>
+<span id="cb49-11"><a href="#cb49-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> indegree[i] <span class="op">==</span> <span class="dv">0</span></span>
+<span id="cb49-12"><a href="#cb49-12" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb49-13"><a href="#cb49-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-14"><a href="#cb49-14" aria-hidden="true" tabindex="-1"></a>order <span class="op">=</span> []</span>
+<span id="cb49-15"><a href="#cb49-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-16"><a href="#cb49-16" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> q:</span>
+<span id="cb49-17"><a href="#cb49-17" aria-hidden="true" tabindex="-1"></a>    u <span class="op">=</span> q.popleft()</span>
+<span id="cb49-18"><a href="#cb49-18" aria-hidden="true" tabindex="-1"></a>    order.append(u)</span>
+<span id="cb49-19"><a href="#cb49-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-20"><a href="#cb49-20" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> v <span class="kw">in</span> graph[u]:</span>
+<span id="cb49-21"><a href="#cb49-21" aria-hidden="true" tabindex="-1"></a>        indegree[v] <span class="op">-=</span> <span class="dv">1</span></span>
+<span id="cb49-22"><a href="#cb49-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-23"><a href="#cb49-23" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> indegree[v] <span class="op">==</span> <span class="dv">0</span>:</span>
+<span id="cb49-24"><a href="#cb49-24" aria-hidden="true" tabindex="-1"></a>            q.append(v)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="union-find" class="level3">
+<h3 class="anchored" data-anchor-id="union-find">Union-Find</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb50"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> DSU:</span>
+<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, n):</span>
+<span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.parent <span class="op">=</span> <span class="bu">list</span>(<span class="bu">range</span>(n))</span>
+<span id="cb50-4"><a href="#cb50-4" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.size <span class="op">=</span> [<span class="dv">1</span>] <span class="op">*</span> n</span>
+<span id="cb50-5"><a href="#cb50-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb50-6"><a href="#cb50-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> find(<span class="va">self</span>, x):</span>
+<span id="cb50-7"><a href="#cb50-7" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="va">self</span>.parent[x] <span class="op">!=</span> x:</span>
+<span id="cb50-8"><a href="#cb50-8" aria-hidden="true" tabindex="-1"></a>            <span class="va">self</span>.parent[x] <span class="op">=</span> <span class="va">self</span>.find(<span class="va">self</span>.parent[x])</span>
+<span id="cb50-9"><a href="#cb50-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb50-10"><a href="#cb50-10" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">self</span>.parent[x]</span>
+<span id="cb50-11"><a href="#cb50-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb50-12"><a href="#cb50-12" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> union(<span class="va">self</span>, a, b):</span>
+<span id="cb50-13"><a href="#cb50-13" aria-hidden="true" tabindex="-1"></a>        a <span class="op">=</span> <span class="va">self</span>.find(a)</span>
+<span id="cb50-14"><a href="#cb50-14" aria-hidden="true" tabindex="-1"></a>        b <span class="op">=</span> <span class="va">self</span>.find(b)</span>
+<span id="cb50-15"><a href="#cb50-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb50-16"><a href="#cb50-16" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> a <span class="op">==</span> b:</span>
+<span id="cb50-17"><a href="#cb50-17" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> <span class="va">False</span></span>
+<span id="cb50-18"><a href="#cb50-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb50-19"><a href="#cb50-19" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="va">self</span>.size[a] <span class="op">&lt;</span> <span class="va">self</span>.size[b]:</span>
+<span id="cb50-20"><a href="#cb50-20" aria-hidden="true" tabindex="-1"></a>            a, b <span class="op">=</span> b, a</span>
+<span id="cb50-21"><a href="#cb50-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb50-22"><a href="#cb50-22" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.parent[b] <span class="op">=</span> a</span>
+<span id="cb50-23"><a href="#cb50-23" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.size[a] <span class="op">+=</span> <span class="va">self</span>.size[b]</span>
+<span id="cb50-24"><a href="#cb50-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb50-25"><a href="#cb50-25" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">True</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+</section>
+</section>
+<section id="practice-problems" class="level1">
+<h1>Practice Problems</h1>
+<section id="practice-problems-dp-foundations" class="level2">
+<h2 class="anchored" data-anchor-id="practice-problems-dp-foundations">34. Practice problems: DP foundations</h2>
+<p>Do these in order.</p>
+<section id="level-1-learn-to-identify-states" class="level3">
+<h3 class="anchored" data-anchor-id="level-1-learn-to-identify-states">Level 1 — Learn to identify states</h3>
+<section id="climbing-stairs-leetcode-70" class="level4">
+<h4 class="anchored" data-anchor-id="climbing-stairs-leetcode-70">1. Climbing Stairs — LeetCode 70</h4>
+<p>Derive:</p>
+<p><span class="math display">\[
+dp[i]=dp[i-1]+dp[i-2]
+\]</span></p>
+<p>Focus:</p>
+<ul>
+<li>recurrence from last decision;</li>
+<li>memoization vs tabulation;</li>
+<li>space compression.</li>
+</ul>
+</section>
+<section id="house-robber-leetcode-198" class="level4">
+<h4 class="anchored" data-anchor-id="house-robber-leetcode-198">2. House Robber — LeetCode 198</h4>
+<p>Focus:</p>
+<pre class="text"><code>skip
+take</code></pre>
+<p>State should encode where the remaining suffix begins.</p>
+</section>
+<section id="min-cost-climbing-stairs-leetcode-746" class="level4">
+<h4 class="anchored" data-anchor-id="min-cost-climbing-stairs-leetcode-746">3. Min Cost Climbing Stairs — LeetCode 746</h4>
+<p>Focus:</p>
+<ul>
+<li>min instead of max;</li>
+<li>deciding whether the state means “cost to reach” or “cost from here.”</li>
+</ul>
+</section>
+</section>
+<section id="level-2-add-a-resource-dimension" class="level3">
+<h3 class="anchored" data-anchor-id="level-2-add-a-resource-dimension">Level 2 — Add a resource dimension</h3>
+<section id="coin-change-leetcode-322" class="level4">
+<h4 class="anchored" data-anchor-id="coin-change-leetcode-322">4. Coin Change — LeetCode 322</h4>
+<p>State:</p>
+<p><span class="math display">\[
+dp[x]
+=
+\text{minimum coins needed for amount }x.
+\]</span></p>
+<p>Interpret the amount as a node and adding a coin as an edge.</p>
+<p>Then Coin Change is also an implicit shortest-path problem.</p>
+</section>
+<section id="partition-equal-subset-sum-leetcode-416" class="level4">
+<h4 class="anchored" data-anchor-id="partition-equal-subset-sum-leetcode-416">5. Partition Equal Subset Sum — LeetCode 416</h4>
+<p>State:</p>
+<p><span class="math display">\[
+dp[i][s]
+\]</span></p>
+<p>or optimized:</p>
+<p><span class="math display">\[
+dp[s].
+\]</span></p>
+<p>Focus:</p>
+<blockquote class="blockquote">
+<p>decision position + remaining/achieved resource.</p>
+</blockquote>
+</section>
+<section id="target-sum-leetcode-494" class="level4">
+<h4 class="anchored" data-anchor-id="target-sum-leetcode-494">6. Target Sum — LeetCode 494</h4>
+<p>Useful for learning that different histories can collapse onto the same numeric state.</p>
+</section>
+</section>
+</section>
+<section id="practice-problems-sequence-dp" class="level2">
+<h2 class="anchored" data-anchor-id="practice-problems-sequence-dp">35. Practice problems: sequence DP</h2>
+<section id="longest-increasing-subsequence-leetcode-300" class="level3">
+<h3 class="anchored" data-anchor-id="longest-increasing-subsequence-leetcode-300">7. Longest Increasing Subsequence — LeetCode 300</h3>
+<p>First solve:</p>
+<p><span class="math display">\[
+O(n^2)
+\]</span></p>
+<p>with</p>
+<p><span class="math display">\[
+dp[i]
+=
+\text{best LIS ending at }i.
+\]</span></p>
+<p>Only afterward learn the <code>O(n log n)</code> patience-sorting solution.</p>
+<p>The DP formulation makes the problem structure explicit.</p>
+</section>
+<section id="longest-common-subsequence-leetcode-1143" class="level3">
+<h3 class="anchored" data-anchor-id="longest-common-subsequence-leetcode-1143">8. Longest Common Subsequence — LeetCode 1143</h3>
+<p>Essential 2D sequence DP.</p>
+</section>
+<section id="edit-distance-leetcode-72" class="level3">
+<h3 class="anchored" data-anchor-id="edit-distance-leetcode-72">9. Edit Distance — LeetCode 72</h3>
+<p>State:</p>
+<p><span class="math display">\[
+dp[i][j]
+=
+\text{minimum edits to transform suffix }a[i:]
+\text{ into }b[j:].
+\]</span></p>
+<p>Transitions correspond to:</p>
+<ul>
+<li>insert;</li>
+<li>delete;</li>
+<li>replace/match.</li>
+</ul>
+<p>This is especially useful because it makes the state graph interpretation obvious.</p>
+</section>
+</section>
+<section id="practice-problems-grid-implicit-graph" class="level2">
+<h2 class="anchored" data-anchor-id="practice-problems-grid-implicit-graph">36. Practice problems: grid = implicit graph</h2>
+<section id="unique-paths-leetcode-62" class="level3">
+<h3 class="anchored" data-anchor-id="unique-paths-leetcode-62">10. Unique Paths — LeetCode 62</h3>
+<p>Pure DAG DP.</p>
+</section>
+<section id="minimum-path-sum-leetcode-64" class="level3">
+<h3 class="anchored" data-anchor-id="minimum-path-sum-leetcode-64">11. Minimum Path Sum — LeetCode 64</h3>
+<p>Weighted DAG shortest path.</p>
+</section>
+<section id="number-of-islands-leetcode-200" class="level3">
+<h3 class="anchored" data-anchor-id="number-of-islands-leetcode-200">12. Number of Islands — LeetCode 200</h3>
+<p>DFS/BFS connected components.</p>
+<p>Compare this directly with Minimum Path Sum.</p>
+<p>Both use a grid.</p>
+<p>The transition structure/objective determines the algorithm.</p>
+</section>
+<section id="rotting-oranges-leetcode-994" class="level3">
+<h3 class="anchored" data-anchor-id="rotting-oranges-leetcode-994">13. Rotting Oranges — LeetCode 994</h3>
+<p>Multi-source BFS.</p>
+<p>Key trick:</p>
+<p>Initialize the queue with <strong>all sources simultaneously</strong>.</p>
+</section>
+<section id="shortest-path-in-binary-matrix-leetcode-1091" class="level3">
+<h3 class="anchored" data-anchor-id="shortest-path-in-binary-matrix-leetcode-1091">14. Shortest Path in Binary Matrix — LeetCode 1091</h3>
+<p>Classic BFS shortest path.</p>
+</section>
+</section>
+<section id="practice-problems-topology-and-dependency-graphs" class="level2">
+<h2 class="anchored" data-anchor-id="practice-problems-topology-and-dependency-graphs">37. Practice problems: topology and dependency graphs</h2>
+<section id="course-schedule-leetcode-207" class="level3">
+<h3 class="anchored" data-anchor-id="course-schedule-leetcode-207">15. Course Schedule — LeetCode 207</h3>
+<p>Goal:</p>
+<blockquote class="blockquote">
+<p>detect whether a directed graph contains a cycle.</p>
+</blockquote>
+<p>Solve both ways:</p>
+<ul>
+<li>three-color DFS;</li>
+<li>Kahn’s algorithm.</li>
+</ul>
+</section>
+<section id="course-schedule-ii-leetcode-210" class="level3">
+<h3 class="anchored" data-anchor-id="course-schedule-ii-leetcode-210">16. Course Schedule II — LeetCode 210</h3>
+<p>Return the topological ordering.</p>
+</section>
+<section id="alien-dictionary-leetcode-269" class="level3">
+<h3 class="anchored" data-anchor-id="alien-dictionary-leetcode-269">17. Alien Dictionary — LeetCode 269</h3>
+<p>A strong interview problem because graph construction is harder than the topological sort itself.</p>
+<p>Focus:</p>
+<blockquote class="blockquote">
+<p>Infer edges from constraints before running the graph algorithm.</p>
+</blockquote>
+</section>
+</section>
+<section id="practice-problems-shortest-paths" class="level2">
+<h2 class="anchored" data-anchor-id="practice-problems-shortest-paths">38. Practice problems: shortest paths</h2>
+<section id="network-delay-time-leetcode-743" class="level3">
+<h3 class="anchored" data-anchor-id="network-delay-time-leetcode-743">18. Network Delay Time — LeetCode 743</h3>
+<p>Canonical Dijkstra.</p>
+<p>Before coding, explicitly state:</p>
+<pre class="text"><code>state = node
+edge cost = delay
+weights = nonnegative
+=&gt; Dijkstra</code></pre>
+</section>
+<section id="path-with-minimum-effort-leetcode-1631" class="level3">
+<h3 class="anchored" data-anchor-id="path-with-minimum-effort-leetcode-1631">19. Path With Minimum Effort — LeetCode 1631</h3>
+<p>The path cost is not a sum.</p>
+<p>It is:</p>
+<p><span class="math display">\[
+\max(\text{edge costs along path})
+\]</span></p>
+<p>Relaxation becomes:</p>
+<p><span class="math display">\[
+new =
+\max(dist[u], w(u,v)).
+\]</span></p>
+<p>Then minimize that value.</p>
+<p>This teaches an important idea:</p>
+<blockquote class="blockquote">
+<p>Dijkstra is not fundamentally about summing weights; it works whenever the path objective has the appropriate monotonic property.</p>
+</blockquote>
+</section>
+<section id="cheapest-flights-within-k-stops-leetcode-787" class="level3">
+<h3 class="anchored" data-anchor-id="cheapest-flights-within-k-stops-leetcode-787">20. Cheapest Flights Within K Stops — LeetCode 787</h3>
+<p>This is especially important.</p>
+<p>A plain:</p>
+<pre class="text"><code>dist[node]</code></pre>
+<p>is insufficient because the number of flights used affects future feasibility.</p>
+<p>Use:</p>
+<p><span class="math display">\[
+dp[k][v]
+\]</span></p>
+<p>or an expanded graph state:</p>
+<p><span class="math display">\[
+(v,k).
+\]</span></p>
+<p>Solve it at least two ways:</p>
+<ol type="1">
+<li>Bellman-Ford-style bounded relaxation;</li>
+<li>state-space shortest path.</li>
+</ol>
+<p>This directly exercises our earlier discussion about multi-constraint graph states.</p>
+</section>
+</section>
+<section id="practice-problems-0-1-bfs-and-state-expansion" class="level2">
+<h2 class="anchored" data-anchor-id="practice-problems-0-1-bfs-and-state-expansion">39. Practice problems: 0-1 BFS and state expansion</h2>
+<section id="minimum-cost-to-make-at-least-one-valid-path-in-a-grid-leetcode-1368" class="level3">
+<h3 class="anchored" data-anchor-id="minimum-cost-to-make-at-least-one-valid-path-in-a-grid-leetcode-1368">21. Minimum Cost to Make at Least One Valid Path in a Grid — LeetCode 1368</h3>
+<p>Transitions cost either:</p>
+<pre class="text"><code>0: follow arrow
+1: change arrow</code></pre>
+<p>Perfect 0-1 BFS problem.</p>
+</section>
+<section id="shortest-path-in-a-grid-with-obstacles-elimination-leetcode-1293" class="level3">
+<h3 class="anchored" data-anchor-id="shortest-path-in-a-grid-with-obstacles-elimination-leetcode-1293">22. Shortest Path in a Grid with Obstacles Elimination — LeetCode 1293</h3>
+<p>State:</p>
+<p><span class="math display">\[
+(r,c,k)
+\]</span></p>
+<p>where <code>k</code> records obstacle eliminations used or remaining.</p>
+<p>This is a canonical demonstration that:</p>
+<blockquote class="blockquote">
+<p>same location + different resource state = different graph node.</p>
+</blockquote>
+</section>
+<section id="state-compression-key-collection-problems" class="level3">
+<h3 class="anchored" data-anchor-id="state-compression-key-collection-problems">23. State compression / key collection problems</h3>
+<p>Example:</p>
+<p><strong>Shortest Path to Get All Keys — LeetCode 864</strong></p>
+<p>State:</p>
+<p><span class="math display">\[
+(r,c,mask)
+\]</span></p>
+<p>Use BFS over the expanded state graph.</p>
+</section>
+</section>
+<section id="practice-problems-union-find-mst" class="level2">
+<h2 class="anchored" data-anchor-id="practice-problems-union-find-mst">40. Practice problems: Union-Find / MST</h2>
+<section id="number-of-provinces-leetcode-547" class="level3">
+<h3 class="anchored" data-anchor-id="number-of-provinces-leetcode-547">24. Number of Provinces — LeetCode 547</h3>
+<p>Solve with:</p>
+<ul>
+<li>DFS;</li>
+<li>Union-Find.</li>
+</ul>
+<p>Understand why both solve connectivity but maintain different abstractions.</p>
+</section>
+<section id="redundant-connection-leetcode-684" class="level3">
+<h3 class="anchored" data-anchor-id="redundant-connection-leetcode-684">25. Redundant Connection — LeetCode 684</h3>
+<p>For every edge:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb55"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="kw">not</span> union(u, v):</span>
+<span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a>    <span class="co"># endpoints were already connected</span></span>
+<span id="cb55-3"><a href="#cb55-3" aria-hidden="true" tabindex="-1"></a>    <span class="co"># this edge creates a cycle</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="min-cost-to-connect-all-points-leetcode-1584" class="level3">
+<h3 class="anchored" data-anchor-id="min-cost-to-connect-all-points-leetcode-1584">26. Min Cost to Connect All Points — LeetCode 1584</h3>
+<p>Solve with either:</p>
+<ul>
+<li>Kruskal + Union-Find;</li>
+<li>Prim.</li>
+</ul>
+<p>Focus on distinguishing:</p>
+<pre class="text"><code>shortest path
+vs.
+minimum spanning tree</code></pre>
+</section>
+</section>
+</section>
+<section id="synthesis-and-study-strategy" class="level1">
+<h1>Synthesis and Study Strategy</h1>
+<section id="higher-value-synthesis-problems" class="level2">
+<h2 class="anchored" data-anchor-id="higher-value-synthesis-problems">41. Higher-value synthesis problems</h2>
+<p>These are more useful than doing many nearly identical easy problems.</p>
+<section id="word-ladder-leetcode-127" class="level3">
+<h3 class="anchored" data-anchor-id="word-ladder-leetcode-127">Word Ladder — LeetCode 127</h3>
+<p>Why it matters:</p>
+<ul>
+<li>implicit graph;</li>
+<li>shortest path;</li>
+<li>efficient neighbor construction;</li>
+<li>BFS layers.</li>
+</ul>
+</section>
+<section id="decode-ways-leetcode-91" class="level3">
+<h3 class="anchored" data-anchor-id="decode-ways-leetcode-91">Decode Ways — LeetCode 91</h3>
+<p>Why it matters:</p>
+<ul>
+<li>identifying state from parsing;</li>
+<li>recurrence based on one- and two-character transitions.</li>
+</ul>
+</section>
+<section id="burst-balloons-leetcode-312" class="level3">
+<h3 class="anchored" data-anchor-id="burst-balloons-leetcode-312">Burst Balloons — LeetCode 312</h3>
+<p>Why it matters:</p>
+<p>Naively choosing the first balloon is awkward.</p>
+<p>Instead reverse the decision:</p>
+<blockquote class="blockquote">
+<p>Which balloon is popped <strong>last</strong> in interval <code>[l,r]</code>?</p>
+</blockquote>
+<p>That creates independent subproblems.</p>
+<p>This is a major DP-design lesson:</p>
+<blockquote class="blockquote">
+<p><strong>If the natural decision does not create independent subproblems, change the direction of the decision.</strong></p>
+</blockquote>
+</section>
+<section id="regular-expression-matching-leetcode-10" class="level3">
+<h3 class="anchored" data-anchor-id="regular-expression-matching-leetcode-10">Regular Expression Matching — LeetCode 10</h3>
+<p>Why it matters:</p>
+<ul>
+<li>compact state design;</li>
+<li>branching transitions;</li>
+<li>2D memoization;</li>
+<li>separating syntax from state.</li>
+</ul>
+</section>
+<section id="minimum-cost-to-reach-destination-with-constraints" class="level3">
+<h3 class="anchored" data-anchor-id="minimum-cost-to-reach-destination-with-constraints">Minimum Cost to Reach Destination with Constraints</h3>
+<p>Any problem containing:</p>
+<pre class="text"><code>minimum cost
+subject to time &lt;= T</code></pre>
+<p>is worth practicing.</p>
+<p>Try defining:</p>
+<p><span class="math display">\[
+dp[time][node]
+\]</span></p>
+<p>then ask:</p>
+<ul>
+<li>can the resource dimension be bounded?</li>
+<li>can dominated states be removed?</li>
+<li>is a full DP table feasible?</li>
+</ul>
+<p>This trains the multi-objective/Pareto-frontier reasoning that appears in harder interviews.</p>
+</section>
+</section>
+<section id="recommended-practice-order" class="level2">
+<h2 class="anchored" data-anchor-id="recommended-practice-order">42. Recommended practice order</h2>
+<p>Rather than studying algorithms independently, practice them in contrasts.</p>
+<section id="pair-1-same-grid-different-structure" class="level3">
+<h3 class="anchored" data-anchor-id="pair-1-same-grid-different-structure">Pair 1: same grid, different structure</h3>
+<ol type="1">
+<li>Minimum Path Sum</li>
+<li>Shortest Path in Binary Matrix</li>
+<li>Number of Islands</li>
+</ol>
+<p>Learn:</p>
+<pre class="text"><code>DAG optimization -&gt; DP
+unit-cost shortest path -&gt; BFS
+connectivity -&gt; DFS/BFS</code></pre>
+</section>
+<section id="pair-2-same-relaxation-different-processing-order" class="level3">
+<h3 class="anchored" data-anchor-id="pair-2-same-relaxation-different-processing-order">Pair 2: same relaxation, different processing order</h3>
+<ol type="1">
+<li>DAG shortest path</li>
+<li>Network Delay Time</li>
+<li>Bellman-Ford / Cheapest Flights Within K Stops</li>
+</ol>
+<p>Learn:</p>
+<pre class="text"><code>topological order
+vs.
+priority-queue order
+vs.
+repeated relaxation</code></pre>
+</section>
+<section id="pair-3-same-node-different-state" class="level3">
+<h3 class="anchored" data-anchor-id="pair-3-same-node-different-state">Pair 3: same node, different state</h3>
+<ol type="1">
+<li>ordinary shortest path</li>
+<li>Cheapest Flights Within K Stops</li>
+<li>Shortest Path with Obstacles Elimination</li>
+<li>Shortest Path to Get All Keys</li>
+</ol>
+<p>Learn:</p>
+<pre class="text"><code>node
+(node, steps)
+(node, resource)
+(node, bitmask)</code></pre>
+</section>
+<section id="pair-4-same-graph-different-objective" class="level3">
+<h3 class="anchored" data-anchor-id="pair-4-same-graph-different-objective">Pair 4: same graph, different objective</h3>
+<ol type="1">
+<li>Network Delay Time</li>
+<li>Number of Provinces</li>
+<li>Min Cost to Connect All Points</li>
+</ol>
+<p>Learn:</p>
+<pre class="text"><code>shortest path
+connectivity
+minimum spanning tree</code></pre>
+</section>
+</section>
+</section>
+<section id="final-synthesis" class="level1">
+<h1>Final Synthesis</h1>
+<section id="the-most-important-conceptual-distinctions" class="level2">
+<h2 class="anchored" data-anchor-id="the-most-important-conceptual-distinctions">43. The most important conceptual distinctions</h2>
+<section id="dp-vs-backtracking" class="level3">
+<h3 class="anchored" data-anchor-id="dp-vs-backtracking">DP vs backtracking</h3>
+<p>Backtracking asks:</p>
+<blockquote class="blockquote">
+<p>enumerate decision paths.</p>
+</blockquote>
+<p>DP asks:</p>
+<blockquote class="blockquote">
+<p>which histories are equivalent for all future decisions?</p>
+</blockquote>
+<p>Memoization merges equivalent histories.</p>
+<p>Thus DP can be viewed as:</p>
+<blockquote class="blockquote">
+<p><strong>backtracking + state equivalence + caching.</strong></p>
+</blockquote>
+</section>
+<section id="dp-vs-greedy" class="level3">
+<h3 class="anchored" data-anchor-id="dp-vs-greedy">DP vs greedy</h3>
+<p>DP preserves multiple candidate states until enough information exists to compare them.</p>
+<p>Greedy discards alternatives immediately.</p>
+<p>Greedy requires a proof that the discarded alternatives can never become optimal.</p>
+<p>Dijkstra is interesting because it uses both:</p>
+<ul>
+<li>DP-like relaxation;</li>
+<li>greedy finalization.</li>
+</ul>
+</section>
+<section id="bfs-vs-dijkstra" class="level3">
+<h3 class="anchored" data-anchor-id="bfs-vs-dijkstra">BFS vs Dijkstra</h3>
+<p>Both process states in increasing distance.</p>
+<p>The difference is how distance ordering is maintained.</p>
+<section id="bfs-2" class="level4">
+<h4 class="anchored" data-anchor-id="bfs-2">BFS</h4>
+<p>Each new edge adds exactly <code>1</code>.</p>
+<p>FIFO is sufficient.</p>
+</section>
+<section id="dijkstra-2" class="level4">
+<h4 class="anchored" data-anchor-id="dijkstra-2">Dijkstra</h4>
+<p>Edges have arbitrary nonnegative weights.</p>
+<p>A priority queue is needed.</p>
+</section>
+</section>
+<section id="dijkstra-vs-bellman-ford" class="level3">
+<h3 class="anchored" data-anchor-id="dijkstra-vs-bellman-ford">Dijkstra vs Bellman-Ford</h3>
+<section id="dijkstra-3" class="level4">
+<h4 class="anchored" data-anchor-id="dijkstra-3">Dijkstra</h4>
+<blockquote class="blockquote">
+<p>Once the minimum tentative node is selected, finalize it.</p>
+</blockquote>
+<p>Requires nonnegative weights.</p>
+</section>
+<section id="bellman-ford-1" class="level4">
+<h4 class="anchored" data-anchor-id="bellman-ford-1">Bellman-Ford</h4>
+<blockquote class="blockquote">
+<p>Do not trust finalization; repeatedly propagate improvements.</p>
+</blockquote>
+<p>Supports negative edges.</p>
+</section>
+</section>
+<section id="graph-algorithm-vs-dp" class="level3">
+<h3 class="anchored" data-anchor-id="graph-algorithm-vs-dp">Graph algorithm vs DP</h3>
+<p>This distinction is often artificial.</p>
+<p>A more useful continuum is:</p>
+<pre class="text"><code>state-transition optimization
+|
++-- known DAG order ----------&gt; ordinary DP
+|
++-- arbitrary unit weights ---&gt; BFS
+|
++-- 0/1 weights --------------&gt; 0-1 BFS
+|
++-- nonnegative weights ------&gt; Dijkstra
+|
++-- negative weights ---------&gt; Bellman-Ford</code></pre>
+</section>
+</section>
+<section id="a-60-second-interview-reasoning-script" class="level2">
+<h2 class="anchored" data-anchor-id="a-60-second-interview-reasoning-script">44. A 60-second interview reasoning script</h2>
+<p>When presented with a new problem:</p>
+<blockquote class="blockquote">
+<p>I’ll first model the problem as states and transitions.<br>
+The state needs to contain exactly the information that affects future choices.<br>
+Then I’ll determine whether the state graph is acyclic.<br>
+If it is, this is DP/topological DP.<br>
+If not, I’ll inspect transition costs: unit weights suggest BFS, nonnegative weights Dijkstra, and negative weights repeated relaxation such as Bellman-Ford.<br>
+If constraints like remaining stops or resources affect feasibility, I’ll add them as another state dimension.<br>
+Complexity is then roughly the number of reachable states times the transitions explored per state.</p>
+</blockquote>
+<p>That explanation demonstrates substantially more understanding than simply naming an algorithm.</p>
+</section>
+<section id="final-mental-model" class="level2">
+<h2 class="anchored" data-anchor-id="final-mental-model">45. Final mental model</h2>
+<p>Do not start with:</p>
+<pre class="text"><code>Is this a DP problem?
+Is this a graph problem?</code></pre>
+<p>Start with:</p>
+<p><span class="math display">\[
+\boxed{
+\text{state}
+\rightarrow
+\text{transition}
+\rightarrow
+\text{objective}
+\rightarrow
+\text{processing order}
+}
+\]</span></p>
+<p>Then:</p>
+<p><span class="math display">\[
+\boxed{
+\text{DP and graph algorithms are different execution strategies over state-transition systems.}
+}
+\]</span></p>
+<p>The recurring questions are:</p>
+<ol type="1">
+<li><strong>What information defines an equivalent future?</strong></li>
+<li><strong>What are the legal transitions?</strong></li>
+<li><strong>What quantity is being propagated?</strong></li>
+<li><strong>When is a state’s value safe to use or finalize?</strong></li>
+</ol>
+<p>If you can answer those four questions, most interview DP and graph problems stop being collections of tricks and become instances of the same underlying framework.</p>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/threeeyelidds\.github\.io\/minimal-ml\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

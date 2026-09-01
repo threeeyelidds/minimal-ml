@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Linear Attention – Minimal ML</title>
+<title>probabilistic_modeling_tricks – Minimal ML</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -25,41 +25,6 @@ ul.task-list li input[type="checkbox"] {
   width: 0.8em;
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
-}
-/* CSS for syntax highlighting */
-html { -webkit-text-size-adjust: 100%; }
-pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
-pre > code.sourceCode > span:empty { height: 1.2em; }
-.sourceCode { overflow: visible; }
-code.sourceCode > span { color: inherit; text-decoration: inherit; }
-div.sourceCode { margin: 1em 0; }
-pre.sourceCode { margin: 0; }
-@media screen {
-div.sourceCode { overflow: auto; }
-}
-@media print {
-pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
-}
-pre.numberSource code
-  { counter-reset: source-line 0; }
-pre.numberSource code > span
-  { position: relative; left: -4em; counter-increment: source-line; }
-pre.numberSource code > span > a:first-child::before
-  { content: counter(source-line);
-    position: relative; left: -1em; text-align: right; vertical-align: baseline;
-    border: none; display: inline-block;
-    -webkit-touch-callout: none; -webkit-user-select: none;
-    -khtml-user-select: none; -moz-user-select: none;
-    -ms-user-select: none; user-select: none;
-    padding: 0 4px; width: 4em;
-  }
-pre.numberSource { margin-left: 3em;  padding-left: 4px; }
-div.sourceCode
-  {   }
-@media screen {
-pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
 </style>
 
@@ -189,297 +154,592 @@ window.Quarto = {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#motivation" id="toc-motivation" class="nav-link active" data-scroll-target="#motivation">Motivation</a></li>
-  <li><a href="#why-softmax-attention-cannot-simply-be-reordered" id="toc-why-softmax-attention-cannot-simply-be-reordered" class="nav-link" data-scroll-target="#why-softmax-attention-cannot-simply-be-reordered">Why Softmax Attention Cannot Simply Be Reordered</a></li>
-  <li><a href="#kernel-factorization" id="toc-kernel-factorization" class="nav-link" data-scroll-target="#kernel-factorization">Kernel Factorization</a></li>
-  <li><a href="#causal-linear-attention-as-a-recurrence" id="toc-causal-linear-attention-as-a-recurrence" class="nav-link" data-scroll-target="#causal-linear-attention-as-a-recurrence">Causal Linear Attention as a Recurrence</a></li>
-  <li><a href="#complexity" id="toc-complexity" class="nav-link" data-scroll-target="#complexity">Complexity</a></li>
-  <li><a href="#minimal-causal-implementation" id="toc-minimal-causal-implementation" class="nav-link" data-scroll-target="#minimal-causal-implementation">Minimal Causal Implementation</a></li>
-  <li><a href="#choosing-the-feature-map" id="toc-choosing-the-feature-map" class="nav-link" data-scroll-target="#choosing-the-feature-map">Choosing the Feature Map</a></li>
-  <li><a href="#what-is-gained-and-lost" id="toc-what-is-gained-and-lost" class="nav-link" data-scroll-target="#what-is-gained-and-lost">What Is Gained and Lost?</a>
+  <li><a href="#probability-modeling-tricks" id="toc-probability-modeling-tricks" class="nav-link active" data-scroll-target="#probability-modeling-tricks">Probability modeling tricks</a>
   <ul class="collapse">
-  <li><a href="#advantages" id="toc-advantages" class="nav-link" data-scroll-target="#advantages">Advantages</a></li>
-  <li><a href="#limitations" id="toc-limitations" class="nav-link" data-scroll-target="#limitations">Limitations</a></li>
+  <li><a href="#core-toolkit" id="toc-core-toolkit" class="nav-link" data-scroll-target="#core-toolkit">0. Core Toolkit</a>
+  <ul class="collapse">
+  <li><a href="#random-variables-expectation-variance" id="toc-random-variables-expectation-variance" class="nav-link" data-scroll-target="#random-variables-expectation-variance">0.1 Random Variables, Expectation, Variance</a></li>
+  <li><a href="#linearity-of-expectation" id="toc-linearity-of-expectation" class="nav-link" data-scroll-target="#linearity-of-expectation">0.2 Linearity of Expectation</a></li>
+  <li><a href="#indicator-variables" id="toc-indicator-variables" class="nav-link" data-scroll-target="#indicator-variables">0.3 Indicator Variables</a></li>
+  <li><a href="#conditional-probability" id="toc-conditional-probability" class="nav-link" data-scroll-target="#conditional-probability">0.4 Conditional Probability</a></li>
+  <li><a href="#bayes-rule" id="toc-bayes-rule" class="nav-link" data-scroll-target="#bayes-rule">0.5 Bayes’ Rule</a></li>
+  <li><a href="#law-of-total-expectation" id="toc-law-of-total-expectation" class="nav-link" data-scroll-target="#law-of-total-expectation">0.6 Law of Total Expectation</a></li>
+  <li><a href="#conditional-expectation" id="toc-conditional-expectation" class="nav-link" data-scroll-target="#conditional-expectation">0.7 Conditional Expectation</a></li>
+  <li><a href="#size-biased-sampling" id="toc-size-biased-sampling" class="nav-link" data-scroll-target="#size-biased-sampling">0.8 Size-Biased Sampling</a></li>
+  <li><a href="#complement-probability" id="toc-complement-probability" class="nav-link" data-scroll-target="#complement-probability">0.9 Complement Probability</a></li>
+  <li><a href="#binomial-distribution" id="toc-binomial-distribution" class="nav-link" data-scroll-target="#binomial-distribution">0.10 Binomial Distribution</a></li>
+  <li><a href="#geometric-distribution" id="toc-geometric-distribution" class="nav-link" data-scroll-target="#geometric-distribution">0.11 Geometric Distribution</a></li>
+  <li><a href="#poisson-distribution" id="toc-poisson-distribution" class="nav-link" data-scroll-target="#poisson-distribution">0.12 Poisson Distribution</a></li>
+  <li><a href="#useful-approximations" id="toc-useful-approximations" class="nav-link" data-scroll-target="#useful-approximations">0.13 Useful Approximations</a></li>
+  <li><a href="#combinatorics" id="toc-combinatorics" class="nav-link" data-scroll-target="#combinatorics">0.14 Combinatorics</a></li>
+  <li><a href="#independence-vs.-uncorrelated" id="toc-independence-vs.-uncorrelated" class="nav-link" data-scroll-target="#independence-vs.-uncorrelated">0.15 Independence vs.&nbsp;Uncorrelated</a></li>
+  <li><a href="#variance-of-a-sum" id="toc-variance-of-a-sum" class="nav-link" data-scroll-target="#variance-of-a-sum">0.16 Variance of a Sum</a></li>
+  <li><a href="#jensens-inequality" id="toc-jensens-inequality" class="nav-link" data-scroll-target="#jensens-inequality">0.17 Jensen’s Inequality</a></li>
+  <li><a href="#tail-sum-formula" id="toc-tail-sum-formula" class="nav-link" data-scroll-target="#tail-sum-formula">0.18 Tail-Sum Formula</a></li>
   </ul></li>
-  <li><a href="#interview-questions" id="toc-interview-questions" class="nav-link" data-scroll-target="#interview-questions">Interview Questions</a></li>
-  <li><a href="#exercises" id="toc-exercises" class="nav-link" data-scroll-target="#exercises">Exercises</a></li>
+  <li><a href="#problem-solving-patterns" id="toc-problem-solving-patterns" class="nav-link" data-scroll-target="#problem-solving-patterns">1. Problem-Solving Patterns</a>
+  <ul class="collapse">
+  <li><a href="#pattern-a-expected-count" id="toc-pattern-a-expected-count" class="nav-link" data-scroll-target="#pattern-a-expected-count">Pattern A — Expected count?</a></li>
+  <li><a href="#pattern-b-given-that-we-observed" id="toc-pattern-b-given-that-we-observed" class="nav-link" data-scroll-target="#pattern-b-given-that-we-observed">Pattern B — “Given that we observed…”?</a></li>
+  <li><a href="#pattern-c-at-least-one" id="toc-pattern-c-at-least-one" class="nav-link" data-scroll-target="#pattern-c-at-least-one">Pattern C — “At least one”?</a></li>
+  <li><a href="#pattern-d-random-process-becomes-easier-after-knowing-something" id="toc-pattern-d-random-process-becomes-easier-after-knowing-something" class="nav-link" data-scroll-target="#pattern-d-random-process-becomes-easier-after-knowing-something">Pattern D — Random process becomes easier after knowing something?</a></li>
+  <li><a href="#pattern-e-rare-event-repeated-many-times" id="toc-pattern-e-rare-event-repeated-many-times" class="nav-link" data-scroll-target="#pattern-e-rare-event-repeated-many-times">Pattern E — Rare event repeated many times?</a></li>
+  <li><a href="#pattern-f-expected-number-of-pairs" id="toc-pattern-f-expected-number-of-pairs" class="nav-link" data-scroll-target="#pattern-f-expected-number-of-pairs">Pattern F — Expected number of pairs?</a></li>
+  <li><a href="#pattern-g-sampling-through-an-event" id="toc-pattern-g-sampling-through-an-event" class="nav-link" data-scroll-target="#pattern-g-sampling-through-an-event">Pattern G — Sampling through an event?</a></li>
+  </ul></li>
+  </ul></li>
   </ul>
 </nav>
     </div>
 <!-- main -->
-<main class="content" id="quarto-document-content">
-
-<header id="title-block-header" class="quarto-title-block default">
-<div class="quarto-title">
-<h1 class="title">Linear Attention</h1>
-</div>
+<main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"></header>
 
 
 
-<div class="quarto-title-meta">
 
-    
-  
-    
-  </div>
-  
-
-
-</header>
-
-
-<section id="motivation" class="level2">
-<h2 class="anchored" data-anchor-id="motivation">Motivation</h2>
-<p>Standard attention for one head is</p>
+<section id="probability-modeling-tricks" class="level1">
+<h1>Probability modeling tricks</h1>
+<section id="core-toolkit" class="level2">
+<h2 class="anchored" data-anchor-id="core-toolkit">0. Core Toolkit</h2>
+<section id="random-variables-expectation-variance" class="level3">
+<h3 class="anchored" data-anchor-id="random-variables-expectation-variance">0.1 Random Variables, Expectation, Variance</h3>
+<p>For a discrete random variable <span class="math inline">\(X\)</span>,</p>
 <p><span class="math display">\[
-\operatorname{Attention}(Q,K,V)
+\mathbb E[X] = \sum_x x\,P(X=x).
+\]</span></p>
+<p>For a continuous random variable,</p>
+<p><span class="math display">\[
+\mathbb E[X] = \int x f_X(x)\,dx.
+\]</span></p>
+<p>Variance:</p>
+<p><span class="math display">\[
+\operatorname{Var}(X)
 =
-\operatorname{softmax}(QK^T)V.
+\mathbb E[(X-\mathbb E[X])^2]
+=
+\mathbb E[X^2]-\mathbb E[X]^2.
 \]</span></p>
-<p>For sequence length <span class="math inline">\(T\)</span>, forming the score matrix requires <span class="math inline">\(O(T^2)\)</span> pairwise interactions and <span class="math inline">\(O(T^2)\)</span> attention storage in a straightforward implementation. FlashAttention avoids materializing this matrix in high-bandwidth memory, but it does not change the quadratic arithmetic of dense attention.</p>
-<p><strong>Linear attention</strong> changes the attention function so computation can be reassociated. Its cost becomes linear in sequence length when the feature dimension is treated as fixed.</p>
+<p>Covariance:</p>
+<p><span class="math display">\[
+\operatorname{Cov}(X,Y)
+=
+\mathbb E[XY]-\mathbb E[X]\mathbb E[Y].
+\]</span></p>
+<p>Useful identity:</p>
+<p><span class="math display">\[
+\operatorname{Var}(X+Y)
+=
+\operatorname{Var}(X)+\operatorname{Var}(Y)
++2\operatorname{Cov}(X,Y).
+\]</span></p>
+<p>If <span class="math inline">\(X,Y\)</span> are independent,</p>
+<p><span class="math display">\[
+\operatorname{Cov}(X,Y)=0.
+\]</span></p>
+<hr>
 </section>
-<section id="why-softmax-attention-cannot-simply-be-reordered" class="level2">
-<h2 class="anchored" data-anchor-id="why-softmax-attention-cannot-simply-be-reordered">Why Softmax Attention Cannot Simply Be Reordered</h2>
-<p>Matrix multiplication is associative:</p>
+<section id="linearity-of-expectation" class="level3">
+<h3 class="anchored" data-anchor-id="linearity-of-expectation">0.2 Linearity of Expectation</h3>
+<p>Always:</p>
 <p><span class="math display">\[
-(QK^T)V=Q(K^TV).
+\mathbb E\left[\sum_i X_i\right]
+=
+\sum_i \mathbb E[X_i].
 \]</span></p>
-<p>But row-wise softmax sits between the two products:</p>
+<p>Independence is <strong>not required</strong>.</p>
+<p>This is one of the most useful interview tricks.</p>
+<p>Typical signal:</p>
+<blockquote class="blockquote">
+<p>“Expected number of objects/pairs/events satisfying some property.”</p>
+</blockquote>
+<p>Represent the count as</p>
 <p><span class="math display">\[
-\operatorname{softmax}(QK^T)V
-\neq
-Q\operatorname{softmax}(K^TV).
+X = \sum_i I_i,
 \]</span></p>
-<p>The softmax normalization for query <span class="math inline">\(q_i\)</span> depends on all of its scores against the keys. Moving parentheses alone therefore does not produce linear softmax attention.</p>
+<p>where <span class="math inline">\(I_i\)</span> is an indicator variable.</p>
+<p>Since</p>
+<p><span class="math display">\[
+\mathbb E[I_i]=P(I_i=1),
+\]</span></p>
+<p>we get</p>
+<p><span class="math display">\[
+\mathbb E[X]=\sum_i P(I_i=1).
+\]</span></p>
+<hr>
 </section>
-<section id="kernel-factorization" class="level2">
-<h2 class="anchored" data-anchor-id="kernel-factorization">Kernel Factorization</h2>
-<p>Generalized attention can use a non-negative similarity function:</p>
+<section id="indicator-variables" class="level3">
+<h3 class="anchored" data-anchor-id="indicator-variables">0.3 Indicator Variables</h3>
+<p>For event <span class="math inline">\(A\)</span>,</p>
 <p><span class="math display">\[
-o_i
+I_A =
+\begin{cases}
+1 &amp; A\text{ occurs}\\
+0 &amp; \text{otherwise}
+\end{cases}
+\]</span></p>
+<p>and</p>
+<p><span class="math display">\[
+\mathbb E[I_A] = P(A).
+\]</span></p>
+<p>Example: collision pairs among <span class="math inline">\(n\)</span> items placed uniformly into <span class="math inline">\(v\)</span> buckets.</p>
+<p><span class="math display">\[
+C = \sum_{i&lt;j} I_{ij}
+\]</span></p>
+<p>where</p>
+<p><span class="math display">\[
+P(I_{ij}=1)=\frac1v.
+\]</span></p>
+<p>Therefore</p>
+<p><span class="math display">\[
+\mathbb E[C]
+=
+\binom n2\frac1v.
+\]</span></p>
+<hr>
+</section>
+<section id="conditional-probability" class="level3">
+<h3 class="anchored" data-anchor-id="conditional-probability">0.4 Conditional Probability</h3>
+<p><span class="math display">\[
+P(A\mid B)
+=
+\frac{P(A\cap B)}{P(B)}.
+\]</span></p>
+<p>Product rule:</p>
+<p><span class="math display">\[
+P(A\cap B)
+=
+P(A\mid B)P(B).
+\]</span></p>
+<p>Law of total probability:</p>
+<p><span class="math display">\[
+P(A)
+=
+\sum_b P(A\mid B=b)P(B=b).
+\]</span></p>
+<p>Continuous analogue:</p>
+<p><span class="math display">\[
+P(A)
+=
+\int P(A\mid X=x)f_X(x)\,dx.
+\]</span></p>
+<hr>
+</section>
+<section id="bayes-rule" class="level3">
+<h3 class="anchored" data-anchor-id="bayes-rule">0.5 Bayes’ Rule</h3>
+<p><span class="math display">\[
+P(A\mid B)
+=
+\frac{P(B\mid A)P(A)}{P(B)}.
+\]</span></p>
+<p>Often the denominator only normalizes the distribution, so:</p>
+<p><span class="math display">\[
+P(A\mid B)
+\propto
+P(B\mid A)P(A).
+\]</span></p>
+<p>Useful interview interpretation:</p>
+<blockquote class="blockquote">
+<p>Conditioning reweights the original population according to how likely the observed event is.</p>
+</blockquote>
+<p>If</p>
+<p><span class="math display">\[
+P(B\mid X=x)
+\]</span></p>
+<p>increases with <span class="math inline">\(x\)</span>, then conditioning on <span class="math inline">\(B\)</span> biases the distribution toward larger <span class="math inline">\(x\)</span>.</p>
+<hr>
+</section>
+<section id="law-of-total-expectation" class="level3">
+<h3 class="anchored" data-anchor-id="law-of-total-expectation">0.6 Law of Total Expectation</h3>
+<p><span class="math display">\[
+\mathbb E[X]
+=
+\mathbb E[\mathbb E[X\mid Y]].
+\]</span></p>
+<p>Discrete form:</p>
+<p><span class="math display">\[
+\mathbb E[X]
+=
+\sum_y
+\mathbb E[X\mid Y=y]P(Y=y).
+\]</span></p>
+<p>Very useful when the problem becomes easy after conditioning on some intermediate variable.</p>
+<p>Pattern:</p>
+<p><span class="math display">\[
+\boxed{\text{Condition on something that makes the randomness simple.}}
+\]</span></p>
+<hr>
+</section>
+<section id="conditional-expectation" class="level3">
+<h3 class="anchored" data-anchor-id="conditional-expectation">0.7 Conditional Expectation</h3>
+<p><span class="math display">\[
+\mathbb E[X\mid A]
+=
+\sum_x xP(X=x\mid A).
+\]</span></p>
+<p>Using Bayes,</p>
+<p><span class="math display">\[
+P(X=x\mid A)
+=
+\frac{P(A\mid X=x)P(X=x)}{P(A)}.
+\]</span></p>
+<p>Therefore</p>
+<p><span class="math display">\[
+\mathbb E[X\mid A]
 =
 \frac{
-\sum_{j=1}^{T}\operatorname{sim}(q_i,k_j)v_j
+\mathbb E[X\,P(A\mid X)]
 }{
-\sum_{j=1}^{T}\operatorname{sim}(q_i,k_j)
+\mathbb E[P(A\mid X)]
 }.
 \]</span></p>
-<p>Suppose the similarity factorizes through a feature map <span class="math inline">\(\phi:\mathbb R^{d_h}\rightarrow\mathbb R^r\)</span>:</p>
+<p>This form is especially useful for selection bias.</p>
+<hr>
+</section>
+<section id="size-biased-sampling" class="level3">
+<h3 class="anchored" data-anchor-id="size-biased-sampling">0.8 Size-Biased Sampling</h3>
+<p>Suppose objects have size <span class="math inline">\(L\)</span>.</p>
+<p>If the probability of observing an object is proportional to its size,</p>
 <p><span class="math display">\[
-\operatorname{sim}(q,k)=\phi(q)^T\phi(k).
+P(\text{observe}\mid L)\propto L,
 \]</span></p>
-<p>Then the numerator can be reassociated:</p>
+<p>then</p>
 <p><span class="math display">\[
-\begin{aligned}
-\sum_j \left[\phi(q_i)^T\phi(k_j)\right]v_j
-&amp;=
-\phi(q_i)^T
-\left(\sum_j\phi(k_j)v_j^T\right).
-\end{aligned}
+P(L\mid \text{observe})
+\propto L P(L).
 \]</span></p>
-<p>Define the sequence summaries</p>
+<p>The expected observed size becomes</p>
 <p><span class="math display">\[
-S=\sum_j\phi(k_j)v_j^T
-\in\mathbb R^{r\times d_v},
-\qquad
-z=\sum_j\phi(k_j)
-\in\mathbb R^r.
-\]</span></p>
-<p>The output is</p>
-<p><span class="math display">\[
-\boxed{
-o_i
+\mathbb E[L_{\text{obs}}]
 =
-\frac{\phi(q_i)^TS}{\phi(q_i)^Tz}
-}.
-\]</span></p>
-<p>No <span class="math inline">\(T\times T\)</span> matrix is required.</p>
-</section>
-<section id="causal-linear-attention-as-a-recurrence" class="level2">
-<h2 class="anchored" data-anchor-id="causal-linear-attention-as-a-recurrence">Causal Linear Attention as a Recurrence</h2>
-<p>For causal attention, query position <span class="math inline">\(i\)</span> may use only keys and values at <span class="math inline">\(j\leq i\)</span>. Replace the full summaries with prefix states:</p>
-<p><span class="math display">\[
-S_i=S_{i-1}+\phi(k_i)v_i^T,
-\]</span></p>
-<p><span class="math display">\[
-z_i=z_{i-1}+\phi(k_i),
-\]</span></p>
-<p><span class="math display">\[
-o_i
+\frac{\mathbb E[L^2]}{\mathbb E[L]}
 =
-\frac{\phi(q_i)^TS_i}{\phi(q_i)^Tz_i+\varepsilon}.
+\mathbb E[L]
++
+\frac{\operatorname{Var}(L)}{\mathbb E[L]}.
 \]</span></p>
-<p>The causal mask is enforced by the update order, not by constructing a mask matrix. During autoregressive decoding, <span class="math inline">\((S_i,z_i)\)</span> is a fixed-size recurrent state. This makes the connection to an RNN explicit: the sequence history is compressed into state rather than retained as a growing KV cache.</p>
-<div class="callout callout-style-default callout-note callout-titled">
-<div class="callout-header d-flex align-content-center">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<div class="callout-title-container flex-fill">
-<span class="screen-reader-only">Note</span>Inclusive versus exclusive recurrence
-</div>
-</div>
-<div class="callout-body-container callout-body">
-<p>The equations update the state with <span class="math inline">\((k_i,v_i)\)</span> before reading it, so token <span class="math inline">\(i\)</span> can attend to itself. Reading before updating would implement a strictly previous-token convention.</p>
-</div>
-</div>
-</section>
-<section id="complexity" class="level2">
-<h2 class="anchored" data-anchor-id="complexity">Complexity</h2>
-<p>Let query/key feature width be <span class="math inline">\(r\)</span> and value width be <span class="math inline">\(d_v\)</span>.</p>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 27%">
-<col style="width: 36%">
-<col style="width: 36%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Method</th>
-<th style="text-align: right;">Sequence work per head</th>
-<th style="text-align: right;">Attention state</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>Dense softmax attention</td>
-<td style="text-align: right;"><span class="math inline">\(O(T^2(d_h+d_v))\)</span></td>
-<td style="text-align: right;"><span class="math inline">\(O(T^2)\)</span> naïvely; tiled by FlashAttention</td>
-</tr>
-<tr class="even">
-<td>Linear attention</td>
-<td style="text-align: right;"><span class="math inline">\(O(Trd_v)\)</span></td>
-<td style="text-align: right;"><span class="math inline">\(O(rd_v+r)\)</span></td>
-</tr>
-</tbody>
-</table>
-<p>Linear dependence on <span class="math inline">\(T\)</span> is not automatically faster. If <span class="math inline">\(r d_v\)</span> is large, sequences are short, or the implementation uses a slow sequential loop, dense attention with optimized kernels may win in wall-clock time.</p>
-</section>
-<section id="minimal-causal-implementation" class="level2">
-<h2 class="anchored" data-anchor-id="minimal-causal-implementation">Minimal Causal Implementation</h2>
-<p>The positive feature map</p>
+<p>Therefore</p>
 <p><span class="math display">\[
-\phi(x)=\operatorname{ELU}(x)+1
+\mathbb E[L_{\text{obs}}]\ge \mathbb E[L].
 \]</span></p>
-<p>makes every kernel score non-negative. This is a pedagogical kernel attention implementation, not an approximation of ordinary softmax attention.</p>
-<div id="42a68f47" class="cell" data-execution_count="1">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch.nn.functional <span class="im">as</span> F</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> positive_feature_map(x):</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> F.elu(x) <span class="op">+</span> <span class="fl">1.0</span></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> causal_linear_attention(q, k, v, eps<span class="op">=</span><span class="fl">1e-6</span>):</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""</span></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co">    q, k: [batch, heads, time, feature_dim]</span></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="co">    v:    [batch, heads, time, value_dim]</span></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="co">    """</span></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    q_features <span class="op">=</span> positive_feature_map(q)</span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    k_features <span class="op">=</span> positive_feature_map(k)</span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    batch, heads, time, feature_dim <span class="op">=</span> q_features.shape</span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    value_dim <span class="op">=</span> v.shape[<span class="op">-</span><span class="dv">1</span>]</span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>    state <span class="op">=</span> q.new_zeros(batch, heads, feature_dim, value_dim)</span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>    normalizer_state <span class="op">=</span> q.new_zeros(batch, heads, feature_dim)</span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>    outputs <span class="op">=</span> []</span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> index <span class="kw">in</span> <span class="bu">range</span>(time):</span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>        k_t <span class="op">=</span> k_features[:, :, index]</span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>        v_t <span class="op">=</span> v[:, :, index]</span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>        q_t <span class="op">=</span> q_features[:, :, index]</span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>        state <span class="op">=</span> state <span class="op">+</span> torch.einsum(<span class="st">"bhr,bhd-&gt;bhrd"</span>, k_t, v_t)</span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>        normalizer_state <span class="op">=</span> normalizer_state <span class="op">+</span> k_t</span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>        numerator <span class="op">=</span> torch.einsum(<span class="st">"bhr,bhrd-&gt;bhd"</span>, q_t, state)</span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>        denominator <span class="op">=</span> torch.einsum(</span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>            <span class="st">"bhr,bhr-&gt;bh"</span>, q_t, normalizer_state</span>
-<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>        ).unsqueeze(<span class="op">-</span><span class="dv">1</span>)</span>
-<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>        outputs.append(numerator <span class="op">/</span> denominator.clamp_min(eps))</span>
-<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> torch.stack(outputs, dim<span class="op">=</span><span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-<p>Verify the recurrence against a quadratic implementation of the <strong>same kernel</strong>, not against softmax attention:</p>
-<div id="6253a306" class="cell" data-execution_count="2">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>torch.manual_seed(<span class="dv">0</span>)</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>q <span class="op">=</span> torch.randn(<span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">5</span>, <span class="dv">4</span>)</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>k <span class="op">=</span> torch.randn(<span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">5</span>, <span class="dv">4</span>)</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>v <span class="op">=</span> torch.randn(<span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">5</span>, <span class="dv">6</span>)</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>q_features <span class="op">=</span> positive_feature_map(q)</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>k_features <span class="op">=</span> positive_feature_map(k)</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>scores <span class="op">=</span> torch.einsum(<span class="st">"bhir,bhjr-&gt;bhij"</span>, q_features, k_features)</span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>causal <span class="op">=</span> torch.ones(<span class="dv">5</span>, <span class="dv">5</span>, dtype<span class="op">=</span>torch.<span class="bu">bool</span>).tril()</span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>scores <span class="op">=</span> scores.masked_fill(<span class="op">~</span>causal, <span class="fl">0.0</span>)</span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>expected <span class="op">=</span> torch.einsum(<span class="st">"bhij,bhjd-&gt;bhid"</span>, scores, v)</span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>expected <span class="op">=</span> expected <span class="op">/</span> scores.<span class="bu">sum</span>(dim<span class="op">=-</span><span class="dv">1</span>, keepdim<span class="op">=</span><span class="va">True</span>).clamp_min(<span class="fl">1e-6</span>)</span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>actual <span class="op">=</span> causal_linear_attention(q, k, v)</span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>torch.testing.assert_close(actual, expected)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-<p>The Python loop makes the recurrence easy to see but prevents efficient parallel training. Production implementations use chunking, prefix scans, or specialized recurrent kernels.</p>
-</section>
-<section id="choosing-the-feature-map" class="level2">
-<h2 class="anchored" data-anchor-id="choosing-the-feature-map">Choosing the Feature Map</h2>
-<p>The feature map defines the attention kernel.</p>
+<p>This explains:</p>
 <ul>
-<li>Simple positive maps such as <code>ELU(x) + 1</code> are cheap but define a different similarity from softmax.</li>
-<li>Random-feature methods approximate the exponential softmax kernel. Increasing feature width can improve the approximation but increases compute and state.</li>
-<li>Learned features can adapt the kernel but add parameters and training dynamics.</li>
-<li>Gated or decayed variants control how old information contributes to the fixed-size state.</li>
+<li>friend paradox</li>
+<li>inspection paradox</li>
+<li>token/article length bias</li>
+<li>user/activity sampling bias</li>
+<li>exposure bias</li>
 </ul>
-<p>The denominator matters. Omitting it produces unnormalized aggregation whose magnitude can grow with sequence length. Non-negative features make the normalizer interpretable and reduce the risk of cancellation near zero.</p>
+<hr>
 </section>
-<section id="what-is-gained-and-lost" class="level2">
-<h2 class="anchored" data-anchor-id="what-is-gained-and-lost">What Is Gained and Lost?</h2>
-<section id="advantages" class="level3">
-<h3 class="anchored" data-anchor-id="advantages">Advantages</h3>
+<section id="complement-probability" class="level3">
+<h3 class="anchored" data-anchor-id="complement-probability">0.9 Complement Probability</h3>
+<p>For “at least one”:</p>
+<p><span class="math display">\[
+P(\text{at least one})
+=
+1-P(\text{none}).
+\]</span></p>
+<p>If <span class="math inline">\(n\)</span> independent trials each succeed with probability <span class="math inline">\(p\)</span>,</p>
+<p><span class="math display">\[
+P(\text{at least one success})
+=
+1-(1-p)^n.
+\]</span></p>
+<p>This often avoids inclusion-exclusion.</p>
+<hr>
+</section>
+<section id="binomial-distribution" class="level3">
+<h3 class="anchored" data-anchor-id="binomial-distribution">0.10 Binomial Distribution</h3>
+<p>If</p>
+<p><span class="math display">\[
+X\sim\operatorname{Binomial}(n,p),
+\]</span></p>
+<p>then</p>
+<p><span class="math display">\[
+P(X=k)
+=
+\binom nk p^k(1-p)^{n-k}.
+\]</span></p>
+<p>Mean:</p>
+<p><span class="math display">\[
+\mathbb E[X]=np.
+\]</span></p>
+<p>Variance:</p>
+<p><span class="math display">\[
+\operatorname{Var}(X)=np(1-p).
+\]</span></p>
+<p>Interpretation:</p>
+<p><span class="math display">\[
+X=\sum_{i=1}^n I_i.
+\]</span></p>
+<hr>
+</section>
+<section id="geometric-distribution" class="level3">
+<h3 class="anchored" data-anchor-id="geometric-distribution">0.11 Geometric Distribution</h3>
+<p>If <span class="math inline">\(X\)</span> is the number of trials until the first success,</p>
+<p><span class="math display">\[
+P(X=k)
+=
+(1-p)^{k-1}p.
+\]</span></p>
+<p>and</p>
+<p><span class="math display">\[
+\mathbb E[X]=\frac1p.
+\]</span></p>
+<p>Memoryless property:</p>
+<p><span class="math display">\[
+P(X&gt;s+t\mid X&gt;s)=P(X&gt;t).
+\]</span></p>
+<p>Common signal:</p>
+<blockquote class="blockquote">
+<p>“How long until the first …?”</p>
+</blockquote>
+<hr>
+</section>
+<section id="poisson-distribution" class="level3">
+<h3 class="anchored" data-anchor-id="poisson-distribution">0.12 Poisson Distribution</h3>
+<p>For rare independent events,</p>
+<p><span class="math display">\[
+X\sim\operatorname{Poisson}(\lambda),
+\]</span></p>
+<p>with</p>
+<p><span class="math display">\[
+P(X=k)
+=
+e^{-\lambda}\frac{\lambda^k}{k!}.
+\]</span></p>
+<p>Mean and variance:</p>
+<p><span class="math display">\[
+\mathbb E[X]
+=
+\operatorname{Var}(X)
+=
+\lambda.
+\]</span></p>
+<p>Approximation:</p>
+<p><span class="math display">\[
+\operatorname{Binomial}(n,p)
+\approx
+\operatorname{Poisson}(np)
+\]</span></p>
+<p>when</p>
+<p><span class="math display">\[
+n\gg1,\qquad p\ll1.
+\]</span></p>
+<hr>
+</section>
+<section id="useful-approximations" class="level3">
+<h3 class="anchored" data-anchor-id="useful-approximations">0.13 Useful Approximations</h3>
+<p>For small <span class="math inline">\(x\)</span>,</p>
+<p><span class="math display">\[
+e^x \approx 1+x.
+\]</span></p>
+<p>Therefore</p>
+<p><span class="math display">\[
+1-x\approx e^{-x}.
+\]</span></p>
+<p>More generally,</p>
+<p><span class="math display">\[
+(1-p)^n
+\approx
+e^{-np}
+\]</span></p>
+<p>when <span class="math inline">\(p\)</span> is small.</p>
+<p>Hence</p>
+<p><span class="math display">\[
+1-(1-p)^n
+\approx
+1-e^{-np}.
+\]</span></p>
+<p>If additionally <span class="math inline">\(np\ll1\)</span>,</p>
+<p><span class="math display">\[
+1-e^{-np}
+\approx np.
+\]</span></p>
+<p>This is extremely useful for rare-token / collision / occupancy problems.</p>
+<hr>
+</section>
+<section id="combinatorics" class="level3">
+<h3 class="anchored" data-anchor-id="combinatorics">0.14 Combinatorics</h3>
+<p>Number of unordered pairs:</p>
+<p><span class="math display">\[
+\binom n2
+=
+\frac{n(n-1)}2.
+\]</span></p>
+<p>General combinations:</p>
+<p><span class="math display">\[
+\binom nk
+=
+\frac{n!}{k!(n-k)!}.
+\]</span></p>
+<p>Permutations:</p>
+<p><span class="math display">\[
+P(n,k)
+=
+\frac{n!}{(n-k)!}.
+\]</span></p>
+<p>Interview heuristic:</p>
 <ul>
-<li>linear sequence scaling for fixed <span class="math inline">\(r\)</span> and <span class="math inline">\(d_v\)</span></li>
-<li>constant-size decoding state instead of a KV cache that grows with context</li>
-<li>natural recurrent, streaming interpretation</li>
-<li>causal masking is implicit in the state update</li>
+<li>order matters <span class="math inline">\(\rightarrow\)</span> permutation</li>
+<li>order does not matter <span class="math inline">\(\rightarrow\)</span> combination</li>
 </ul>
+<hr>
 </section>
-<section id="limitations" class="level3">
-<h3 class="anchored" data-anchor-id="limitations">Limitations</h3>
-<ul>
-<li>most feature maps do not reproduce exact softmax attention</li>
-<li>a fixed-size state can overwrite or entangle information from many tokens</li>
-<li>prefix sums can accumulate numerical error over long sequences</li>
-<li>efficient parallel training needs more than the simple recurrent loop</li>
-<li>positional information, locality, forgetting, and state capacity require explicit architectural choices</li>
-</ul>
-<p>FlashAttention and linear attention therefore solve different problems: FlashAttention computes ordinary dense attention with better memory movement; linear attention changes the operator to avoid quadratic pairwise computation.</p>
-<p><a href="../../notes/advanced/continual_intelligence_ttt.html">From Test-Time Training to Continual Intelligence</a> develops the related view that learned fast-weight updates can implement a linear-attention-like recurrent state rather than literal key-value regression.</p>
+<section id="independence-vs.-uncorrelated" class="level3">
+<h3 class="anchored" data-anchor-id="independence-vs.-uncorrelated">0.15 Independence vs.&nbsp;Uncorrelated</h3>
+<p>Independence:</p>
+<p><span class="math display">\[
+P(X,Y)=P(X)P(Y).
+\]</span></p>
+<p>Independent variables satisfy</p>
+<p><span class="math display">\[
+\mathbb E[XY]
+=
+\mathbb E[X]\mathbb E[Y].
+\]</span></p>
+<p>Therefore</p>
+<p><span class="math display">\[
+\operatorname{Cov}(X,Y)=0.
+\]</span></p>
+<p>But</p>
+<p><span class="math display">\[
+\operatorname{Cov}(X,Y)=0
+\]</span></p>
+<p>does <strong>not</strong> generally imply independence.</p>
+<p>Also remember:</p>
+<blockquote class="blockquote">
+<p>Linearity of expectation does not require independence.</p>
+</blockquote>
+<hr>
+</section>
+<section id="variance-of-a-sum" class="level3">
+<h3 class="anchored" data-anchor-id="variance-of-a-sum">0.16 Variance of a Sum</h3>
+<p>For</p>
+<p><span class="math display">\[
+S=\sum_i X_i,
+\]</span></p>
+<p><span class="math display">\[
+\operatorname{Var}(S)
+=
+\sum_i\operatorname{Var}(X_i)
++
+2\sum_{i&lt;j}\operatorname{Cov}(X_i,X_j).
+\]</span></p>
+<p>If the variables are independent,</p>
+<p><span class="math display">\[
+\operatorname{Var}(S)
+=
+\sum_i\operatorname{Var}(X_i).
+\]</span></p>
+<p>This distinction matters because expectation questions are often much easier than variance questions.</p>
+<hr>
+</section>
+<section id="jensens-inequality" class="level3">
+<h3 class="anchored" data-anchor-id="jensens-inequality">0.17 Jensen’s Inequality</h3>
+<p>For convex <span class="math inline">\(f\)</span>,</p>
+<p><span class="math display">\[
+f(\mathbb E[X])
+\le
+\mathbb E[f(X)].
+\]</span></p>
+<p>For concave <span class="math inline">\(f\)</span>,</p>
+<p><span class="math display">\[
+f(\mathbb E[X])
+\ge
+\mathbb E[f(X)].
+\]</span></p>
+<p>Examples:</p>
+<p>Because <span class="math inline">\(x^2\)</span> is convex,</p>
+<p><span class="math display">\[
+\mathbb E[X^2]\ge \mathbb E[X]^2.
+\]</span></p>
+<p>Because <span class="math inline">\(\log x\)</span> is concave,</p>
+<p><span class="math display">\[
+\mathbb E[\log X]
+\le
+\log \mathbb E[X].
+\]</span></p>
+<p>Useful when asked to compare two quantities without computing them exactly.</p>
+<hr>
+</section>
+<section id="tail-sum-formula" class="level3">
+<h3 class="anchored" data-anchor-id="tail-sum-formula">0.18 Tail-Sum Formula</h3>
+<p>For a nonnegative integer-valued random variable,</p>
+<p><span class="math display">\[
+\mathbb E[X]
+=
+\sum_{k=1}^{\infty}P(X\ge k).
+\]</span></p>
+<p>Continuous version:</p>
+<p><span class="math display">\[
+\mathbb E[X]
+=
+\int_0^\infty P(X&gt;x)\,dx.
+\]</span></p>
+<p>Useful when calculating the distribution of <span class="math inline">\(X\)</span> directly is difficult but its tail probability is easy.</p>
+<hr>
 </section>
 </section>
-<section id="interview-questions" class="level2">
-<h2 class="anchored" data-anchor-id="interview-questions">Interview Questions</h2>
-<ul>
-<li>Why can <span class="math inline">\((QK^T)V\)</span> be reassociated while <span class="math inline">\(\operatorname{softmax}(QK^T)V\)</span> cannot?</li>
-<li>Derive the <span class="math inline">\(S_i\)</span> and <span class="math inline">\(z_i\)</span> causal recurrences.</li>
-<li>In what sense is causal linear attention an RNN?</li>
-<li>Why must a quadratic reference use the same kernel for a correctness test?</li>
-<li>How does feature width trade approximation quality for state and compute?</li>
-<li>Compare the decoding state of softmax attention, linear attention, and an RNN.</li>
-<li>Why might FlashAttention outperform linear attention at moderate lengths?</li>
-</ul>
+<section id="problem-solving-patterns" class="level2">
+<h2 class="anchored" data-anchor-id="problem-solving-patterns">1. Problem-Solving Patterns</h2>
+<p>Before doing algebra, ask:</p>
+<section id="pattern-a-expected-count" class="level3">
+<h3 class="anchored" data-anchor-id="pattern-a-expected-count">Pattern A — Expected count?</h3>
+<p>Use indicators:</p>
+<p><span class="math display">\[
+X=\sum_i I_i.
+\]</span></p>
 </section>
-<section id="exercises" class="level2">
-<h2 class="anchored" data-anchor-id="exercises">Exercises</h2>
-<ul class="task-list">
-<li><label><input type="checkbox">Implement the non-causal vectorized form without a Python loop.</label></li>
-<li><label><input type="checkbox">Change the code to read state before updating it and explain the mask.</label></li>
-<li><label><input type="checkbox">Compare outputs from the ELU kernel and softmax attention.</label></li>
-<li><label><input type="checkbox">Add an exponential decay to the recurrent state.</label></li>
-<li><label><input type="checkbox">Measure runtime and memory as sequence length grows.</label></li>
-</ul>
+<section id="pattern-b-given-that-we-observed" class="level3">
+<h3 class="anchored" data-anchor-id="pattern-b-given-that-we-observed">Pattern B — “Given that we observed…”?</h3>
+<p>Use Bayes / reweighting:</p>
+<p><span class="math display">\[
+P(X\mid A)\propto P(A\mid X)P(X).
+\]</span></p>
+</section>
+<section id="pattern-c-at-least-one" class="level3">
+<h3 class="anchored" data-anchor-id="pattern-c-at-least-one">Pattern C — “At least one”?</h3>
+<p>Use the complement:</p>
+<p><span class="math display">\[
+P(\ge1)=1-P(0).
+\]</span></p>
+</section>
+<section id="pattern-d-random-process-becomes-easier-after-knowing-something" class="level3">
+<h3 class="anchored" data-anchor-id="pattern-d-random-process-becomes-easier-after-knowing-something">Pattern D — Random process becomes easier after knowing something?</h3>
+<p>Condition:</p>
+<p><span class="math display">\[
+E[X]=E[E[X\mid Y]].
+\]</span></p>
+</section>
+<section id="pattern-e-rare-event-repeated-many-times" class="level3">
+<h3 class="anchored" data-anchor-id="pattern-e-rare-event-repeated-many-times">Pattern E — Rare event repeated many times?</h3>
+<p>Think</p>
+<p><span class="math display">\[
+(1-p)^n\approx e^{-np}
+\]</span></p>
+<p>or Poisson.</p>
+</section>
+<section id="pattern-f-expected-number-of-pairs" class="level3">
+<h3 class="anchored" data-anchor-id="pattern-f-expected-number-of-pairs">Pattern F — Expected number of pairs?</h3>
+<p>Almost always consider</p>
+<p><span class="math display">\[
+\binom n2
+\]</span></p>
+<p>possible pairs + an indicator for each pair.</p>
+</section>
+<section id="pattern-g-sampling-through-an-event" class="level3">
+<h3 class="anchored" data-anchor-id="pattern-g-sampling-through-an-event">Pattern G — Sampling through an event?</h3>
+<p>Ask whether</p>
+<p><span class="math display">\[
+P(\text{selected}\mid X)
+\]</span></p>
+<p>depends on <span class="math inline">\(X\)</span>.</p>
+<p>If yes, expect selection bias.</p>
 
 
+</section>
+</section>
 </section>
 
 </main> <!-- /main -->
