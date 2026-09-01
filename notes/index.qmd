@@ -33,6 +33,12 @@ title: "Notes"
 - [Case Study: Cursor's Continual Training Loop](applied_ml/cursor_continual_training.qmd)
 - [Codex: anatomy of an open-source coding agent](applied_ml/codex.qmd)
 
+
+## Algorithms
+
+- [Dynamic Programming and Graph Algorithms from First Principles](algorithms/dynamic_programming_and_graph_algorithms.qmd)
+- [Probabilistic modeling tricks](algorithms/probabilistic_modeling_tricks.qmd)
+
 ## Coming next
 
 - post-train

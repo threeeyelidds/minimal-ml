@@ -1,0 +1,2687 @@
+---
+title: "Dynamic Programming and Graph Algorithms from First Principles"
+toc-depth: 3
+---
+
+# The unifying idea
+
+Dynamic programming and graph algorithms often look like separate interview topics, but the same abstraction explains most of both:
+
+> **A problem defines a state space, transitions between states, and some quantity to propagate through those transitions.**
+
+**DP is essentially structured value propagation over a state/ dependency DAG**
+
+Examples:
+
+- `dp[i]` is a state.
+- `(r, c)` in a grid is a state.
+- `(node, remaining_stops)` is a state.
+- `(index, current_sum)` is a state.
+- A graph vertex is literally a state.
+
+Once states and transitions are identified, most problems reduce to:
+
+1. **What information must a state remember?**
+2. **What transition connects one state to another?**
+3. **What value are we propagating?**
+4. **In what order can states be processed safely?**
+
+The fourth question is what separates many familiar algorithms.
+
+| State graph structure | Edge cost | Typical algorithm |
+|---|---:|---|
+| DAG / known acyclic dependency order | arbitrary | DP / topological DP |
+| arbitrary graph | all edges = 1 | BFS |
+| arbitrary graph | edges in `{0,1}` | 0-1 BFS |
+| arbitrary graph | nonnegative | Dijkstra |
+| arbitrary graph | negative allowed | Bellman-Ford |
+| graph reachability only | irrelevant | DFS / BFS |
+
+
+:::: {.callout-tip title="A useful interview mental model is therefore:"}
+DP = relaxation over states when **the processing order is already known.**  
+Graph shortest-path algorithms = relaxation when the state graph is more general and **the order must be discovered or repeatedly corrected.**
+::::
+
+
+# Dynamic Programming
+
+## 1. Dynamic programming from first principles
+
+### 1.1 What makes a problem DP?
+
+A problem is a good DP candidate when:
+
+1. The answer can be expressed in terms of answers to smaller states.
+2. The same states would otherwise be recomputed.
+3. The state contains enough information that the future no longer needs the full history.
+
+The third point is the most important.
+
+A DP state should satisfy a Markov-like property:
+
+$$
+P(\text{future} \mid \text{entire history})
+=
+P(\text{future} \mid \text{state})
+$$
+
+Not probabilistically, necessarily—the idea is simply:
+
+> once I know the state, nothing else about how I arrived there matters.
+
+
+### 1.2 The real task: designing the state
+
+Suppose the recursive problem is
+
+$$
+F(\text{history})
+$$
+
+If two different histories always have exactly the same set of legal futures and future rewards, they should collapse into the same state.
+
+For example, in climbing stairs:
+
+```text
+history A: 0 -> 1 -> 3 -> 4
+history B: 0 -> 2 -> 3 -> 4
+```
+
+Once we are at stair `4`, the previous path no longer matters.
+
+So:
+
+$$
+\text{state} = i
+$$
+
+rather than the whole path.
+
+This compression is the essence of DP.
+
+
+## 2. A mechanical DP derivation procedure
+
+For an interview problem, use this sequence.
+
+### Step 1: Write the brute-force decision process
+
+Ask:
+
+> If I solved this recursively without worrying about efficiency, what choices would I make?
+
+Example: House Robber.
+
+At house `i`:
+
+- skip it;
+- rob it, then move to `i + 2`.
+
+So:
+
+$$
+F(i)=\max(F(i+1), nums_i + F(i+2))
+$$
+
+This already contains the DP recurrence.
+
+
+### Step 2: Identify repeated subproblems
+
+A recursion tree might contain:
+
+```text
+F(0)
+├── F(1)
+│   ├── F(2)
+│   └── F(3)
+└── F(2)
+```
+
+`F(2)` is recomputed.
+
+Memoization turns the recursion tree into a state DAG.
+
+
+### Step 3: Define exactly what `dp[state]` means
+
+A weak definition:
+
+> `dp[i]` is the answer around `i`.
+
+A good definition:
+
+> `dp[i]` = maximum money obtainable from houses `i...n-1`.
+
+Every recurrence should follow naturally from the English definition.
+
+
+### Step 4: Derive the recurrence from one decision
+
+For House Robber:
+
+$$
+dp[i]
+=
+\max(
+dp[i+1],
+nums[i] + dp[i+2]
+)
+$$
+
+Do not memorize the equation first.
+
+Derive it from:
+
+```text
+state
+  -> legal decisions
+      -> next states
+          -> combine their answers
+```
+
+
+### Step 5: Find base cases
+
+Ask:
+
+> What happens when there are no decisions left?
+
+$$
+dp[n] = 0
+$$
+
+and often
+
+$$
+dp[n+1]=0.
+$$
+
+
+### Step 6: Determine dependency order
+
+If
+
+$$
+dp[i]
+$$
+
+depends on
+
+$$
+dp[i+1], dp[i+2],
+$$
+
+then iterate backward.
+
+If
+
+$$
+dp[i]
+$$
+
+depends on earlier states, iterate forward.
+
+
+## 3. Top-down and bottom-up DP
+
+### Top-down: memoized recursion
+
+```python
+from functools import cache
+
+def solve(nums):
+    n = len(nums)
+
+    @cache
+    def dp(i):
+        if i >= n:
+            return 0
+
+        skip = dp(i + 1)
+        take = nums[i] + dp(i + 2)
+
+        return max(skip, take)
+
+    return dp(0)
+```
+
+Advantages:
+
+- closest to mathematical recurrence;
+- often easiest to derive correctly;
+- computes only reachable states.
+
+Disadvantages:
+
+- recursion overhead;
+- stack-depth limits;
+- state transitions can be less explicit.
+
+
+### Bottom-up: tabulation
+
+```python
+def solve(nums):
+    n = len(nums)
+    dp = [0] * (n + 2)
+
+    for i in range(n - 1, -1, -1):
+        dp[i] = max(
+            dp[i + 1],
+            nums[i] + dp[i + 2],
+        )
+
+    return dp[0]
+```
+
+Advantages:
+
+- explicit dependency order;
+- easy space optimization;
+- usually less overhead.
+
+
+## 4. The generic DP template
+
+The most useful generic abstraction is:
+
+```python
+def dp(state):
+    if state is terminal:
+        return base_value
+
+    if state in memo:
+        return memo[state]
+
+    answer = identity
+
+    for action in legal_actions(state):
+        next_state = transition(state, action)
+
+        candidate = immediate_value(state, action) + dp(next_state)
+
+        answer = combine(answer, candidate)
+
+    memo[state] = answer
+    return answer
+```
+
+Different problems merely change:
+
+- `state`
+- `legal_actions`
+- `transition`
+- `candidate`
+- `combine`
+
+For minimization:
+
+```python
+answer = float("inf")
+answer = min(answer, candidate)
+```
+
+For maximization:
+
+```python
+answer = float("-inf")
+answer = max(answer, candidate)
+```
+
+For counting:
+
+```python
+answer = 0
+answer += dp(next_state)
+```
+
+For boolean feasibility:
+
+```python
+answer = False
+answer |= dp(next_state)
+```
+
+This is much more useful than memorizing dozens of named DP types.
+
+
+## 5. DP as a graph problem
+
+Suppose:
+
+$$
+dp[v]
+=
+\min_{u\rightarrow v}
+\left(dp[u] + w(u,v)\right)
+$$
+
+This is exactly shortest-path relaxation.
+
+Each DP state is a node.
+
+Each recurrence dependency is an edge.
+
+For example:
+
+$$
+dp[i]
+=
+\min(dp[i-1]+a_i,\ dp[i-2]+b_i)
+$$
+
+corresponds to:
+
+```text
+i-1 ----a_i----> i
+i-2 ----b_i----> i
+```
+
+If transitions only move from smaller indices to larger indices, this implicit graph is a DAG.
+
+Then ordinary bottom-up DP is simply shortest-path computation in topological order.
+
+This gives a powerful equivalence:
+
+> **Topological DP is shortest path on a DAG.**
+
+
+## 6. Processing order is the hidden algorithm
+
+Once we adopt the relaxation view, many algorithms differ only in **how they choose the next state to process**.
+
+### Known acyclic order
+
+Use ordinary DP.
+
+```text
+state 0 -> state 1 -> state 2 -> ...
+```
+
+or run a topological sort.
+
+
+### Unit-weight graph
+
+Use BFS.
+
+Why?
+
+After processing distance layer `d`, every newly discovered node is at distance `d+1`.
+
+The queue therefore processes states in nondecreasing shortest-path distance.
+
+
+### Nonnegative weighted graph
+
+Use Dijkstra.
+
+A FIFO queue is no longer enough because an edge may cost 100 while another costs 1.
+
+Instead process the state with smallest tentative distance.
+
+That is what the min-heap does.
+
+
+### Negative edges
+
+Dijkstra's finalization argument breaks.
+
+Use Bellman-Ford or another algorithm designed for negative edges.
+
+
+# Graph Algorithms
+
+:::: {.callout-tip title="Think of graph algorithms as frontier scheduling"}
+
+Many graph algorithms can be decomposed into
+
+$$
+\boxed{
+\text{state transitions}
++
+\text{frontier scheduling policy}
+}
+$$
+
+The graph determines **which states can be reached next**.  
+The frontier data structure determines **which discovered state gets processed next**.
+
+| Scheduling rule | Data structure | Typical algorithms |
+|---|---|---|
+| earliest discovered | queue | BFS, Kahn's topo sort |
+| most recently discovered | stack / recursion | DFS |
+| smallest tentative cost | min-heap | Dijkstra, A*, Prim |
+| priority differs by only $0$ or $1$ | deque | 0–1 BFS |
+
+For shortest paths, this gives a useful progression:
+
+$$
+\text{equal edge weights}
+\Rightarrow
+\text{queue}
+$$
+
+$$
+\text{weights in }\{0,1\}
+\Rightarrow
+\text{deque}
+$$
+
+$$
+\text{arbitrary nonnegative weights}
+\Rightarrow
+\text{min-heap}
+$$
+
+So BFS, 0–1 BFS, and Dijkstra are conceptually very similar algorithms with increasingly general **frontier-ordering rules**.
+
+::::
+
+## 7. BFS from first principles
+
+Suppose every edge has cost 1.
+
+Then:
+
+$$
+dist[v] = \min_{u\rightarrow v}(dist[u] + 1)
+$$
+
+BFS explores:
+
+```text
+distance 0
+distance 1
+distance 2
+distance 3
+...
+```
+
+The queue automatically enforces this order.
+
+### Template
+
+```python
+from collections import deque
+
+def bfs(graph, start):
+    q = deque([start])
+    dist = {start: 0}
+
+    while q:
+        u = q.popleft()
+
+        for v in graph[u]:
+            if v in dist:
+                continue
+
+            dist[v] = dist[u] + 1
+            q.append(v)
+
+    return dist
+```
+
+### Important invariant
+
+When a node is first inserted into the queue:
+
+> its shortest distance has already been found.
+
+This is true because every edge has identical cost.
+
+
+## 8. BFS on an implicit state space
+
+Many problems that do not look like graphs are BFS problems.
+
+Example: transform number `x` using operations
+
+```text
+x -> x + 1
+x -> 2x
+x -> x - 1
+```
+
+State:
+
+$$
+x
+$$
+
+Transitions:
+
+$$
+x\rightarrow x+1,\quad
+x\rightarrow2x,\quad
+x\rightarrow x-1
+$$
+
+If every operation costs one move, BFS gives the minimum number of operations.
+
+The graph never needs to be constructed explicitly.
+
+This is a recurring interview pattern:
+
+> **Graph = states + legal transitions.**
+
+
+## 9. DFS from first principles
+
+DFS answers a different fundamental question:
+
+> What happens if I completely explore one branch before exploring its siblings?
+
+It is useful for:
+
+- reachability;
+- connected components;
+- cycle detection;
+- topological ordering;
+- tree recursion;
+- enumerating paths;
+- backtracking.
+
+### Recursive template
+
+```python
+def dfs(u):
+    visited.add(u)
+
+    for v in graph[u]:
+        if v not in visited:
+            dfs(v)
+```
+
+
+## 10. Cycle Detection: Three-color DFS
+
+For directed graphs, use:
+
+```text
+0 = unseen
+1 = currently in recursion stack
+2 = completely processed
+```
+
+A transition
+
+```text
+u -> v
+```
+
+where `v` is color `1` means a directed cycle.
+
+```python
+def has_cycle(graph):
+    n = len(graph)
+    color = [0] * n
+
+    def dfs(u):
+        color[u] = 1
+
+        for v in graph[u]:
+            if color[v] == 1:
+                return True
+
+            if color[v] == 0 and dfs(v):
+                return True
+
+        color[u] = 2
+        return False
+
+    return any(color[u] == 0 and dfs(u) for u in range(n))
+```
+
+Why color `1` matters:
+
+A visited node is not necessarily evidence of a cycle.
+
+Only an edge back into the **current unresolved dependency chain** creates a cycle.
+
+### Undirected cycle detection with DFS
+
+For an undirected graph, track the node we came from:
+
+```python
+def has_cycle(graph):
+    n = len(graph)
+    visited = [False] * n
+
+    def dfs(u, parent):
+        visited[u] = True
+
+        for v in graph[u]:
+            if not visited[v]:
+                if dfs(v, u):
+                    return True
+            elif v != parent:
+                return True
+
+        return False
+
+    return any(
+        not visited[u] and dfs(u, -1)
+        for u in range(n)
+    )
+```
+
+
+## 11. Topological sort
+
+A topological ordering guarantees:
+
+$$
+u\rightarrow v
+\implies
+u \text{ appears before } v
+$$
+
+This gives exactly the order needed for DAG DP.
+
+
+### Kahn's algorithm
+
+```python
+from collections import deque
+
+def topo_sort(n, graph):
+    indegree = [0] * n
+
+    for u in range(n):
+        for v in graph[u]:
+            indegree[v] += 1
+
+    q = deque(
+        u for u in range(n)
+        if indegree[u] == 0
+    )
+
+    order = []
+
+    while q:
+        u = q.popleft()
+        order.append(u)
+
+        for v in graph[u]:
+            indegree[v] -= 1
+
+            if indegree[v] == 0:
+                q.append(v)
+
+    if len(order) != n:
+        return None
+
+    return order
+```
+
+Interpretation:
+
+A node with indegree zero has no unresolved prerequisites.
+
+Once it is processed, we remove its outgoing dependencies.
+
+
+## 12. Topological DP
+
+Suppose each edge `u -> v` has cost `w`.
+
+```python
+def dag_shortest_path(n, graph, start):
+    order = topo_sort(n, graph)
+
+    INF = float("inf")
+    dist = [INF] * n
+    dist[start] = 0
+
+    for u in order:
+        if dist[u] == INF:
+            continue
+
+        for v, w in graph[u]:
+            dist[v] = min(
+                dist[v],
+                dist[u] + w,
+            )
+
+    return dist
+```
+
+This is structurally identical to ordinary DP.
+
+
+# Shortest Paths
+
+::::{ .callout-tip}
+| Algorithm | Frontier structure | Per operation | Total time |
+|---|---:|---:|---:|
+| BFS | queue | $O(1)$ | $O(V + E)$ |
+| 0–1 BFS | deque | $O(1)$ | $O(V + E)$ |
+| Dijkstra | min-heap | $O(\log V)$ | $O((V + E)\log V)$ |
+| Bellman–Ford | usually no queue; repeated edge scans | $O(1)$ relaxation | $O(VE)$ |
+::::
+
+## 13. Dijkstra from first principles
+
+Suppose:
+
+$$
+dist[v]
+=
+\min_{u\rightarrow v}
+(dist[u] + w(u,v))
+$$
+
+but the graph may contain cycles.
+
+We no longer have a static topological order.
+
+If all weights satisfy:
+
+$$
+w(u,v)\ge 0,
+$$
+
+Dijkstra discovers a safe order dynamically.
+
+
+At each step, select the unprocessed node with the smallest tentative distance.
+
+Suppose that node is `u`.
+
+Could some future path produce a shorter route to `u`?
+
+Any future path would first reach some unprocessed node `x`.
+
+But:
+
+$$
+dist[x] \ge dist[u]
+$$
+
+because `u` was the minimum.
+
+And every remaining edge has nonnegative cost.
+
+Therefore any path through `x` costs at least:
+
+$$
+dist[x] + \text{nonnegative}
+\ge dist[u].
+$$
+
+So `dist[u]` is final.
+
+This is the greedy correctness argument.
+
+
+### Template
+
+```python
+import heapq
+
+def dijkstra(n, graph, start):
+    INF = float("inf")
+    dist = [INF] * n
+    dist[start] = 0
+
+    pq = [(0, start)]
+
+    while pq:
+        d, u = heapq.heappop(pq)
+
+        if d != dist[u]:
+            continue
+
+        for v, w in graph[u]:
+            nd = d + w
+
+            if nd < dist[v]:
+                dist[v] = nd
+                heapq.heappush(pq, (nd, v))
+
+    return dist
+```
+
+## 14. Why Dijkstra feels like DP
+
+The relaxation is still:
+
+$$
+dist[v]
+=
+\min(dist[v], dist[u]+w(u,v)).
+$$
+
+This looks exactly like DP.
+
+The difference is processing order.
+
+### DAG DP
+
+The order is known from graph structure.
+
+### Dijkstra
+
+The order is discovered greedily using current distances.
+
+A useful mental model from our earlier discussion:
+
+> **Dijkstra is essentially DP whose evaluation order is generated online by a priority queue.**
+
+This should not be taken as a formal textbook definition, but it is an excellent reasoning model.
+
+
+## 15. Why negative edges break Dijkstra
+
+Suppose Dijkstra finalizes node `u`.
+
+Later there may be:
+
+```text
+start -> x -> u
+```
+
+with a negative edge:
+
+$$
+w(x,u)<0.
+$$
+
+Then even though
+
+$$
+dist[x] > dist[u],
+$$
+
+we could have
+
+$$
+dist[x]+w(x,u)<dist[u].
+$$
+
+So a state that appeared final can become better later.
+
+The entire greedy-finalization argument disappears.
+
+
+## 16. Bellman-Ford as explicit DP
+
+### Bellman–Ford as Dynamic Programming on an Expanded DAG
+
+A useful way to understand Bellman–Ford is:
+
+$$
+\boxed{\text{The original graph may be cyclic, but the DP dependency graph is acyclic.}}
+$$
+
+Define
+
+$$
+dp[k][v]
+=
+\text{minimum cost to reach } v \text{ using at most } k \text{ edges}.
+$$
+
+Then
+
+$$
+dp[k][v]
+=
+\min\left(
+dp[k-1][v],
+\min_{(u,v)\in E}
+\left(dp[k-1][u]+w(u,v)\right)
+\right).
+$$
+
+Although the original graph \(G\) may contain cycles, each DP state \((k,v)\) depends only on states in the previous layer:
+
+$$
+(k-1,u)\rightarrow(k,v).
+$$
+
+Since \(k\) always increases, the dependency graph over DP states is a DAG.
+
+This gives a more general view of dynamic programming:
+
+$$
+\boxed{\text{DP does not require the original problem graph to be acyclic.}}
+$$
+
+It requires that we can define a state representation whose **dependency graph is acyclic**.
+
+For DAG shortest path:
+
+$$
+\text{state}=v.
+$$
+
+For Bellman–Ford:
+
+$$
+\text{state}=(k,v).
+$$
+
+The extra dimension \(k\) effectively **unrolls cycles over path length**.
+
+This is a common DP technique: when the natural state graph has cycles, add a monotonic dimension such as
+
+$$
+\text{time},\quad
+\text{steps used},\quad
+\text{items processed},\quad
+\text{remaining budget}
+$$
+
+so that dependencies move in only one direction.
+
+
+Bellman-Ford makes the path-length dimension explicit.
+
+Define:
+
+$$
+dp[k][v]
+=
+\text{shortest distance to }v
+\text{ using at most }k\text{ edges}.
+$$
+
+Then:
+
+$$
+dp[k][v]
+=
+\min
+\left(
+dp[k-1][v],
+\min_{u\rightarrow v}
+dp[k-1][u]+w(u,v)
+\right)
+$$
+
+Any simple shortest path contains at most:
+
+$$
+|V|-1
+$$
+
+edges.
+
+Therefore evaluate `|V|-1` rounds.
+
+The optimized implementation stores only one distance array.
+
+```python
+def bellman_ford(n, edges, start):
+    INF = float("inf")
+    dist = [INF] * n
+    dist[start] = 0
+
+    for _ in range(n - 1):
+        changed = False
+        new_dist = dist.copy()
+
+        for u, v, w in edges:
+            if dist[u] == INF:
+                continue
+
+            if dist[u] + w < new_dist[v]:
+                new_dist[v] = dist[u] + w
+                changed = True
+
+        dist = new_dist
+
+        if not changed:
+            break
+
+    return dist
+```
+
+Bellman-Ford therefore looks much more obviously like conventional DP than Dijkstra.
+
+
+## 17. Negative-cycle detection
+
+After `V-1` rounds, perform one more relaxation pass.
+
+If some distance can still improve:
+
+$$
+dist[u]+w(u,v)<dist[v],
+$$
+
+then a reachable negative cycle exists.
+
+Why?
+
+Any cycle-free path contains at most `V-1` edges.
+
+An improving path with at least `V` edges must repeat a vertex.
+
+If repeating that cycle reduces cost, the cycle has negative total weight.
+
+```python
+from collections import deque
+
+# normal Bellman-Ford
+for _ in range(V - 1):
+    changed = False
+    for u, v, w in edges:
+        if dist[u] != INF and dist[u] + w < dist[v]:
+            dist[v] = dist[u] + w
+            changed = True
+    if not changed:
+        break
+
+# detect negative-cycle influence
+q = deque()
+neg = [False] * V
+
+for u, v, w in edges:
+    if dist[u] != INF and dist[u] + w < dist[v]:
+        if not neg[v]:
+            neg[v] = True
+            q.append(v)
+
+# propagate to everything reachable from those vertices
+while q:
+    u = q.popleft()
+    for v, _ in graph[u]:
+        if not neg[v]:
+            neg[v] = True
+            q.append(v)
+
+for v in range(V):
+    if neg[v]:
+        dist[v] = float("-inf")
+```
+
+
+## 18. 0-1 BFS
+
+When edge weights are only:
+
+$$
+w\in\{0,1\},
+$$
+
+we can avoid a heap.
+
+For cost `0`, push the next state to the front.
+
+For cost `1`, push it to the back.
+
+```python
+from collections import deque
+
+def zero_one_bfs(n, graph, start):
+    INF = float("inf")
+    dist = [INF] * n
+    dist[start] = 0
+
+    dq = deque([start])
+
+    while dq:
+        u = dq.popleft()
+
+        for v, w in graph[u]:
+            nd = dist[u] + w
+
+            if nd < dist[v]:
+                dist[v] = nd
+
+                if w == 0:
+                    dq.appendleft(v)
+                else:
+                    dq.append(v)
+
+    return dist
+```
+
+Conceptually this is Dijkstra with a specialized two-level priority structure.
+
+
+## 19. The shortest-path decision tree
+
+When you see a minimum-cost graph/state-space problem:
+
+```text
+Is the dependency graph acyclic?
+|
++-- yes --> DP / topological shortest path
+|
++-- no
+    |
+    +-- all edges cost 1? --> BFS
+    |
+    +-- weights only 0 or 1? --> 0-1 BFS
+    |
+    +-- all weights nonnegative? --> Dijkstra
+    |
+    +-- negative edges? --> Bellman-Ford
+```
+
+This is far more robust than memorizing algorithms independently.
+
+
+# Multidimensional DP
+
+## 20. Multi-dimensional state: constraints become coordinates
+
+A particularly important pattern is:
+
+> A graph problem with extra constraints often becomes an ordinary graph problem on an expanded state space.
+
+Suppose we need the cheapest route while using at most `K` flights.
+
+A node alone is insufficient.
+
+Arriving at city `u` after 2 flights is different from arriving after 7 flights.
+
+State:
+
+$$
+(u,k)
+$$
+
+where:
+
+- `u` = city;
+- `k` = flights used.
+
+Then:
+
+$$
+dp[k][u]
+=
+\text{best cost reaching }u
+\text{ using }k\text{ transitions}.
+$$
+
+This principle generalizes.
+
+
+### Common expanded states
+
+#### Limited stops
+
+$$
+(node,\ stops)
+$$
+
+#### Fuel
+
+$$
+(node,\ fuel)
+$$
+
+#### Number of obstacles removed
+
+$$
+(r,c,k)
+$$
+
+#### Whether a coupon has been used
+
+$$
+(node,\ used)
+$$
+
+#### Bitmask of visited targets
+
+$$
+(node,\ mask)
+$$
+
+#### Multiple resources
+
+$$
+(node,\ time,\ fuel)
+$$
+
+The key insight:
+
+> **Constraints that affect future options belong in the state.**
+
+
+## 21. When state dimensions become too large
+
+Suppose the state is:
+
+$$
+(node,\ time,\ cost)
+$$
+
+A full DP table may be enormous.
+
+But many states are dominated.
+
+Consider two states at the same node:
+
+```text
+A = (time=10, cost=50)
+B = (time=12, cost=60)
+```
+
+If lower time and lower cost are both better, `B` can never be useful.
+
+`A` dominates `B`.
+
+This motivates Pareto-frontier pruning.
+
+Keep only nondominated states.
+
+This is often the bridge from textbook DP to practical constrained shortest-path algorithms.
+
+
+## 22. Grid problems are graph problems
+
+A grid is simply a graph where:
+
+$$
+(r,c)
+$$
+
+is a node.
+
+Typical transitions:
+
+$$
+(r,c)\rightarrow
+(r+1,c),
+(r-1,c),
+(r,c+1),
+(r,c-1)
+$$
+
+The algorithm depends on allowed movement and costs.
+
+
+### Example: shortest path in binary matrix
+
+Each move costs one.
+
+Use BFS.
+
+```python
+from collections import deque
+
+def shortest_path(grid):
+    rows, cols = len(grid), len(grid[0])
+
+    q = deque([(0, 0, 1)])
+    seen = {(0, 0)}
+
+    while q:
+        r, c, d = q.popleft()
+
+        if (r, c) == (rows - 1, cols - 1):
+            return d
+
+        for dr, dc in directions:
+            nr, nc = r + dr, c + dc
+
+            if (
+                0 <= nr < rows
+                and 0 <= nc < cols
+                and grid[nr][nc] == 0
+                and (nr, nc) not in seen
+            ):
+                seen.add((nr, nc))
+                q.append((nr, nc, d + 1))
+
+    return -1
+```
+
+
+### Example: minimum path sum
+
+If movement is only:
+
+```text
+right
+down
+```
+
+then dependencies are acyclic.
+
+Use DP.
+
+$$
+dp[r][c]
+=
+grid[r][c]
++
+\min(
+dp[r-1][c],
+dp[r][c-1]
+)
+$$
+
+The difference from the BFS problem is not that one is a "grid problem" and one is a "DP problem."
+
+The real difference is the transition graph.
+
+
+# Classical DP Patterns
+
+## 23. Sequence DP
+
+Sequence DP often has states such as:
+
+$$
+dp[i]
+$$
+
+or
+
+$$
+dp[i][j].
+$$
+
+The first question should be:
+
+> What prefix/subsequence/subarray does this state summarize?
+
+
+### Longest common subsequence
+
+State:
+
+$$
+dp[i][j]
+=
+\text{LCS length of }
+a[i:]
+\text{ and }
+b[j:].
+$$
+
+If characters match:
+
+$$
+dp[i][j]
+=
+1+dp[i+1][j+1]
+$$
+
+otherwise:
+
+$$
+dp[i][j]
+=
+\max(
+dp[i+1][j],
+dp[i][j+1]
+)
+$$
+
+Template:
+
+```python
+def longest_common_subsequence(a, b):
+    m, n = len(a), len(b)
+
+    dp = [[0] * (n + 1) for _ in range(m + 1)]
+
+    for i in range(m - 1, -1, -1):
+        for j in range(n - 1, -1, -1):
+            if a[i] == b[j]:
+                dp[i][j] = 1 + dp[i + 1][j + 1]
+            else:
+                dp[i][j] = max(
+                    dp[i + 1][j],
+                    dp[i][j + 1],
+                )
+
+    return dp[0][0]
+```
+
+
+## 24. Knapsack-style DP
+
+A common state:
+
+$$
+dp[i][c]
+=
+\text{best answer using items }i...
+\text{ with capacity }c.
+$$
+
+Decision:
+
+```text
+skip item i
+take item i
+```
+
+Recurrence:
+
+$$
+dp[i][c]
+=
+\max
+\left(
+dp[i+1][c],
+value_i + dp[i+1][c-weight_i]
+\right)
+$$
+
+when the item fits.
+
+The deeper idea is not "knapsack."
+
+It is:
+
+> **state = decision position + remaining resource.**
+
+
+## 25. Interval DP
+
+Sometimes the subproblem is not a prefix but an interval.
+
+State:
+
+$$
+dp[l][r]
+=
+\text{answer for interval }[l,r].
+$$
+
+Typical recurrence:
+
+$$
+dp[l][r]
+=
+\min_{k\in[l,r)}
+\left(
+dp[l][k]
++
+dp[k+1][r]
++
+cost(l,k,r)
+\right)
+$$
+
+Process intervals from short to long.
+
+```python
+for length in range(1, n + 1):
+    for l in range(n - length + 1):
+        r = l + length - 1
+        ...
+```
+
+Recognize this when the decision **splits one interval into smaller intervals**.
+
+
+## 26. Bitmask DP
+
+When the problem asks about subsets of a small set, encode the subset as bits.
+
+$$
+mask\in[0,2^n)
+$$
+
+For traveling-salesman-like problems:
+
+$$
+dp[mask][u]
+=
+\text{best cost after visiting }mask
+\text{ and ending at }u.
+$$
+
+Transition:
+
+$$
+dp[mask\cup\{v\}][v]
+=
+\min(
+dp[mask\cup\{v\}][v],
+dp[mask][u]+w(u,v)
+)
+$$
+
+Complexity is often:
+
+$$
+O(2^n n^2).
+$$
+
+This is practical only when `n` is relatively small.
+
+
+# Connectivity and Spanning Trees
+
+## 27. Union-Find from first principles
+
+Some graph problems do not care about paths at all.
+
+They only ask:
+
+> Are two nodes currently in the same connected component?
+
+Union-Find maintains a partition of elements under repeated merging.
+
+Operations:
+
+```text
+find(x)
+union(x, y)
+```
+
+Template:
+
+```python
+class DSU:
+    def __init__(self, n):
+        self.parent = list(range(n))
+        self.size = [1] * n
+
+    def find(self, x):
+        while x != self.parent[x]:
+            self.parent[x] = self.parent[self.parent[x]]
+            x = self.parent[x]
+
+        return x
+
+    def union(self, a, b):
+        ra = self.find(a)
+        rb = self.find(b)
+
+        if ra == rb:
+            return False
+
+        if self.size[ra] < self.size[rb]:
+            ra, rb = rb, ra
+
+        self.parent[rb] = ra
+        self.size[ra] += self.size[rb]
+
+        return True
+```
+
+Two optimizations:
+
+- path compression;
+- union by size/rank.
+
+Together they give nearly constant amortized complexity:
+
+$$
+O(\alpha(n)).
+$$
+
+
+## 28. Minimum spanning tree
+
+An MST asks for:
+
+> the minimum-total-weight set of edges connecting all vertices.
+
+This is different from shortest path.
+
+Shortest path minimizes distance from a source.
+
+MST minimizes total network construction cost.
+
+
+### Kruskal
+
+Process edges from cheapest to most expensive.
+
+Take an edge unless it creates a cycle.
+
+```python
+def kruskal(n, edges):
+    edges.sort(key=lambda e: e[2])
+
+    dsu = DSU(n)
+    total = 0
+    used = 0
+
+    for u, v, w in edges:
+        if dsu.union(u, v):
+            total += w
+            used += 1
+
+    return total if used == n - 1 else None
+```
+
+Why the greedy step works is captured by the cut property:
+
+> For any cut, a minimum-weight edge crossing that cut can safely belong to an MST.
+
+
+# Interview Problem-Solving Framework
+
+## 29. A compact recognition framework
+
+When reading a problem, ask these questions in order.
+
+### Question 1: What is a state?
+
+What information determines future legal decisions and future cost?
+
+
+### Question 2: What are the transitions?
+
+What decisions move us to another state?
+
+
+### Question 3: Is the state-transition graph acyclic?
+
+If yes:
+
+> use DP / topological DP.
+
+
+### Question 4: If cyclic, what are the edge costs?
+
+- all `1` → BFS;
+- `0/1` → 0-1 BFS;
+- nonnegative → Dijkstra;
+- negative → Bellman-Ford.
+
+
+### Question 5: Do we need optimization, reachability, or connectivity?
+
+- reachability → DFS/BFS;
+- shortest path → BFS/Dijkstra/etc.;
+- dependency ordering → topological sort;
+- dynamic connectivity/components → Union-Find;
+- cheapest connecting network → MST.
+
+
+### Question 6: Is an extra constraint affecting the future?
+
+Add it to the state.
+
+Examples:
+
+```text
+(node, stops)
+(node, fuel)
+(node, mask)
+(row, col, obstacles_used)
+```
+
+
+## 30. Interview template: derive before coding
+
+A useful scratchpad is:
+
+```text
+State:
+    What minimum information describes the future?
+
+Transition:
+    What choices move to another state?
+
+Objective:
+    min / max / count / boolean?
+
+Base case:
+    What happens at terminal states?
+
+Dependency structure:
+    DAG or cyclic?
+
+Processing order:
+    index order / topological / queue / deque / heap /
+    repeated relaxation?
+
+Complexity:
+    #states × transitions per state
+```
+
+For graph-state problems:
+
+```text
+Node/state:
+Edges/transitions:
+Edge cost:
+Source:
+Target:
+Extra state dimensions:
+Algorithm:
+```
+
+
+## 31. Complexity from the state graph
+
+For DP, a reliable rule is:
+
+$$
+T
+=
+O(
+\#\text{states}
+\times
+\text{transitions per state}
+)
+$$
+
+Examples:
+
+### 1D DP
+
+$$
+n\text{ states}\times O(1)
+=
+O(n)
+$$
+
+### LCS
+
+$$
+mn\text{ states}\times O(1)
+=
+O(mn)
+$$
+
+### Bitmask TSP
+
+$$
+2^n n\text{ states}\times O(n)
+=
+O(2^n n^2)
+$$
+
+For graph algorithms:
+
+### BFS / DFS
+
+$$
+O(V+E)
+$$
+
+### Dijkstra with binary heap
+
+$$
+O((V+E)\log V)
+$$
+
+usually written:
+
+$$
+O(E\log V)
+$$
+
+for connected sparse graphs.
+
+### Bellman-Ford
+
+$$
+O(VE)
+$$
+
+
+## 32. Common interview failure modes
+
+### Failure 1: Adding too little to the state
+
+Example:
+
+```text
+dp[node]
+```
+
+when the future also depends on remaining fuel.
+
+Two arrivals at the same node are not equivalent.
+
+Correct state:
+
+```text
+dp[node][fuel]
+```
+
+
+### Failure 2: Adding too much to the state
+
+Storing the entire path often creates exponential states unnecessarily.
+
+Ask:
+
+> Which parts of the history can no longer affect future decisions?
+
+Discard them.
+
+
+### Failure 3: Choosing BFS because the input is a graph
+
+BFS is not "the graph algorithm."
+
+It is shortest path specifically when transitions have equal cost.
+
+
+### Failure 4: Using Dijkstra with negative edges
+
+The issue is not implementation.
+
+The greedy invariant itself becomes false.
+
+
+### Failure 5: Memorizing a recurrence without its state meaning
+
+If you cannot say exactly what
+
+$$
+dp[i][j]
+$$
+
+means in English, the recurrence is fragile.
+
+
+### Failure 6: Confusing visited with finalized
+
+In BFS, first discovery is sufficient.
+
+In Dijkstra, a node may enter the heap many times.
+
+Use:
+
+```python
+if d != dist[u]:
+    continue
+```
+
+to discard stale entries.
+
+
+## 33. Reusable code templates
+
+### Memoized DP
+
+```python
+from functools import cache
+
+@cache
+def dp(state):
+    if terminal(state):
+        return base
+
+    ans = ...
+
+    for next_state in transitions(state):
+        ans = combine(ans, dp(next_state))
+
+    return ans
+```
+
+
+### 2D bottom-up DP
+
+```python
+dp = [[...] * (m + 1) for _ in range(n + 1)]
+
+for i in range(...):
+    for j in range(...):
+        dp[i][j] = ...
+```
+
+
+### BFS
+
+```python
+from collections import deque
+
+q = deque([start])
+seen = {start}
+
+while q:
+    u = q.popleft()
+
+    for v in neighbors(u):
+        if v in seen:
+            continue
+
+        seen.add(v)
+        q.append(v)
+```
+
+
+### DFS
+
+```python
+def dfs(u):
+    seen.add(u)
+
+    for v in neighbors(u):
+        if v not in seen:
+            dfs(v)
+```
+
+
+### Dijkstra
+
+```python
+import heapq
+
+dist = {start: 0}
+pq = [(0, start)]
+
+while pq:
+    d, u = heapq.heappop(pq)
+
+    if d != dist[u]:
+        continue
+
+    for v, w in neighbors(u):
+        nd = d + w
+
+        if nd < dist.get(v, float("inf")):
+            dist[v] = nd
+            heapq.heappush(pq, (nd, v))
+```
+
+
+### Topological sort
+
+```python
+from collections import deque
+
+indegree = [0] * n
+
+for u in range(n):
+    for v in graph[u]:
+        indegree[v] += 1
+
+q = deque(
+    i for i in range(n)
+    if indegree[i] == 0
+)
+
+order = []
+
+while q:
+    u = q.popleft()
+    order.append(u)
+
+    for v in graph[u]:
+        indegree[v] -= 1
+
+        if indegree[v] == 0:
+            q.append(v)
+```
+
+
+### Union-Find
+
+```python
+class DSU:
+    def __init__(self, n):
+        self.parent = list(range(n))
+        self.size = [1] * n
+
+    def find(self, x):
+        if self.parent[x] != x:
+            self.parent[x] = self.find(self.parent[x])
+
+        return self.parent[x]
+
+    def union(self, a, b):
+        a = self.find(a)
+        b = self.find(b)
+
+        if a == b:
+            return False
+
+        if self.size[a] < self.size[b]:
+            a, b = b, a
+
+        self.parent[b] = a
+        self.size[a] += self.size[b]
+
+        return True
+```
+
+
+# Practice Problems
+
+## 34. Practice problems: DP foundations
+
+Do these in order.
+
+### Level 1 — Learn to identify states
+
+#### 1. Climbing Stairs — LeetCode 70
+
+Derive:
+
+$$
+dp[i]=dp[i-1]+dp[i-2]
+$$
+
+Focus:
+
+- recurrence from last decision;
+- memoization vs tabulation;
+- space compression.
+
+
+#### 2. House Robber — LeetCode 198
+
+Focus:
+
+```text
+skip
+take
+```
+
+State should encode where the remaining suffix begins.
+
+
+#### 3. Min Cost Climbing Stairs — LeetCode 746
+
+Focus:
+
+- min instead of max;
+- deciding whether the state means "cost to reach" or "cost from here."
+
+
+### Level 2 — Add a resource dimension
+
+#### 4. Coin Change — LeetCode 322
+
+State:
+
+$$
+dp[x]
+=
+\text{minimum coins needed for amount }x.
+$$
+
+Interpret the amount as a node and adding a coin as an edge.
+
+Then Coin Change is also an implicit shortest-path problem.
+
+
+#### 5. Partition Equal Subset Sum — LeetCode 416
+
+State:
+
+$$
+dp[i][s]
+$$
+
+or optimized:
+
+$$
+dp[s].
+$$
+
+Focus:
+
+> decision position + remaining/achieved resource.
+
+
+#### 6. Target Sum — LeetCode 494
+
+Useful for learning that different histories can collapse onto the same numeric state.
+
+
+## 35. Practice problems: sequence DP
+
+### 7. Longest Increasing Subsequence — LeetCode 300
+
+First solve:
+
+$$
+O(n^2)
+$$
+
+with
+
+$$
+dp[i]
+=
+\text{best LIS ending at }i.
+$$
+
+Only afterward learn the `O(n log n)` patience-sorting solution.
+
+The DP formulation makes the problem structure explicit.
+
+
+### 8. Longest Common Subsequence — LeetCode 1143
+
+Essential 2D sequence DP.
+
+
+### 9. Edit Distance — LeetCode 72
+
+State:
+
+$$
+dp[i][j]
+=
+\text{minimum edits to transform suffix }a[i:]
+\text{ into }b[j:].
+$$
+
+Transitions correspond to:
+
+- insert;
+- delete;
+- replace/match.
+
+This is especially useful because it makes the state graph interpretation obvious.
+
+
+## 36. Practice problems: grid = implicit graph
+
+### 10. Unique Paths — LeetCode 62
+
+Pure DAG DP.
+
+
+### 11. Minimum Path Sum — LeetCode 64
+
+Weighted DAG shortest path.
+
+
+### 12. Number of Islands — LeetCode 200
+
+DFS/BFS connected components.
+
+Compare this directly with Minimum Path Sum.
+
+Both use a grid.
+
+The transition structure/objective determines the algorithm.
+
+
+### 13. Rotting Oranges — LeetCode 994
+
+Multi-source BFS.
+
+Key trick:
+
+Initialize the queue with **all sources simultaneously**.
+
+
+### 14. Shortest Path in Binary Matrix — LeetCode 1091
+
+Classic BFS shortest path.
+
+
+## 37. Practice problems: topology and dependency graphs
+
+### 15. Course Schedule — LeetCode 207
+
+Goal:
+
+> detect whether a directed graph contains a cycle.
+
+Solve both ways:
+
+- three-color DFS;
+- Kahn's algorithm.
+
+
+### 16. Course Schedule II — LeetCode 210
+
+Return the topological ordering.
+
+
+### 17. Alien Dictionary — LeetCode 269
+
+A strong interview problem because graph construction is harder than the topological sort itself.
+
+Focus:
+
+> Infer edges from constraints before running the graph algorithm.
+
+
+## 38. Practice problems: shortest paths
+
+### 18. Network Delay Time — LeetCode 743
+
+Canonical Dijkstra.
+
+Before coding, explicitly state:
+
+```text
+state = node
+edge cost = delay
+weights = nonnegative
+=> Dijkstra
+```
+
+
+### 19. Path With Minimum Effort — LeetCode 1631
+
+The path cost is not a sum.
+
+It is:
+
+$$
+\max(\text{edge costs along path})
+$$
+
+Relaxation becomes:
+
+$$
+new =
+\max(dist[u], w(u,v)).
+$$
+
+Then minimize that value.
+
+This teaches an important idea:
+
+> Dijkstra is not fundamentally about summing weights; it works whenever the path objective has the appropriate monotonic property.
+
+
+### 20. Cheapest Flights Within K Stops — LeetCode 787
+
+This is especially important.
+
+A plain:
+
+```text
+dist[node]
+```
+
+is insufficient because the number of flights used affects future feasibility.
+
+Use:
+
+$$
+dp[k][v]
+$$
+
+or an expanded graph state:
+
+$$
+(v,k).
+$$
+
+Solve it at least two ways:
+
+1. Bellman-Ford-style bounded relaxation;
+2. state-space shortest path.
+
+This directly exercises our earlier discussion about multi-constraint graph states.
+
+
+## 39. Practice problems: 0-1 BFS and state expansion
+
+### 21. Minimum Cost to Make at Least One Valid Path in a Grid — LeetCode 1368
+
+Transitions cost either:
+
+```text
+0: follow arrow
+1: change arrow
+```
+
+Perfect 0-1 BFS problem.
+
+
+### 22. Shortest Path in a Grid with Obstacles Elimination — LeetCode 1293
+
+State:
+
+$$
+(r,c,k)
+$$
+
+where `k` records obstacle eliminations used or remaining.
+
+This is a canonical demonstration that:
+
+> same location + different resource state = different graph node.
+
+
+### 23. State compression / key collection problems
+
+Example:
+
+**Shortest Path to Get All Keys — LeetCode 864**
+
+State:
+
+$$
+(r,c,mask)
+$$
+
+Use BFS over the expanded state graph.
+
+
+## 40. Practice problems: Union-Find / MST
+
+### 24. Number of Provinces — LeetCode 547
+
+Solve with:
+
+- DFS;
+- Union-Find.
+
+Understand why both solve connectivity but maintain different abstractions.
+
+
+### 25. Redundant Connection — LeetCode 684
+
+For every edge:
+
+```python
+if not union(u, v):
+    # endpoints were already connected
+    # this edge creates a cycle
+```
+
+
+### 26. Min Cost to Connect All Points — LeetCode 1584
+
+Solve with either:
+
+- Kruskal + Union-Find;
+- Prim.
+
+Focus on distinguishing:
+
+```text
+shortest path
+vs.
+minimum spanning tree
+```
+
+
+# Synthesis and Study Strategy
+
+## 41. Higher-value synthesis problems
+
+These are more useful than doing many nearly identical easy problems.
+
+### Word Ladder — LeetCode 127
+
+Why it matters:
+
+- implicit graph;
+- shortest path;
+- efficient neighbor construction;
+- BFS layers.
+
+
+### Decode Ways — LeetCode 91
+
+Why it matters:
+
+- identifying state from parsing;
+- recurrence based on one- and two-character transitions.
+
+
+### Burst Balloons — LeetCode 312
+
+Why it matters:
+
+Naively choosing the first balloon is awkward.
+
+Instead reverse the decision:
+
+> Which balloon is popped **last** in interval `[l,r]`?
+
+That creates independent subproblems.
+
+This is a major DP-design lesson:
+
+> **If the natural decision does not create independent subproblems, change the direction of the decision.**
+
+
+### Regular Expression Matching — LeetCode 10
+
+Why it matters:
+
+- compact state design;
+- branching transitions;
+- 2D memoization;
+- separating syntax from state.
+
+
+### Minimum Cost to Reach Destination with Constraints
+
+Any problem containing:
+
+```text
+minimum cost
+subject to time <= T
+```
+
+is worth practicing.
+
+Try defining:
+
+$$
+dp[time][node]
+$$
+
+then ask:
+
+- can the resource dimension be bounded?
+- can dominated states be removed?
+- is a full DP table feasible?
+
+This trains the multi-objective/Pareto-frontier reasoning that appears in harder interviews.
+
+
+## 42. Recommended practice order
+
+Rather than studying algorithms independently, practice them in contrasts.
+
+### Pair 1: same grid, different structure
+
+1. Minimum Path Sum
+2. Shortest Path in Binary Matrix
+3. Number of Islands
+
+Learn:
+
+```text
+DAG optimization -> DP
+unit-cost shortest path -> BFS
+connectivity -> DFS/BFS
+```
+
+
+### Pair 2: same relaxation, different processing order
+
+1. DAG shortest path
+2. Network Delay Time
+3. Bellman-Ford / Cheapest Flights Within K Stops
+
+Learn:
+
+```text
+topological order
+vs.
+priority-queue order
+vs.
+repeated relaxation
+```
+
+
+### Pair 3: same node, different state
+
+1. ordinary shortest path
+2. Cheapest Flights Within K Stops
+3. Shortest Path with Obstacles Elimination
+4. Shortest Path to Get All Keys
+
+Learn:
+
+```text
+node
+(node, steps)
+(node, resource)
+(node, bitmask)
+```
+
+
+### Pair 4: same graph, different objective
+
+1. Network Delay Time
+2. Number of Provinces
+3. Min Cost to Connect All Points
+
+Learn:
+
+```text
+shortest path
+connectivity
+minimum spanning tree
+```
+
+
+# Final Synthesis
+
+## 43. The most important conceptual distinctions
+
+### DP vs backtracking
+
+Backtracking asks:
+
+> enumerate decision paths.
+
+DP asks:
+
+> which histories are equivalent for all future decisions?
+
+Memoization merges equivalent histories.
+
+Thus DP can be viewed as:
+
+> **backtracking + state equivalence + caching.**
+
+
+### DP vs greedy
+
+DP preserves multiple candidate states until enough information exists to compare them.
+
+Greedy discards alternatives immediately.
+
+Greedy requires a proof that the discarded alternatives can never become optimal.
+
+Dijkstra is interesting because it uses both:
+
+- DP-like relaxation;
+- greedy finalization.
+
+
+### BFS vs Dijkstra
+
+Both process states in increasing distance.
+
+The difference is how distance ordering is maintained.
+
+#### BFS
+
+Each new edge adds exactly `1`.
+
+FIFO is sufficient.
+
+#### Dijkstra
+
+Edges have arbitrary nonnegative weights.
+
+A priority queue is needed.
+
+
+### Dijkstra vs Bellman-Ford
+
+#### Dijkstra
+
+> Once the minimum tentative node is selected, finalize it.
+
+Requires nonnegative weights.
+
+#### Bellman-Ford
+
+> Do not trust finalization; repeatedly propagate improvements.
+
+Supports negative edges.
+
+
+### Graph algorithm vs DP
+
+This distinction is often artificial.
+
+A more useful continuum is:
+
+```text
+state-transition optimization
+|
++-- known DAG order ----------> ordinary DP
+|
++-- arbitrary unit weights ---> BFS
+|
++-- 0/1 weights --------------> 0-1 BFS
+|
++-- nonnegative weights ------> Dijkstra
+|
++-- negative weights ---------> Bellman-Ford
+```
+
+
+## 44. A 60-second interview reasoning script
+
+When presented with a new problem:
+
+> I'll first model the problem as states and transitions.  
+> The state needs to contain exactly the information that affects future choices.  
+> Then I'll determine whether the state graph is acyclic.  
+> If it is, this is DP/topological DP.  
+> If not, I'll inspect transition costs: unit weights suggest BFS, nonnegative weights Dijkstra, and negative weights repeated relaxation such as Bellman-Ford.  
+> If constraints like remaining stops or resources affect feasibility, I'll add them as another state dimension.  
+> Complexity is then roughly the number of reachable states times the transitions explored per state.
+
+That explanation demonstrates substantially more understanding than simply naming an algorithm.
+
+
+## 45. Final mental model
+
+Do not start with:
+
+```text
+Is this a DP problem?
+Is this a graph problem?
+```
+
+Start with:
+
+$$
+\boxed{
+\text{state}
+\rightarrow
+\text{transition}
+\rightarrow
+\text{objective}
+\rightarrow
+\text{processing order}
+}
+$$
+
+Then:
+
+$$
+\boxed{
+\text{DP and graph algorithms are different execution strategies over state-transition systems.}
+}
+$$
+
+The recurring questions are:
+
+1. **What information defines an equivalent future?**
+2. **What are the legal transitions?**
+3. **What quantity is being propagated?**
+4. **When is a state's value safe to use or finalize?**
+
+If you can answer those four questions, most interview DP and graph problems stop being collections of tricks and become instances of the same underlying framework.

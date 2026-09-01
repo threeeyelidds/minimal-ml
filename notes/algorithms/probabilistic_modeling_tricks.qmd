@@ -1,0 +1,696 @@
+# Probability modeling tricks
+
+## 0. Core Toolkit
+
+### 0.1 Random Variables, Expectation, Variance
+
+For a discrete random variable $X$,
+
+$$
+\mathbb E[X] = \sum_x x\,P(X=x).
+$$
+
+For a continuous random variable,
+
+$$
+\mathbb E[X] = \int x f_X(x)\,dx.
+$$
+
+Variance:
+
+$$
+\operatorname{Var}(X)
+=
+\mathbb E[(X-\mathbb E[X])^2]
+=
+\mathbb E[X^2]-\mathbb E[X]^2.
+$$
+
+Covariance:
+
+$$
+\operatorname{Cov}(X,Y)
+=
+\mathbb E[XY]-\mathbb E[X]\mathbb E[Y].
+$$
+
+Useful identity:
+
+$$
+\operatorname{Var}(X+Y)
+=
+\operatorname{Var}(X)+\operatorname{Var}(Y)
++2\operatorname{Cov}(X,Y).
+$$
+
+If $X,Y$ are independent,
+
+$$
+\operatorname{Cov}(X,Y)=0.
+$$
+
+---
+
+### 0.2 Linearity of Expectation
+
+Always:
+
+$$
+\mathbb E\left[\sum_i X_i\right]
+=
+\sum_i \mathbb E[X_i].
+$$
+
+Independence is **not required**.
+
+This is one of the most useful interview tricks.
+
+Typical signal:
+
+> "Expected number of objects/pairs/events satisfying some property."
+
+Represent the count as
+
+$$
+X = \sum_i I_i,
+$$
+
+where $I_i$ is an indicator variable.
+
+Since
+
+$$
+\mathbb E[I_i]=P(I_i=1),
+$$
+
+we get
+
+$$
+\mathbb E[X]=\sum_i P(I_i=1).
+$$
+
+---
+
+### 0.3 Indicator Variables
+
+For event $A$,
+
+$$
+I_A =
+\begin{cases}
+1 & A\text{ occurs}\\
+0 & \text{otherwise}
+\end{cases}
+$$
+
+and
+
+$$
+\mathbb E[I_A] = P(A).
+$$
+
+Example: collision pairs among $n$ items placed uniformly into $v$ buckets.
+
+$$
+C = \sum_{i<j} I_{ij}
+$$
+
+where
+
+$$
+P(I_{ij}=1)=\frac1v.
+$$
+
+Therefore
+
+$$
+\mathbb E[C]
+=
+\binom n2\frac1v.
+$$
+
+---
+
+### 0.4 Conditional Probability
+
+$$
+P(A\mid B)
+=
+\frac{P(A\cap B)}{P(B)}.
+$$
+
+Product rule:
+
+$$
+P(A\cap B)
+=
+P(A\mid B)P(B).
+$$
+
+Law of total probability:
+
+$$
+P(A)
+=
+\sum_b P(A\mid B=b)P(B=b).
+$$
+
+Continuous analogue:
+
+$$
+P(A)
+=
+\int P(A\mid X=x)f_X(x)\,dx.
+$$
+
+---
+
+### 0.5 Bayes' Rule
+
+$$
+P(A\mid B)
+=
+\frac{P(B\mid A)P(A)}{P(B)}.
+$$
+
+Often the denominator only normalizes the distribution, so:
+
+$$
+P(A\mid B)
+\propto
+P(B\mid A)P(A).
+$$
+
+Useful interview interpretation:
+
+> Conditioning reweights the original population according to how likely the observed event is.
+
+If
+
+$$
+P(B\mid X=x)
+$$
+
+increases with $x$, then conditioning on $B$ biases the distribution toward larger $x$.
+
+---
+
+### 0.6 Law of Total Expectation
+
+$$
+\mathbb E[X]
+=
+\mathbb E[\mathbb E[X\mid Y]].
+$$
+
+Discrete form:
+
+$$
+\mathbb E[X]
+=
+\sum_y
+\mathbb E[X\mid Y=y]P(Y=y).
+$$
+
+Very useful when the problem becomes easy after conditioning on some intermediate variable.
+
+Pattern:
+
+$$
+\boxed{\text{Condition on something that makes the randomness simple.}}
+$$
+
+---
+
+### 0.7 Conditional Expectation
+
+$$
+\mathbb E[X\mid A]
+=
+\sum_x xP(X=x\mid A).
+$$
+
+Using Bayes,
+
+$$
+P(X=x\mid A)
+=
+\frac{P(A\mid X=x)P(X=x)}{P(A)}.
+$$
+
+Therefore
+
+$$
+\mathbb E[X\mid A]
+=
+\frac{
+\mathbb E[X\,P(A\mid X)]
+}{
+\mathbb E[P(A\mid X)]
+}.
+$$
+
+This form is especially useful for selection bias.
+
+---
+
+### 0.8 Size-Biased Sampling
+
+Suppose objects have size $L$.
+
+If the probability of observing an object is proportional to its size,
+
+$$
+P(\text{observe}\mid L)\propto L,
+$$
+
+then
+
+$$
+P(L\mid \text{observe})
+\propto L P(L).
+$$
+
+The expected observed size becomes
+
+$$
+\mathbb E[L_{\text{obs}}]
+=
+\frac{\mathbb E[L^2]}{\mathbb E[L]}
+=
+\mathbb E[L]
++
+\frac{\operatorname{Var}(L)}{\mathbb E[L]}.
+$$
+
+Therefore
+
+$$
+\mathbb E[L_{\text{obs}}]\ge \mathbb E[L].
+$$
+
+This explains:
+
+- friend paradox
+- inspection paradox
+- token/article length bias
+- user/activity sampling bias
+- exposure bias
+
+---
+
+### 0.9 Complement Probability
+
+For "at least one":
+
+$$
+P(\text{at least one})
+=
+1-P(\text{none}).
+$$
+
+If $n$ independent trials each succeed with probability $p$,
+
+$$
+P(\text{at least one success})
+=
+1-(1-p)^n.
+$$
+
+This often avoids inclusion-exclusion.
+
+---
+
+### 0.10 Binomial Distribution
+
+If
+
+$$
+X\sim\operatorname{Binomial}(n,p),
+$$
+
+then
+
+$$
+P(X=k)
+=
+\binom nk p^k(1-p)^{n-k}.
+$$
+
+Mean:
+
+$$
+\mathbb E[X]=np.
+$$
+
+Variance:
+
+$$
+\operatorname{Var}(X)=np(1-p).
+$$
+
+Interpretation:
+
+$$
+X=\sum_{i=1}^n I_i.
+$$
+
+---
+
+### 0.11 Geometric Distribution
+
+If $X$ is the number of trials until the first success,
+
+$$
+P(X=k)
+=
+(1-p)^{k-1}p.
+$$
+
+and
+
+$$
+\mathbb E[X]=\frac1p.
+$$
+
+Memoryless property:
+
+$$
+P(X>s+t\mid X>s)=P(X>t).
+$$
+
+Common signal:
+
+> "How long until the first ...?"
+
+---
+
+### 0.12 Poisson Distribution
+
+For rare independent events,
+
+$$
+X\sim\operatorname{Poisson}(\lambda),
+$$
+
+with
+
+$$
+P(X=k)
+=
+e^{-\lambda}\frac{\lambda^k}{k!}.
+$$
+
+Mean and variance:
+
+$$
+\mathbb E[X]
+=
+\operatorname{Var}(X)
+=
+\lambda.
+$$
+
+Approximation:
+
+$$
+\operatorname{Binomial}(n,p)
+\approx
+\operatorname{Poisson}(np)
+$$
+
+when
+
+$$
+n\gg1,\qquad p\ll1.
+$$
+
+---
+
+### 0.13 Useful Approximations
+
+For small $x$,
+
+$$
+e^x \approx 1+x.
+$$
+
+Therefore
+
+$$
+1-x\approx e^{-x}.
+$$
+
+More generally,
+
+$$
+(1-p)^n
+\approx
+e^{-np}
+$$
+
+when $p$ is small.
+
+Hence
+
+$$
+1-(1-p)^n
+\approx
+1-e^{-np}.
+$$
+
+If additionally $np\ll1$,
+
+$$
+1-e^{-np}
+\approx np.
+$$
+
+This is extremely useful for rare-token / collision / occupancy problems.
+
+---
+
+### 0.14 Combinatorics
+
+Number of unordered pairs:
+
+$$
+\binom n2
+=
+\frac{n(n-1)}2.
+$$
+
+General combinations:
+
+$$
+\binom nk
+=
+\frac{n!}{k!(n-k)!}.
+$$
+
+Permutations:
+
+$$
+P(n,k)
+=
+\frac{n!}{(n-k)!}.
+$$
+
+Interview heuristic:
+
+- order matters $\rightarrow$ permutation
+- order does not matter $\rightarrow$ combination
+
+---
+
+### 0.15 Independence vs. Uncorrelated
+
+Independence:
+
+$$
+P(X,Y)=P(X)P(Y).
+$$
+
+Independent variables satisfy
+
+$$
+\mathbb E[XY]
+=
+\mathbb E[X]\mathbb E[Y].
+$$
+
+Therefore
+
+$$
+\operatorname{Cov}(X,Y)=0.
+$$
+
+But
+
+$$
+\operatorname{Cov}(X,Y)=0
+$$
+
+does **not** generally imply independence.
+
+Also remember:
+
+> Linearity of expectation does not require independence.
+
+---
+
+### 0.16 Variance of a Sum
+
+For
+
+$$
+S=\sum_i X_i,
+$$
+
+$$
+\operatorname{Var}(S)
+=
+\sum_i\operatorname{Var}(X_i)
++
+2\sum_{i<j}\operatorname{Cov}(X_i,X_j).
+$$
+
+If the variables are independent,
+
+$$
+\operatorname{Var}(S)
+=
+\sum_i\operatorname{Var}(X_i).
+$$
+
+This distinction matters because expectation questions are often much easier than variance questions.
+
+---
+
+### 0.17 Jensen's Inequality
+
+For convex $f$,
+
+$$
+f(\mathbb E[X])
+\le
+\mathbb E[f(X)].
+$$
+
+For concave $f$,
+
+$$
+f(\mathbb E[X])
+\ge
+\mathbb E[f(X)].
+$$
+
+Examples:
+
+Because $x^2$ is convex,
+
+$$
+\mathbb E[X^2]\ge \mathbb E[X]^2.
+$$
+
+Because $\log x$ is concave,
+
+$$
+\mathbb E[\log X]
+\le
+\log \mathbb E[X].
+$$
+
+Useful when asked to compare two quantities without computing them exactly.
+
+---
+
+### 0.18 Tail-Sum Formula
+
+For a nonnegative integer-valued random variable,
+
+$$
+\mathbb E[X]
+=
+\sum_{k=1}^{\infty}P(X\ge k).
+$$
+
+Continuous version:
+
+$$
+\mathbb E[X]
+=
+\int_0^\infty P(X>x)\,dx.
+$$
+
+Useful when calculating the distribution of $X$ directly is difficult but its tail probability is easy.
+
+---
+
+## 1. Problem-Solving Patterns
+
+Before doing algebra, ask:
+
+### Pattern A — Expected count?
+
+Use indicators:
+
+$$
+X=\sum_i I_i.
+$$
+
+### Pattern B — "Given that we observed..."?
+
+Use Bayes / reweighting:
+
+$$
+P(X\mid A)\propto P(A\mid X)P(X).
+$$
+
+### Pattern C — "At least one"?
+
+Use the complement:
+
+$$
+P(\ge1)=1-P(0).
+$$
+
+### Pattern D — Random process becomes easier after knowing something?
+
+Condition:
+
+$$
+E[X]=E[E[X\mid Y]].
+$$
+
+### Pattern E — Rare event repeated many times?
+
+Think
+
+$$
+(1-p)^n\approx e^{-np}
+$$
+
+or Poisson.
+
+### Pattern F — Expected number of pairs?
+
+Almost always consider
+
+$$
+\binom n2
+$$
+
+possible pairs + an indicator for each pair.
+
+### Pattern G — Sampling through an event?
+
+Ask whether
+
+$$
+P(\text{selected}\mid X)
+$$
+
+depends on $X$.
+
+If yes, expect selection bias.
