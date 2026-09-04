@@ -1265,6 +1265,21 @@ dist[x]+w(x,u)&lt;dist[u].
 </section>
 <section id="bellman-ford-as-explicit-dp" class="level2">
 <h2 class="anchored" data-anchor-id="bellman-ford-as-explicit-dp">16. Bellman-Ford as explicit DP</h2>
+<div class="callout callout-style-default callout-note callout-titled" title="Connection to reinforcement learning">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Connection to reinforcement learning
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Shortest-path algorithms and RL share the same underlying idea: <strong>propagate value over a state-transition graph using Bellman-style updates.</strong></p>
+<p>The main differences are how value dependencies are scheduled and whether the transition model is known.</p>
+<p>See <a href="../../notes/algorithms/rl_algo.html">From Graph Algorithms to Reinforcement Learning</a> for the full connection.</p>
+</div>
+</div>
 <section id="bellmanford-as-dynamic-programming-on-an-expanded-dag" class="level3">
 <h3 class="anchored" data-anchor-id="bellmanford-as-dynamic-programming-on-an-expanded-dag">Bellman–Ford as Dynamic Programming on an Expanded DAG</h3>
 <p>A useful way to understand Bellman–Ford is:</p>

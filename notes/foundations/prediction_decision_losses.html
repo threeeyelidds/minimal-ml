@@ -396,7 +396,7 @@ p_j-\mathbb 1[j=y].
 <p>The target logit rises; competing logits fall in proportion to their predicted probability.</p>
 <section id="minimal-stable-implementation" class="level4">
 <h4 class="anchored" data-anchor-id="minimal-stable-implementation">Minimal stable implementation</h4>
-<div id="11bfc833" class="cell" data-execution_count="1">
+<div id="b38b1e68" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch.nn.functional <span class="im">as</span> F</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -489,7 +489,7 @@ z_\theta(x),
 \max(z,0)-yz+\log(1+e^{-|z|}),
 \]</span></p>
 <p>with derivative <span class="math inline">\(\sigma(z)-y\)</span>.</p>
-<div id="f9eae13e" class="cell" data-execution_count="2">
+<div id="1659e0ff" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> binary_cross_entropy_with_logits(logits, targets, reduction<span class="op">=</span><span class="st">"mean"</span>):</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    targets <span class="op">=</span> targets.to(logits.dtype)</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    losses <span class="op">=</span> torch.logaddexp(torch.zeros_like(logits), logits) <span class="op">-</span> targets <span class="op">*</span> logits</span>
@@ -575,7 +575,7 @@ p,&amp;y=1,\\
 -\alpha_t(1-p_t)^\gamma\log p_t.
 \]</span></p>
 <p>At <span class="math inline">\(\gamma=0\)</span> it becomes weighted CE. For <span class="math inline">\(\gamma&gt;0\)</span>, the vast population of easy examples contributes less gradient. This helped dense detection where easy background anchors overwhelmed rare foreground examples. It can hurt probability calibration, so use it for gradient allocation—not merely because a dataset is imbalanced.</p>
-<div id="49ffba7c" class="cell" data-execution_count="3">
+<div id="6c0ff439" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> binary_focal_loss(logits, targets, gamma<span class="op">=</span><span class="fl">2.0</span>, alpha<span class="op">=</span><span class="va">None</span>):</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    targets <span class="op">=</span> targets.to(logits.dtype)</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    bce <span class="op">=</span> F.binary_cross_entropy_with_logits(logits, targets, reduction<span class="op">=</span><span class="st">"none"</span>)</span>
@@ -640,7 +640,7 @@ rD_{ij}^2
 <p>Some sources use <span class="math inline">\(y=0\)</span> for similar pairs and <span class="math inline">\(y=1\)</span> for dissimilar pairs. The formula changes appearance but not meaning. Always define which value denotes a positive pair.</p>
 </div>
 </div>
-<div id="7a9ab063" class="cell" data-execution_count="4">
+<div id="58de9e5e" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> pairwise_contrastive_loss(</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    left_embeddings,</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    right_embeddings,</span>
@@ -702,7 +702,7 @@ d(e_a,e_p)+m\le d(e_a,e_n),
 }.
 \]</span></p>
 <p>This is ordinary cross-entropy over a dynamically constructed classification problem: candidate <span class="math inline">\(i\)</span> is the target class and the other batch elements provide negatives. Temperature controls how strongly the loss focuses on the largest similarities.</p>
-<div id="9faf85de" class="cell" data-execution_count="5">
+<div id="81af3024" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> info_nce_loss(anchors, positives, temperature<span class="op">=</span><span class="fl">0.1</span>):</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    anchors <span class="op">=</span> F.normalize(anchors, dim<span class="op">=-</span><span class="dv">1</span>)</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    positives <span class="op">=</span> F.normalize(positives, dim<span class="op">=-</span><span class="dv">1</span>)</span>

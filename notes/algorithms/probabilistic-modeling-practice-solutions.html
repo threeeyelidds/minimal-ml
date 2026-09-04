@@ -1,0 +1,2043 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Kedi Xu">
+<meta name="dcterms.date" content="2026-09-04">
+
+<title>Probabilistic Modeling Practice: 20 Worked Problems – Minimal ML</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-f83c246346592b24d02aa84ae3974412.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<meta name="google-site-verification" content="Ztjr25pGaioeZP-mkoIn_MkNmmsFXWcU6I6W2tEPli0">
+
+  <script>window.backupDefine = window.define; window.define = undefined;</script><script src="https://cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <script>window.define = window.backupDefine; window.backupDefine = undefined;</script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.css">
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../../styles.css">
+<link rel="stylesheet" href="../../colors.css">
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">Minimal ML</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../notes/index.html"> 
+<span class="menu-text">Notes</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../essays/index.html"> 
+<span class="menu-text">Essays</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#a-reusable-modeling-workflow" id="toc-a-reusable-modeling-workflow" class="nav-link active" data-scroll-target="#a-reusable-modeling-workflow"><span class="header-section-number">1</span> A reusable modeling workflow</a></li>
+  <li><a href="#balls-into-buckets" id="toc-balls-into-buckets" class="nav-link" data-scroll-target="#balls-into-buckets"><span class="header-section-number">2</span> Balls into buckets</a>
+  <ul class="collapse">
+  <li><a href="#question" id="toc-question" class="nav-link" data-scroll-target="#question"><span class="header-section-number">2.1</span> Question</a></li>
+  <li><a href="#solution" id="toc-solution" class="nav-link" data-scroll-target="#solution"><span class="header-section-number">2.2</span> Solution</a></li>
+  <li><a href="#expected-number-of-colliding-pairs" id="toc-expected-number-of-colliding-pairs" class="nav-link" data-scroll-target="#expected-number-of-colliding-pairs"><span class="header-section-number">2.3</span> Expected number of colliding pairs</a></li>
+  <li><a href="#expected-number-of-occupied-buckets" id="toc-expected-number-of-occupied-buckets" class="nav-link" data-scroll-target="#expected-number-of-occupied-buckets"><span class="header-section-number">2.4</span> Expected number of occupied buckets</a></li>
+  <li><a href="#probability-of-at-least-one-collision" id="toc-probability-of-at-least-one-collision" class="nav-link" data-scroll-target="#probability-of-at-least-one-collision"><span class="header-section-number">2.5</span> Probability of at least one collision</a></li>
+  </ul></li>
+  <li><a href="#length-biased-sampling" id="toc-length-biased-sampling" class="nav-link" data-scroll-target="#length-biased-sampling"><span class="header-section-number">3</span> Length-biased sampling</a>
+  <ul class="collapse">
+  <li><a href="#question-1" id="toc-question-1" class="nav-link" data-scroll-target="#question-1"><span class="header-section-number">3.1</span> Question</a></li>
+  <li><a href="#solution-1" id="toc-solution-1" class="nav-link" data-scroll-target="#solution-1"><span class="header-section-number">3.2</span> Solution</a></li>
+  </ul></li>
+  <li><a href="#medical-test-and-the-base-rate-effect" id="toc-medical-test-and-the-base-rate-effect" class="nav-link" data-scroll-target="#medical-test-and-the-base-rate-effect"><span class="header-section-number">4</span> Medical test and the base-rate effect</a>
+  <ul class="collapse">
+  <li><a href="#question-2" id="toc-question-2" class="nav-link" data-scroll-target="#question-2"><span class="header-section-number">4.1</span> Question</a></li>
+  <li><a href="#solution-2" id="toc-solution-2" class="nav-link" data-scroll-target="#solution-2"><span class="header-section-number">4.2</span> Solution</a></li>
+  </ul></li>
+  <li><a href="#mixture-of-coins" id="toc-mixture-of-coins" class="nav-link" data-scroll-target="#mixture-of-coins"><span class="header-section-number">5</span> Mixture of coins</a>
+  <ul class="collapse">
+  <li><a href="#question-3" id="toc-question-3" class="nav-link" data-scroll-target="#question-3"><span class="header-section-number">5.1</span> Question</a></li>
+  <li><a href="#solution-3" id="toc-solution-3" class="nav-link" data-scroll-target="#solution-3"><span class="header-section-number">5.2</span> Solution</a></li>
+  </ul></li>
+  <li><a href="#betabernoulli-model" id="toc-betabernoulli-model" class="nav-link" data-scroll-target="#betabernoulli-model"><span class="header-section-number">6</span> Beta–Bernoulli model</a>
+  <ul class="collapse">
+  <li><a href="#question-4" id="toc-question-4" class="nav-link" data-scroll-target="#question-4"><span class="header-section-number">6.1</span> Question</a></li>
+  <li><a href="#solution-4" id="toc-solution-4" class="nav-link" data-scroll-target="#solution-4"><span class="header-section-number">6.2</span> Solution</a></li>
+  </ul></li>
+  <li><a href="#dirichletcategorical-model" id="toc-dirichletcategorical-model" class="nav-link" data-scroll-target="#dirichletcategorical-model"><span class="header-section-number">7</span> Dirichlet–categorical model</a>
+  <ul class="collapse">
+  <li><a href="#question-5" id="toc-question-5" class="nav-link" data-scroll-target="#question-5"><span class="header-section-number">7.1</span> Question</a></li>
+  <li><a href="#solution-5" id="toc-solution-5" class="nav-link" data-scroll-target="#solution-5"><span class="header-section-number">7.2</span> Solution</a></li>
+  </ul></li>
+  <li><a href="#capturerecapture" id="toc-capturerecapture" class="nav-link" data-scroll-target="#capturerecapture"><span class="header-section-number">8</span> Capture–recapture</a>
+  <ul class="collapse">
+  <li><a href="#question-6" id="toc-question-6" class="nav-link" data-scroll-target="#question-6"><span class="header-section-number">8.1</span> Question</a></li>
+  <li><a href="#solution-6" id="toc-solution-6" class="nav-link" data-scroll-target="#solution-6"><span class="header-section-number">8.2</span> Solution</a></li>
+  </ul></li>
+  <li><a href="#poisson-arrivals" id="toc-poisson-arrivals" class="nav-link" data-scroll-target="#poisson-arrivals"><span class="header-section-number">9</span> Poisson arrivals</a>
+  <ul class="collapse">
+  <li><a href="#question-7" id="toc-question-7" class="nav-link" data-scroll-target="#question-7"><span class="header-section-number">9.1</span> Question</a></li>
+  <li><a href="#solution-7" id="toc-solution-7" class="nav-link" data-scroll-target="#solution-7"><span class="header-section-number">9.2</span> Solution</a></li>
+  <li><a href="#exactly-three-requests-in-one-minute" id="toc-exactly-three-requests-in-one-minute" class="nav-link" data-scroll-target="#exactly-three-requests-in-one-minute"><span class="header-section-number">9.3</span> Exactly three requests in one minute</a></li>
+  <li><a href="#no-requests-for-30-seconds" id="toc-no-requests-for-30-seconds" class="nav-link" data-scroll-target="#no-requests-for-30-seconds"><span class="header-section-number">9.4</span> No requests for 30 seconds</a></li>
+  <li><a href="#time-until-the-next-request" id="toc-time-until-the-next-request" class="nav-link" data-scroll-target="#time-until-the-next-request"><span class="header-section-number">9.5</span> Time until the next request</a></li>
+  <li><a href="#time-until-the-tenth-request" id="toc-time-until-the-tenth-request" class="nav-link" data-scroll-target="#time-until-the-tenth-request"><span class="header-section-number">9.6</span> Time until the tenth request</a></li>
+  </ul></li>
+  <li><a href="#ab-testing" id="toc-ab-testing" class="nav-link" data-scroll-target="#ab-testing"><span class="header-section-number">10</span> A/B testing</a>
+  <ul class="collapse">
+  <li><a href="#question-8" id="toc-question-8" class="nav-link" data-scroll-target="#question-8"><span class="header-section-number">10.1</span> Question</a></li>
+  <li><a href="#solution-8" id="toc-solution-8" class="nav-link" data-scroll-target="#solution-8"><span class="header-section-number">10.2</span> Solution</a></li>
+  <li><a href="#point-estimate-and-uncertainty" id="toc-point-estimate-and-uncertainty" class="nav-link" data-scroll-target="#point-estimate-and-uncertainty"><span class="header-section-number">10.3</span> Point estimate and uncertainty</a></li>
+  <li><a href="#two-sided-test-of-equal-ctr" id="toc-two-sided-test-of-equal-ctr" class="nav-link" data-scroll-target="#two-sided-test-of-equal-ctr"><span class="header-section-number">10.4</span> Two-sided test of equal CTR</a></li>
+  <li><a href="#bayesian-comparison" id="toc-bayesian-comparison" class="nav-link" data-scroll-target="#bayesian-comparison"><span class="header-section-number">10.5</span> Bayesian comparison</a></li>
+  </ul></li>
+  <li><a href="#simpsons-paradox" id="toc-simpsons-paradox" class="nav-link" data-scroll-target="#simpsons-paradox"><span class="header-section-number">11</span> Simpson’s paradox</a>
+  <ul class="collapse">
+  <li><a href="#question-9" id="toc-question-9" class="nav-link" data-scroll-target="#question-9"><span class="header-section-number">11.1</span> Question</a></li>
+  <li><a href="#solution-9" id="toc-solution-9" class="nav-link" data-scroll-target="#solution-9"><span class="header-section-number">11.2</span> Solution</a></li>
+  </ul></li>
+  <li><a href="#missing-observations-and-selection-bias" id="toc-missing-observations-and-selection-bias" class="nav-link" data-scroll-target="#missing-observations-and-selection-bias"><span class="header-section-number">12</span> Missing observations and selection bias</a>
+  <ul class="collapse">
+  <li><a href="#question-10" id="toc-question-10" class="nav-link" data-scroll-target="#question-10"><span class="header-section-number">12.1</span> Question</a></li>
+  <li><a href="#solution-10" id="toc-solution-10" class="nav-link" data-scroll-target="#solution-10"><span class="header-section-number">12.2</span> Solution</a></li>
+  <li><a href="#when-is-the-clicked-mean-valid" id="toc-when-is-the-clicked-mean-valid" class="nav-link" data-scroll-target="#when-is-the-clicked-mean-valid"><span class="header-section-number">12.3</span> When is the clicked mean valid?</a></li>
+  <li><a href="#adjustment-using-observed-covariates" id="toc-adjustment-using-observed-covariates" class="nav-link" data-scroll-target="#adjustment-using-observed-covariates"><span class="header-section-number">12.4</span> Adjustment using observed covariates</a></li>
+  </ul></li>
+  <li><a href="#position-bias-in-ranking" id="toc-position-bias-in-ranking" class="nav-link" data-scroll-target="#position-bias-in-ranking"><span class="header-section-number">13</span> Position bias in ranking</a>
+  <ul class="collapse">
+  <li><a href="#question-11" id="toc-question-11" class="nav-link" data-scroll-target="#question-11"><span class="header-section-number">13.1</span> Question</a></li>
+  <li><a href="#solution-11" id="toc-solution-11" class="nav-link" data-scroll-target="#solution-11"><span class="header-section-number">13.2</span> Solution</a></li>
+  </ul></li>
+  <li><a href="#gaussian-parameter-estimation" id="toc-gaussian-parameter-estimation" class="nav-link" data-scroll-target="#gaussian-parameter-estimation"><span class="header-section-number">14</span> Gaussian parameter estimation</a>
+  <ul class="collapse">
+  <li><a href="#question-12" id="toc-question-12" class="nav-link" data-scroll-target="#question-12"><span class="header-section-number">14.1</span> Question</a></li>
+  <li><a href="#solution-12" id="toc-solution-12" class="nav-link" data-scroll-target="#solution-12"><span class="header-section-number">14.2</span> Solution</a></li>
+  </ul></li>
+  <li><a href="#gaussian-mixture-model-and-em" id="toc-gaussian-mixture-model-and-em" class="nav-link" data-scroll-target="#gaussian-mixture-model-and-em"><span class="header-section-number">15</span> Gaussian mixture model and EM</a>
+  <ul class="collapse">
+  <li><a href="#question-13" id="toc-question-13" class="nav-link" data-scroll-target="#question-13"><span class="header-section-number">15.1</span> Question</a></li>
+  <li><a href="#solution-13" id="toc-solution-13" class="nav-link" data-scroll-target="#solution-13"><span class="header-section-number">15.2</span> Solution</a></li>
+  <li><a href="#posterior-responsibility" id="toc-posterior-responsibility" class="nav-link" data-scroll-target="#posterior-responsibility"><span class="header-section-number">15.3</span> Posterior responsibility</a></li>
+  <li><a href="#em-algorithm" id="toc-em-algorithm" class="nav-link" data-scroll-target="#em-algorithm"><span class="header-section-number">15.4</span> EM algorithm</a></li>
+  </ul></li>
+  <li><a href="#hidden-markov-model" id="toc-hidden-markov-model" class="nav-link" data-scroll-target="#hidden-markov-model"><span class="header-section-number">16</span> Hidden Markov model</a>
+  <ul class="collapse">
+  <li><a href="#question-14" id="toc-question-14" class="nav-link" data-scroll-target="#question-14"><span class="header-section-number">16.1</span> Question</a></li>
+  <li><a href="#solution-14" id="toc-solution-14" class="nav-link" data-scroll-target="#solution-14"><span class="header-section-number">16.2</span> Solution</a></li>
+  <li><a href="#filtering-and-smoothing-forwardbackward" id="toc-filtering-and-smoothing-forwardbackward" class="nav-link" data-scroll-target="#filtering-and-smoothing-forwardbackward"><span class="header-section-number">16.3</span> Filtering and smoothing: forward–backward</a></li>
+  <li><a href="#most-likely-complete-path-viterbi" id="toc-most-likely-complete-path-viterbi" class="nav-link" data-scroll-target="#most-likely-complete-path-viterbi"><span class="header-section-number">16.4</span> Most likely complete path: Viterbi</a></li>
+  </ul></li>
+  <li><a href="#bayesian-ranking-and-exploration" id="toc-bayesian-ranking-and-exploration" class="nav-link" data-scroll-target="#bayesian-ranking-and-exploration"><span class="header-section-number">17</span> Bayesian ranking and exploration</a>
+  <ul class="collapse">
+  <li><a href="#question-15" id="toc-question-15" class="nav-link" data-scroll-target="#question-15"><span class="header-section-number">17.1</span> Question</a></li>
+  <li><a href="#solution-15" id="toc-solution-15" class="nav-link" data-scroll-target="#solution-15"><span class="header-section-number">17.2</span> Solution</a></li>
+  </ul></li>
+  <li><a href="#coupon-collector" id="toc-coupon-collector" class="nav-link" data-scroll-target="#coupon-collector"><span class="header-section-number">18</span> Coupon collector</a>
+  <ul class="collapse">
+  <li><a href="#question-16" id="toc-question-16" class="nav-link" data-scroll-target="#question-16"><span class="header-section-number">18.1</span> Question</a></li>
+  <li><a href="#solution-16" id="toc-solution-16" class="nav-link" data-scroll-target="#solution-16"><span class="header-section-number">18.2</span> Solution</a></li>
+  </ul></li>
+  <li><a href="#maximum-and-minimum-of-uniform-variables" id="toc-maximum-and-minimum-of-uniform-variables" class="nav-link" data-scroll-target="#maximum-and-minimum-of-uniform-variables"><span class="header-section-number">19</span> Maximum and minimum of uniform variables</a>
+  <ul class="collapse">
+  <li><a href="#question-17" id="toc-question-17" class="nav-link" data-scroll-target="#question-17"><span class="header-section-number">19.1</span> Question</a></li>
+  <li><a href="#solution-17" id="toc-solution-17" class="nav-link" data-scroll-target="#solution-17"><span class="header-section-number">19.2</span> Solution</a></li>
+  <li><a href="#maximum" id="toc-maximum" class="nav-link" data-scroll-target="#maximum"><span class="header-section-number">19.3</span> Maximum</a></li>
+  <li><a href="#minimum" id="toc-minimum" class="nav-link" data-scroll-target="#minimum"><span class="header-section-number">19.4</span> Minimum</a></li>
+  </ul></li>
+  <li><a href="#random-walk-and-gamblers-ruin" id="toc-random-walk-and-gamblers-ruin" class="nav-link" data-scroll-target="#random-walk-and-gamblers-ruin"><span class="header-section-number">20</span> Random walk and gambler’s ruin</a>
+  <ul class="collapse">
+  <li><a href="#question-18" id="toc-question-18" class="nav-link" data-scroll-target="#question-18"><span class="header-section-number">20.1</span> Question</a></li>
+  <li><a href="#solution-18" id="toc-solution-18" class="nav-link" data-scroll-target="#solution-18"><span class="header-section-number">20.2</span> Solution</a></li>
+  <li><a href="#mean-and-variance" id="toc-mean-and-variance" class="nav-link" data-scroll-target="#mean-and-variance"><span class="header-section-number">20.3</span> Mean and variance</a></li>
+  <li><a href="#probability-of-hitting-n-before-0" id="toc-probability-of-hitting-n-before-0" class="nav-link" data-scroll-target="#probability-of-hitting-n-before-0"><span class="header-section-number">20.4</span> Probability of hitting <span class="math inline">N</span> before <span class="math inline">0</span></a></li>
+  <li><a href="#expected-time-to-hit-either-boundary" id="toc-expected-time-to-hit-either-boundary" class="nav-link" data-scroll-target="#expected-time-to-hit-either-boundary"><span class="header-section-number">20.5</span> Expected time to hit either boundary</a></li>
+  </ul></li>
+  <li><a href="#probabilistic-graphical-model-reasoning" id="toc-probabilistic-graphical-model-reasoning" class="nav-link" data-scroll-target="#probabilistic-graphical-model-reasoning"><span class="header-section-number">21</span> Probabilistic graphical-model reasoning</a>
+  <ul class="collapse">
+  <li><a href="#question-19" id="toc-question-19" class="nav-link" data-scroll-target="#question-19"><span class="header-section-number">21.1</span> Question</a></li>
+  <li><a href="#solution-19" id="toc-solution-19" class="nav-link" data-scroll-target="#solution-19"><span class="header-section-number">21.2</span> Solution</a></li>
+  <li><a href="#common-cause-xleftarrow-zrightarrow-y" id="toc-common-cause-xleftarrow-zrightarrow-y" class="nav-link" data-scroll-target="#common-cause-xleftarrow-zrightarrow-y"><span class="header-section-number">21.3</span> Common cause: <span class="math inline">X\leftarrow Z\rightarrow Y</span></a></li>
+  <li><a href="#collider-xrightarrow-zleftarrow-y" id="toc-collider-xrightarrow-zleftarrow-y" class="nav-link" data-scroll-target="#collider-xrightarrow-zleftarrow-y"><span class="header-section-number">21.4</span> Collider: <span class="math inline">X\rightarrow Z\leftarrow Y</span></a></li>
+  </ul></li>
+  <li><a href="#final-synthesis" id="toc-final-synthesis" class="nav-link" data-scroll-target="#final-synthesis"><span class="header-section-number">22</span> Final synthesis</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Probabilistic Modeling Practice: 20 Worked Problems</h1>
+<p class="subtitle lead">From probability fundamentals to latent-variable models, ranking, and sequential inference</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Kedi Xu </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">September 4, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="a-reusable-modeling-workflow" class="level2" data-number="1">
+<h2 data-number="1" class="anchored" data-anchor-id="a-reusable-modeling-workflow"><span class="header-section-number">1</span> A reusable modeling workflow</h2>
+<p>For each problem, move through the same sequence:</p>
+<p><span class="math display">
+\boxed{
+\text{random variables}
+\rightarrow \text{assumptions}
+\rightarrow \text{joint distribution}
+\rightarrow \text{desired marginal or conditional}
+}
+</span></p>
+<p>Useful recurring tools:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Goal</th>
+<th>Default tool</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Expected count</td>
+<td>Indicators + linearity of expectation</td>
+</tr>
+<tr class="even">
+<td>Probability of at least one event</td>
+<td>Complement or inclusion–exclusion</td>
+</tr>
+<tr class="odd">
+<td>Infer a hidden cause</td>
+<td>Bayes’ rule</td>
+</tr>
+<tr class="even">
+<td>Predict a future observation</td>
+<td>Marginalize over posterior uncertainty</td>
+</tr>
+<tr class="odd">
+<td>Estimate parameters</td>
+<td>Write and optimize the log-likelihood</td>
+</tr>
+<tr class="even">
+<td>Correct logged-feedback bias</td>
+<td>Condition on covariates or use propensities</td>
+</tr>
+<tr class="odd">
+<td>Sequential latent inference</td>
+<td>Dynamic programming</td>
+</tr>
+</tbody>
+</table>
+<div class="callout callout-style-default callout-tip callout-titled" title="Interview habit">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Interview habit
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Before calculating, state what is random, what is observed, and which conditional-independence assumptions justify the factorization. This often matters more than the final algebra.</p>
+</div>
+</div>
+</section>
+<section id="balls-into-buckets" class="level2" data-number="2">
+<h2 data-number="2" class="anchored" data-anchor-id="balls-into-buckets"><span class="header-section-number">2</span> Balls into buckets</h2>
+<section id="question" class="level3" data-number="2.1">
+<h3 data-number="2.1" class="anchored" data-anchor-id="question"><span class="header-section-number">2.1</span> Question</h3>
+<p>You throw <span class="math inline">n</span> balls independently and uniformly into <span class="math inline">m</span> buckets.</p>
+<ol type="1">
+<li>What is the expected number of colliding pairs?</li>
+<li>What is the expected number of occupied buckets?</li>
+<li>What is the probability of at least one collision?</li>
+<li>Approximate the collision probability when <span class="math inline">n\ll m</span>.</li>
+</ol>
+<p><strong>Concepts:</strong> indicators, linearity of expectation, birthday paradox, and Poisson approximation.</p>
+</section>
+<section id="solution" class="level3" data-number="2.2">
+<h3 data-number="2.2" class="anchored" data-anchor-id="solution"><span class="header-section-number">2.2</span> Solution</h3>
+<p>Throw <span class="math inline">n</span> balls independently and uniformly into <span class="math inline">m</span> buckets. Let <span class="math inline">B_i</span> be the bucket selected by ball <span class="math inline">i</span>.</p>
+</section>
+<section id="expected-number-of-colliding-pairs" class="level3" data-number="2.3">
+<h3 data-number="2.3" class="anchored" data-anchor-id="expected-number-of-colliding-pairs"><span class="header-section-number">2.3</span> Expected number of colliding pairs</h3>
+<p>For each pair <span class="math inline">i&lt;j</span>, define</p>
+<p><span class="math display">
+I_{ij}=\mathbf 1\{B_i=B_j\}.
+</span></p>
+<p>The collision-pair count is <span class="math inline">C=\sum_{i&lt;j}I_{ij}</span>. Since <span class="math inline">P(B_i=B_j)=1/m</span>,</p>
+<p><span class="math display">
+\boxed{E[C]=\binom n2\frac1m=\frac{n(n-1)}{2m}}.
+</span></p>
+<p>The indicators need not be mutually independent; linearity of expectation does not require independence.</p>
+</section>
+<section id="expected-number-of-occupied-buckets" class="level3" data-number="2.4">
+<h3 data-number="2.4" class="anchored" data-anchor-id="expected-number-of-occupied-buckets"><span class="header-section-number">2.4</span> Expected number of occupied buckets</h3>
+<p>Let <span class="math inline">J_k</span> indicate that bucket <span class="math inline">k</span> is occupied. It is empty only if every ball avoids it:</p>
+<p><span class="math display">
+P(J_k=0)=\left(1-\frac1m\right)^n.
+</span></p>
+<p>Therefore</p>
+<p><span class="math display">
+\boxed{E[O]=m\left[1-\left(1-\frac1m\right)^n\right]}
+\approx m(1-e^{-n/m}).
+</span></p>
+</section>
+<section id="probability-of-at-least-one-collision" class="level3" data-number="2.5">
+<h3 data-number="2.5" class="anchored" data-anchor-id="probability-of-at-least-one-collision"><span class="header-section-number">2.5</span> Probability of at least one collision</h3>
+<p>For <span class="math inline">n\le m</span>,</p>
+<p><span class="math display">
+P(C=0)=\prod_{k=0}^{n-1}\left(1-\frac{k}{m}\right),
+</span></p>
+<p>so</p>
+<p><span class="math display">
+\boxed{P(C\ge1)=1-\prod_{k=0}^{n-1}\left(1-\frac{k}{m}\right)}.
+</span></p>
+<p>If <span class="math inline">n&gt;m</span>, the probability is <span class="math inline">1</span> by the pigeonhole principle.</p>
+<p>When <span class="math inline">n\ll m</span>, use <span class="math inline">\log(1-x)\approx-x</span>:</p>
+<p><span class="math display">
+P(C\ge1)
+\approx 1-\exp\left[-\frac{n(n-1)}{2m}\right].
+</span></p>
+<p>For rare collisions, <span class="math inline">C</span> is approximately Poisson with</p>
+<p><span class="math display">
+\lambda=\frac{n(n-1)}{2m}.
+</span></p>
+<p>If <span class="math inline">\lambda\ll1</span>, then <span class="math inline">P(C\ge1)\approx\lambda</span>.</p>
+</section>
+</section>
+<section id="length-biased-sampling" class="level2" data-number="3">
+<h2 data-number="3" class="anchored" data-anchor-id="length-biased-sampling"><span class="header-section-number">3</span> Length-biased sampling</h2>
+<section id="question-1" class="level3" data-number="3.1">
+<h3 data-number="3.1" class="anchored" data-anchor-id="question-1"><span class="header-section-number">3.1</span> Question</h3>
+<p>Documents have random lengths <span class="math inline">L</span> with distribution <span class="math inline">P(L=\ell)</span>. Select one token uniformly from all tokens in the corpus and inspect the document containing it.</p>
+<ol type="1">
+<li>What is the distribution of that document’s length?</li>
+<li>Show that <span class="math inline">P(L=\ell\mid\text{random token})\propto \ell P(L=\ell)</span>.</li>
+<li>What is the expected length of the selected token’s document, and how does it compare with the document-level average <span class="math inline">E[L]</span>?</li>
+</ol>
+<p><strong>Concepts:</strong> size-biased distributions, conditional probability, and the inspection paradox.</p>
+</section>
+<section id="solution-1" class="level3" data-number="3.2">
+<h3 data-number="3.2" class="anchored" data-anchor-id="solution-1"><span class="header-section-number">3.2</span> Solution</h3>
+<p>Let document length <span class="math inline">L</span> have document-level distribution <span class="math inline">P(L=\ell)=p_\ell</span>. Select one token uniformly from the entire corpus and inspect its document.</p>
+<p>A document of length <span class="math inline">\ell</span> contributes <span class="math inline">\ell</span> possible sampled tokens, so it is <span class="math inline">\ell</span> times as likely to be encountered as a unit-length document. Normalizing gives</p>
+<p><span class="math display">
+\boxed{
+P_{\text{token}}(L=\ell)
+=\frac{\ell p_\ell}{E[L]}
+}.
+</span></p>
+<p>Its expected length is</p>
+<p><span class="math display">
+E_{\text{token}}[L]
+=\sum_\ell \ell\frac{\ell p_\ell}{E[L]}
+=\boxed{\frac{E[L^2]}{E[L]}}.
+</span></p>
+<p>Using <span class="math inline">E[L^2]=\operatorname{Var}(L)+E[L]^2</span>,</p>
+<p><span class="math display">
+\boxed{
+E_{\text{token}}[L]
+=E[L]+\frac{\operatorname{Var}(L)}{E[L]}
+\ge E[L]
+}.
+</span></p>
+<p>Equality holds only when all documents have the same length. This is the inspection paradox / size-bias effect.</p>
+</section>
+</section>
+<section id="medical-test-and-the-base-rate-effect" class="level2" data-number="4">
+<h2 data-number="4" class="anchored" data-anchor-id="medical-test-and-the-base-rate-effect"><span class="header-section-number">4</span> Medical test and the base-rate effect</h2>
+<section id="question-2" class="level3" data-number="4.1">
+<h3 data-number="4.1" class="anchored" data-anchor-id="question-2"><span class="header-section-number">4.1</span> Question</h3>
+<p>A disease occurs in <span class="math inline">1\%</span> of people. A test satisfies</p>
+<p><span class="math display">
+P(+\mid D)=0.95,
+\qquad
+P(+\mid\neg D)=0.05.
+</span></p>
+<ol type="1">
+<li>Given a positive result, compute <span class="math inline">P(D\mid +)</span>.</li>
+<li>Recompute it if disease prevalence falls to <span class="math inline">0.1\%</span>.</li>
+<li>Explain why high sensitivity does not necessarily imply high precision.</li>
+</ol>
+<p><strong>Concepts:</strong> Bayes’ rule, the law of total probability, and base-rate effects.</p>
+</section>
+<section id="solution-2" class="level3" data-number="4.2">
+<h3 data-number="4.2" class="anchored" data-anchor-id="solution-2"><span class="header-section-number">4.2</span> Solution</h3>
+<p>Suppose</p>
+<p><span class="math display">
+P(D)=0.01,\qquad P(+\mid D)=0.95,\qquad P(+\mid \neg D)=0.05.
+</span></p>
+<p>Because <span class="math inline">D</span> and <span class="math inline">\neg D</span> partition the population,</p>
+<p><span class="math display">
+P(+)=P(+\mid D)P(D)+P(+\mid\neg D)P(\neg D).
+</span></p>
+<p>Bayes’ rule gives</p>
+<p><span class="math display">
+P(D\mid+)
+=\frac{0.95(0.01)}{0.95(0.01)+0.05(0.99)}
+=\boxed{0.1610}.
+</span></p>
+<p>With prevalence <span class="math inline">P(D)=0.001</span>,</p>
+<p><span class="math display">
+P(D\mid+)
+=\frac{0.95(0.001)}{0.95(0.001)+0.05(0.999)}
+=\boxed{0.0187}.
+</span></p>
+<p>The sensitivity <span class="math inline">P(+\mid D)</span> and the precision <span class="math inline">P(D\mid+)</span> reverse the conditioning and can be very different.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="What must sum to one?">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>What must sum to one?
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><span class="math inline">P(+\mid D)+P(-\mid D)=1</span> because the outcomes share the same conditioning event. In general, <span class="math inline">P(+\mid D)+P(+\mid\neg D)</span> need not equal <span class="math inline">1</span>; it happens to do so for the supplied numbers.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="mixture-of-coins" class="level2" data-number="5">
+<h2 data-number="5" class="anchored" data-anchor-id="mixture-of-coins"><span class="header-section-number">5</span> Mixture of coins</h2>
+<section id="question-3" class="level3" data-number="5.1">
+<h3 data-number="5.1" class="anchored" data-anchor-id="question-3"><span class="header-section-number">5.1</span> Question</h3>
+<p>Choose one of two coins. Let <span class="math inline">Z\sim\operatorname{Bernoulli}(0.3)</span>, where <span class="math inline">Z=1</span> selects coin 1. Coin 1 has <span class="math inline">P(H)=0.8</span> and coin 2 has <span class="math inline">P(H)=0.4</span>. You observe <span class="math inline">H,H,T,H</span>.</p>
+<ol type="1">
+<li>Compute <span class="math inline">P(Z=1\mid H,H,T,H)</span>.</li>
+<li>Compute the posterior predictive probability that the next toss is heads.</li>
+</ol>
+<p><strong>Concepts:</strong> latent variables, conditional independence, posterior inference, and posterior prediction.</p>
+</section>
+<section id="solution-3" class="level3" data-number="5.2">
+<h3 data-number="5.2" class="anchored" data-anchor-id="solution-3"><span class="header-section-number">5.2</span> Solution</h3>
+<p>Let <span class="math inline">Z=1</span> select coin 1 and <span class="math inline">Z=0</span> select coin 2:</p>
+<p><span class="math display">
+P(Z=1)=0.3,\qquad P(H\mid Z=1)=0.8,\qquad P(H\mid Z=0)=0.4.
+</span></p>
+<p>For <span class="math inline">X=(H,H,T,H)</span>, conditional independence of tosses gives</p>
+<p><span class="math display">
+P(X\mid Z=1)=0.8^3(0.2)=0.1024,
+</span></p>
+<p><span class="math display">
+P(X\mid Z=0)=0.4^3(0.6)=0.0384.
+</span></p>
+<p>The unnormalized posterior weights are</p>
+<p><span class="math display">
+w_1=0.3(0.1024)=0.03072,
+\qquad
+w_0=0.7(0.0384)=0.02688.
+</span></p>
+<p>Thus</p>
+<p><span class="math display">
+\boxed{P(Z=1\mid X)=\frac{w_1}{w_1+w_0}=0.5333}.
+</span></p>
+<p>For the next toss, marginalize the uncertain coin identity:</p>
+<p><span class="math display">
+\begin{aligned}
+P(H_{\text{next}}\mid X)
+&amp;=\sum_zP(H_{\text{next}}\mid Z=z)P(Z=z\mid X)\\
+&amp;=0.8(0.5333)+0.4(0.4667)\\
+&amp;=\boxed{0.6133}.
+\end{aligned}
+</span></p>
+</section>
+</section>
+<section id="betabernoulli-model" class="level2" data-number="6">
+<h2 data-number="6" class="anchored" data-anchor-id="betabernoulli-model"><span class="header-section-number">6</span> Beta–Bernoulli model</h2>
+<section id="question-4" class="level3" data-number="6.1">
+<h3 data-number="6.1" class="anchored" data-anchor-id="question-4"><span class="header-section-number">6.1</span> Question</h3>
+<p>Suppose</p>
+<p><span class="math display">
+p\sim\operatorname{Beta}(\alpha,\beta),
+\qquad
+X_i\mid p\sim\operatorname{Bernoulli}(p).
+</span></p>
+<p>After observing <span class="math inline">h</span> heads and <span class="math inline">t</span> tails:</p>
+<ol type="1">
+<li>Derive the posterior distribution of <span class="math inline">p</span>.</li>
+<li>Compute <span class="math inline">E[p\mid D]</span>.</li>
+<li>Compute the probability that the next toss is heads.</li>
+</ol>
+<p><strong>Concepts:</strong> conjugate priors, Bayesian updating, and posterior prediction.</p>
+</section>
+<section id="solution-4" class="level3" data-number="6.2">
+<h3 data-number="6.2" class="anchored" data-anchor-id="solution-4"><span class="header-section-number">6.2</span> Solution</h3>
+<p>Let</p>
+<p><span class="math display">
+p\sim\operatorname{Beta}(\alpha,\beta),
+\qquad
+X_i\mid p\overset{iid}{\sim}\operatorname{Bernoulli}(p).
+</span></p>
+<p>After <span class="math inline">h</span> heads and <span class="math inline">t</span> tails, the likelihood is proportional to <span class="math inline">p^h(1-p)^t</span>. Multiplying by the prior,</p>
+<p><span class="math display">
+p(p\mid D)
+\propto p^{\alpha+h-1}(1-p)^{\beta+t-1}.
+</span></p>
+<p>Therefore</p>
+<p><span class="math display">
+\boxed{p\mid D\sim\operatorname{Beta}(\alpha+h,\beta+t)}.
+</span></p>
+<p>The posterior mean is</p>
+<p><span class="math display">
+\boxed{E[p\mid D]=\frac{\alpha+h}{\alpha+\beta+h+t}}.
+</span></p>
+<p>The next-toss probability is the posterior predictive:</p>
+<p><span class="math display">
+\begin{aligned}
+P(X_{n+1}=1\mid D)
+&amp;=\int P(X_{n+1}=1\mid p)p(p\mid D)\,dp\\
+&amp;=\int p\,p(p\mid D)\,dp\\
+&amp;=\boxed{\frac{\alpha+h}{\alpha+\beta+h+t}}.
+\end{aligned}
+</span></p>
+<p>The prior acts like <span class="math inline">\alpha</span> pseudo-heads and <span class="math inline">\beta</span> pseudo-tails.</p>
+</section>
+</section>
+<section id="dirichletcategorical-model" class="level2" data-number="7">
+<h2 data-number="7" class="anchored" data-anchor-id="dirichletcategorical-model"><span class="header-section-number">7</span> Dirichlet–categorical model</h2>
+<section id="question-5" class="level3" data-number="7.1">
+<h3 data-number="7.1" class="anchored" data-anchor-id="question-5"><span class="header-section-number">7.1</span> Question</h3>
+<p>A user’s clicks belong to <span class="math inline">K</span> categories:</p>
+<p><span class="math display">
+\theta\sim\operatorname{Dirichlet}(\alpha_1,\ldots,\alpha_K),
+\qquad
+X_i\mid\theta\sim\operatorname{Categorical}(\theta).
+</span></p>
+<p>After observing counts <span class="math inline">n_1,\ldots,n_K</span>:</p>
+<ol type="1">
+<li>Derive the posterior distribution of <span class="math inline">\theta</span>.</li>
+<li>Derive the posterior predictive probability of category <span class="math inline">j</span>.</li>
+</ol>
+<p><strong>Concepts:</strong> conjugacy, categorical models, and Bayesian smoothing.</p>
+</section>
+<section id="solution-5" class="level3" data-number="7.2">
+<h3 data-number="7.2" class="anchored" data-anchor-id="solution-5"><span class="header-section-number">7.2</span> Solution</h3>
+<p>Let</p>
+<p><span class="math display">
+\theta\sim\operatorname{Dirichlet}(\alpha_1,\ldots,\alpha_K),
+\qquad X_i\mid\theta\sim\operatorname{Categorical}(\theta).
+</span></p>
+<p>Given counts <span class="math inline">n_1,\ldots,n_K</span>, the likelihood is proportional to <span class="math inline">\prod_k\theta_k^{n_k}</span>. Hence</p>
+<p><span class="math display">
+\boxed{
+\theta\mid D
+\sim\operatorname{Dirichlet}(\alpha_1+n_1,\ldots,\alpha_K+n_K)
+}.
+</span></p>
+<p>Writing <span class="math inline">\alpha_0=\sum_k\alpha_k</span> and <span class="math inline">n=\sum_kn_k</span>, the predictive probability for category <span class="math inline">j</span> is</p>
+<p><span class="math display">
+\boxed{
+P(X_{n+1}=j\mid D)
+=E[\theta_j\mid D]
+=\frac{\alpha_j+n_j}{\alpha_0+n}
+}.
+</span></p>
+<p>This is Bayesian additive smoothing: unseen categories retain nonzero probability when <span class="math inline">\alpha_j&gt;0</span>.</p>
+</section>
+</section>
+<section id="capturerecapture" class="level2" data-number="8">
+<h2 data-number="8" class="anchored" data-anchor-id="capturerecapture"><span class="header-section-number">8</span> Capture–recapture</h2>
+<section id="question-6" class="level3" data-number="8.1">
+<h3 data-number="8.1" class="anchored" data-anchor-id="question-6"><span class="header-section-number">8.1</span> Question</h3>
+<p>There are <span class="math inline">N</span> fish in a lake. You catch <span class="math inline">n_1</span>, mark them, and release them. Later, you catch <span class="math inline">n_2</span>, of which <span class="math inline">k</span> are marked.</p>
+<ol type="1">
+<li>Write the likelihood of <span class="math inline">k</span> given <span class="math inline">N</span>.</li>
+<li>Estimate <span class="math inline">N</span>.</li>
+<li>State the assumptions required for the estimate to be meaningful.</li>
+</ol>
+<p><strong>Concepts:</strong> the hypergeometric distribution, MLE, moment estimation, and latent population size.</p>
+</section>
+<section id="solution-6" class="level3" data-number="8.2">
+<h3 data-number="8.2" class="anchored" data-anchor-id="solution-6"><span class="header-section-number">8.2</span> Solution</h3>
+<p>There are <span class="math inline">N</span> fish. Initially <span class="math inline">n_1</span> are caught, marked, and released. A second sample contains <span class="math inline">n_2</span> fish, <span class="math inline">k</span> of which are marked.</p>
+<p>Conditional on <span class="math inline">N</span>, the second sample is hypergeometric:</p>
+<p><span class="math display">
+\boxed{
+P(k\mid N,n_1,n_2)
+=\frac{\binom{n_1}{k}\binom{N-n_1}{n_2-k}}
+{\binom{N}{n_2}}
+}.
+</span></p>
+<p>The intuitive moment estimate equates the marked fraction in the population and second sample:</p>
+<p><span class="math display">
+\frac{n_1}{N}\approx\frac{k}{n_2}
+\quad\Longrightarrow\quad
+\boxed{\hat N\approx\frac{n_1n_2}{k}}.
+</span></p>
+<p>The likelihood-based integer MLE is essentially the neighboring integer around <span class="math inline">n_1n_2/k</span> (with boundary/tie details). A common small-sample bias correction is the Chapman estimator:</p>
+<p><span class="math display">
+\boxed{
+\hat N_{\text{Chapman}}
+=\frac{(n_1+1)(n_2+1)}{k+1}-1
+}.
+</span></p>
+<p>Required assumptions include population closure, equal catchability, reliable marks, and sufficient mixing between samples. When <span class="math inline">k=0</span>, the naive estimate is infinite and the data provide only weak lower-bound information.</p>
+</section>
+</section>
+<section id="poisson-arrivals" class="level2" data-number="9">
+<h2 data-number="9" class="anchored" data-anchor-id="poisson-arrivals"><span class="header-section-number">9</span> Poisson arrivals</h2>
+<section id="question-7" class="level3" data-number="9.1">
+<h3 data-number="9.1" class="anchored" data-anchor-id="question-7"><span class="header-section-number">9.1</span> Question</h3>
+<p>Requests arrive independently according to a Poisson process at rate <span class="math inline">\lambda=5</span> per minute. Find:</p>
+<ol type="1">
+<li>the probability of exactly three requests in one minute;</li>
+<li>the probability of no requests for 30 seconds;</li>
+<li>the distribution of the time until the next request;</li>
+<li>the distribution and expected value of the waiting time until the tenth request.</li>
+</ol>
+<p><strong>Concepts:</strong> Poisson processes, exponential waiting times, and Gamma distributions.</p>
+</section>
+<section id="solution-7" class="level3" data-number="9.2">
+<h3 data-number="9.2" class="anchored" data-anchor-id="solution-7"><span class="header-section-number">9.2</span> Solution</h3>
+<p>Requests follow a Poisson process with rate <span class="math inline">\lambda=5</span> per minute.</p>
+</section>
+<section id="exactly-three-requests-in-one-minute" class="level3" data-number="9.3">
+<h3 data-number="9.3" class="anchored" data-anchor-id="exactly-three-requests-in-one-minute"><span class="header-section-number">9.3</span> Exactly three requests in one minute</h3>
+<p><span class="math display">
+\boxed{
+P(N(1)=3)=e^{-5}\frac{5^3}{3!}\approx0.1404
+}.
+</span></p>
+</section>
+<section id="no-requests-for-30-seconds" class="level3" data-number="9.4">
+<h3 data-number="9.4" class="anchored" data-anchor-id="no-requests-for-30-seconds"><span class="header-section-number">9.4</span> No requests for 30 seconds</h3>
+<p>Thirty seconds is <span class="math inline">0.5</span> minute, so the expected count is <span class="math inline">2.5</span>:</p>
+<p><span class="math display">
+\boxed{P(N(0.5)=0)=e^{-2.5}\approx0.0821}.
+</span></p>
+</section>
+<section id="time-until-the-next-request" class="level3" data-number="9.5">
+<h3 data-number="9.5" class="anchored" data-anchor-id="time-until-the-next-request"><span class="header-section-number">9.5</span> Time until the next request</h3>
+<p><span class="math display">
+\boxed{T_1\sim\operatorname{Exponential}(5)},
+\qquad E[T_1]=\frac15\text{ minute}=12\text{ seconds}.
+</span></p>
+</section>
+<section id="time-until-the-tenth-request" class="level3" data-number="9.6">
+<h3 data-number="9.6" class="anchored" data-anchor-id="time-until-the-tenth-request"><span class="header-section-number">9.6</span> Time until the tenth request</h3>
+<p>It is the sum of ten independent exponential waiting times:</p>
+<p><span class="math display">
+\boxed{T_{10}\sim\operatorname{Gamma}(\text{shape}=10,\text{rate}=5)},
+</span></p>
+<p><span class="math display">
+\boxed{E[T_{10}]=\frac{10}{5}=2\text{ minutes}}.
+</span></p>
+</section>
+</section>
+<section id="ab-testing" class="level2" data-number="10">
+<h2 data-number="10" class="anchored" data-anchor-id="ab-testing"><span class="header-section-number">10</span> A/B testing</h2>
+<section id="question-8" class="level3" data-number="10.1">
+<h3 data-number="10.1" class="anchored" data-anchor-id="question-8"><span class="header-section-number">10.1</span> Question</h3>
+<p>Variant A receives <span class="math inline">80</span> clicks from <span class="math inline">1000</span> impressions, while variant B receives <span class="math inline">100</span> clicks from <span class="math inline">1000</span> impressions.</p>
+<ol type="1">
+<li>Estimate the CTR difference <span class="math inline">p_B-p_A</span>.</li>
+<li>Derive its estimated variance and a <span class="math inline">95\%</span> confidence interval.</li>
+<li>Test <span class="math inline">H_0:p_A=p_B</span> against a two-sided alternative.</li>
+<li>With independent Beta priors, formulate and estimate <span class="math inline">P(p_B&gt;p_A\mid D)</span>.</li>
+</ol>
+<p><strong>Concepts:</strong> binomial modeling, hypothesis testing, uncertainty, and frequentist versus Bayesian inference.</p>
+</section>
+<section id="solution-8" class="level3" data-number="10.2">
+<h3 data-number="10.2" class="anchored" data-anchor-id="solution-8"><span class="header-section-number">10.2</span> Solution</h3>
+<p>Variant A has <span class="math inline">80/1000</span> clicks and B has <span class="math inline">100/1000</span>.</p>
+</section>
+<section id="point-estimate-and-uncertainty" class="level3" data-number="10.3">
+<h3 data-number="10.3" class="anchored" data-anchor-id="point-estimate-and-uncertainty"><span class="header-section-number">10.3</span> Point estimate and uncertainty</h3>
+<p><span class="math display">
+\hat p_A=0.08,\qquad \hat p_B=0.10,
+</span></p>
+<p><span class="math display">
+\boxed{\widehat{p_B-p_A}=0.02}.
+</span></p>
+<p>The unpooled estimated variance is</p>
+<p><span class="math display">
+\widehat{\operatorname{Var}}(\hat p_B-\hat p_A)
+=\frac{\hat p_A(1-\hat p_A)}{n_A}
++\frac{\hat p_B(1-\hat p_B)}{n_B}.
+</span></p>
+<p>Numerically, <span class="math inline">SE\approx0.01279</span>, giving the approximate <span class="math inline">95\%</span> confidence interval</p>
+<p><span class="math display">
+0.02\pm1.96(0.01279)
+=\boxed{[-0.0051,\ 0.0451]}.
+</span></p>
+</section>
+<section id="two-sided-test-of-equal-ctr" class="level3" data-number="10.4">
+<h3 data-number="10.4" class="anchored" data-anchor-id="two-sided-test-of-equal-ctr"><span class="header-section-number">10.4</span> Two-sided test of equal CTR</h3>
+<p>Under <span class="math inline">H_0:p_A=p_B</span>, the pooled estimate is</p>
+<p><span class="math display">
+\hat p=\frac{80+100}{2000}=0.09.
+</span></p>
+<p>Then</p>
+<p><span class="math display">
+SE_0=\sqrt{\hat p(1-\hat p)\left(\frac1{n_A}+\frac1{n_B}\right)}
+\approx0.01280,
+</span></p>
+<p><span class="math display">
+z=\frac{0.10-0.08}{0.01280}\approx1.56.
+</span></p>
+<p>The two-sided <span class="math inline">p</span>-value is about <span class="math inline">0.118</span>, so this experiment does not reject equality at the <span class="math inline">5\%</span> level.</p>
+</section>
+<section id="bayesian-comparison" class="level3" data-number="10.5">
+<h3 data-number="10.5" class="anchored" data-anchor-id="bayesian-comparison"><span class="header-section-number">10.5</span> Bayesian comparison</h3>
+<p>With independent <span class="math inline">\operatorname{Beta}(1,1)</span> priors,</p>
+<p><span class="math display">
+p_A\mid D\sim\operatorname{Beta}(81,921),
+</span></p>
+<p><span class="math display">
+p_B\mid D\sim\operatorname{Beta}(101,901).
+</span></p>
+<p>The exact probability is</p>
+<p><span class="math display">
+P(p_B&gt;p_A\mid D)
+=\int_0^1 f_B(b)F_A(b)\,db,
+</span></p>
+<p>which is approximately <span class="math inline">0.94</span> here. This is not contradictory to the frequentist result: <span class="math inline">P(p_B&gt;p_A\mid D)</span> is not a <span class="math inline">p</span>-value, and neither statement says the improvement is large enough to matter practically.</p>
+</section>
+</section>
+<section id="simpsons-paradox" class="level2" data-number="11">
+<h2 data-number="11" class="anchored" data-anchor-id="simpsons-paradox"><span class="header-section-number">11</span> Simpson’s paradox</h2>
+<section id="question-9" class="level3" data-number="11.1">
+<h3 data-number="11.1" class="anchored" data-anchor-id="question-9"><span class="header-section-number">11.1</span> Question</h3>
+<p>Consider the following A/B results:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Segment</th>
+<th style="text-align: right;">A</th>
+<th style="text-align: right;">B</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>New users</td>
+<td style="text-align: right;"><span class="math inline">10/100</span></td>
+<td style="text-align: right;"><span class="math inline">90/1000</span></td>
+</tr>
+<tr class="even">
+<td>Existing users</td>
+<td style="text-align: right;"><span class="math inline">810/900</span></td>
+<td style="text-align: right;"><span class="math inline">80/100</span></td>
+</tr>
+</tbody>
+</table>
+<ol type="1">
+<li>Which variant is better within each segment?</li>
+<li>Which variant is better overall?</li>
+<li>Do these data actually exhibit Simpson’s paradox? Explain how a reversal could arise.</li>
+</ol>
+<p><strong>Concepts:</strong> conditioning, confounding, aggregation, and weighted averages.</p>
+</section>
+<section id="solution-9" class="level3" data-number="11.2">
+<h3 data-number="11.2" class="anchored" data-anchor-id="solution-9"><span class="header-section-number">11.2</span> Solution</h3>
+<p>The supplied table is:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Segment</th>
+<th style="text-align: right;">A</th>
+<th style="text-align: right;">B</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>New users</td>
+<td style="text-align: right;"><span class="math inline">10/100=10\%</span></td>
+<td style="text-align: right;"><span class="math inline">90/1000=9\%</span></td>
+</tr>
+<tr class="even">
+<td>Existing users</td>
+<td style="text-align: right;"><span class="math inline">810/900=90\%</span></td>
+<td style="text-align: right;"><span class="math inline">80/100=80\%</span></td>
+</tr>
+</tbody>
+</table>
+<p>Within both segments, A has the higher rate. Overall,</p>
+<p><span class="math display">
+\hat p_A=\frac{820}{1000}=82\%,
+</span></p>
+<p><span class="math display">
+\hat p_B=\frac{170}{1100}\approx15.45\%.
+</span></p>
+<p>So A also wins overall.</p>
+<div class="callout callout-style-default callout-warning callout-titled" title="The given numbers are not Simpson's paradox">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>The given numbers are not Simpson’s paradox
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>There is no reversal in this table. It demonstrates how dramatically different segment mixtures can affect aggregate rates, but both conditional and aggregate comparisons favor A.</p>
+</div>
+</div>
+<p>In general, each aggregate is a weighted average:</p>
+<p><span class="math display">
+P(Y=1\mid T=t)
+=\sum_sP(Y=1\mid T=t,S=s)P(S=s\mid T=t).
+</span></p>
+<p>Simpson’s paradox occurs when A can have a higher rate within every segment, yet B has a higher aggregate rate because <span class="math inline">P(S\mid T=A)</span> and <span class="math inline">P(S\mid T=B)</span> differ sharply. Segment <span class="math inline">S</span> is associated with both treatment assignment and outcome difficulty. The remedy is not blindly choosing segmented results; it is specifying the causal estimand and adjusting for genuine pre-treatment confounders.</p>
+</section>
+</section>
+<section id="missing-observations-and-selection-bias" class="level2" data-number="12">
+<h2 data-number="12" class="anchored" data-anchor-id="missing-observations-and-selection-bias"><span class="header-section-number">12</span> Missing observations and selection bias</h2>
+<section id="question-10" class="level3" data-number="12.1">
+<h3 data-number="12.1" class="anchored" data-anchor-id="question-10"><span class="header-section-number">12.1</span> Question</h3>
+<p>Suppose user engagement <span class="math inline">Y</span> is observed only if the user clicks:</p>
+<p><span class="math display">
+C\sim\operatorname{Bernoulli}(e(X)),
+</span></p>
+<p>and <span class="math inline">Y</span> is visible only when <span class="math inline">C=1</span>.</p>
+<ol type="1">
+<li>Can <span class="math inline">E[Y\mid C=1]</span> estimate overall engagement <span class="math inline">E[Y]</span>?</li>
+<li>Under what assumptions is recovery possible?</li>
+<li>Derive an inverse-propensity-weighted estimator.</li>
+<li>What changes if selection depends on unobserved outcomes?</li>
+</ol>
+<p><strong>Concepts:</strong> selection bias, missingness, exchangeability, positivity, and inverse propensity weighting.</p>
+</section>
+<section id="solution-10" class="level3" data-number="12.2">
+<h3 data-number="12.2" class="anchored" data-anchor-id="solution-10"><span class="header-section-number">12.2</span> Solution</h3>
+<p>Suppose engagement <span class="math inline">Y</span> is observed only when <span class="math inline">C=1</span>, with</p>
+<p><span class="math display">
+C\sim\operatorname{Bernoulli}(e(X)),
+\qquad e(X)=P(C=1\mid X).
+</span></p>
+<p>In general,</p>
+<p><span class="math display">
+E[Y\mid C=1]\ne E[Y],
+</span></p>
+<p>because clicking selects a nonrepresentative population.</p>
+</section>
+<section id="when-is-the-clicked-mean-valid" class="level3" data-number="12.3">
+<h3 data-number="12.3" class="anchored" data-anchor-id="when-is-the-clicked-mean-valid"><span class="header-section-number">12.3</span> When is the clicked mean valid?</h3>
+<p>It is valid if observation is completely random with respect to outcome:</p>
+<p><span class="math display">
+Y\perp C,
+</span></p>
+<p>or under stronger designs that make the observed group representative. Usually this is implausible.</p>
+</section>
+<section id="adjustment-using-observed-covariates" class="level3" data-number="12.4">
+<h3 data-number="12.4" class="anchored" data-anchor-id="adjustment-using-observed-covariates"><span class="header-section-number">12.4</span> Adjustment using observed covariates</h3>
+<p>Assume:</p>
+<ol type="1">
+<li><strong>Conditional exchangeability / missing at random:</strong> <span class="math inline">Y\perp C\mid X</span>.</li>
+<li><strong>Positivity:</strong> <span class="math inline">e(X)&gt;0</span> wherever the target population has mass.</li>
+<li>The propensity <span class="math inline">e(X)</span> is known or consistently estimated.</li>
+<li>Relevant outcomes and covariates are measured consistently.</li>
+</ol>
+<p>Then inverse-propensity weighting recovers the population mean:</p>
+<p><span class="math display">
+\boxed{
+E[Y]
+=E\left[\frac{CY}{e(X)}\right]
+}.
+</span></p>
+<p>Indeed,</p>
+<p><span class="math display">
+E\left[\frac{CY}{e(X)}\mid X,Y\right]
+=\frac{Y}{e(X)}E[C\mid X,Y]
+=Y.
+</span></p>
+<p>If selection still depends on unobserved <span class="math inline">Y</span> after conditioning on <span class="math inline">X</span>—missing not at random—the overall mean is generally unidentified without extra assumptions, instruments, experiments, or sensitivity analysis.</p>
+</section>
+</section>
+<section id="position-bias-in-ranking" class="level2" data-number="13">
+<h2 data-number="13" class="anchored" data-anchor-id="position-bias-in-ranking"><span class="header-section-number">13</span> Position bias in ranking</h2>
+<section id="question-11" class="level3" data-number="13.1">
+<h3 data-number="13.1" class="anchored" data-anchor-id="question-11"><span class="header-section-number">13.1</span> Question</h3>
+<p>A document has intrinsic binary relevance <span class="math inline">R</span>, but clicks depend on both relevance and examination:</p>
+<p><span class="math display">
+C=E\cdot R.
+</span></p>
+<p>Suppose</p>
+<p><span class="math display">
+P(E=1\mid\text{position}=k)=e_k.
+</span></p>
+<ol type="1">
+<li>Given logged clicks, how can you estimate relevance?</li>
+<li>Why is inverse propensity weighting appropriate?</li>
+<li>What goes wrong if clicks are used directly as relevance labels?</li>
+</ol>
+<p><strong>Concepts:</strong> latent examination, position bias, propensity correction, and counterfactual learning.</p>
+</section>
+<section id="solution-11" class="level3" data-number="13.2">
+<h3 data-number="13.2" class="anchored" data-anchor-id="solution-11"><span class="header-section-number">13.2</span> Solution</h3>
+<p>Under the examination model,</p>
+<p><span class="math display">
+C=E\cdot R,
+</span></p>
+<p>where <span class="math inline">E</span> indicates examination and <span class="math inline">R</span> intrinsic relevance. At position <span class="math inline">k</span>,</p>
+<p><span class="math display">
+P(E=1\mid k)=e_k.
+</span></p>
+<p>Assuming examination and relevance are conditionally independent given the displayed context,</p>
+<p><span class="math display">
+P(C=1\mid k,x)=e_kP(R=1\mid x).
+</span></p>
+<p>Thus an observed click at position <span class="math inline">k</span> receives inverse-propensity weight <span class="math inline">1/e_k</span>. For a fixed item shown at positions <span class="math inline">k_i</span>, an IPS-style relevance estimate is</p>
+<p><span class="math display">
+\boxed{
+\hat r
+=\frac1N\sum_{i=1}^N\frac{C_i}{e_{k_i}}
+},
+</span></p>
+<p>with clipping or self-normalization often used to control variance.</p>
+<p>Training directly on clicks treats unexamined relevant results as negatives. It therefore learns the old ranker’s exposure policy and position effects along with relevance. Propensities may be estimated through randomized swaps/interleaving or an examination model; purely observational estimation requires additional identifiability assumptions.</p>
+</section>
+</section>
+<section id="gaussian-parameter-estimation" class="level2" data-number="14">
+<h2 data-number="14" class="anchored" data-anchor-id="gaussian-parameter-estimation"><span class="header-section-number">14</span> Gaussian parameter estimation</h2>
+<section id="question-12" class="level3" data-number="14.1">
+<h3 data-number="14.1" class="anchored" data-anchor-id="question-12"><span class="header-section-number">14.1</span> Question</h3>
+<p>Suppose</p>
+<p><span class="math display">
+X_i\overset{iid}{\sim}\mathcal N(\mu,\sigma^2).
+</span></p>
+<ol type="1">
+<li>Derive the MLEs of <span class="math inline">\mu</span> and <span class="math inline">\sigma^2</span>.</li>
+<li>Why does the variance MLE use <span class="math inline">1/n</span> while the unbiased sample variance uses <span class="math inline">1/(n-1)</span>?</li>
+</ol>
+<p><strong>Concepts:</strong> likelihood, optimization, estimator bias, and degrees of freedom.</p>
+</section>
+<section id="solution-12" class="level3" data-number="14.2">
+<h3 data-number="14.2" class="anchored" data-anchor-id="solution-12"><span class="header-section-number">14.2</span> Solution</h3>
+<p>Let <span class="math inline">X_i\overset{iid}{\sim}\mathcal N(\mu,\sigma^2)</span>. The log-likelihood is</p>
+<p><span class="math display">
+\ell(\mu,\sigma^2)
+=-\frac n2\log(2\pi)-\frac n2\log\sigma^2
+-\frac1{2\sigma^2}\sum_{i=1}^n(x_i-\mu)^2.
+</span></p>
+<p>Differentiating with respect to <span class="math inline">\mu</span>,</p>
+<p><span class="math display">
+\frac{\partial\ell}{\partial\mu}
+=\frac1{\sigma^2}\sum_i(x_i-\mu)=0,
+</span></p>
+<p>so</p>
+<p><span class="math display">
+\boxed{\hat\mu_{\text{MLE}}=\bar x}.
+</span></p>
+<p>Substituting <span class="math inline">\bar x</span> and differentiating with respect to <span class="math inline">\sigma^2</span> gives</p>
+<p><span class="math display">
+\boxed{
+\hat\sigma^2_{\text{MLE}}
+=\frac1n\sum_i(x_i-\bar x)^2
+}.
+</span></p>
+<p>Why is this biased? Estimating <span class="math inline">\mu</span> from the same data imposes</p>
+<p><span class="math display">
+\sum_i(x_i-\bar x)=0,
+</span></p>
+<p>leaving only <span class="math inline">n-1</span> independent residual degrees of freedom. In fact,</p>
+<p><span class="math display">
+E\left[\sum_i(X_i-\bar X)^2\right]=(n-1)\sigma^2.
+</span></p>
+<p>Therefore the unbiased estimator is</p>
+<p><span class="math display">
+\boxed{s^2=\frac1{n-1}\sum_i(x_i-\bar x)^2}.
+</span></p>
+<p>MLE optimizes likelihood; it is not defined by unbiasedness.</p>
+</section>
+</section>
+<section id="gaussian-mixture-model-and-em" class="level2" data-number="15">
+<h2 data-number="15" class="anchored" data-anchor-id="gaussian-mixture-model-and-em"><span class="header-section-number">15</span> Gaussian mixture model and EM</h2>
+<section id="question-13" class="level3" data-number="15.1">
+<h3 data-number="15.1" class="anchored" data-anchor-id="question-13"><span class="header-section-number">15.1</span> Question</h3>
+<p>Data come from</p>
+<p><span class="math display">
+p(x)=\pi\mathcal N(x;\mu_1,\sigma_1^2)
++(1-\pi)\mathcal N(x;\mu_2,\sigma_2^2),
+</span></p>
+<p>where component assignment <span class="math inline">Z_i</span> is unobserved.</p>
+<ol type="1">
+<li>Derive <span class="math inline">P(Z_i=1\mid x_i)</span>.</li>
+<li>Derive the E-step and M-step updates for EM.</li>
+<li>State important limitations of EM for Gaussian mixtures.</li>
+</ol>
+<p><strong>Concepts:</strong> latent-variable inference, marginalization, responsibilities, and EM.</p>
+</section>
+<section id="solution-13" class="level3" data-number="15.2">
+<h3 data-number="15.2" class="anchored" data-anchor-id="solution-13"><span class="header-section-number">15.2</span> Solution</h3>
+<p>Let</p>
+<p><span class="math display">
+p(x)=\pi\mathcal N(x;\mu_1,\sigma_1^2)
++(1-\pi)\mathcal N(x;\mu_2,\sigma_2^2),
+</span></p>
+<p>with latent assignment <span class="math inline">Z_i\in\{0,1\}</span>.</p>
+</section>
+<section id="posterior-responsibility" class="level3" data-number="15.3">
+<h3 data-number="15.3" class="anchored" data-anchor-id="posterior-responsibility"><span class="header-section-number">15.3</span> Posterior responsibility</h3>
+<p>Bayes’ rule gives</p>
+<p><span class="math display">
+\boxed{
+\gamma_i
+:=P(Z_i=1\mid x_i)
+=\frac{\pi\mathcal N(x_i;\mu_1,\sigma_1^2)}
+{\pi\mathcal N(x_i;\mu_1,\sigma_1^2)
++(1-\pi)\mathcal N(x_i;\mu_2,\sigma_2^2)}
+}.
+</span></p>
+</section>
+<section id="em-algorithm" class="level3" data-number="15.4">
+<h3 data-number="15.4" class="anchored" data-anchor-id="em-algorithm"><span class="header-section-number">15.4</span> EM algorithm</h3>
+<p><strong>E-step:</strong> compute <span class="math inline">\gamma_i</span> using the current parameters.</p>
+<p><strong>M-step:</strong> maximize the expected complete-data log-likelihood:</p>
+<p><span class="math display">
+N_1=\sum_i\gamma_i,\qquad N_2=\sum_i(1-\gamma_i),
+</span></p>
+<p><span class="math display">
+\pi^{\text{new}}=\frac{N_1}{n},
+</span></p>
+<p><span class="math display">
+\mu_1^{\text{new}}=\frac{\sum_i\gamma_ix_i}{N_1},
+\qquad
+\mu_2^{\text{new}}=\frac{\sum_i(1-\gamma_i)x_i}{N_2},
+</span></p>
+<p><span class="math display">
+(\sigma_1^2)^{\text{new}}
+=\frac{\sum_i\gamma_i(x_i-\mu_1^{\text{new}})^2}{N_1},
+</span></p>
+<p><span class="math display">
+(\sigma_2^2)^{\text{new}}
+=\frac{\sum_i(1-\gamma_i)(x_i-\mu_2^{\text{new}})^2}{N_2}.
+</span></p>
+<p>Repeat until the observed-data log-likelihood stops improving materially. EM monotonically increases—or leaves unchanged—the likelihood but may converge to a local optimum. Mixtures also have label-switching symmetry and can have singular likelihoods when a component variance collapses toward zero.</p>
+</section>
+</section>
+<section id="hidden-markov-model" class="level2" data-number="16">
+<h2 data-number="16" class="anchored" data-anchor-id="hidden-markov-model"><span class="header-section-number">16</span> Hidden Markov model</h2>
+<section id="question-14" class="level3" data-number="16.1">
+<h3 data-number="16.1" class="anchored" data-anchor-id="question-14"><span class="header-section-number">16.1</span> Question</h3>
+<p>A user has an unobserved intent state</p>
+<p><span class="math display">
+Z_t\in\{\text{shopping},\text{research},\text{navigation}\},
+</span></p>
+<p>with transition model <span class="math inline">P(Z_t\mid Z_{t-1})</span> and observation model <span class="math inline">P(X_t\mid Z_t)</span>. Given <span class="math inline">X_{1:T}</span>:</p>
+<ol type="1">
+<li>How do you compute <span class="math inline">P(Z_t\mid X_{1:T})</span>?</li>
+<li>How do you find the most likely complete state sequence?</li>
+<li>Why are these different inference problems?</li>
+</ol>
+<p><strong>Concepts:</strong> forward–backward, Viterbi, marginal MAP, joint MAP, and dynamic programming.</p>
+</section>
+<section id="solution-14" class="level3" data-number="16.2">
+<h3 data-number="16.2" class="anchored" data-anchor-id="solution-14"><span class="header-section-number">16.2</span> Solution</h3>
+<p>For latent intent states <span class="math inline">Z_{1:T}</span> and observed queries <span class="math inline">X_{1:T}</span>,</p>
+<p><span class="math display">
+p(z_{1:T},x_{1:T})
+=p(z_1)p(x_1\mid z_1)
+\prod_{t=2}^Tp(z_t\mid z_{t-1})p(x_t\mid z_t).
+</span></p>
+</section>
+<section id="filtering-and-smoothing-forwardbackward" class="level3" data-number="16.3">
+<h3 data-number="16.3" class="anchored" data-anchor-id="filtering-and-smoothing-forwardbackward"><span class="header-section-number">16.3</span> Filtering and smoothing: forward–backward</h3>
+<p>Define the forward message</p>
+<p><span class="math display">
+\alpha_t(j)=P(X_{1:t},Z_t=j).
+</span></p>
+<p>Its recurrence is</p>
+<p><span class="math display">
+\alpha_t(j)
+=P(X_t\mid Z_t=j)\sum_i\alpha_{t-1}(i)P(Z_t=j\mid Z_{t-1}=i).
+</span></p>
+<p>Define the backward message</p>
+<p><span class="math display">
+\beta_t(j)=P(X_{t+1:T}\mid Z_t=j),
+</span></p>
+<p>with recurrence</p>
+<p><span class="math display">
+\beta_t(i)
+=\sum_jP(Z_{t+1}=j\mid Z_t=i)
+P(X_{t+1}\mid Z_{t+1}=j)\beta_{t+1}(j).
+</span></p>
+<p>Then the smoothed marginal is</p>
+<p><span class="math display">
+\boxed{
+P(Z_t=j\mid X_{1:T})
+=\frac{\alpha_t(j)\beta_t(j)}{\sum_k\alpha_t(k)\beta_t(k)}
+}.
+</span></p>
+</section>
+<section id="most-likely-complete-path-viterbi" class="level3" data-number="16.4">
+<h3 data-number="16.4" class="anchored" data-anchor-id="most-likely-complete-path-viterbi"><span class="header-section-number">16.4</span> Most likely complete path: Viterbi</h3>
+<p>Define</p>
+<p><span class="math display">
+\delta_t(j)=\max_{z_{1:t-1}}P(z_{1:t-1},Z_t=j,X_{1:t}).
+</span></p>
+<p>Then</p>
+<p><span class="math display">
+\delta_t(j)
+=P(X_t\mid Z_t=j)
+\max_i\left[\delta_{t-1}(i)P(Z_t=j\mid Z_{t-1}=i)\right].
+</span></p>
+<p>Store each maximizing predecessor and backtrack at <span class="math inline">T</span>.</p>
+<p>Forward–backward computes a separate marginal MAP state at each time; Viterbi computes one joint MAP sequence. The individually most probable states need not form the most probable—or even structurally plausible—joint path.</p>
+</section>
+</section>
+<section id="bayesian-ranking-and-exploration" class="level2" data-number="17">
+<h2 data-number="17" class="anchored" data-anchor-id="bayesian-ranking-and-exploration"><span class="header-section-number">17</span> Bayesian ranking and exploration</h2>
+<section id="question-15" class="level3" data-number="17.1">
+<h3 data-number="17.1" class="anchored" data-anchor-id="question-15"><span class="header-section-number">17.1</span> Question</h3>
+<p>For each item <span class="math inline">i</span>,</p>
+<p><span class="math display">
+p_i\sim\operatorname{Beta}(\alpha,\beta),
+</span></p>
+<p>and you observe <span class="math inline">c_i</span> clicks from <span class="math inline">n_i</span> impressions. Compare ranking items by:</p>
+<ol type="1">
+<li>empirical CTR <span class="math inline">c_i/n_i</span>;</li>
+<li>posterior mean <span class="math inline">E[p_i\mid D]</span>;</li>
+<li>a posterior sample <span class="math inline">\tilde p_i\sim P(p_i\mid D)</span>.</li>
+</ol>
+<p>When should each score be used, and how do uncertainty and exposure bias affect the choice?</p>
+<p><strong>Concepts:</strong> Bayesian smoothing, uncertainty, exploration–exploitation, and Thompson sampling.</p>
+</section>
+<section id="solution-15" class="level3" data-number="17.2">
+<h3 data-number="17.2" class="anchored" data-anchor-id="solution-15"><span class="header-section-number">17.2</span> Solution</h3>
+<p>For item <span class="math inline">i</span>,</p>
+<p><span class="math display">
+p_i\sim\operatorname{Beta}(\alpha,\beta),
+</span></p>
+<p>with <span class="math inline">c_i</span> clicks in <span class="math inline">n_i</span> impressions. Then</p>
+<p><span class="math display">
+p_i\mid D_i
+\sim\operatorname{Beta}(\alpha+c_i,\beta+n_i-c_i).
+</span></p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Ranking score</th>
+<th>Formula</th>
+<th>Behavior</th>
+<th>Best use</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Empirical CTR</td>
+<td><span class="math inline">c_i/n_i</span></td>
+<td>No shrinkage; unstable for small <span class="math inline">n_i</span></td>
+<td>Large, comparable sample sizes; descriptive ranking</td>
+</tr>
+<tr class="even">
+<td>Posterior mean</td>
+<td><span class="math inline">(\alpha+c_i)/(\alpha+\beta+n_i)</span></td>
+<td>Shrinks uncertain items toward prior mean</td>
+<td>Stable exploitation and cold-start smoothing</td>
+</tr>
+<tr class="odd">
+<td>Thompson sample</td>
+<td><span class="math inline">\tilde p_i\sim p(p_i\mid D_i)</span></td>
+<td>Uncertain items sometimes rank high</td>
+<td>Online exploration–exploitation</td>
+</tr>
+</tbody>
+</table>
+<p>Ranking by posterior mean maximizes immediate expected clicks under the model. Thompson sampling may sacrifice immediate reward to acquire information and can improve cumulative reward. If poor recommendations are costly, a conservative lower credible bound may be preferable.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="Important logging issue">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Important logging issue
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>In a recommender, impressions are policy-dependent and affected by position. Beta–Bernoulli updating alone does not correct exposure bias; the observation model or experimental design must address it.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="coupon-collector" class="level2" data-number="18">
+<h2 data-number="18" class="anchored" data-anchor-id="coupon-collector"><span class="header-section-number">18</span> Coupon collector</h2>
+<section id="question-16" class="level3" data-number="18.1">
+<h3 data-number="18.1" class="anchored" data-anchor-id="question-16"><span class="header-section-number">18.1</span> Question</h3>
+<p>There are <span class="math inline">n</span> equally likely categories. You repeatedly draw one category independently.</p>
+<ol type="1">
+<li>What is the expected number of draws required to observe every category?</li>
+<li>Derive</li>
+</ol>
+<p><span class="math display">
+E[T]=n\left(1+\frac12+\cdots+\frac1n\right).
+</span></p>
+<ol start="3" type="1">
+<li>Give its large-<span class="math inline">n</span> approximation.</li>
+</ol>
+<p><strong>Concepts:</strong> decomposition of expectations, geometric waiting times, and harmonic numbers.</p>
+</section>
+<section id="solution-16" class="level3" data-number="18.2">
+<h3 data-number="18.2" class="anchored" data-anchor-id="solution-16"><span class="header-section-number">18.2</span> Solution</h3>
+<p>There are <span class="math inline">n</span> equally likely categories. After observing <span class="math inline">k</span> distinct categories, the probability that the next draw is new is</p>
+<p><span class="math display">
+\frac{n-k}{n}.
+</span></p>
+<p>Let <span class="math inline">W_k</span> be the additional draws needed to move from <span class="math inline">k</span> to <span class="math inline">k+1</span> observed categories. Then</p>
+<p><span class="math display">
+W_k\sim\operatorname{Geometric}\left(\frac{n-k}{n}\right),
+</span></p>
+<p>so</p>
+<p><span class="math display">
+E[W_k]=\frac{n}{n-k}.
+</span></p>
+<p>Because <span class="math inline">T=\sum_{k=0}^{n-1}W_k</span>,</p>
+<p><span class="math display">
+\begin{aligned}
+E[T]
+&amp;=\sum_{k=0}^{n-1}\frac{n}{n-k}\\
+&amp;=n\sum_{j=1}^n\frac1j\\
+&amp;=\boxed{nH_n}.
+\end{aligned}
+</span></p>
+<p>Since <span class="math inline">H_n=\log n+\gamma+o(1)</span>,</p>
+<p><span class="math display">
+\boxed{E[T]\approx n\log n+\gamma n}.
+</span></p>
+<p>The last few unseen categories dominate the waiting time.</p>
+</section>
+</section>
+<section id="maximum-and-minimum-of-uniform-variables" class="level2" data-number="19">
+<h2 data-number="19" class="anchored" data-anchor-id="maximum-and-minimum-of-uniform-variables"><span class="header-section-number">19</span> Maximum and minimum of uniform variables</h2>
+<section id="question-17" class="level3" data-number="19.1">
+<h3 data-number="19.1" class="anchored" data-anchor-id="question-17"><span class="header-section-number">19.1</span> Question</h3>
+<p>Let</p>
+<p><span class="math display">
+X_1,\ldots,X_n\overset{iid}{\sim}\operatorname{Uniform}(0,1).
+</span></p>
+<p>For <span class="math inline">M=\max_iX_i</span>:</p>
+<ol type="1">
+<li>derive its CDF and PDF;</li>
+<li>compute <span class="math inline">E[M]</span>.</li>
+</ol>
+<p>Then derive the corresponding CDF, PDF, and expectation for <span class="math inline">m=\min_iX_i</span>.</p>
+<p><strong>Concepts:</strong> order statistics, independence, and the CDF method.</p>
+</section>
+<section id="solution-17" class="level3" data-number="19.2">
+<h3 data-number="19.2" class="anchored" data-anchor-id="solution-17"><span class="header-section-number">19.2</span> Solution</h3>
+<p>Let <span class="math inline">X_1,\ldots,X_n\overset{iid}{\sim}\operatorname{Uniform}(0,1)</span>.</p>
+</section>
+<section id="maximum" class="level3" data-number="19.3">
+<h3 data-number="19.3" class="anchored" data-anchor-id="maximum"><span class="header-section-number">19.3</span> Maximum</h3>
+<p>For <span class="math inline">M=\max_iX_i</span> and <span class="math inline">0\le x\le1</span>,</p>
+<p><span class="math display">
+P(M\le x)
+=P(X_1\le x,\ldots,X_n\le x)
+=x^n.
+</span></p>
+<p>Thus</p>
+<p><span class="math display">
+\boxed{F_M(x)=x^n},
+\qquad
+\boxed{f_M(x)=nx^{n-1}}.
+</span></p>
+<p>The expectation is</p>
+<p><span class="math display">
+\boxed{E[M]=\int_0^1x\,nx^{n-1}dx=\frac{n}{n+1}}.
+</span></p>
+</section>
+<section id="minimum" class="level3" data-number="19.4">
+<h3 data-number="19.4" class="anchored" data-anchor-id="minimum"><span class="header-section-number">19.4</span> Minimum</h3>
+<p>For <span class="math inline">m=\min_iX_i</span>,</p>
+<p><span class="math display">
+P(m&gt;x)=P(X_1&gt;x,\ldots,X_n&gt;x)=(1-x)^n.
+</span></p>
+<p>Therefore</p>
+<p><span class="math display">
+\boxed{F_m(x)=1-(1-x)^n},
+</span></p>
+<p><span class="math display">
+\boxed{f_m(x)=n(1-x)^{n-1}},
+</span></p>
+<p><span class="math display">
+\boxed{E[m]=\frac1{n+1}}.
+</span></p>
+<p>The key trick is to derive the CDF from an event involving all independent variables.</p>
+</section>
+</section>
+<section id="random-walk-and-gamblers-ruin" class="level2" data-number="20">
+<h2 data-number="20" class="anchored" data-anchor-id="random-walk-and-gamblers-ruin"><span class="header-section-number">20</span> Random walk and gambler’s ruin</h2>
+<section id="question-18" class="level3" data-number="20.1">
+<h3 data-number="20.1" class="anchored" data-anchor-id="question-18"><span class="header-section-number">20.1</span> Question</h3>
+<p>A particle begins at <span class="math inline">X_0</span> and moves independently at each step:</p>
+<p><span class="math display">
+X_{t+1}=
+\begin{cases}
+X_t+1, &amp; \text{with probability }p,\\
+X_t-1, &amp; \text{with probability }1-p.
+\end{cases}
+</span></p>
+<ol type="1">
+<li>Compute <span class="math inline">E[X_t]</span> and <span class="math inline">\operatorname{Var}(X_t)</span>.</li>
+<li>Starting at <span class="math inline">i\in\{1,\ldots,N-1\}</span>, compute the probability of hitting <span class="math inline">N</span> before <span class="math inline">0</span>.</li>
+<li>Compute the expected time to hit either boundary.</li>
+</ol>
+<p><strong>Concepts:</strong> random walks, Markov chains, first-step recurrences, and gambler’s ruin.</p>
+</section>
+<section id="solution-18" class="level3" data-number="20.2">
+<h3 data-number="20.2" class="anchored" data-anchor-id="solution-18"><span class="header-section-number">20.2</span> Solution</h3>
+<p>Let increments <span class="math inline">Y_s\in\{+1,-1\}</span> satisfy</p>
+<p><span class="math display">
+P(Y_s=1)=p,\qquad P(Y_s=-1)=q=1-p,
+</span></p>
+<p>and <span class="math inline">X_t=X_0+\sum_{s=1}^tY_s</span>.</p>
+</section>
+<section id="mean-and-variance" class="level3" data-number="20.3">
+<h3 data-number="20.3" class="anchored" data-anchor-id="mean-and-variance"><span class="header-section-number">20.3</span> Mean and variance</h3>
+<p>Since <span class="math inline">E[Y_s]=p-q=2p-1</span> and <span class="math inline">\operatorname{Var}(Y_s)=4pq</span>,</p>
+<p><span class="math display">
+\boxed{E[X_t]=X_0+t(2p-1)},
+</span></p>
+<p><span class="math display">
+\boxed{\operatorname{Var}(X_t)=4tpq}.
+</span></p>
+</section>
+<section id="probability-of-hitting-n-before-0" class="level3" data-number="20.4">
+<h3 data-number="20.4" class="anchored" data-anchor-id="probability-of-hitting-n-before-0"><span class="header-section-number">20.4</span> Probability of hitting <span class="math inline">N</span> before <span class="math inline">0</span></h3>
+<p>Let</p>
+<p><span class="math display">
+h_i=P_i(\tau_N&lt;\tau_0).
+</span></p>
+<p>First-step analysis gives</p>
+<p><span class="math display">
+h_i=ph_{i+1}+qh_{i-1},
+\qquad h_0=0,\quad h_N=1.
+</span></p>
+<p>Solving,</p>
+<p><span class="math display">
+\boxed{
+h_i=
+\begin{cases}
+\dfrac{1-(q/p)^i}{1-(q/p)^N}, &amp; p\ne q,\\[8pt]
+\dfrac{i}{N}, &amp; p=q=1/2.
+\end{cases}
+}
+</span></p>
+</section>
+<section id="expected-time-to-hit-either-boundary" class="level3" data-number="20.5">
+<h3 data-number="20.5" class="anchored" data-anchor-id="expected-time-to-hit-either-boundary"><span class="header-section-number">20.5</span> Expected time to hit either boundary</h3>
+<p>Let <span class="math inline">e_i=E_i[\tau_{\{0,N\}}]</span>. Then</p>
+<p><span class="math display">
+e_i=1+pe_{i+1}+qe_{i-1},
+\qquad e_0=e_N=0.
+</span></p>
+<p>The solution is</p>
+<p><span class="math display">
+\boxed{
+e_i=
+\begin{cases}
+\dfrac{Nh_i-i}{p-q}, &amp; p\ne q,\\[8pt]
+i(N-i), &amp; p=q=1/2.
+\end{cases}
+}
+</span></p>
+<p>For the unbiased walk, the expected position does not drift, yet absorption still occurs and can take <span class="math inline">O(N^2)</span> time from the middle.</p>
+</section>
+</section>
+<section id="probabilistic-graphical-model-reasoning" class="level2" data-number="21">
+<h2 data-number="21" class="anchored" data-anchor-id="probabilistic-graphical-model-reasoning"><span class="header-section-number">21</span> Probabilistic graphical-model reasoning</h2>
+<section id="question-19" class="level3" data-number="21.1">
+<h3 data-number="21.1" class="anchored" data-anchor-id="question-19"><span class="header-section-number">21.1</span> Question</h3>
+<p>Consider the common-cause graph</p>
+<p><span class="math display">
+X\leftarrow Z\rightarrow Y.
+</span></p>
+<ol type="1">
+<li>Are <span class="math inline">X</span> and <span class="math inline">Y</span> independent marginally?</li>
+<li>Are they independent conditioned on <span class="math inline">Z</span>?</li>
+</ol>
+<p>Now consider the collider</p>
+<p><span class="math display">
+X\rightarrow Z\leftarrow Y.
+</span></p>
+<ol start="3" type="1">
+<li>Are <span class="math inline">X</span> and <span class="math inline">Y</span> independent marginally?</li>
+<li>What happens after conditioning on <span class="math inline">Z</span>?</li>
+</ol>
+<p><strong>Concepts:</strong> factorization, conditional independence, d-separation, common causes, colliders, and explaining away.</p>
+</section>
+<section id="solution-19" class="level3" data-number="21.2">
+<h3 data-number="21.2" class="anchored" data-anchor-id="solution-19"><span class="header-section-number">21.2</span> Solution</h3>
+</section>
+<section id="common-cause-xleftarrow-zrightarrow-y" class="level3" data-number="21.3">
+<h3 data-number="21.3" class="anchored" data-anchor-id="common-cause-xleftarrow-zrightarrow-y"><span class="header-section-number">21.3</span> Common cause: <span class="math inline">X\leftarrow Z\rightarrow Y</span></h3>
+<p>The joint factorizes as</p>
+<p><span class="math display">
+p(x,y,z)=p(z)p(x\mid z)p(y\mid z).
+</span></p>
+<p>Therefore</p>
+<p><span class="math display">
+\boxed{X\perp Y\mid Z}.
+</span></p>
+<p>Marginally,</p>
+<p><span class="math display">
+p(x,y)=\sum_zp(z)p(x\mid z)p(y\mid z),
+</span></p>
+<p>which generally does not equal <span class="math inline">p(x)p(y)</span>. Thus <span class="math inline">X</span> and <span class="math inline">Y</span> are usually dependent because observing one provides information about their common cause.</p>
+</section>
+<section id="collider-xrightarrow-zleftarrow-y" class="level3" data-number="21.4">
+<h3 data-number="21.4" class="anchored" data-anchor-id="collider-xrightarrow-zleftarrow-y"><span class="header-section-number">21.4</span> Collider: <span class="math inline">X\rightarrow Z\leftarrow Y</span></h3>
+<p>The joint factorizes as</p>
+<p><span class="math display">
+p(x,y,z)=p(x)p(y)p(z\mid x,y).
+</span></p>
+<p>Assuming no other path connects them,</p>
+<p><span class="math display">
+\boxed{X\perp Y}
+</span></p>
+<p>marginally. But conditioning on <span class="math inline">Z</span> gives</p>
+<p><span class="math display">
+p(x,y\mid z)\propto p(x)p(y)p(z\mid x,y),
+</span></p>
+<p>which generally does not factorize. Therefore</p>
+<p><span class="math display">
+\boxed{X\not\!\perp Y\mid Z}.
+</span></p>
+<p>This is collider bias or explaining away. If admission depends on either high grades or athletic ability, then among admitted students, learning that one student has weaker grades raises the probability that they have strong athletic ability—even if the traits were independent in the applicant population.</p>
+</section>
+</section>
+<section id="final-synthesis" class="level2" data-number="22">
+<h2 data-number="22" class="anchored" data-anchor-id="final-synthesis"><span class="header-section-number">22</span> Final synthesis</h2>
+<p>These problems fall into a small number of reusable modeling patterns:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Pattern</th>
+<th>Problems</th>
+<th>Core move</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Indicator decomposition</td>
+<td>Buckets, coupon collector</td>
+<td>Convert a global count into local random variables</td>
+</tr>
+<tr class="even">
+<td>Reweighting by observation process</td>
+<td>Length bias, missingness, position bias</td>
+<td>Model why an observation entered the data</td>
+</tr>
+<tr class="odd">
+<td>Bayes and marginalization</td>
+<td>Medical test, coin mixture, conjugate models</td>
+<td>Posterior <span class="math inline">\propto</span> likelihood <span class="math inline">\times</span> prior</td>
+</tr>
+<tr class="even">
+<td>Likelihood-based estimation</td>
+<td>Capture–recapture, Gaussian MLE, GMM</td>
+<td>Write the data-generating distribution first</td>
+</tr>
+<tr class="odd">
+<td>Aggregation and confounding</td>
+<td>A/B testing, Simpson’s paradox</td>
+<td>Separate estimand, uncertainty, and assignment mechanism</td>
+</tr>
+<tr class="even">
+<td>Sequential dynamic programming</td>
+<td>HMM, random walk</td>
+<td>Condition on the next/previous state</td>
+</tr>
+<tr class="odd">
+<td>Uncertainty-aware decisions</td>
+<td>Bayesian ranking</td>
+<td>Distinguish inference from action selection</td>
+</tr>
+</tbody>
+</table>
+<div class="callout callout-style-default callout-important callout-titled" title="Senior MLE / Research Engineer takeaway">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>Senior MLE / Research Engineer takeaway
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The unifying question is not “which formula applies?” It is “what observation process generated this dataset?” Most production failures—selection bias, position bias, confounding, feedback loops, and overconfident ranking—come from modeling outcomes while ignoring that process.</p>
+</div>
+</div>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/threeeyelidds\.github\.io\/minimal-ml\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

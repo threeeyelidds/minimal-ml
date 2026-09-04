@@ -429,7 +429,7 @@ x_t\pm\Delta_t e_i,
 \qquad i=1,\ldots,d.
 \]</span></p>
 <p>It moves to an improving candidate. If none improves the objective, it shrinks <span class="math inline">\(\Delta_t\)</span>. More general pattern-search methods use a set of directions that positively spans the space. Their convergence arguments come from ensuring that failure to improve at progressively smaller scales implies a local stationarity condition—not from approximating a gradient.</p>
-<div id="39ce9736" class="cell" data-execution_count="1">
+<div id="0703a35d" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -531,7 +531,7 @@ L(\theta+\mu u)-L(\theta-\mu u)
 <section id="minimal-two-point-implementation" class="level3">
 <h3 class="anchored" data-anchor-id="minimal-two-point-implementation">Minimal two-point implementation</h3>
 <p>This educational implementation optimizes one tensor without calling <code>backward()</code> or reading <code>.grad</code>:</p>
-<div id="a3e0b873" class="cell" data-execution_count="2">
+<div id="957b39b5" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -1256,7 +1256,7 @@ v_{ij}\approx\mathbb E[G_{ij}^2].
 </section>
 <section id="minimal-matrix-shampoo-direction" class="level4">
 <h4 class="anchored" data-anchor-id="minimal-matrix-shampoo-direction">Minimal matrix Shampoo direction</h4>
-<div id="cda8a281" class="cell" data-execution_count="3">
+<div id="fb381e6c" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -1400,7 +1400,7 @@ X_{k+1}
 \frac{3}{2}\sigma_k-\frac{1}{2}\sigma_k^3,
 \]</span></p>
 <p>which drives nonzero singular values toward one.</p>
-<div id="5efe3ab8" class="cell" data-execution_count="4">
+<div id="a0869678" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> newton_schulz_orthogonalize(matrix, num_steps<span class="op">=</span><span class="dv">10</span>, eps<span class="op">=</span><span class="fl">1e-7</span>):</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Educational polar-factor approximation for a 2D matrix."""</span></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> matrix.<span class="bu">float</span>()</span>
@@ -1672,7 +1672,7 @@ X_{k+1}
 <section id="minimal-adamw-implementation" class="level2">
 <h2 class="anchored" data-anchor-id="minimal-adamw-implementation">Minimal AdamW Implementation</h2>
 <p>The implementation below is educational and omits parameter groups, sparse gradients, fused kernels, capturable state, and mixed-precision concerns.</p>
-<div id="610d2b90" class="cell" data-execution_count="5">
+<div id="56b2a6ed" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> math</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -1731,7 +1731,7 @@ X_{k+1}
 <span id="cb6-56"><a href="#cb6-56" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> parameter <span class="kw">in</span> <span class="va">self</span>.parameters:</span>
 <span id="cb6-57"><a href="#cb6-57" aria-hidden="true" tabindex="-1"></a>            parameter.grad <span class="op">=</span> <span class="va">None</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="dcebeb5f" class="cell" data-execution_count="6">
+<div id="440ffa09" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>parameter <span class="op">=</span> torch.nn.Parameter(torch.tensor([<span class="fl">3.0</span>, <span class="op">-</span><span class="fl">4.0</span>]))</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>target <span class="op">=</span> torch.tensor([<span class="fl">1.0</span>, <span class="op">-</span><span class="fl">1.0</span>])</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>optimizer <span class="op">=</span> MinimalAdamW([parameter], lr<span class="op">=</span><span class="fl">0.1</span>, weight_decay<span class="op">=</span><span class="fl">0.01</span>)</span>
