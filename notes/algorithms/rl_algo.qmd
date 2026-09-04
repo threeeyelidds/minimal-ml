@@ -1,0 +1,715 @@
+---
+title: "From Graph Algorithms to Reinforcement Learning"
+---
+
+A useful way to understand reinforcement learning is to start from graph algorithms.
+
+Many classical graph algorithms, dynamic programming methods, planning algorithms, and RL algorithms can all be viewed as solving the same abstract problem:
+
+$$
+\boxed{
+\text{state space}
++
+\text{transitions}
++
+\text{value equation}
++
+\text{update / exploration schedule}
+}
+$$
+
+The major differences are:
+
+1. whether transitions are deterministic or stochastic,
+2. whether the transition model is known,
+3. whether the dependency graph is acyclic,
+4. whether values can be finalized in a particular order,
+5. whether we must learn from interaction.
+
+---
+
+## 1. Graphs as deterministic state-transition systems
+
+Consider a weighted directed graph.
+
+A node corresponds to a **state**:
+
+$$
+s \in \mathcal S.
+$$
+
+An outgoing edge corresponds to a possible transition:
+
+$$
+s \to s'.
+$$
+
+If we can choose among outgoing edges, we can reinterpret each edge as an **action**:
+
+$$
+s \xrightarrow{a} s'.
+$$
+
+The edge weight becomes a transition cost:
+
+$$
+c(s,a).
+$$
+
+A shortest-path problem is therefore already a simple deterministic decision problem.
+
+If $V(s)$ denotes the minimum remaining cost from $s$ to the goal, then
+
+$$
+V(s)
+=
+\min_a
+\left[
+c(s,a) + V(s')
+\right].
+$$
+
+This is a Bellman equation.
+
+---
+
+## 2. From shortest path to the RL Bellman equation
+
+In an MDP, taking action $a$ does not necessarily determine the next state.
+
+Instead,
+
+$$
+s' \sim P(\cdot \mid s,a).
+$$
+
+We also usually express the objective using reward rather than cost.
+
+The optimal value becomes
+
+$$
+V^*(s)
+=
+\max_a
+\mathbb E_{s' \sim P(\cdot \mid s,a)}
+\left[
+r(s,a,s') + \gamma V^*(s')
+\right].
+$$
+
+The shortest-path recurrence
+
+$$
+d[v]
+=
+\min_{u\to v}
+\left(
+d[u]+w(u,v)
+\right)
+$$
+
+and the RL Bellman equation are therefore structurally the same idea:
+
+> **The value of a state is determined by immediate transition value plus the value of future states.**
+
+The main problem becomes:
+
+> How do we resolve these recursive value dependencies?
+
+---
+
+## 3. DAG DP: dependencies already have an order
+
+Suppose the state-dependency graph is a DAG.
+
+Then we can evaluate states in topological order.
+
+For example,
+
+$$
+V(s)
+=
+\min_{s'\in \operatorname{Next}(s)}
+\left[
+c(s,s') + V(s')
+\right].
+$$
+
+If every successor $V(s')$ is already known when we evaluate $s$, each state only needs to be solved once.
+
+Thus classical DP can often be understood as
+
+$$
+\boxed{
+\text{Bellman recurrence}
++
+\text{acyclic dependency graph}
++
+\text{topological evaluation}
+}
+$$
+
+Bottom-up DP explicitly chooses this order.
+
+Memoized DFS discovers it lazily by recursively evaluating dependencies first.
+
+---
+
+## 4. Cycles create the interesting problem
+
+If the state graph contains cycles, values may depend recursively on one another:
+
+$$
+V(A) \to V(B) \to V(C) \to V(A).
+$$
+
+There is no topological order.
+
+Different graph algorithms succeed because they exploit additional structure to resolve these cyclic dependencies.
+
+This gives a useful perspective on shortest-path algorithms.
+
+| Algorithm         | How Bellman dependencies are resolved   |
+| ----------------- | --------------------------------------- |
+| DAG shortest path | known topological order                 |
+| BFS               | increasing hop distance                 |
+| 0--1 BFS          | deque maintains distance order          |
+| Dijkstra          | greedy finalization by minimum distance |
+| Bellman--Ford     | repeated relaxation                     |
+| Floyd--Warshall   | introduce an extra DP dimension         |
+
+The recurrence can remain almost identical.
+
+What changes is the **dependency-resolution strategy**.
+
+---
+
+## 5. BFS, 0--1 BFS, and Dijkstra as increasingly general schedulers
+
+For shortest paths with unit edge weights, BFS processes states in increasing distance:
+
+$$
+0,1,2,3,\ldots
+$$
+
+A FIFO queue is enough.
+
+With weights in
+
+$$
+\{0,1\},
+$$
+
+relaxing a node at distance $d$ can only produce nodes at distance
+
+$$
+d
+\quad\text{or}\quad
+d+1.
+$$
+
+A deque is therefore enough to preserve distance ordering.
+
+For arbitrary nonnegative weights, Dijkstra needs a min-heap:
+
+$$
+u
+=
+\arg\min_{v\in\text{frontier}}d[v].
+$$
+
+Therefore:
+
+$$
+\boxed{
+\begin{aligned}
+w=1
+&\Rightarrow \text{queue} \\
+w\in\{0,1\}
+&\Rightarrow \text{deque} \\
+w\ge 0
+&\Rightarrow \text{min-heap}.
+\end{aligned}
+}
+$$
+
+All three algorithms can be understood as enforcing the same principle:
+
+> Process states in an order that allows their shortest-path values to become final.
+
+---
+
+## 6. Dijkstra as greedy value finalization
+
+Dijkstra exploits nonnegative edge weights.
+
+When it extracts
+
+$$
+u=\arg\min d[u],
+$$
+
+no future path through an unprocessed state can produce a cheaper path to $u$.
+
+Therefore $d[u]$ can be permanently finalized.
+
+This is much stronger than what is generally possible in RL.
+
+Dijkstra effectively discovers a valid value-evaluation order dynamically:
+
+$$
+\boxed{
+\text{Bellman backup}
++
+\text{greedy finalization order}
+}
+$$
+
+The heap is therefore not just an implementation detail.
+
+It implements the algorithm's **value scheduling rule**.
+
+---
+
+## 7. Bellman--Ford as deterministic value iteration
+
+Bellman--Ford does not know a safe finalization order.
+
+Instead, it repeatedly applies Bellman relaxations:
+
+$$
+d[v]
+\leftarrow
+\min
+\left(
+d[v],
+d[u]+w(u,v)
+\right).
+$$
+
+Another interpretation introduces the state
+
+$$
+dp[k][v]
+=
+\text{shortest path to }v
+\text{ using at most }k\text{ edges}.
+$$
+
+Then
+
+$$
+dp[k][v]
+=
+\min
+\left(
+dp[k-1][v],
+\min_{u\to v}
+\left[
+dp[k-1][u]+w(u,v)
+\right]
+\right).
+$$
+
+The original cyclic graph has now become a layered dependency DAG:
+
+$$
+(k-1,u)\to(k,v).
+$$
+
+This is closely related to value iteration in RL:
+
+$$
+V_{k+1}(s)
+=
+\max_a
+\mathbb E
+\left[
+r+\gamma V_k(s')
+\right].
+$$
+
+Conceptually,
+
+$$
+\boxed{
+\text{Bellman--Ford}
+\approx
+\text{deterministic shortest-path value iteration}
+}
+$$
+
+Both repeatedly apply a Bellman operator rather than finding a one-pass dependency order.
+
+---
+
+## 8. A* introduces an approximate value function
+
+Dijkstra prioritizes states using cost already incurred:
+
+$$
+f(s)=g(s).
+$$
+
+A* instead uses
+
+$$
+f(s)=g(s)+h(s),
+$$
+
+where
+
+* $g(s)$ is cost from the start to $s$,
+* $h(s)$ estimates the remaining cost to the goal.
+
+The heuristic is therefore an approximate **cost-to-go function**:
+
+$$
+h(s)\approx V^*_{\text{cost}}(s).
+$$
+
+This gives a direct connection to RL:
+
+$$
+\boxed{
+\text{A*}
+=
+\text{search}
++
+\text{approximate value function}
+}
+$$
+
+If
+
+$$
+h(s)=0,
+$$
+
+A* becomes Dijkstra.
+
+If $h(s)$ were a perfect value function, search could focus almost entirely on optimal trajectories.
+
+This is conceptually similar to using a critic to guide decision making.
+
+---
+
+## 9. Planning versus reinforcement learning
+
+At this point the transition from graph algorithms to RL is mostly about what information is available.
+
+### Graph algorithms
+
+The graph and transition costs are explicitly known.
+
+$$
+(s,a)\to(s',c)
+$$
+
+can be queried directly.
+
+The problem is primarily computational:
+
+> Given the complete world model, solve for optimal values or paths.
+
+### MDP planning
+
+The transition model and rewards are known:
+
+$$
+P(s'|s,a), \qquad R(s,a).
+$$
+
+But transitions may be stochastic.
+
+We solve for
+
+$$
+V^*,\qquad Q^*,\qquad \pi^*.
+$$
+
+Algorithms include:
+
+* value iteration,
+* policy iteration,
+* dynamic programming.
+
+### Reinforcement learning
+
+The model may not be known.
+
+Instead, the agent observes samples such as
+
+$$
+(s,a,r,s').
+$$
+
+Now the agent must estimate values, policies, and sometimes the dynamics themselves from interaction.
+
+Thus:
+
+$$
+\boxed{
+\begin{array}{lll}
+\text{Graph algorithm}
+&:&
+\text{known deterministic world} \\[2mm]
+
+\text{Planning}
+&:&
+\text{known stochastic world} \\[2mm]
+
+\text{RL}
+&:&
+\text{world learned through interaction}
+\end{array}
+}
+$$
+
+---
+
+## 10. Bellman backup as the common primitive
+
+Across all of these algorithms, the fundamental operation is some form of **value backup**.
+
+Shortest path:
+
+$$
+d[v]
+\leftarrow
+\min
+\left(
+d[v],
+d[u]+w(u,v)
+\right).
+$$
+
+MDP value iteration:
+
+$$
+V(s)
+\leftarrow
+\max_a
+\mathbb E
+\left[
+r+\gamma V(s')
+\right].
+$$
+
+Q-learning:
+
+$$
+Q(s,a)
+\leftarrow
+Q(s,a)
++
+\alpha
+\left[
+r+\gamma\max_{a'}Q(s',a')
+-
+Q(s,a)
+\right].
+$$
+
+The latter differs because we only observe a sampled transition and use a stochastic update.
+
+But the target still comes from the same recursive structure:
+
+$$
+\boxed{
+\text{current value}
+\leftarrow
+\text{immediate outcome}
++
+\text{future value}
+}
+$$
+
+---
+
+## 11. Scheduling is a hidden dimension of RL
+
+Graph algorithms make the scheduling problem very visible.
+
+* BFS: FIFO queue
+* DFS: stack
+* 0--1 BFS: deque
+* Dijkstra: min-heap
+* A*: priority by $g+h$
+
+RL has analogous scheduling questions.
+
+There are actually two:
+
+1. **Which state should I visit next?**
+2. **Which state's value should I update next?**
+
+These correspond roughly to:
+
+$$
+\text{exploration}
+\qquad\text{and}\qquad
+\text{backup scheduling}.
+$$
+
+Standard synchronous value iteration updates every state.
+
+Asynchronous value iteration updates selected states.
+
+Prioritized sweeping prefers states whose values are likely to change significantly.
+
+This is strikingly similar to changing the frontier data structure in graph algorithms.
+
+Thus a more general decomposition is
+
+$$
+\boxed{
+\text{value update rule}
++
+\text{update scheduling policy}
+}
+$$
+
+and RL adds another dimension:
+
+$$
+\boxed{
+\text{exploration policy}
+}
+$$
+
+because the agent may not even know which transitions exist until it experiences them.
+
+---
+
+## 12. Tree search versus graph search
+
+Algorithms such as A* are often drawn as trees, but the underlying environment may be a graph.
+
+Suppose
+
+$$
+A\to B\to D
+$$
+
+and
+
+$$
+A\to C\to D.
+$$
+
+A tree-search representation contains two copies of $D$:
+
+```text
+       A
+      / \
+     B   C
+     |   |
+     D   D
+```
+
+Graph search recognizes that they represent the same state:
+
+```text
+       A
+      / \
+     B   C
+      \ /
+       D
+```
+
+This distinction becomes important in AI.
+
+Search algorithms often construct a **search tree over trajectories**, even when the underlying state space is a graph.
+
+The same idea appears in RL and planning:
+
+* a state may be reachable through many trajectories,
+* value functions merge those trajectories into a common state representation,
+* trajectory-based search may temporarily treat them separately.
+
+---
+
+## 13. A useful conceptual ladder
+
+The progression from graph algorithms to RL can be organized as:
+
+$$
+\boxed{
+\text{DAG DP}
+\rightarrow
+\text{shortest-path algorithms}
+\rightarrow
+\text{MDP planning}
+\rightarrow
+\text{RL}
+}
+$$
+
+### DAG DP
+
+Dependencies are acyclic.
+
+Solve once in topological order.
+
+### Dijkstra / BFS / 0--1 BFS
+
+The graph may be cyclic, but structural assumptions allow a safe dynamic finalization order.
+
+### Bellman--Ford / value iteration
+
+No one-pass order is available.
+
+Repeatedly propagate values until the Bellman equations are satisfied.
+
+### MDP planning
+
+Transitions become stochastic:
+
+$$
+V(s)
+=
+\max_a
+\mathbb E[
+r+\gamma V(s')
+].
+$$
+
+### RL
+
+The transition model or rewards are not fully known.
+
+Bellman updates must be estimated from experience.
+
+---
+
+:::: {.callout-tip title="The unifying view"}
+
+Graph algorithms, dynamic programming, planning, and reinforcement learning are all forms of **value propagation over a state-transition system**.
+
+A useful decomposition is
+
+$$
+\boxed{
+\text{state representation}
++
+\text{transition structure}
++
+\text{Bellman/value equation}
++
+\text{update scheduling}
++
+\text{exploration}
+}
+$$
+
+Different algorithms become possible because they assume different amounts of structure.
+
+* DAG DP gets an explicit dependency order.
+* BFS / Dijkstra exploit transition-cost structure to discover a safe order.
+* Bellman--Ford uses repeated relaxation when no such order is available.
+* A* adds an approximate future-value function to guide search.
+* RL learns values or policies from sampled interaction when the model itself is not fully available.
+
+The progression is therefore not a set of unrelated algorithms, but increasingly general ways of solving recursive decision problems.
+::::

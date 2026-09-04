@@ -1,0 +1,1338 @@
+---
+title: "Probabilistic Modeling Practice: 20 Worked Problems"
+subtitle: "From probability fundamentals to latent-variable models, ranking, and sequential inference"
+author: "Kedi Xu"
+date: last-modified
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    code-fold: true
+    html-math-method: katex
+execute:
+  echo: true
+  warning: false
+---
+
+## A reusable modeling workflow
+
+For each problem, move through the same sequence:
+
+$$
+\boxed{
+\text{random variables}
+\rightarrow \text{assumptions}
+\rightarrow \text{joint distribution}
+\rightarrow \text{desired marginal or conditional}
+}
+$$
+
+Useful recurring tools:
+
+| Goal | Default tool |
+|---|---|
+| Expected count | Indicators + linearity of expectation |
+| Probability of at least one event | Complement or inclusion--exclusion |
+| Infer a hidden cause | Bayes' rule |
+| Predict a future observation | Marginalize over posterior uncertainty |
+| Estimate parameters | Write and optimize the log-likelihood |
+| Correct logged-feedback bias | Condition on covariates or use propensities |
+| Sequential latent inference | Dynamic programming |
+
+::: {.callout-tip title="Interview habit"}
+Before calculating, state what is random, what is observed, and which conditional-independence assumptions justify the factorization. This often matters more than the final algebra.
+:::
+
+## Balls into buckets
+
+### Question
+
+You throw $n$ balls independently and uniformly into $m$ buckets.
+
+1. What is the expected number of colliding pairs?
+2. What is the expected number of occupied buckets?
+3. What is the probability of at least one collision?
+4. Approximate the collision probability when $n\ll m$.
+
+**Concepts:** indicators, linearity of expectation, birthday paradox, and Poisson approximation.
+
+### Solution
+
+Throw $n$ balls independently and uniformly into $m$ buckets. Let $B_i$ be the bucket selected by ball $i$.
+
+### Expected number of colliding pairs
+
+For each pair $i<j$, define
+
+$$
+I_{ij}=\mathbf 1\{B_i=B_j\}.
+$$
+
+The collision-pair count is $C=\sum_{i<j}I_{ij}$. Since $P(B_i=B_j)=1/m$,
+
+$$
+\boxed{E[C]=\binom n2\frac1m=\frac{n(n-1)}{2m}}.
+$$
+
+The indicators need not be mutually independent; linearity of expectation does not require independence.
+
+### Expected number of occupied buckets
+
+Let $J_k$ indicate that bucket $k$ is occupied. It is empty only if every ball avoids it:
+
+$$
+P(J_k=0)=\left(1-\frac1m\right)^n.
+$$
+
+Therefore
+
+$$
+\boxed{E[O]=m\left[1-\left(1-\frac1m\right)^n\right]}
+\approx m(1-e^{-n/m}).
+$$
+
+### Probability of at least one collision
+
+For $n\le m$,
+
+$$
+P(C=0)=\prod_{k=0}^{n-1}\left(1-\frac{k}{m}\right),
+$$
+
+so
+
+$$
+\boxed{P(C\ge1)=1-\prod_{k=0}^{n-1}\left(1-\frac{k}{m}\right)}.
+$$
+
+If $n>m$, the probability is $1$ by the pigeonhole principle.
+
+When $n\ll m$, use $\log(1-x)\approx-x$:
+
+$$
+P(C\ge1)
+\approx 1-\exp\left[-\frac{n(n-1)}{2m}\right].
+$$
+
+For rare collisions, $C$ is approximately Poisson with
+
+$$
+\lambda=\frac{n(n-1)}{2m}.
+$$
+
+If $\lambda\ll1$, then $P(C\ge1)\approx\lambda$.
+
+## Length-biased sampling
+
+### Question
+
+Documents have random lengths $L$ with distribution $P(L=\ell)$. Select one token uniformly from all tokens in the corpus and inspect the document containing it.
+
+1. What is the distribution of that document's length?
+2. Show that $P(L=\ell\mid\text{random token})\propto \ell P(L=\ell)$.
+3. What is the expected length of the selected token's document, and how does it compare with the document-level average $E[L]$?
+
+**Concepts:** size-biased distributions, conditional probability, and the inspection paradox.
+
+### Solution
+
+Let document length $L$ have document-level distribution $P(L=\ell)=p_\ell$. Select one token uniformly from the entire corpus and inspect its document.
+
+A document of length $\ell$ contributes $\ell$ possible sampled tokens, so it is $\ell$ times as likely to be encountered as a unit-length document. Normalizing gives
+
+$$
+\boxed{
+P_{\text{token}}(L=\ell)
+=\frac{\ell p_\ell}{E[L]}
+}.
+$$
+
+Its expected length is
+
+$$
+E_{\text{token}}[L]
+=\sum_\ell \ell\frac{\ell p_\ell}{E[L]}
+=\boxed{\frac{E[L^2]}{E[L]}}.
+$$
+
+Using $E[L^2]=\operatorname{Var}(L)+E[L]^2$,
+
+$$
+\boxed{
+E_{\text{token}}[L]
+=E[L]+\frac{\operatorname{Var}(L)}{E[L]}
+\ge E[L]
+}.
+$$
+
+Equality holds only when all documents have the same length. This is the inspection paradox / size-bias effect.
+
+## Medical test and the base-rate effect
+
+### Question
+
+A disease occurs in $1\%$ of people. A test satisfies
+
+$$
+P(+\mid D)=0.95,
+\qquad
+P(+\mid\neg D)=0.05.
+$$
+
+1. Given a positive result, compute $P(D\mid +)$.
+2. Recompute it if disease prevalence falls to $0.1\%$.
+3. Explain why high sensitivity does not necessarily imply high precision.
+
+**Concepts:** Bayes' rule, the law of total probability, and base-rate effects.
+
+### Solution
+
+Suppose
+
+$$
+P(D)=0.01,\qquad P(+\mid D)=0.95,\qquad P(+\mid \neg D)=0.05.
+$$
+
+Because $D$ and $\neg D$ partition the population,
+
+$$
+P(+)=P(+\mid D)P(D)+P(+\mid\neg D)P(\neg D).
+$$
+
+Bayes' rule gives
+
+$$
+P(D\mid+)
+=\frac{0.95(0.01)}{0.95(0.01)+0.05(0.99)}
+=\boxed{0.1610}.
+$$
+
+With prevalence $P(D)=0.001$,
+
+$$
+P(D\mid+)
+=\frac{0.95(0.001)}{0.95(0.001)+0.05(0.999)}
+=\boxed{0.0187}.
+$$
+
+The sensitivity $P(+\mid D)$ and the precision $P(D\mid+)$ reverse the conditioning and can be very different.
+
+::: {.callout-note title="What must sum to one?"}
+$P(+\mid D)+P(-\mid D)=1$ because the outcomes share the same conditioning event. In general, $P(+\mid D)+P(+\mid\neg D)$ need not equal $1$; it happens to do so for the supplied numbers.
+:::
+
+## Mixture of coins
+
+### Question
+
+Choose one of two coins. Let $Z\sim\operatorname{Bernoulli}(0.3)$, where $Z=1$ selects coin 1. Coin 1 has $P(H)=0.8$ and coin 2 has $P(H)=0.4$. You observe $H,H,T,H$.
+
+1. Compute $P(Z=1\mid H,H,T,H)$.
+2. Compute the posterior predictive probability that the next toss is heads.
+
+**Concepts:** latent variables, conditional independence, posterior inference, and posterior prediction.
+
+### Solution
+
+Let $Z=1$ select coin 1 and $Z=0$ select coin 2:
+
+$$
+P(Z=1)=0.3,\qquad P(H\mid Z=1)=0.8,\qquad P(H\mid Z=0)=0.4.
+$$
+
+For $X=(H,H,T,H)$, conditional independence of tosses gives
+
+$$
+P(X\mid Z=1)=0.8^3(0.2)=0.1024,
+$$
+
+$$
+P(X\mid Z=0)=0.4^3(0.6)=0.0384.
+$$
+
+The unnormalized posterior weights are
+
+$$
+w_1=0.3(0.1024)=0.03072,
+\qquad
+w_0=0.7(0.0384)=0.02688.
+$$
+
+Thus
+
+$$
+\boxed{P(Z=1\mid X)=\frac{w_1}{w_1+w_0}=0.5333}.
+$$
+
+For the next toss, marginalize the uncertain coin identity:
+
+$$
+\begin{aligned}
+P(H_{\text{next}}\mid X)
+&=\sum_zP(H_{\text{next}}\mid Z=z)P(Z=z\mid X)\\
+&=0.8(0.5333)+0.4(0.4667)\\
+&=\boxed{0.6133}.
+\end{aligned}
+$$
+
+## Beta--Bernoulli model
+
+### Question
+
+Suppose
+
+$$
+p\sim\operatorname{Beta}(\alpha,\beta),
+\qquad
+X_i\mid p\sim\operatorname{Bernoulli}(p).
+$$
+
+After observing $h$ heads and $t$ tails:
+
+1. Derive the posterior distribution of $p$.
+2. Compute $E[p\mid D]$.
+3. Compute the probability that the next toss is heads.
+
+**Concepts:** conjugate priors, Bayesian updating, and posterior prediction.
+
+### Solution
+
+Let
+
+$$
+p\sim\operatorname{Beta}(\alpha,\beta),
+\qquad
+X_i\mid p\overset{iid}{\sim}\operatorname{Bernoulli}(p).
+$$
+
+After $h$ heads and $t$ tails, the likelihood is proportional to $p^h(1-p)^t$. Multiplying by the prior,
+
+$$
+p(p\mid D)
+\propto p^{\alpha+h-1}(1-p)^{\beta+t-1}.
+$$
+
+Therefore
+
+$$
+\boxed{p\mid D\sim\operatorname{Beta}(\alpha+h,\beta+t)}.
+$$
+
+The posterior mean is
+
+$$
+\boxed{E[p\mid D]=\frac{\alpha+h}{\alpha+\beta+h+t}}.
+$$
+
+The next-toss probability is the posterior predictive:
+
+$$
+\begin{aligned}
+P(X_{n+1}=1\mid D)
+&=\int P(X_{n+1}=1\mid p)p(p\mid D)\,dp\\
+&=\int p\,p(p\mid D)\,dp\\
+&=\boxed{\frac{\alpha+h}{\alpha+\beta+h+t}}.
+\end{aligned}
+$$
+
+The prior acts like $\alpha$ pseudo-heads and $\beta$ pseudo-tails.
+
+## Dirichlet--categorical model
+
+### Question
+
+A user's clicks belong to $K$ categories:
+
+$$
+\theta\sim\operatorname{Dirichlet}(\alpha_1,\ldots,\alpha_K),
+\qquad
+X_i\mid\theta\sim\operatorname{Categorical}(\theta).
+$$
+
+After observing counts $n_1,\ldots,n_K$:
+
+1. Derive the posterior distribution of $\theta$.
+2. Derive the posterior predictive probability of category $j$.
+
+**Concepts:** conjugacy, categorical models, and Bayesian smoothing.
+
+### Solution
+
+Let
+
+$$
+\theta\sim\operatorname{Dirichlet}(\alpha_1,\ldots,\alpha_K),
+\qquad X_i\mid\theta\sim\operatorname{Categorical}(\theta).
+$$
+
+Given counts $n_1,\ldots,n_K$, the likelihood is proportional to $\prod_k\theta_k^{n_k}$. Hence
+
+$$
+\boxed{
+\theta\mid D
+\sim\operatorname{Dirichlet}(\alpha_1+n_1,\ldots,\alpha_K+n_K)
+}.
+$$
+
+Writing $\alpha_0=\sum_k\alpha_k$ and $n=\sum_kn_k$, the predictive probability for category $j$ is
+
+$$
+\boxed{
+P(X_{n+1}=j\mid D)
+=E[\theta_j\mid D]
+=\frac{\alpha_j+n_j}{\alpha_0+n}
+}.
+$$
+
+This is Bayesian additive smoothing: unseen categories retain nonzero probability when $\alpha_j>0$.
+
+## Capture--recapture
+
+### Question
+
+There are $N$ fish in a lake. You catch $n_1$, mark them, and release them. Later, you catch $n_2$, of which $k$ are marked.
+
+1. Write the likelihood of $k$ given $N$.
+2. Estimate $N$.
+3. State the assumptions required for the estimate to be meaningful.
+
+**Concepts:** the hypergeometric distribution, MLE, moment estimation, and latent population size.
+
+### Solution
+
+There are $N$ fish. Initially $n_1$ are caught, marked, and released. A second sample contains $n_2$ fish, $k$ of which are marked.
+
+Conditional on $N$, the second sample is hypergeometric:
+
+$$
+\boxed{
+P(k\mid N,n_1,n_2)
+=\frac{\binom{n_1}{k}\binom{N-n_1}{n_2-k}}
+{\binom{N}{n_2}}
+}.
+$$
+
+The intuitive moment estimate equates the marked fraction in the population and second sample:
+
+$$
+\frac{n_1}{N}\approx\frac{k}{n_2}
+\quad\Longrightarrow\quad
+\boxed{\hat N\approx\frac{n_1n_2}{k}}.
+$$
+
+The likelihood-based integer MLE is essentially the neighboring integer around $n_1n_2/k$ (with boundary/tie details). A common small-sample bias correction is the Chapman estimator:
+
+$$
+\boxed{
+\hat N_{\text{Chapman}}
+=\frac{(n_1+1)(n_2+1)}{k+1}-1
+}.
+$$
+
+Required assumptions include population closure, equal catchability, reliable marks, and sufficient mixing between samples. When $k=0$, the naive estimate is infinite and the data provide only weak lower-bound information.
+
+## Poisson arrivals
+
+### Question
+
+Requests arrive independently according to a Poisson process at rate $\lambda=5$ per minute. Find:
+
+1. the probability of exactly three requests in one minute;
+2. the probability of no requests for 30 seconds;
+3. the distribution of the time until the next request;
+4. the distribution and expected value of the waiting time until the tenth request.
+
+**Concepts:** Poisson processes, exponential waiting times, and Gamma distributions.
+
+### Solution
+
+Requests follow a Poisson process with rate $\lambda=5$ per minute.
+
+### Exactly three requests in one minute
+
+$$
+\boxed{
+P(N(1)=3)=e^{-5}\frac{5^3}{3!}\approx0.1404
+}.
+$$
+
+### No requests for 30 seconds
+
+Thirty seconds is $0.5$ minute, so the expected count is $2.5$:
+
+$$
+\boxed{P(N(0.5)=0)=e^{-2.5}\approx0.0821}.
+$$
+
+### Time until the next request
+
+$$
+\boxed{T_1\sim\operatorname{Exponential}(5)},
+\qquad E[T_1]=\frac15\text{ minute}=12\text{ seconds}.
+$$
+
+### Time until the tenth request
+
+It is the sum of ten independent exponential waiting times:
+
+$$
+\boxed{T_{10}\sim\operatorname{Gamma}(\text{shape}=10,\text{rate}=5)},
+$$
+
+$$
+\boxed{E[T_{10}]=\frac{10}{5}=2\text{ minutes}}.
+$$
+
+## A/B testing
+
+### Question
+
+Variant A receives $80$ clicks from $1000$ impressions, while variant B receives $100$ clicks from $1000$ impressions.
+
+1. Estimate the CTR difference $p_B-p_A$.
+2. Derive its estimated variance and a $95\%$ confidence interval.
+3. Test $H_0:p_A=p_B$ against a two-sided alternative.
+4. With independent Beta priors, formulate and estimate $P(p_B>p_A\mid D)$.
+
+**Concepts:** binomial modeling, hypothesis testing, uncertainty, and frequentist versus Bayesian inference.
+
+### Solution
+
+Variant A has $80/1000$ clicks and B has $100/1000$.
+
+### Point estimate and uncertainty
+
+$$
+\hat p_A=0.08,\qquad \hat p_B=0.10,
+$$
+
+$$
+\boxed{\widehat{p_B-p_A}=0.02}.
+$$
+
+The unpooled estimated variance is
+
+$$
+\widehat{\operatorname{Var}}(\hat p_B-\hat p_A)
+=\frac{\hat p_A(1-\hat p_A)}{n_A}
++\frac{\hat p_B(1-\hat p_B)}{n_B}.
+$$
+
+Numerically, $SE\approx0.01279$, giving the approximate $95\%$ confidence interval
+
+$$
+0.02\pm1.96(0.01279)
+=\boxed{[-0.0051,\ 0.0451]}.
+$$
+
+### Two-sided test of equal CTR
+
+Under $H_0:p_A=p_B$, the pooled estimate is
+
+$$
+\hat p=\frac{80+100}{2000}=0.09.
+$$
+
+Then
+
+$$
+SE_0=\sqrt{\hat p(1-\hat p)\left(\frac1{n_A}+\frac1{n_B}\right)}
+\approx0.01280,
+$$
+
+$$
+z=\frac{0.10-0.08}{0.01280}\approx1.56.
+$$
+
+The two-sided $p$-value is about $0.118$, so this experiment does not reject equality at the $5\%$ level.
+
+### Bayesian comparison
+
+With independent $\operatorname{Beta}(1,1)$ priors,
+
+$$
+p_A\mid D\sim\operatorname{Beta}(81,921),
+$$
+
+$$
+p_B\mid D\sim\operatorname{Beta}(101,901).
+$$
+
+The exact probability is
+
+$$
+P(p_B>p_A\mid D)
+=\int_0^1 f_B(b)F_A(b)\,db,
+$$
+
+which is approximately $0.94$ here. This is not contradictory to the frequentist result: $P(p_B>p_A\mid D)$ is not a $p$-value, and neither statement says the improvement is large enough to matter practically.
+
+## Simpson's paradox
+
+### Question
+
+Consider the following A/B results:
+
+| Segment | A | B |
+|---|---:|---:|
+| New users | $10/100$ | $90/1000$ |
+| Existing users | $810/900$ | $80/100$ |
+
+1. Which variant is better within each segment?
+2. Which variant is better overall?
+3. Do these data actually exhibit Simpson's paradox? Explain how a reversal could arise.
+
+**Concepts:** conditioning, confounding, aggregation, and weighted averages.
+
+### Solution
+
+The supplied table is:
+
+| Segment | A | B |
+|---|---:|---:|
+| New users | $10/100=10\%$ | $90/1000=9\%$ |
+| Existing users | $810/900=90\%$ | $80/100=80\%$ |
+
+Within both segments, A has the higher rate. Overall,
+
+$$
+\hat p_A=\frac{820}{1000}=82\%,
+$$
+
+$$
+\hat p_B=\frac{170}{1100}\approx15.45\%.
+$$
+
+So A also wins overall.
+
+::: {.callout-warning title="The given numbers are not Simpson's paradox"}
+There is no reversal in this table. It demonstrates how dramatically different segment mixtures can affect aggregate rates, but both conditional and aggregate comparisons favor A.
+:::
+
+In general, each aggregate is a weighted average:
+
+$$
+P(Y=1\mid T=t)
+=\sum_sP(Y=1\mid T=t,S=s)P(S=s\mid T=t).
+$$
+
+Simpson's paradox occurs when A can have a higher rate within every segment, yet B has a higher aggregate rate because $P(S\mid T=A)$ and $P(S\mid T=B)$ differ sharply. Segment $S$ is associated with both treatment assignment and outcome difficulty. The remedy is not blindly choosing segmented results; it is specifying the causal estimand and adjusting for genuine pre-treatment confounders.
+
+## Missing observations and selection bias
+
+### Question
+
+Suppose user engagement $Y$ is observed only if the user clicks:
+
+$$
+C\sim\operatorname{Bernoulli}(e(X)),
+$$
+
+and $Y$ is visible only when $C=1$.
+
+1. Can $E[Y\mid C=1]$ estimate overall engagement $E[Y]$?
+2. Under what assumptions is recovery possible?
+3. Derive an inverse-propensity-weighted estimator.
+4. What changes if selection depends on unobserved outcomes?
+
+**Concepts:** selection bias, missingness, exchangeability, positivity, and inverse propensity weighting.
+
+### Solution
+
+Suppose engagement $Y$ is observed only when $C=1$, with
+
+$$
+C\sim\operatorname{Bernoulli}(e(X)),
+\qquad e(X)=P(C=1\mid X).
+$$
+
+In general,
+
+$$
+E[Y\mid C=1]\ne E[Y],
+$$
+
+because clicking selects a nonrepresentative population.
+
+### When is the clicked mean valid?
+
+It is valid if observation is completely random with respect to outcome:
+
+$$
+Y\perp C,
+$$
+
+or under stronger designs that make the observed group representative. Usually this is implausible.
+
+### Adjustment using observed covariates
+
+Assume:
+
+1. **Conditional exchangeability / missing at random:** $Y\perp C\mid X$.
+2. **Positivity:** $e(X)>0$ wherever the target population has mass.
+3. The propensity $e(X)$ is known or consistently estimated.
+4. Relevant outcomes and covariates are measured consistently.
+
+Then inverse-propensity weighting recovers the population mean:
+
+$$
+\boxed{
+E[Y]
+=E\left[\frac{CY}{e(X)}\right]
+}.
+$$
+
+Indeed,
+
+$$
+E\left[\frac{CY}{e(X)}\mid X,Y\right]
+=\frac{Y}{e(X)}E[C\mid X,Y]
+=Y.
+$$
+
+If selection still depends on unobserved $Y$ after conditioning on $X$—missing not at random—the overall mean is generally unidentified without extra assumptions, instruments, experiments, or sensitivity analysis.
+
+## Position bias in ranking
+
+### Question
+
+A document has intrinsic binary relevance $R$, but clicks depend on both relevance and examination:
+
+$$
+C=E\cdot R.
+$$
+
+Suppose
+
+$$
+P(E=1\mid\text{position}=k)=e_k.
+$$
+
+1. Given logged clicks, how can you estimate relevance?
+2. Why is inverse propensity weighting appropriate?
+3. What goes wrong if clicks are used directly as relevance labels?
+
+**Concepts:** latent examination, position bias, propensity correction, and counterfactual learning.
+
+### Solution
+
+Under the examination model,
+
+$$
+C=E\cdot R,
+$$
+
+where $E$ indicates examination and $R$ intrinsic relevance. At position $k$,
+
+$$
+P(E=1\mid k)=e_k.
+$$
+
+Assuming examination and relevance are conditionally independent given the displayed context,
+
+$$
+P(C=1\mid k,x)=e_kP(R=1\mid x).
+$$
+
+Thus an observed click at position $k$ receives inverse-propensity weight $1/e_k$. For a fixed item shown at positions $k_i$, an IPS-style relevance estimate is
+
+$$
+\boxed{
+\hat r
+=\frac1N\sum_{i=1}^N\frac{C_i}{e_{k_i}}
+},
+$$
+
+with clipping or self-normalization often used to control variance.
+
+Training directly on clicks treats unexamined relevant results as negatives. It therefore learns the old ranker's exposure policy and position effects along with relevance. Propensities may be estimated through randomized swaps/interleaving or an examination model; purely observational estimation requires additional identifiability assumptions.
+
+## Gaussian parameter estimation
+
+### Question
+
+Suppose
+
+$$
+X_i\overset{iid}{\sim}\mathcal N(\mu,\sigma^2).
+$$
+
+1. Derive the MLEs of $\mu$ and $\sigma^2$.
+2. Why does the variance MLE use $1/n$ while the unbiased sample variance uses $1/(n-1)$?
+
+**Concepts:** likelihood, optimization, estimator bias, and degrees of freedom.
+
+### Solution
+
+Let $X_i\overset{iid}{\sim}\mathcal N(\mu,\sigma^2)$. The log-likelihood is
+
+$$
+\ell(\mu,\sigma^2)
+=-\frac n2\log(2\pi)-\frac n2\log\sigma^2
+-\frac1{2\sigma^2}\sum_{i=1}^n(x_i-\mu)^2.
+$$
+
+Differentiating with respect to $\mu$,
+
+$$
+\frac{\partial\ell}{\partial\mu}
+=\frac1{\sigma^2}\sum_i(x_i-\mu)=0,
+$$
+
+so
+
+$$
+\boxed{\hat\mu_{\text{MLE}}=\bar x}.
+$$
+
+Substituting $\bar x$ and differentiating with respect to $\sigma^2$ gives
+
+$$
+\boxed{
+\hat\sigma^2_{\text{MLE}}
+=\frac1n\sum_i(x_i-\bar x)^2
+}.
+$$
+
+Why is this biased? Estimating $\mu$ from the same data imposes
+
+$$
+\sum_i(x_i-\bar x)=0,
+$$
+
+leaving only $n-1$ independent residual degrees of freedom. In fact,
+
+$$
+E\left[\sum_i(X_i-\bar X)^2\right]=(n-1)\sigma^2.
+$$
+
+Therefore the unbiased estimator is
+
+$$
+\boxed{s^2=\frac1{n-1}\sum_i(x_i-\bar x)^2}.
+$$
+
+MLE optimizes likelihood; it is not defined by unbiasedness.
+
+## Gaussian mixture model and EM
+
+### Question
+
+Data come from
+
+$$
+p(x)=\pi\mathcal N(x;\mu_1,\sigma_1^2)
++(1-\pi)\mathcal N(x;\mu_2,\sigma_2^2),
+$$
+
+where component assignment $Z_i$ is unobserved.
+
+1. Derive $P(Z_i=1\mid x_i)$.
+2. Derive the E-step and M-step updates for EM.
+3. State important limitations of EM for Gaussian mixtures.
+
+**Concepts:** latent-variable inference, marginalization, responsibilities, and EM.
+
+### Solution
+
+Let
+
+$$
+p(x)=\pi\mathcal N(x;\mu_1,\sigma_1^2)
++(1-\pi)\mathcal N(x;\mu_2,\sigma_2^2),
+$$
+
+with latent assignment $Z_i\in\{0,1\}$.
+
+### Posterior responsibility
+
+Bayes' rule gives
+
+$$
+\boxed{
+\gamma_i
+:=P(Z_i=1\mid x_i)
+=\frac{\pi\mathcal N(x_i;\mu_1,\sigma_1^2)}
+{\pi\mathcal N(x_i;\mu_1,\sigma_1^2)
++(1-\pi)\mathcal N(x_i;\mu_2,\sigma_2^2)}
+}.
+$$
+
+### EM algorithm
+
+**E-step:** compute $\gamma_i$ using the current parameters.
+
+**M-step:** maximize the expected complete-data log-likelihood:
+
+$$
+N_1=\sum_i\gamma_i,\qquad N_2=\sum_i(1-\gamma_i),
+$$
+
+$$
+\pi^{\text{new}}=\frac{N_1}{n},
+$$
+
+$$
+\mu_1^{\text{new}}=\frac{\sum_i\gamma_ix_i}{N_1},
+\qquad
+\mu_2^{\text{new}}=\frac{\sum_i(1-\gamma_i)x_i}{N_2},
+$$
+
+$$
+(\sigma_1^2)^{\text{new}}
+=\frac{\sum_i\gamma_i(x_i-\mu_1^{\text{new}})^2}{N_1},
+$$
+
+$$
+(\sigma_2^2)^{\text{new}}
+=\frac{\sum_i(1-\gamma_i)(x_i-\mu_2^{\text{new}})^2}{N_2}.
+$$
+
+Repeat until the observed-data log-likelihood stops improving materially. EM monotonically increases—or leaves unchanged—the likelihood but may converge to a local optimum. Mixtures also have label-switching symmetry and can have singular likelihoods when a component variance collapses toward zero.
+
+## Hidden Markov model
+
+### Question
+
+A user has an unobserved intent state
+
+$$
+Z_t\in\{\text{shopping},\text{research},\text{navigation}\},
+$$
+
+with transition model $P(Z_t\mid Z_{t-1})$ and observation model $P(X_t\mid Z_t)$. Given $X_{1:T}$:
+
+1. How do you compute $P(Z_t\mid X_{1:T})$?
+2. How do you find the most likely complete state sequence?
+3. Why are these different inference problems?
+
+**Concepts:** forward--backward, Viterbi, marginal MAP, joint MAP, and dynamic programming.
+
+### Solution
+
+For latent intent states $Z_{1:T}$ and observed queries $X_{1:T}$,
+
+$$
+p(z_{1:T},x_{1:T})
+=p(z_1)p(x_1\mid z_1)
+\prod_{t=2}^Tp(z_t\mid z_{t-1})p(x_t\mid z_t).
+$$
+
+### Filtering and smoothing: forward--backward
+
+Define the forward message
+
+$$
+\alpha_t(j)=P(X_{1:t},Z_t=j).
+$$
+
+Its recurrence is
+
+$$
+\alpha_t(j)
+=P(X_t\mid Z_t=j)\sum_i\alpha_{t-1}(i)P(Z_t=j\mid Z_{t-1}=i).
+$$
+
+Define the backward message
+
+$$
+\beta_t(j)=P(X_{t+1:T}\mid Z_t=j),
+$$
+
+with recurrence
+
+$$
+\beta_t(i)
+=\sum_jP(Z_{t+1}=j\mid Z_t=i)
+P(X_{t+1}\mid Z_{t+1}=j)\beta_{t+1}(j).
+$$
+
+Then the smoothed marginal is
+
+$$
+\boxed{
+P(Z_t=j\mid X_{1:T})
+=\frac{\alpha_t(j)\beta_t(j)}{\sum_k\alpha_t(k)\beta_t(k)}
+}.
+$$
+
+### Most likely complete path: Viterbi
+
+Define
+
+$$
+\delta_t(j)=\max_{z_{1:t-1}}P(z_{1:t-1},Z_t=j,X_{1:t}).
+$$
+
+Then
+
+$$
+\delta_t(j)
+=P(X_t\mid Z_t=j)
+\max_i\left[\delta_{t-1}(i)P(Z_t=j\mid Z_{t-1}=i)\right].
+$$
+
+Store each maximizing predecessor and backtrack at $T$.
+
+Forward--backward computes a separate marginal MAP state at each time; Viterbi computes one joint MAP sequence. The individually most probable states need not form the most probable—or even structurally plausible—joint path.
+
+## Bayesian ranking and exploration
+
+### Question
+
+For each item $i$,
+
+$$
+p_i\sim\operatorname{Beta}(\alpha,\beta),
+$$
+
+and you observe $c_i$ clicks from $n_i$ impressions. Compare ranking items by:
+
+1. empirical CTR $c_i/n_i$;
+2. posterior mean $E[p_i\mid D]$;
+3. a posterior sample $\tilde p_i\sim P(p_i\mid D)$.
+
+When should each score be used, and how do uncertainty and exposure bias affect the choice?
+
+**Concepts:** Bayesian smoothing, uncertainty, exploration--exploitation, and Thompson sampling.
+
+### Solution
+
+For item $i$,
+
+$$
+p_i\sim\operatorname{Beta}(\alpha,\beta),
+$$
+
+with $c_i$ clicks in $n_i$ impressions. Then
+
+$$
+p_i\mid D_i
+\sim\operatorname{Beta}(\alpha+c_i,\beta+n_i-c_i).
+$$
+
+| Ranking score | Formula | Behavior | Best use |
+|---|---|---|---|
+| Empirical CTR | $c_i/n_i$ | No shrinkage; unstable for small $n_i$ | Large, comparable sample sizes; descriptive ranking |
+| Posterior mean | $(\alpha+c_i)/(\alpha+\beta+n_i)$ | Shrinks uncertain items toward prior mean | Stable exploitation and cold-start smoothing |
+| Thompson sample | $\tilde p_i\sim p(p_i\mid D_i)$ | Uncertain items sometimes rank high | Online exploration--exploitation |
+
+Ranking by posterior mean maximizes immediate expected clicks under the model. Thompson sampling may sacrifice immediate reward to acquire information and can improve cumulative reward. If poor recommendations are costly, a conservative lower credible bound may be preferable.
+
+::: {.callout-note title="Important logging issue"}
+In a recommender, impressions are policy-dependent and affected by position. Beta--Bernoulli updating alone does not correct exposure bias; the observation model or experimental design must address it.
+:::
+
+## Coupon collector
+
+### Question
+
+There are $n$ equally likely categories. You repeatedly draw one category independently.
+
+1. What is the expected number of draws required to observe every category?
+2. Derive
+
+$$
+E[T]=n\left(1+\frac12+\cdots+\frac1n\right).
+$$
+
+3. Give its large-$n$ approximation.
+
+**Concepts:** decomposition of expectations, geometric waiting times, and harmonic numbers.
+
+### Solution
+
+There are $n$ equally likely categories. After observing $k$ distinct categories, the probability that the next draw is new is
+
+$$
+\frac{n-k}{n}.
+$$
+
+Let $W_k$ be the additional draws needed to move from $k$ to $k+1$ observed categories. Then
+
+$$
+W_k\sim\operatorname{Geometric}\left(\frac{n-k}{n}\right),
+$$
+
+so
+
+$$
+E[W_k]=\frac{n}{n-k}.
+$$
+
+Because $T=\sum_{k=0}^{n-1}W_k$,
+
+$$
+\begin{aligned}
+E[T]
+&=\sum_{k=0}^{n-1}\frac{n}{n-k}\\
+&=n\sum_{j=1}^n\frac1j\\
+&=\boxed{nH_n}.
+\end{aligned}
+$$
+
+Since $H_n=\log n+\gamma+o(1)$,
+
+$$
+\boxed{E[T]\approx n\log n+\gamma n}.
+$$
+
+The last few unseen categories dominate the waiting time.
+
+## Maximum and minimum of uniform variables
+
+### Question
+
+Let
+
+$$
+X_1,\ldots,X_n\overset{iid}{\sim}\operatorname{Uniform}(0,1).
+$$
+
+For $M=\max_iX_i$:
+
+1. derive its CDF and PDF;
+2. compute $E[M]$.
+
+Then derive the corresponding CDF, PDF, and expectation for $m=\min_iX_i$.
+
+**Concepts:** order statistics, independence, and the CDF method.
+
+### Solution
+
+Let $X_1,\ldots,X_n\overset{iid}{\sim}\operatorname{Uniform}(0,1)$.
+
+### Maximum
+
+For $M=\max_iX_i$ and $0\le x\le1$,
+
+$$
+P(M\le x)
+=P(X_1\le x,\ldots,X_n\le x)
+=x^n.
+$$
+
+Thus
+
+$$
+\boxed{F_M(x)=x^n},
+\qquad
+\boxed{f_M(x)=nx^{n-1}}.
+$$
+
+The expectation is
+
+$$
+\boxed{E[M]=\int_0^1x\,nx^{n-1}dx=\frac{n}{n+1}}.
+$$
+
+### Minimum
+
+For $m=\min_iX_i$,
+
+$$
+P(m>x)=P(X_1>x,\ldots,X_n>x)=(1-x)^n.
+$$
+
+Therefore
+
+$$
+\boxed{F_m(x)=1-(1-x)^n},
+$$
+
+$$
+\boxed{f_m(x)=n(1-x)^{n-1}},
+$$
+
+$$
+\boxed{E[m]=\frac1{n+1}}.
+$$
+
+The key trick is to derive the CDF from an event involving all independent variables.
+
+## Random walk and gambler's ruin
+
+### Question
+
+A particle begins at $X_0$ and moves independently at each step:
+
+$$
+X_{t+1}=
+\begin{cases}
+X_t+1, & \text{with probability }p,\\
+X_t-1, & \text{with probability }1-p.
+\end{cases}
+$$
+
+1. Compute $E[X_t]$ and $\operatorname{Var}(X_t)$.
+2. Starting at $i\in\{1,\ldots,N-1\}$, compute the probability of hitting $N$ before $0$.
+3. Compute the expected time to hit either boundary.
+
+**Concepts:** random walks, Markov chains, first-step recurrences, and gambler's ruin.
+
+### Solution
+
+Let increments $Y_s\in\{+1,-1\}$ satisfy
+
+$$
+P(Y_s=1)=p,\qquad P(Y_s=-1)=q=1-p,
+$$
+
+and $X_t=X_0+\sum_{s=1}^tY_s$.
+
+### Mean and variance
+
+Since $E[Y_s]=p-q=2p-1$ and $\operatorname{Var}(Y_s)=4pq$,
+
+$$
+\boxed{E[X_t]=X_0+t(2p-1)},
+$$
+
+$$
+\boxed{\operatorname{Var}(X_t)=4tpq}.
+$$
+
+### Probability of hitting $N$ before $0$
+
+Let
+
+$$
+h_i=P_i(\tau_N<\tau_0).
+$$
+
+First-step analysis gives
+
+$$
+h_i=ph_{i+1}+qh_{i-1},
+\qquad h_0=0,\quad h_N=1.
+$$
+
+Solving,
+
+$$
+\boxed{
+h_i=
+\begin{cases}
+\dfrac{1-(q/p)^i}{1-(q/p)^N}, & p\ne q,\\[8pt]
+\dfrac{i}{N}, & p=q=1/2.
+\end{cases}
+}
+$$
+
+### Expected time to hit either boundary
+
+Let $e_i=E_i[\tau_{\{0,N\}}]$. Then
+
+$$
+e_i=1+pe_{i+1}+qe_{i-1},
+\qquad e_0=e_N=0.
+$$
+
+The solution is
+
+$$
+\boxed{
+e_i=
+\begin{cases}
+\dfrac{Nh_i-i}{p-q}, & p\ne q,\\[8pt]
+i(N-i), & p=q=1/2.
+\end{cases}
+}
+$$
+
+For the unbiased walk, the expected position does not drift, yet absorption still occurs and can take $O(N^2)$ time from the middle.
+
+## Probabilistic graphical-model reasoning
+
+### Question
+
+Consider the common-cause graph
+
+$$
+X\leftarrow Z\rightarrow Y.
+$$
+
+1. Are $X$ and $Y$ independent marginally?
+2. Are they independent conditioned on $Z$?
+
+Now consider the collider
+
+$$
+X\rightarrow Z\leftarrow Y.
+$$
+
+3. Are $X$ and $Y$ independent marginally?
+4. What happens after conditioning on $Z$?
+
+**Concepts:** factorization, conditional independence, d-separation, common causes, colliders, and explaining away.
+
+### Solution
+
+### Common cause: $X\leftarrow Z\rightarrow Y$
+
+The joint factorizes as
+
+$$
+p(x,y,z)=p(z)p(x\mid z)p(y\mid z).
+$$
+
+Therefore
+
+$$
+\boxed{X\perp Y\mid Z}.
+$$
+
+Marginally,
+
+$$
+p(x,y)=\sum_zp(z)p(x\mid z)p(y\mid z),
+$$
+
+which generally does not equal $p(x)p(y)$. Thus $X$ and $Y$ are usually dependent because observing one provides information about their common cause.
+
+### Collider: $X\rightarrow Z\leftarrow Y$
+
+The joint factorizes as
+
+$$
+p(x,y,z)=p(x)p(y)p(z\mid x,y).
+$$
+
+Assuming no other path connects them,
+
+$$
+\boxed{X\perp Y}
+$$
+
+marginally. But conditioning on $Z$ gives
+
+$$
+p(x,y\mid z)\propto p(x)p(y)p(z\mid x,y),
+$$
+
+which generally does not factorize. Therefore
+
+$$
+\boxed{X\not\!\perp Y\mid Z}.
+$$
+
+This is collider bias or explaining away. If admission depends on either high grades or athletic ability, then among admitted students, learning that one student has weaker grades raises the probability that they have strong athletic ability—even if the traits were independent in the applicant population.
+
+## Final synthesis
+
+These problems fall into a small number of reusable modeling patterns:
+
+| Pattern | Problems | Core move |
+|---|---|---|
+| Indicator decomposition | Buckets, coupon collector | Convert a global count into local random variables |
+| Reweighting by observation process | Length bias, missingness, position bias | Model why an observation entered the data |
+| Bayes and marginalization | Medical test, coin mixture, conjugate models | Posterior $\propto$ likelihood $\times$ prior |
+| Likelihood-based estimation | Capture--recapture, Gaussian MLE, GMM | Write the data-generating distribution first |
+| Aggregation and confounding | A/B testing, Simpson's paradox | Separate estimand, uncertainty, and assignment mechanism |
+| Sequential dynamic programming | HMM, random walk | Condition on the next/previous state |
+| Uncertainty-aware decisions | Bayesian ranking | Distinguish inference from action selection |
+
+::: {.callout-important title="Senior MLE / Research Engineer takeaway"}
+The unifying question is not “which formula applies?” It is “what observation process generated this dataset?” Most production failures—selection bias, position bias, confounding, feedback loops, and overconfident ranking—come from modeling outcomes while ignoring that process.
+:::

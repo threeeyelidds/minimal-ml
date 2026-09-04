@@ -37,7 +37,9 @@ title: "Notes"
 ## Algorithms
 
 - [Dynamic Programming and Graph Algorithms from First Principles](algorithms/dynamic_programming_and_graph_algorithms.qmd)
+- [From Graph Algorithms to Reinforcement Learning](algorithms/rl_algo.qmd)
 - [Probabilistic modeling tricks](algorithms/probabilistic_modeling_tricks.qmd)
+- [Probabilistic Modeling Practice: 20 Worked Problems](algorithms/probabilistic-modeling-practice-solutions.qmd)
 
 ## Coming next
 

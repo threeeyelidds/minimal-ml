@@ -194,6 +194,267 @@ Important design choices:
 - special tokens such as BOS, EOS, PAD, and modality separators
 - whether segmentation is deterministic or sampled during training
 
+### BPE from first principles
+
+Byte-pair encoding learns a vocabulary between the two extremes of characters
+and whole words. It begins with small symbols and repeatedly creates a new
+symbol for the most frequent adjacent pair. Frequent fragments become single
+tokens, while rare words remain compositions of smaller reusable tokens.
+
+Suppose a pre-tokenized corpus contains word types $w$ with counts $c(w)$, and
+the current segmentation of each word is $s(w)$. At each training step, count
+every adjacent pair and select
+
+$$
+(a^*,b^*)
+=
+\arg\max_{(a,b)}
+\sum_w c(w)
+\sum_i
+\mathbf{1}
+\left[
+(s_i(w),s_{i+1}(w))=(a,b)
+\right].
+$$
+
+Then replace every non-overlapping occurrence of $(a^*,b^*)$ with the new
+symbol $a^*b^*$. For example,
+
+```text
+l o w e r
+    merge (l, o)
+lo w e r
+    merge (lo, w)
+low e r
+```
+
+The algorithm has two distinct phases:
+
+1. **Training:** repeatedly count pairs on the training corpus and store the
+   selected merges in order.
+2. **Encoding:** start a new input from the base symbols and apply only those
+   learned merges, respecting their learned priority. Pair frequencies are not
+   relearned from the input being encoded.
+
+The ordered merge list is therefore the tokenizer's learned model. If merge
+$(a,b)$ was learned before merge $(ab,c)$, the first merge must create `ab`
+before the second can create `abc`.
+
+#### Minimal BPE with incremental training
+
+A useful middle ground keeps the optimization that matters at corpus scale
+without reproducing a production tokenizer's internal data structures.
+
+The trainer maintains:
+
+| State | Purpose |
+|---|---|
+| pair counts | current corpus-wide frequency of each adjacent pair |
+| pair-to-word index | word types affected by a selected merge |
+| max-heap | retrieve the next pair without scanning every candidate |
+
+There is one full pair-counting pass. After that, a merge revisits only word
+types containing the selected pair and updates their pair-count deltas. Stale
+heap entries are discarded lazily. This avoids rescanning the entire corpus for
+every learned token while leaving the BPE recurrence visible.
+
+```{python}
+from collections import Counter, defaultdict
+import heapq
+
+
+def byte_symbols(text):
+    return tuple(bytes([value]) for value in text.encode("utf-8"))
+
+
+def count_pairs(symbols):
+    return Counter(zip(symbols, symbols[1:]))
+
+
+def merge_pair(symbols, target):
+    """Merge non-overlapping occurrences of target from left to right."""
+    output = []
+    index = 0
+
+    while index < len(symbols):
+        if (
+            index + 1 < len(symbols)
+            and (symbols[index], symbols[index + 1]) == target
+        ):
+            output.append(symbols[index] + symbols[index + 1])
+            index += 2
+        else:
+            output.append(symbols[index])
+            index += 1
+
+    return tuple(output)
+
+
+class MinimalBPE:
+    def __init__(self, num_merges, min_frequency=2):
+        self.num_merges = num_merges
+        self.min_frequency = min_frequency
+
+    def fit(self, texts):
+        word_counts = Counter(
+            word
+            for text in texts
+            for word in text.split()
+        )
+        words = [byte_symbols(word) for word in word_counts]
+        frequencies = list(word_counts.values())
+
+        pair_counts = Counter()
+        pair_to_words = defaultdict(set)
+
+        # The only full pass over the corpus vocabulary.
+        for word_id, (symbols, frequency) in enumerate(zip(words, frequencies)):
+            for pair, occurrences in count_pairs(symbols).items():
+                pair_counts[pair] += occurrences * frequency
+                pair_to_words[pair].add(word_id)
+
+        # Python implements a min-heap, so counts are negated.
+        heap = [(-count, pair) for pair, count in pair_counts.items()]
+        heapq.heapify(heap)
+        self.merges = []
+
+        for _ in range(self.num_merges):
+            # Pair counts change over time. Ignore stale heap entries.
+            while heap:
+                negative_count, best_pair = heapq.heappop(heap)
+                if -negative_count == pair_counts.get(best_pair, 0):
+                    break
+            else:
+                break
+
+            if pair_counts[best_pair] < self.min_frequency:
+                break
+
+            self.merges.append(best_pair)
+            changed_pairs = set()
+
+            # Only these word types can change under this merge.
+            for word_id in tuple(pair_to_words[best_pair]):
+                before = count_pairs(words[word_id])
+                words[word_id] = merge_pair(words[word_id], best_pair)
+                after = count_pairs(words[word_id])
+                frequency = frequencies[word_id]
+
+                for pair in before.keys() | after.keys():
+                    pair_counts[pair] += (
+                        after[pair] - before[pair]
+                    ) * frequency
+                    changed_pairs.add(pair)
+
+                    if after[pair]:
+                        pair_to_words[pair].add(word_id)
+                    else:
+                        pair_to_words[pair].discard(word_id)
+
+            for pair in changed_pairs:
+                if pair_counts[pair] > 0:
+                    heapq.heappush(heap, (-pair_counts[pair], pair))
+
+        self.merge_ranks = {
+            pair: rank for rank, pair in enumerate(self.merges)
+        }
+
+        # Byte IDs 0...255 are fixed; learned tokens follow merge order.
+        vocabulary = [bytes([value]) for value in range(256)]
+        self.token_to_id = {
+            token: token_id for token_id, token in enumerate(vocabulary)
+        }
+        for left, right in self.merges:
+            token = left + right
+            if token not in self.token_to_id:
+                self.token_to_id[token] = len(vocabulary)
+                vocabulary.append(token)
+        self.id_to_token = dict(enumerate(vocabulary))
+        return self
+
+    def encode_piece(self, piece):
+        symbols = byte_symbols(piece)
+
+        # At most len(symbols) - 1 merges can happen. Crucially, this searches
+        # only adjacent pairs in the piece, not every rule in the vocabulary.
+        while len(symbols) > 1:
+            candidates = [
+                (self.merge_ranks[pair], pair)
+                for pair in zip(symbols, symbols[1:])
+                if pair in self.merge_ranks
+            ]
+            if not candidates:
+                break
+            _, best_pair = min(candidates)
+            symbols = merge_pair(symbols, best_pair)
+
+        return list(symbols)
+
+    def encode_tokens(self, text):
+        tokens = []
+        for word_index, word in enumerate(text.split()):
+            if word_index:
+                tokens.append(b" ")
+            tokens.extend(self.encode_piece(word))
+        return tokens
+
+    def encode(self, text):
+        return [self.token_to_id[token] for token in self.encode_tokens(text)]
+
+    def decode(self, token_ids):
+        return b"".join(self.id_to_token[i] for i in token_ids).decode("utf-8")
+
+
+corpus = [
+    "low lower lowest",
+    "low lower",
+    "newer wider",
+]
+
+bpe = MinimalBPE(num_merges=8, min_frequency=1).fit(corpus)
+tokens = bpe.encode_tokens("lowest newer")
+token_ids = bpe.encode("lowest newer")
+
+assert bpe.decode(token_ids) == "lowest newer"
+print("merges:", bpe.merges)
+print("tokens:", [token.decode("utf-8") for token in tokens])
+print("ids:", token_ids)
+```
+
+Let $C$ be the initial number of symbols across distinct pre-tokenized word
+types, and let $A_k$ be the total length of word types affected by merge
+$k$. Training costs approximately
+
+$$
+O\left(
+C + \sum_{k=1}^{M} A_k + H
+\right),
+$$
+
+where $H$ is heap overhead. This is substantially better than the naïve
+$O(MC)$ full rescan when most pairs occur in only a small part of the
+vocabulary.
+
+The compact encoder repeatedly finds the learned pair with the best rank among
+the current adjacent pairs. It is $O(n^2)$ in the worst case for a piece of
+$n$ bytes, but it does not scan all $M$ learned rules and pre-tokenized
+pieces are usually short. A production encoder replaces the list rescans with
+linked neighbors and a candidate heap, approaching $O(n\log n)$, and adds
+caching and native parallelism.
+
+This implementation still simplifies pre-tokenization: `split()` collapses
+whitespace, and it omits normalization and special-token handling. For
+production, use native libraries such as
+[Hugging Face Tokenizers](https://github.com/huggingface/tokenizers) or
+[OpenAI tiktoken](https://github.com/openai/tiktoken).
+
+:::: {.callout-note title="The key BPE distinction"}
+BPE training is a greedy corpus-compression procedure. BPE encoding is a
+deterministic replay of the learned merge priorities. Choosing the most frequent
+pair in each new input would define a different tokenizer and would not produce
+the token IDs the model was trained on.
+::::
+
 ### Minimal byte tokenizer
 
 This is lossless for valid UTF-8 text and has no learned vocabulary. It is

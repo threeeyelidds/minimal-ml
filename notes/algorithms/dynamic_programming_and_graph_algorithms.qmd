@@ -909,6 +909,18 @@ The entire greedy-finalization argument disappears.
 
 ## 16. Bellman-Ford as explicit DP
 
+:::: {.callout-note title="Connection to reinforcement learning"}
+
+Shortest-path algorithms and RL share the same underlying idea:
+**propagate value over a state-transition graph using Bellman-style updates.**
+
+The main differences are how value dependencies are scheduled and whether
+the transition model is known.
+
+See [From Graph Algorithms to Reinforcement Learning](rl_algo.qmd)
+for the full connection.
+::::
+
 ### Bellman–Ford as Dynamic Programming on an Expanded DAG
 
 A useful way to understand Bellman–Ford is:
