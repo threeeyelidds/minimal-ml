@@ -24,7 +24,8 @@ title: "Notes"
 
 - [Attention Techniques in Modern LLMs](advanced/advanced_attention.qmd)
 - [Linear Attention](advanced/linear_attention.qmd)
-- [From Test-Time Training to Continual Intelligence](advanced/continual_intelligence_ttt.qmd)
+- [From Test-Time Training to Continual Intelligence — Original Version](advanced/continual_intelligence_ttt.qmd)
+- [From Test-Time Training to Continual Intelligence — Expanded Version](advanced/continual_intelligence_ttt_expanded.qmd)
 
 ## Applied ML
 

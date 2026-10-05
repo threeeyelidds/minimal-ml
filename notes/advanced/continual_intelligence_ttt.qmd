@@ -3,6 +3,14 @@ title: "From Test-Time Training to Continual Intelligence"
 subtitle: "A research-direction note on memory, reasoning, meta-learning, and the substrate of continual adaptation"
 ---
 
+:::: {.callout-note title="Compare the two versions"}
+This is the original, shorter version of the argument.
+
+[Read the expanded version](continual_intelligence_ttt_expanded.qmd), which
+extends the framework to representation compilation, latent reasoning,
+auxiliary supervision, and compute routing.
+::::
+
 ## Thesis
 
 Test-time training (TTT) is usually introduced as a technique: update some model parameters during inference using a self-supervised loss. But the recent evolution of TTT suggests a more interesting interpretation.

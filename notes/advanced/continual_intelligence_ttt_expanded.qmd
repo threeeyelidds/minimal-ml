@@ -1,0 +1,3446 @@
+---
+title: "From Test-Time Training to Continual Intelligence — Expanded Version"
+subtitle: "A research-direction note on memory, reasoning, meta-learning, and the substrate of continual adaptation"
+date: "2026-08-19"
+toc-depth: 3
+---
+
+:::: {.callout-note title="Compare the two versions"}
+This expanded version retains the original TTT-to-continual-intelligence
+argument, then develops representation compilation, latent reasoning,
+auxiliary supervision, and compute routing in greater depth.
+
+[Read the original, shorter note](continual_intelligence_ttt.qmd).
+::::
+
+## Thesis
+
+Test-time training (TTT) is usually introduced as a technique: update some model parameters during inference using a self-supervised loss. But the recent evolution of TTT suggests a more interesting interpretation.
+
+The real question is not:
+
+> **Can a model update its weights at test time?**
+
+Of course it can.
+
+The harder question is:
+
+> **Can we construct a learning system whose local updates are useful, whose update trajectory remains stable, and whose experiences are routed into the right kind of internal state?**
+
+Once phrased this way, TTT stops looking like a niche long-context mechanism. It becomes one instance of a much broader problem: **continual intelligence**.
+
+A continually learning system does not have one homogeneous memory. It has multiple kinds of state, changing at different timescales:
+
+$$
+\boxed{
+\text{working state}
+\rightarrow
+\text{episodic memory}
+\rightarrow
+\text{semantic knowledge}
+\rightarrow
+\text{procedural skills}
+\rightarrow
+\text{meta-learning policy}
+}
+$$
+
+The central architectural question is therefore not merely *what loss should we optimize?* It is also:
+
+> **What should be the substrate of each level of learning?**
+
+Should an experience become an activation, a prompt, an external memory, a skill, a harness rule, an adapter, or a permanent weight update?
+
+My working hypothesis is that future continually learning agents will use **heterogeneous substrates** and progressively compile useful structure downward:
+
+$$
+\boxed{
+\text{explicit + plastic}
+\quad\longrightarrow\quad
+\text{implicit + efficient}
+}
+$$
+
+That gives a possible unifying framework for test-time training, long-context memory, skill libraries, agent harnesses, meta-learning, and eventually online RL.
+
+---
+
+## 1. TTT started as adaptation, not memory
+
+The original formulation of Test-Time Training was motivated by **distribution shift**.
+
+A model is trained on one distribution but deployed on another:
+
+$$
+p_{\text{train}}(x) \neq p_{\text{test}}(x).
+$$
+
+At test time, labels are unavailable, so the model constructs a self-supervised task on the incoming example and updates some of its parameters before making the downstream prediction.
+
+Schematically,
+
+$$
+\theta'
+=
+\theta-\eta\nabla_\theta L_{\text{self-supervised}}(x),
+$$
+
+followed by
+
+$$
+\hat y = f_{\theta'}(x).
+$$
+
+The key intuition was that an auxiliary objective such as rotation prediction could provide a gradient that moved the feature extractor toward a representation more suitable for the current test distribution.
+
+This already contained the seed of the central TTT problem:
+
+$$
+\boxed{
+\nabla L_{\text{aux}}
+\text{ must somehow correlate with }
+\nabla L_{\text{task}}
+}
+$$
+
+even though the true task loss is unavailable.
+
+This is an indirect form of control. We do not optimize the thing we actually care about. We invent a locally observable objective and hope that its optimization changes the model in a useful direction.
+
+That is a very strong assumption.
+
+---
+
+## 2. TTT then changed meaning: weights became recurrent state
+
+The newer sequence-modeling line of TTT repurposed the same mechanism for a different goal.
+
+Instead of asking:
+
+> How do I adapt a model to a shifted distribution?
+
+it asks:
+
+> Can parameter updates themselves act as a memory state?
+
+Consider a recurrent model:
+
+$$
+h_t = F(h_{t-1}, x_t).
+$$
+
+A TTT layer replaces the ordinary hidden state with mutable parameters:
+
+$$
+W_t
+=
+U(W_{t-1},x_t).
+$$
+
+The update operator $U$ is typically implemented as an optimization step:
+
+$$
+W_t
+=
+W_{t-1}
+-
+\eta\nabla_W L_{\text{TTT}}(W_{t-1};x_t).
+$$
+
+Now the weights are not simply "the trained model." They are also **the evolving state of the sequence processor**.
+
+This creates a striking reinterpretation:
+
+$$
+\boxed{
+\text{optimizer dynamics}
+\equiv
+\text{recurrent dynamics}
+}
+$$
+
+and
+
+$$
+\boxed{
+\text{fast weights}
+\equiv
+\text{memory state}.
+}
+$$
+
+This is the conceptual bridge from classical TTT to long-context TTT.
+
+---
+
+## 3. Why did TTT use KV-binding auxiliary losses?
+
+A common long-context TTT construction uses a key-value binding objective:
+
+$$
+L_{\text{KVB}}
+=
+\|f_W(k)-v\|^2.
+$$
+
+At first glance this is confusing.
+
+Standard attention computes
+
+$$
+o(q)
+=
+\sum_i
+\operatorname{softmax}(q^\top k_i)v_i.
+$$
+
+There is no requirement that
+
+$$
+k_i \approx v_i,
+$$
+
+and no function $f$ in ordinary attention that is supposed to map a key directly onto its value.
+
+The intended abstraction is different.
+
+An attention KV cache can be viewed as an explicit associative table:
+
+$$
+\mathcal M
+=
+\{k_i \mapsto v_i\}.
+$$
+
+TTT asks whether this explicit table can instead be compressed into a parameterized function:
+
+$$
+f_W(k_i)\approx v_i.
+$$
+
+Then retrieval is performed by evaluating
+
+$$
+f_W(q).
+$$
+
+Under this interpretation, the auxiliary loss is a **memory-writing rule**. It is not derived from the original attention equation. It is chosen because SGD on this objective is hoped to encode useful associations into $W$.
+
+That difference matters.
+
+The KVB objective does not follow inevitably from the task. It is an architectural hypothesis about how gradients should implement memory.
+
+---
+
+## 4. The KVB story may be more accidental than it first appeared
+
+Recent analysis complicates the literal "SGD memorizes key-value pairs" explanation.
+
+For a simplified linear fast-weight model
+
+$$
+f_W(x)=Wx,
+$$
+
+consider a loss whose gradient gives an outer-product update:
+
+$$
+L = -f_W(k)^\top v.
+$$
+
+Then
+
+$$
+\nabla_W L = -vk^\top,
+$$
+
+and SGD produces
+
+$$
+W_t
+=
+W_{t-1}
++
+\eta v_t k_t^\top.
+$$
+
+Starting from zero,
+
+$$
+W_t
+=
+\eta
+\sum_{i\le t}
+v_i k_i^\top.
+$$
+
+Querying the state gives
+
+$$
+W_tq
+=
+\eta
+\sum_i
+v_i(k_i^\top q).
+$$
+
+This is immediately recognizable as an attention-like computation:
+
+$$
+\boxed{
+W_tq
+=
+\sum_i
+\underbrace{(q^\top k_i)}_{\text{routing weight}}
+v_i
+}
+$$
+
+without explicit KV storage.
+
+The important object is therefore not necessarily the semantic statement
+
+$$
+f(k)\approx v.
+$$
+
+It may instead be the **algebra induced by the gradient**:
+
+$$
+\nabla_W L
+\rightarrow
+vk^\top.
+$$
+
+That makes the auxiliary objective look less like literal memory regression and more like a way to engineer a desired state-transition operator.
+
+The 2026 paper *Test-Time Training with KV Binding Is Secretly Linear Attention* pushes this view further, arguing that a broad class of KV-binding TTT architectures can be rewritten as learned linear-attention operators.
+
+This is an important warning.
+
+::: {.callout-note}
+## A useful way to reinterpret auxiliary-loss TTT
+
+TTT is not necessarily "finding a loss that is intrinsically meaningful."
+
+It may instead be:
+
+$$
+\boxed{
+\text{choose a loss whose gradient implements a useful low-level computation}
+}
+$$
+
+That means success depends on our understanding of the geometry and dynamics induced by the optimizer.
+:::
+
+And our understanding of those dynamics is still limited.
+
+---
+
+## 5. Why not use the actual next-token-prediction loss?
+
+For an autoregressive language model, we have an unusually convenient test-time learning signal.
+
+After reading a sequence,
+
+$$
+x_1,x_2,\ldots,x_T,
+$$
+
+every observed token is also a label for the previous prefix:
+
+$$
+L_t(\theta)
+=
+-\log p_\theta(x_t\mid x_{<t}).
+$$
+
+So why invent
+
+$$
+L_{\text{KVB}}
+$$
+
+at all?
+
+Why not simply use
+
+$$
+L_{\text{NTP}}?
+$$
+
+There are two answers.
+
+### 5.1 Systems cost
+
+A local auxiliary objective can update a small fast-weight module without backpropagating through the whole language model.
+
+Next-token prediction originates at the logits.
+
+If we update a parameter $W_l$ in a lower layer,
+
+$$
+\nabla_{W_l}L_{\text{NTP}}
+$$
+
+requires gradients to flow through the layers above it.
+
+Inference now inherits some of the costs of training:
+
+- backward kernels,
+- activation storage or recomputation,
+- mutable request-specific parameters,
+- optimizer computation,
+- synchronization and batching challenges.
+
+This is a real cost.
+
+But it is probably not the deepest obstacle.
+
+### 5.2 The trajectory problem
+
+Suppose we perform online SGD:
+
+$$
+\theta_{t+1}
+=
+\theta_t-\eta g_t,
+\qquad
+g_t=\nabla_\theta L_t(\theta_t).
+$$
+
+A local update may improve the loss on the current sample:
+
+$$
+L_t(\theta_{t+1})
+<
+L_t(\theta_t),
+$$
+
+but this does not imply that the resulting model is better on future data.
+
+The update may:
+
+- overfit a transient pattern,
+- damage pretrained capabilities,
+- distort future gradients,
+- reinforce an incorrect local interpretation,
+- accumulate interference over a long stream.
+
+Worse, the process is recursive:
+
+$$
+\theta_0
+\rightarrow
+\theta_1
+\rightarrow
+\theta_2
+\rightarrow
+\cdots
+$$
+
+with
+
+$$
+g_{t+1}
+=
+\nabla L_{t+1}(\theta_t).
+$$
+
+A bad update does not merely create an additive error. It changes the model that computes the next gradient.
+
+So continual test-time learning is a **dynamical-system problem**:
+
+$$
+\boxed{
+\theta_{t+1}
+=
+F(\theta_t,x_t)
+}
+$$
+
+and local correctness does not guarantee global trajectory stability.
+
+---
+
+## 6. "TTT Done Right" fixes a different problem
+
+Earlier TTT sequence models often updated fast weights every few tokens:
+
+$$
+B\approx16\text{--}64.
+$$
+
+This gives fine-grained causal updates but poor GPU utilization.
+
+For a 128K-token sequence, a 16-token update means
+
+$$
+\frac{128K}{16}
+=
+8192
+$$
+
+small optimizer steps.
+
+Those operations are poorly shaped for modern accelerators.
+
+*Test-Time Training Done Right* introduces Large Chunk TTT (LaCT), increasing update chunks from tens of tokens to thousands or even much larger blocks depending on the modality.
+
+Instead of
+
+$$
+x_{1:16}
+\rightarrow W_1,
+\quad
+x_{17:32}
+\rightarrow W_2,
+$$
+
+we may have
+
+$$
+x_{1:2048}
+\rightarrow W_1,
+\quad
+x_{2049:4096}
+\rightarrow W_2.
+$$
+
+The trick is to combine the slowly updated TTT state with local/window attention:
+
+$$
+\boxed{
+\text{local attention}
++
+\text{long-timescale fast weights}
+}
+$$
+
+so attention handles interactions within a chunk, while the fast-weight state carries information across chunks.
+
+LaCT therefore primarily attacks:
+
+$$
+\boxed{
+\text{temporal resolution}
+\leftrightarrow
+\text{hardware efficiency}
+}
+$$
+
+rather than replacing the fundamental auxiliary-loss paradigm.
+
+This distinction is useful because it separates two research questions:
+
+1. **What update dynamics should the model use?**
+2. **How can those dynamics execute efficiently?**
+
+LaCT makes major progress on the second.
+
+---
+
+## 7. In-Place TTT: move the adaptive state into the existing model
+
+Another step is to question why TTT needs a specialized fast-weight memory module at all.
+
+*In-Place Test-Time Training* repurposes existing MLP parameters—in particular the final projection matrix of MLP blocks—as fast weights.
+
+That changes the architecture from something like
+
+$$
+\text{Transformer}
++
+\text{special TTT memory layer}
+$$
+
+toward
+
+$$
+\text{ordinary Transformer whose own parameters become adaptive}.
+$$
+
+It also replaces the generic reconstruction target with a language-model-aligned local objective designed around next-token prediction.
+
+The significance is not that it simply performs naive full-model NTP SGD. It does not.
+
+The important conceptual steps are:
+
+- reuse the existing model as the memory substrate,
+- update only selected parameters,
+- align the test-time objective more directly with language modeling,
+- preserve chunk-wise efficiency.
+
+In-Place TTT therefore weakens two assumptions of classical TTT:
+
+1. that a special memory architecture is necessary;
+2. that generic reconstruction is the right update objective.
+
+But it still carefully engineers the adaptation rule.
+
+---
+
+## 8. TTT-E2E: train the model for its own future learning trajectory
+
+End-to-End TTT goes one level deeper.
+
+Instead of pretraining a static model and later applying some test-time updates, it asks:
+
+> What initialization should we learn if we already know the model will continue learning during inference?
+
+Ordinary pretraining solves something like
+
+$$
+\theta^*
+=
+\arg\min_\theta
+\mathbb E[L(\theta)].
+$$
+
+That objective says:
+
+> **Find a parameter vector that is directly good at prediction.**
+
+But if inference will execute an update operator $U$,
+
+$$
+\theta_1=U(\theta_0,x_1),
+$$
+
+$$
+\theta_2=U(\theta_1,x_2),
+$$
+
+and so on, then the actual deployed object is not $\theta_0$.
+
+It is the entire trajectory
+
+$$
+\theta_0,\theta_1,\ldots,\theta_T.
+$$
+
+So the outer objective should optimize through those updates:
+
+$$
+\theta_0^*
+=
+\arg\min_{\theta_0}
+\mathbb E
+\left[
+L\left(
+U_T(
+\cdots
+U_2(
+U_1(\theta_0)
+)
+)
+\right)
+\right].
+$$
+
+In practice, online language modeling needs good predictions throughout the sequence, so the more revealing objective is conceptually
+
+$$
+L_{\text{meta}}
+=
+\sum_t
+L_t(\theta_{t-1}).
+$$
+
+Now every intermediate model matters.
+
+This gives a much stronger interpretation of meta-learning:
+
+$$
+\boxed{
+\text{do not merely learn a good initialization;}
+\quad
+\text{learn a region of parameter space in which the update trajectory stays useful}
+}
+$$
+
+or, more suggestively,
+
+$$
+\boxed{
+\text{learn a stable manifold of online adaptation}.
+}
+$$
+
+---
+
+## 9. TTT-E2E is really learning gradient geometry
+
+This reframes the role of training.
+
+Suppose the model has some conceptual decomposition
+
+$$
+\theta
+=
+\theta_{\text{stable}}
++
+\theta_{\text{plastic}}.
+$$
+
+We want gradients from the current context to mostly change the plastic state:
+
+$$
+g_t
+=
+g_t^{\text{context}}
++
+\epsilon_t^{\text{knowledge}},
+$$
+
+with
+
+$$
+\|\epsilon_t^{\text{knowledge}}\|
+\ll
+\|g_t^{\text{context}}\|.
+$$
+
+Meta-training can shape the representation such that ordinary NTP gradients naturally act like memory-writing operations while avoiding destructive directions.
+
+So TTT-E2E is not only learning parameters.
+
+It is learning:
+
+$$
+\boxed{
+\text{what SGD means inside this representation}.
+}
+$$
+
+That is a much more interesting objective.
+
+Ordinary pretraining learns a function.
+
+Meta-trained TTT additionally learns a **local learning geometry** around that function.
+
+This is closely related to the idea of optimizer programming:
+
+$$
+\boxed{
+\text{representation learning}
++
+\text{optimizer dynamics}
+=
+\text{learned recurrent transition}.
+}
+$$
+
+---
+
+## 10. But long-context memory is only one layer of continual learning
+
+At this point it becomes natural to compare TTT with human continual learning.
+
+A two-way split between
+
+$$
+\text{pretrained knowledge}
+$$
+
+and
+
+$$
+\text{test-time context}
+$$
+
+is useful, but incomplete.
+
+A more interesting hierarchy is:
+
+$$
+\boxed{
+\begin{aligned}
+M &: \text{episodic / contextual state} \\
+K &: \text{semantic knowledge} \\
+P &: \text{procedural / reasoning skills} \\
+A &: \text{meta-policy for reasoning and learning}
+\end{aligned}
+}
+$$
+
+These are not merely different amounts of memory.
+
+They encode fundamentally different things.
+
+---
+
+## 11. Level I: episodic state — what just happened?
+
+Examples:
+
+- a definition introduced 30K tokens ago,
+- a repository-specific convention,
+- an earlier failed attempt,
+- a user's temporary constraint,
+- a fact relevant only to the current task.
+
+This state needs:
+
+$$
+\text{high plasticity}
+\qquad
+\text{low commitment}.
+$$
+
+The best substrates are likely:
+
+- activations,
+- attention/KV state,
+- recurrent state,
+- external scratch memory,
+- request-specific fast weights.
+
+TTT is especially interesting here because it provides a compressed alternative to explicitly retaining all previous activations.
+
+The ideal behavior is:
+
+$$
+\text{experience}
+\rightarrow
+M_{\text{episode}},
+$$
+
+not immediately
+
+$$
+\text{experience}
+\rightarrow
+\Delta\theta_{\text{global}}.
+$$
+
+Most experiences should be cheap to forget.
+
+---
+
+## 12. Level II: semantic knowledge — what has become stably true?
+
+Suppose the system repeatedly encounters evidence supporting a fact or abstraction.
+
+At some point it becomes inefficient to retrieve the original episodes every time.
+
+The information should be consolidated into a slower representation:
+
+$$
+M_{\text{episode}}
+\rightarrow
+K_{\text{semantic}}.
+$$
+
+Dense model weights are good at this because they provide:
+
+- compression,
+- abstraction,
+- broad generalization,
+- constant-cost implicit retrieval.
+
+But weights are poor at:
+
+- provenance,
+- very recent information,
+- precise rare facts,
+- reversible correction.
+
+So semantic knowledge probably wants a hybrid substrate:
+
+$$
+\boxed{
+K
+=
+\text{slow weights}
++
+\text{retrieval store}.
+}
+$$
+
+The retrieval store handles the fresh, rare, precise, and attributable long tail.
+
+Weights absorb stable patterns that repeatedly prove useful.
+
+This resembles consolidation:
+
+$$
+\text{episodes}
+\rightarrow
+\text{selection}
+\rightarrow
+\text{compression}
+\rightarrow
+\text{slow weights}.
+$$
+
+---
+
+## 13. Level III: procedural knowledge — how should I solve this kind of problem?
+
+This is where a simple "memory" framing breaks down.
+
+Suppose an agent repeatedly solves a new family of problems.
+
+Initially it may reason laboriously:
+
+$$
+\text{try A}
+\rightarrow
+\text{fail}
+\rightarrow
+\text{try B}
+\rightarrow
+\text{notice invariant}
+\rightarrow
+\text{solve}.
+$$
+
+Eventually it should learn something like:
+
+> When this structure appears, search for invariant $X$, transform with $Y$, then recurse.
+
+This is not a fact.
+
+It is a reusable **procedure**.
+
+Let the reasoning policy be
+
+$$
+\pi_\phi(a_t\mid s_t).
+$$
+
+Procedural learning changes
+
+$$
+\phi,
+$$
+
+not simply the world model.
+
+This gives an important distinction:
+
+$$
+\boxed{\text{knowing that}}
+\neq
+\boxed{\text{knowing how}}.
+$$
+
+Current LLMs contain many reasoning priors in their weights, learned through pretraining and post-training:
+
+$$
+\text{decompose}
+\rightarrow
+\text{solve}
+\rightarrow
+\text{verify}
+\rightarrow
+\text{backtrack}.
+$$
+
+At inference time those priors generate reasoning traces.
+
+But the traces usually do not permanently improve the procedure that generated them.
+
+A model can rediscover the same strategy many times without proceduralizing it.
+
+---
+
+## 14. Why NTP is much weaker for procedural learning
+
+For contextual memory, NTP is beautifully aligned.
+
+If the context says
+
+> Alice's secret number is 73,
+
+then predicting future tokens can reward storing that information.
+
+But imagine a model solves a proof using a terrible 50-step reasoning process and still reaches the correct answer.
+
+Training on its trace using NTP may teach:
+
+$$
+\text{produce the same bad reasoning more confidently}.
+$$
+
+If the reasoning is wrong, naive self-training can reinforce the error.
+
+So procedural learning needs a signal closer to
+
+$$
+\text{reason}
+\rightarrow
+\text{act}
+\rightarrow
+\text{observe}
+\rightarrow
+R
+\rightarrow
+\Delta\pi.
+$$
+
+The relevant feedback may include:
+
+- verifier results,
+- execution outcomes,
+- environment reward,
+- counterexamples,
+- efficiency,
+- downstream task success.
+
+This is closer to RL and decision learning than to pure prediction.
+
+It also makes the trajectory-stability problem harder.
+
+A corrupted episodic memory can damage one task.
+
+A corrupted **reasoning policy** can systematically damage every later task.
+
+---
+
+## 15. Level IV: meta-learning — how should I decide how to think?
+
+There is an even higher layer.
+
+A reasoning strategy might say:
+
+> Solve this family of problems by backward induction.
+
+A meta-strategy says:
+
+> When direct search branches exponentially and the target state is constrained, consider switching to backward reasoning.
+
+And above that:
+
+> If several attempts fail in structurally similar ways, stop sampling variants and infer the shared assumption behind the failures.
+
+These are policies over **computation itself**.
+
+Let
+
+$$
+A(s)
+$$
+
+select among actions such as
+
+$$
+\{
+\text{answer},
+\text{retrieve},
+\text{search},
+\text{simulate},
+\text{invoke skill},
+\text{verify},
+\text{backtrack},
+\text{store},
+\text{learn}
+\}.
+$$
+
+This is metacognition in an engineering sense.
+
+It decides:
+
+- how much computation to spend,
+- what reasoning method to use,
+- when to use tools,
+- when to seek evidence,
+- when to stop,
+- what to remember,
+- what deserves learning.
+
+This is not naturally represented as one static prompt.
+
+It is a **control loop**.
+
+---
+
+## 16. The substrate should be heterogeneous
+
+This leads to the central architectural claim of this note.
+
+Different levels of continual learning require different properties.
+
+| Level | Contents | Timescale | Preferred substrate |
+|---|---|---:|---|
+| Working state | intermediate computation | tokens/seconds | activations |
+| Episodic memory | current experience/context | session/hours | context, external memory, fast weights |
+| Semantic knowledge | stable facts and abstractions | long | slow weights + retrieval |
+| Procedural skills | reusable reasoning/tool procedures | many tasks | skill objects, programs, adapters |
+| Meta-policy | how to reason/learn | very long / continual | learned controller inside explicit harness |
+
+A single homogeneous parameter tensor is poorly matched to this structure.
+
+---
+
+## 17. Prompts are useful—but probably as an intermediate representation
+
+Natural language prompts are currently an excellent way to represent a newly discovered procedure.
+
+For example:
+
+> When debugging a latency regression:
+>
+> 1. separate queueing, compute, and network latency;
+> 2. identify which percentile changed;
+> 3. correlate with deploys;
+> 4. run the cheapest discriminative test first.
+
+This is already a reusable skill.
+
+But prompt text has weaknesses:
+
+- token overhead,
+- brittleness,
+- weak typing,
+- no execution guarantees,
+- repeated parsing on every invocation.
+
+So I would treat prompts as something like **skill bytecode**.
+
+A skill could begin as natural language:
+
+$$
+s_{\text{text}}.
+$$
+
+Then become a structured object:
+
+$$
+s
+=
+(
+\text{trigger},
+\text{procedure},
+\text{tools},
+\text{verifier},
+\text{statistics}
+).
+$$
+
+Eventually it could be compiled into:
+
+- a policy adapter,
+- a tool DAG,
+- a controller,
+- a small program,
+- or even dense weights.
+
+Thus:
+
+$$
+\boxed{
+\text{prompt is a convenient early substrate, not necessarily the final one}.
+}
+$$
+
+---
+
+## 18. Reasoning skills should often be explicit before they become weights
+
+Consider a reusable debugging strategy.
+
+Instead of immediately modifying billions of model parameters, represent it explicitly:
+
+```yaml
+skill: debug_latency_regression
+
+trigger:
+  - latency regression
+  - distributed service
+
+procedure:
+  - establish which percentile changed
+  - decompose queue / compute / network
+  - compare traces before and after
+  - identify correlated deploys
+  - choose the cheapest discriminative test
+
+verifier:
+  - proposed cause explains observed metric changes
+  - intervention changes the predicted bottleneck
+```
+
+This representation has several advantages over an implicit weight change:
+
+- inspectable,
+- editable,
+- compositional,
+- attributable,
+- easy to test,
+- easy to revert.
+
+If repeated evidence shows that the skill is robust, it can later be distilled.
+
+That suggests a general compilation hierarchy:
+
+$$
+\boxed{
+\text{experience}
+\rightarrow
+\text{verbalized skill}
+\rightarrow
+\text{structured skill}
+\rightarrow
+\text{learned controller}
+\rightarrow
+\text{weight consolidation}
+}
+$$
+
+Each downward transition trades flexibility for efficiency.
+
+---
+
+## 19. Meta-reasoning belongs primarily in the harness
+
+Questions such as
+
+> Should I search?
+
+> Should I think longer?
+
+> Should I retrieve a previous skill?
+
+> Is the current approach failing?
+
+> Should I run code?
+
+> Should I ask another model?
+
+> Should this experience become permanent knowledge?
+
+are decisions about the **allocation and organization of computation**.
+
+These are naturally expressed as a loop:
+
+$$
+s_t
+\rightarrow
+a_t
+\rightarrow
+o_t
+\rightarrow
+r_t
+\rightarrow
+s_{t+1}.
+$$
+
+An explicit harness can maintain state and enforce control boundaries:
+
+```text
+observe
+  ↓
+estimate state
+  ↓
+select strategy / skill
+  ↓
+execute model or tool
+  ↓
+evaluate outcome
+  ↓
+detect surprise / failure
+  ↓
+decide whether to
+  ├─ continue
+  ├─ backtrack
+  ├─ retrieve
+  ├─ switch strategy
+  ├─ store episode
+  ├─ update skill
+  └─ consolidate learning
+```
+
+This does not mean the harness should remain handcrafted forever.
+
+A better endpoint is:
+
+$$
+\boxed{
+\text{learned policy inside an explicit execution harness}.
+}
+$$
+
+The boundary remains explicit, while the controller becomes learned.
+
+---
+
+## 20. A handcrafted harness has the same weakness as handcrafted TTT losses
+
+There is an important symmetry here.
+
+Old auxiliary-loss TTT says:
+
+> Human researchers will design a low-level loss whose gradient happens to produce good memory dynamics.
+
+A fully handwritten agent harness says:
+
+> Human researchers will design a set of rules whose branching logic happens to produce good reasoning dynamics.
+
+Both assume too much human understanding.
+
+For example, hard-coded logic such as
+
+```python
+if uncertainty > 0.7:
+    search()
+
+if failed_attempts >= 2:
+    critique()
+```
+
+is useful for bootstrapping, but unlikely to be the final form.
+
+The harness should generate trajectories, outcomes, and feedback that can train a controller:
+
+$$
+\pi_\phi(a\mid s).
+$$
+
+The controller can gradually learn:
+
+- when search is valuable,
+- when extra reasoning is worth the latency,
+- which verifier is informative,
+- which skill applies,
+- when an experience is novel enough to store.
+
+So the architectural endpoint is neither "everything in weights" nor "everything in code."
+
+It is:
+
+$$
+\boxed{
+\text{learned policies operating over explicit computational primitives}.
+}
+$$
+
+---
+
+## 21. The missing component: credit routing across substrates
+
+Once multiple substrates exist, the most important decision may not be the optimizer step.
+
+It is:
+
+> **What kind of thing did we just learn?**
+
+Suppose the agent encounters a surprising outcome.
+
+The same surprise could imply very different updates.
+
+### Case A: task-specific episode
+
+> This repository's test suite must be run from `/src`.
+
+Store in episodic/project memory.
+
+### Case B: stable external fact
+
+> A library API has permanently changed.
+
+Store in retrieval, perhaps later consolidate into weights.
+
+### Case C: reusable procedure
+
+> This failure class is best diagnosed by checking ownership before timing.
+
+Update or create a skill.
+
+### Case D: reasoning-policy failure
+
+> The agent repeatedly keeps searching even when enough evidence already exists.
+
+Update the meta-controller.
+
+### Case E: foundational regularity
+
+> A pattern is broadly useful across domains and repeatedly confirmed.
+
+Eventually distill into slow weights.
+
+Thus a continual learner requires a routing operator:
+
+$$
+C(e)
+\rightarrow
+\{
+M,
+K,
+S,
+\pi_{\text{meta}},
+\theta
+\}.
+$$
+
+where $e$ is an experience.
+
+This is **continual credit assignment over internal state types**.
+
+I suspect this is more fundamental than choosing Adam versus SGD.
+
+---
+
+## 22. A candidate architecture for continual intelligence
+
+A useful abstraction is:
+
+$$
+\boxed{
+\begin{aligned}
+\theta_{\text{base}}
+&: \text{general semantic and procedural priors} \\
+h_t
+&: \text{current working state} \\
+M
+&: \text{episodic memory} \\
+K
+&: \text{retrievable semantic knowledge} \\
+S
+&: \text{reusable skill library} \\
+\pi_{\text{meta}}
+&: \text{learned strategy-selection policy} \\
+H
+&: \text{explicit execution harness}
+\end{aligned}
+}
+$$
+
+The system operates as
+
+$$
+(x,h,M,K,S)
+\xrightarrow{\pi_{\text{meta}}}
+a
+$$
+
+where $a$ chooses a computation.
+
+The harness executes it:
+
+$$
+a
+\xrightarrow{H}
+o.
+$$
+
+The outcome produces prediction error, task reward, verifier feedback, or surprise:
+
+$$
+o
+\rightarrow
+\delta.
+$$
+
+Then a credit router decides what to update:
+
+$$
+\delta
+\xrightarrow{C}
+\begin{cases}
+\Delta h \\
+\Delta M \\
+\Delta K \\
+\Delta S \\
+\Delta\pi_{\text{meta}} \\
+\Delta\theta_{\text{base}}.
+\end{cases}
+$$
+
+This is a much richer picture than
+
+$$
+\theta
+\leftarrow
+\theta-\eta\nabla L.
+$$
+
+---
+
+## 23. The key design principle: progressive compilation
+
+Human skill acquisition gives an intuitive analogy.
+
+When learning to drive a manual transmission, actions may initially be explicit:
+
+> clutch in, change gear, slowly release clutch.
+
+With practice they become automatic.
+
+Computationally:
+
+$$
+\text{explicit working-memory program}
+\rightarrow
+\text{procedural representation}
+\rightarrow
+\text{compiled neural policy}.
+$$
+
+The same principle could organize artificial continual learning.
+
+### Stage 1: raw episode
+
+A single success is stored as an experience.
+
+### Stage 2: verbal abstraction
+
+After repeated successes, the system forms a hypothesis:
+
+> Backward reasoning tends to work when the goal state is strongly constrained.
+
+### Stage 3: structured skill
+
+The system encodes a reusable procedure:
+
+$$
+\text{detect constrained target}
+\rightarrow
+\text{attempt backward reasoning}.
+$$
+
+### Stage 4: learned controller
+
+Repeated data trains
+
+$$
+\pi_\phi(
+\text{backward-reasoning}\mid s
+).
+$$
+
+### Stage 5: weight consolidation
+
+If the strategy becomes universally useful, it may be absorbed into the base model.
+
+This suggests a continuum:
+
+$$
+\boxed{
+\text{harness}
+>
+\text{skills}
+>
+\text{memory}
+>
+\text{weights}
+}
+$$
+
+where moving downward means:
+
+$$
+\text{less flexible}
+\quad
+\text{but}
+\quad
+\text{cheaper, faster, more automatic}.
+$$
+
+Moving upward means:
+
+$$
+\text{more explicit}
+\quad
+\text{but}
+\quad
+\text{more expensive and deliberative}.
+$$
+
+---
+
+## 24. This changes how we should think about "reasoning"
+
+The current discussion around reasoning models often treats reasoning as extra tokens:
+
+$$
+x
+\rightarrow
+\tau_{\text{CoT}}
+\rightarrow
+y.
+$$
+
+But this conflates three distinct things:
+
+1. **reasoning execution** — the current trajectory $\tau$;
+2. **reasoning skill** — the reusable policy that generates good trajectories;
+3. **meta-reasoning** — the policy that chooses which reasoning method to invoke.
+
+A continually learning reasoning system should improve all three at different timescales.
+
+An individual chain of thought is working state.
+
+A discovered reusable algorithm is procedural memory.
+
+The rule for deciding when to invoke that algorithm is meta-policy.
+
+This distinction suggests that simply increasing inference compute is not sufficient for continual intelligence.
+
+A system that repeatedly discovers a good strategy but never compiles it has no procedural learning.
+
+It is merely **re-solving**.
+
+---
+
+## 25. Long-context TTT may be the easiest instance of a much larger idea
+
+TTT-E2E currently frames long-context language modeling as continual learning.
+
+That is a powerful conceptual shift:
+
+### Attention
+
+$$
+\text{remember by retaining activations}.
+$$
+
+### RNN
+
+$$
+\text{remember by updating hidden state}.
+$$
+
+### TTT
+
+$$
+\text{remember by continuing to learn}.
+$$
+
+But long-context memory may only be the lowest nontrivial level.
+
+The larger progression is:
+
+$$
+\boxed{
+\begin{aligned}
+\text{prediction error}
+&\rightarrow
+\text{learn this context} \\
+\text{task outcome}
+&\rightarrow
+\text{learn a procedure} \\
+\text{history of outcomes}
+&\rightarrow
+\text{learn a better learning strategy}.
+\end{aligned}
+}
+$$
+
+The first can plausibly use NTP.
+
+The second requires richer feedback.
+
+The third requires meta-level credit assignment.
+
+This is where TTT reconnects with meta-learning—but in a broader form than the original literature.
+
+---
+
+## 26. A research agenda
+
+The framework above suggests several concrete research questions.
+
+### 26.1 Learn the credit router
+
+Given an experience $e$, predict:
+
+$$
+C(e)
+\in
+\{
+\text{discard},
+\text{episode},
+\text{knowledge},
+\text{skill},
+\text{meta-policy},
+\text{weights}
+\}.
+$$
+
+This might be one of the most important learned decisions in a continual agent.
+
+The objective should include not only immediate utility but the future cost of storing incorrect abstractions.
+
+---
+
+### 26.2 Train update trajectories, not only endpoints
+
+For any mutable substrate,
+
+$$
+z_{t+1}=U(z_t,e_t),
+$$
+
+optimize the quality of the whole trajectory:
+
+$$
+J
+=
+\sum_t
+R(z_t,e_{t+1:T})
+$$
+
+rather than merely the final state.
+
+This is the deeper lesson of TTT-E2E.
+
+Stable continual learning requires intermediate states to remain useful.
+
+---
+
+### 26.3 Separate plastic and stable capacities
+
+Rather than updating a homogeneous model, expose different timescales:
+
+$$
+\theta
+=
+\theta_{\text{slow}}
++
+\theta_{\text{medium}}
++
+\theta_{\text{fast}}.
+$$
+
+The system should learn which directions belong to each timescale.
+
+This could involve:
+
+- adapters,
+- low-rank fast weights,
+- modular experts,
+- learned parameter masks,
+- optimizer-specific subspaces.
+
+---
+
+### 26.4 Treat skill formation as program synthesis
+
+When multiple successful trajectories share structure, synthesize a compact reusable procedure.
+
+Input:
+
+$$
+\tau_1,\tau_2,\ldots,\tau_n.
+$$
+
+Output:
+
+$$
+s
+=
+\operatorname{CompressProcedure}
+(
+\tau_{1:n}
+).
+$$
+
+Evaluate the skill on held-out tasks before promoting it.
+
+This creates an analogue of consolidation with explicit validation.
+
+---
+
+### 26.5 Learn when to compile
+
+Compilation should depend on evidence.
+
+A possible hierarchy:
+
+$$
+\text{episode count}
+\rightarrow
+\text{skill hypothesis}
+\rightarrow
+\text{held-out validation}
+\rightarrow
+\text{controller integration}
+\rightarrow
+\text{weight distillation}.
+$$
+
+Promotion should be reversible.
+
+Bad abstractions should remain cheap to delete.
+
+---
+
+### 26.6 Optimize the harness as a policy
+
+Represent harness decisions explicitly but train their selection.
+
+$$
+\pi_\phi(a\mid s)
+$$
+
+could choose:
+
+- direct answer,
+- extended reasoning,
+- search,
+- tool invocation,
+- simulation,
+- retrieval,
+- skill execution,
+- critique,
+- verification,
+- learning.
+
+The execution graph remains interpretable while the choice policy becomes learned.
+
+---
+
+### 26.7 Distinguish prediction surprise from decision regret
+
+NTP gives a useful signal:
+
+$$
+\delta_{\text{pred}}
+=
+-\log p(x_t\mid x_{<t}).
+$$
+
+But a reasoning agent also observes decision-level feedback:
+
+$$
+\delta_{\text{decision}}
+=
+R_{\text{expected}}-R_{\text{actual}}.
+$$
+
+These signals should update different substrates.
+
+Prediction surprise is often evidence about the world.
+
+Decision regret is often evidence about the policy.
+
+Conflating them into one generic gradient may be fundamentally inefficient.
+
+---
+
+## 27. A broader decision-loop interpretation
+
+A static language model is approximately
+
+$$
+x_t
+\rightarrow
+p(x_{t+1}).
+$$
+
+A recurrent model is
+
+$$
+(h_t,x_t)
+\rightarrow
+(h_{t+1},p_t).
+$$
+
+A TTT-style model adds explicit learning:
+
+$$
+(\theta_t,x_t)
+\rightarrow
+\text{prediction}
+\rightarrow
+\text{surprise}
+\rightarrow
+\nabla L_t
+\rightarrow
+\theta_{t+1}.
+$$
+
+A continually intelligent agent needs the more general loop:
+
+$$
+\boxed{
+\text{observe}
+\rightarrow
+\text{predict}
+\rightarrow
+\text{decide}
+\rightarrow
+\text{act}
+\rightarrow
+\text{observe surprise/outcome}
+\rightarrow
+\text{assign credit}
+\rightarrow
+\text{update the appropriate substrate}.
+}
+$$
+
+The final step is the critical extension.
+
+Not every surprise should modify the same thing.
+
+A token prediction error may update context memory.
+
+A factual contradiction may update semantic memory.
+
+A failed proof may update a reasoning skill.
+
+Repeated strategy failure may update the meta-controller.
+
+A deeply repeated regularity may eventually update slow weights.
+
+This is a much more structured conception of learning than universal SGD.
+
+---
+
+## 28. Conclusion
+
+The most interesting lesson from recent TTT is not that models can update their weights during inference.
+
+It is that the traditional separation
+
+$$
+\text{training}
+\quad|\quad
+\text{inference}
+$$
+
+may itself be an artifact of our current systems.
+
+Once inference includes persistent state updates, the model becomes a dynamical learner.
+
+But making this work requires more than a clever auxiliary loss.
+
+The central challenge is to design or learn update dynamics such that:
+
+1. local updates are useful;
+2. trajectories remain stable;
+3. pretrained capabilities are protected;
+4. repeated experience becomes abstraction;
+5. abstractions are stored at the right level;
+6. successful reasoning becomes reusable skill;
+7. strategy selection itself continues improving.
+
+This leads to a broader architectural hypothesis:
+
+$$
+\boxed{
+\text{continual intelligence}
+\neq
+\text{one model continually changing its weights}
+}
+$$
+
+but rather
+
+$$
+\boxed{
+\text{continual intelligence}
+=
+\text{multiple learning substrates}
++
+\text{multiple timescales}
++
+\text{learned credit routing}
++
+\text{progressive compilation}.
+}
+$$
+
+Weights are excellent for stable compressed priors.
+
+External memory is excellent for precise episodic state.
+
+Skills are excellent for reusable procedures.
+
+Harnesses are excellent for explicit control.
+
+Meta-learning should determine how these components evolve together.
+
+The long-term research direction is therefore not merely better test-time training.
+
+It is learning **what to learn, where to store it, how quickly to update it, and when to compile it into something more automatic**.
+
+That may be the more useful bridge from today's long-context TTT to genuinely continual reasoning systems.
+
+---
+
+## 29. A missing substrate: representation-level computation
+
+The hierarchy above still hides an important distinction. So far, "working state" has mostly meant either ordinary activations inside one forward pass or explicit token-level reasoning traces. These are not the same computational substrate.
+
+A standard reasoning model often implements
+
+$$
+x
+\rightarrow
+z_1^{\text{text}}
+\rightarrow
+z_2^{\text{text}}
+\rightarrow
+\cdots
+\rightarrow
+y,
+$$
+
+where intermediate computation is serialized into language. This is easy to supervise and inspect, but inference cost grows with autoregressive reasoning length:
+
+$$
+T_{\text{reason}}
+\approx
+T_{\text{prefill}}
++
+N_{\text{reasoning tokens}}T_{\text{decode-step}}.
+$$
+
+For narrow production models, this can be an unnecessarily expensive way to implement a small amount of internal decision-making. A query rewriter, router, ranking model, moderation model, or tool selector may only need a few latent variables such as
+
+$$
+z=
+\{
+\text{act?},
+\text{which evidence matters?},
+\text{which source is required?}
+\}.
+$$
+
+That suggests another compilation step:
+
+$$
+\boxed{
+\text{explicit intermediate decisions}
+\rightarrow
+\text{supervised latent representation}
+\rightarrow
+\text{direct action}
+}
+$$
+
+The model can be trained to *know* the intermediate answer without being required to *say* it.
+
+---
+
+## 30. Representation supervision as neural compilation
+
+Suppose a production task has input $x$, final action $y$, and an intermediate decision $z$.
+
+A modular implementation is
+
+$$
+x
+\rightarrow
+C(x)=z
+\rightarrow
+G(x,z)=y.
+$$
+
+A language-model implementation may instead serialize the intermediate state:
+
+$$
+x
+\rightarrow
+z_{\text{text}}
+\rightarrow
+y.
+$$
+
+Both make $z$ part of the inference-time interface.
+
+A third option is
+
+$$
+x
+\rightarrow
+H(x)
+\rightarrow
+y,
+$$
+
+with an auxiliary training objective
+
+$$
+D(H(x))\rightarrow z,
+$$
+
+so that
+
+$$
+L
+=
+L_{\text{main}}(y)
++
+\lambda L_{\text{aux}}(z).
+$$
+
+At deployment time, $D$ can disappear. The intermediate decision has been **compiled into the representation**:
+
+$$
+\boxed{
+\text{training-time modularity}
+\longrightarrow
+\text{inference-time monolith}
+}
+$$
+
+This is more specific than ordinary knowledge distillation. The object being distilled is not merely a teacher distribution over final tokens, but an **intermediate computation**:
+
+$$
+\boxed{
+\text{intermediate-decision distillation into representations}.
+}
+$$
+
+This resembles compiler optimization. High-level code may contain explicit temporaries because they make the computation easy to specify:
+
+```text
+evidence = select_evidence(x)
+decision = should_act(x, evidence)
+output = generate(x, evidence, decision)
+```
+
+The deployed machine code need not preserve those temporary variables as external interfaces. They only need to be represented sufficiently inside the computation graph to produce the right output.
+
+---
+
+## 31. Explicit reasoning and latent supervision are not equivalent
+
+If the model emits $z$ before the answer,
+
+$$
+p(z,y\mid x)
+=
+p(z\mid x)p(y\mid x,z),
+$$
+
+then the final action causally conditions on the serialized intermediate decision.
+
+If the model instead emits the auxiliary explanation after the answer,
+
+$$
+p(y,z\mid x)
+=
+p(y\mid x)p(z\mid x,y),
+$$
+
+then the current answer cannot condition on $z$. The trailing auxiliary tokens act primarily as attribution and representation supervision.
+
+This gives a clean causal experiment:
+
+$$
+\textbf{A:}\quad
+x\rightarrow z\rightarrow y
+$$
+
+$$
+\textbf{B:}\quad
+x\rightarrow y\rightarrow z
+$$
+
+$$
+\textbf{C:}\quad
+x\rightarrow H\rightarrow y,
+\qquad
+H\rightarrow z.
+$$
+
+If A strongly outperforms B, serialized intermediate reasoning is useful as an autoregressive state. If
+
+$$
+Q_A\approx Q_B,
+$$
+
+the benefit probably comes mainly from shared representation learning. If
+
+$$
+Q_C\approx Q_B\approx Q_A,
+$$
+
+then the explicit intermediate computation has been successfully latentized.
+
+For narrow production tasks, this A/B/C comparison is a much cleaner experiment than assuming in advance that latent reasoning should work.
+
+---
+
+## 32. A concrete narrow-task example: query rewriting
+
+Consider a rewrite system whose deployed action is only
+
+$$
+(q,\text{context})\rightarrow q'.
+$$
+
+The useful intermediate variables may be small.
+
+One is
+
+$$
+r=\mathbf 1[\text{rewrite is needed}].
+$$
+
+Another is evidence usage:
+
+$$
+e=(e_p,e_k,e_g,e_t),
+$$
+
+where, for example,
+
+$$
+\begin{aligned}
+e_p &: \text{personalized memory affects the rewrite},\\
+e_k &: \text{model prior knowledge is required},\\
+e_g &: \text{external web/search evidence affects the rewrite},\\
+e_t &: \text{platform behavioral/retrieval evidence affects the rewrite}.
+\end{aligned}
+$$
+
+The distinction between **evidence availability** and **evidence usage** matters. A source may be present without affecting the optimal action.
+
+A more operational label is therefore
+
+$$
+u_i
+=
+\mathbf 1[
+\text{counterfactually removing source }i
+\text{ should change the rewrite}
+].
+$$
+
+For externally supplied evidence, counterfactual construction is possible:
+
+$$
+x\rightarrow y
+$$
+
+versus
+
+$$
+x\setminus e_i\rightarrow y'.
+$$
+
+If $y'$ should change, source $i$ is plausibly action-relevant.
+
+By contrast, "the model used its own knowledge" is hard to label rigorously because pretrained knowledge is not an observable input field. It may be better to supervise
+
+$$
+\text{is the rewrite supported by supplied evidence?}
+$$
+
+or
+
+$$
+\text{did the rewrite introduce unsupported external information?}
+$$
+
+than to claim perfect attribution to internal weights.
+
+This matters because an auxiliary label that merely explains the model is different from an auxiliary variable that corresponds to a real intervention on the task.
+
+---
+
+## 33. What end-to-end autonomous driving actually contributes
+
+End-to-end autonomous driving provides a useful analogy, but only if used carefully.
+
+Systems such as ST-P3, UniAD, and VAD optimize toward planning while still supervising intermediate scene representations.
+
+ST-P3 jointly learns perception, prediction, and planning features rather than deploying each stage as an independently optimized system [15].
+
+UniAD organizes tracking, mapping, motion prediction, occupancy, and planning inside a planning-oriented network and uses learned query interfaces so that intermediate tasks contribute to the final planner [16].
+
+VAD pushes toward a more compact planning-relevant representation by replacing expensive dense rasterized scene representations with vectorized agent and map representations [17].
+
+The transferable lesson is not:
+
+> every end-to-end system should contain human-named intermediate modules.
+
+It is:
+
+$$
+\boxed{
+\text{intermediate supervision can shape useful latent state
+without requiring independent inference-time systems}.
+}
+$$
+
+Driving has an important advantage, however. Variables such as
+
+$$
+\text{depth},
+\quad
+\text{occupancy},
+\quad
+\text{object motion},
+\quad
+\text{road geometry}
+$$
+
+have external semantics independent of the model.
+
+A rewrite taxonomy such as
+
+$$
+\text{personalized narrowing},
+\quad
+\text{intent enrichment},
+\quad
+\text{format conversion}
+$$
+
+may be only a human convenience.
+
+::: {.callout-note}
+## Prefer externally identifiable auxiliary variables
+
+An auxiliary variable deserves stronger emphasis when it corresponds to something that can be independently intervened on or evaluated.
+
+Evidence relevance is often stronger than a hand-designed rewrite taxonomy because evidence can be removed, replaced, or contradicted and the resulting action can be measured.
+:::
+
+---
+
+## 34. Do not assign semantics to layers too early
+
+A tempting design is
+
+$$
+\text{layers 1--8}=\text{memory},
+\qquad
+\text{layers 9--16}=\text{decision},
+\qquad
+\text{layers 17--24}=\text{generation}.
+$$
+
+There is little reason to assume that a Transformer naturally implements such a clean serial decomposition.
+
+The better abstraction is to decompose **variables**, not necessarily layer ranges.
+
+Let
+
+$$
+H^{(1)},H^{(2)},\ldots,H^{(L)}
+$$
+
+denote hidden representations across depth.
+
+We may want evidence relevance or action necessity to be recoverable from these states, but should not prespecify exactly where the computation occurs unless the architecture itself imposes a bottleneck.
+
+Older deep multi-task learning already provides evidence that supervision depth matters. Søgaard and Goldberg found that low-level linguistic auxiliary tasks can be more useful when supervised at lower rather than outermost layers [10].
+
+The lesson is not that there is one universal semantic depth ordering. It is:
+
+$$
+\boxed{
+\text{the usefulness of an auxiliary objective can depend on representation depth}.
+}
+$$
+
+So measurement should precede architectural commitment.
+
+---
+
+## 35. Layer-wise gradient alignment as an optimization microscope
+
+Suppose
+
+$$
+L_m
+$$
+
+is the main loss and
+
+$$
+L_a
+$$
+
+is an auxiliary loss.
+
+At representation $H^{(l)}$, define
+
+$$
+g_m^{(l)}
+=
+\frac{\partial L_m}{\partial H^{(l)}},
+\qquad
+g_a^{(l)}
+=
+\frac{\partial L_a}{\partial H^{(l)}}.
+$$
+
+Then measure
+
+$$
+A_l
+=
+\cos\left(
+g_m^{(l)},
+g_a^{(l)}
+\right).
+$$
+
+A hypothetical result could look like:
+
+| depth | evidence vs. rewrite | rewrite-needed vs. rewrite | taxonomy vs. rewrite |
+|---:|---:|---:|---:|
+| 4 | +0.31 | +0.08 | +0.04 |
+| 8 | +0.42 | +0.21 | +0.12 |
+| 12 | +0.35 | +0.34 | +0.17 |
+| 16 | +0.20 | +0.29 | -0.08 |
+| 20 | +0.06 | +0.10 | -0.31 |
+| 24 | -0.02 | -0.04 | -0.46 |
+
+This would suggest that a taxonomy helps form early semantic structure but interferes with the later representation needed for generation.
+
+The broader auxiliary-learning literature supports the diagnostic. Du et al. use cosine similarity between auxiliary and main gradients to decide when auxiliary updates are helpful [8]. PCGrad similarly treats conflicting task gradients as a source of negative transfer and projects away conflicting components [9].
+
+The key principle is:
+
+$$
+\boxed{
+\text{auxiliary accuracy is not the objective}.
+}
+$$
+
+The real criterion is improvement in the primary policy.
+
+---
+
+## 36. Three different questions for interpretability
+
+The layer-wise view connects naturally to mechanistic interpretability, but three questions should remain distinct.
+
+### 36.1 Is the variable decodable?
+
+Train a probe:
+
+$$
+P(z\mid H^{(l)}).
+$$
+
+High probe accuracy means information about $z$ is present.
+
+### 36.2 Is the variable causally used?
+
+Intervene on the relevant activation direction or token state:
+
+$$
+H^{(l)}
+\rightarrow
+\widetilde H^{(l)}
+\rightarrow
+\Delta y.
+$$
+
+This asks whether the representation participates in the computation.
+
+### 36.3 Does training on the variable push the model in a useful direction?
+
+Measure
+
+$$
+\cos(g_m^{(l)},g_a^{(l)}).
+$$
+
+This asks about optimization.
+
+These are different statements:
+
+$$
+\boxed{
+\text{what the model knows}
+\neq
+\text{what the model uses}
+\neq
+\text{where training wants to move it}.
+}
+$$
+
+A variable can be highly decodable yet causally irrelevant. It can also be causally relevant while a badly designed auxiliary loss pushes the representation in a harmful direction.
+
+This is where mechanistic analysis can become a training-design tool rather than merely post-hoc explanation.
+
+---
+
+## 37. Explicit CoT is only one way to buy additional computation
+
+Reasoning is often implicitly equated with emitted tokens:
+
+$$
+x\rightarrow\tau_{\text{text}}\rightarrow y.
+$$
+
+But there are at least four ways to spend computation before committing to $y$.
+
+### 37.1 Fixed-depth latent computation
+
+$$
+x
+\xrightarrow{L\text{ Transformer layers}}
+H
+\rightarrow y.
+$$
+
+Representation-level auxiliary supervision belongs here.
+
+### 37.2 Pause-token computation
+
+*Think Before You Speak* inserts learnable pause tokens and delays output, allowing extra hidden-vector computation before the next meaningful output [7]:
+
+$$
+x\rightarrow[\text{pause}]^K\rightarrow y.
+$$
+
+The model spends extra compute without requiring each intermediate position to carry semantic language.
+
+### 37.3 Recurrent or looped latent computation
+
+A depth-recurrent Transformer repeatedly applies a shared block:
+
+$$
+H^{(t+1)}
+=
+F_\theta(H^{(t)},x).
+$$
+
+Now test-time compute scales with recurrent depth rather than generated text length.
+
+### 37.4 Explicit token reasoning
+
+$$
+x
+\rightarrow
+z_1^{\text{text}}
+\rightarrow
+\cdots
+\rightarrow
+z_T^{\text{text}}
+\rightarrow
+y.
+$$
+
+This is the most explicit substrate and integrates naturally with tools, but serializes internal computation through the vocabulary bottleneck.
+
+These mechanisms form a useful spectrum:
+
+$$
+\boxed{
+\text{fixed latent}
+<
+\text{extra latent positions}
+<
+\text{recurrent latent depth}
+<
+\text{explicit token/action trajectory}
+}
+$$
+
+Moving right generally gives more flexible sequential computation but increases execution cost and discrete commitment.
+
+---
+
+## 38. Coconut: reason without committing to words
+
+Coconut attacks the vocabulary bottleneck directly.
+
+Instead of decoding the current hidden state into a token,
+
+$$
+h_t
+\rightarrow
+\operatorname{softmax}(Wh_t)
+\rightarrow
+x_{t+1},
+$$
+
+it feeds the hidden state itself back as the next input embedding:
+
+$$
+h_t
+\rightarrow
+e_{t+1}=h_t.
+$$
+
+Thus reasoning evolves in continuous space:
+
+$$
+h_1\rightarrow h_2\rightarrow\cdots\rightarrow h_K\rightarrow y.
+$$
+
+The Coconut work argues that language need not be an optimal internal reasoning representation and reports that continuous thoughts can preserve multiple candidate reasoning paths rather than forcing an early discrete commitment [11].
+
+Token reasoning repeatedly performs
+
+$$
+\text{continuous state}
+\rightarrow
+\text{discrete token}
+\rightarrow
+\text{embedding}
+\rightarrow
+\text{continuous state}.
+$$
+
+Every reasoning token introduces an information bottleneck:
+
+$$
+h_t\rightarrow z_t\in\mathcal V.
+$$
+
+Latent reasoning avoids this repeated quantization.
+
+But avoiding language does not automatically create useful reasoning. Later causal analyses have questioned whether latent trajectories are always faithful or causally meaningful [18].
+
+So the hard question is not:
+
+> Can we create hidden states between input and answer?
+
+It is:
+
+$$
+\boxed{
+\text{How do we make the latent trajectory carry the right computation?}
+}
+$$
+
+That returns directly to process supervision and credit assignment.
+
+---
+
+## 39. Looped Transformers turn depth into test-time compute
+
+A standard Transformer has fixed learned depth:
+
+$$
+H^{(l+1)}=F_l(H^{(l)}),
+$$
+
+with distinct parameters $F_l$.
+
+A looped model reuses parameters:
+
+$$
+H^{(t+1)}=F_\theta(H^{(t)}).
+$$
+
+The model now has two resources:
+
+$$
+\text{parameter capacity}
+$$
+
+and
+
+$$
+\text{ponder depth}.
+$$
+
+Huginn demonstrates recurrent depth at 3.5B scale and shows that inference computation can increase without increasing parameter count [12].
+
+This gives a latent analogue of test-time scaling:
+
+$$
+\boxed{
+\text{more thinking}
+\neq
+\text{necessarily more generated tokens}.
+}
+$$
+
+But simply looping a block does not guarantee that each iteration learns one useful reasoning step. Analysis of Huginn found limited evidence that recurrent states naturally form an interpretable latent CoT on arithmetic tasks, and increased recurrence alone produced only modest gains in those probes [13].
+
+The analogy to TTT is strong:
+
+$$
+\text{having an update step}
+\neq
+\text{having a useful learning step},
+$$
+
+and
+
+$$
+\text{having an extra recurrent loop}
+\neq
+\text{having a useful reasoning step}.
+$$
+
+The transition operator itself must be trained.
+
+---
+
+## 40. LOTUS: supervise the latent trajectory, not only the endpoint
+
+LOTUS makes this point explicit.
+
+It combines a looped Transformer with **parallel supervision over latent positions**. Latent blocks undergo repeated shared computation while each latent position is trained toward a corresponding gold CoT-step token [14].
+
+The key pattern is:
+
+$$
+H_1,H_2,\ldots,H_K
+$$
+
+are internal computation states, but training supplies process-level targets:
+
+$$
+H_i\rightarrow z_i^{\text{teacher}}.
+$$
+
+At inference time, the model need not autoregressively decode every $z_i$ before continuing.
+
+This is a stronger form of representation compilation:
+
+$$
+\boxed{
+\text{teacher reasoning trajectory}
+\rightarrow
+\text{supervised latent trajectory}.
+}
+$$
+
+A small production router may need one latent variable:
+
+$$
+H\rightarrow z.
+$$
+
+A difficult reasoning problem may require a sequence:
+
+$$
+H_1\rightarrow z_1,
+\quad
+H_2\rightarrow z_2,
+\quad
+\ldots,
+\quad
+H_K\rightarrow z_K.
+$$
+
+The principle scales from **latent decision supervision** to **latent process supervision**.
+
+LOTUS reports that this combination can close the gap to explicit CoT at 3B scale while reducing thought-phase latency, and its ablations indicate that both looping and parallel supervision are important [14].
+
+This supports a broader hypothesis:
+
+$$
+\boxed{
+\text{latent compute becomes much more useful when its trajectory is trained,
+not merely allocated}.
+}
+$$
+
+---
+
+## 41. Implicit CoT distillation anticipated this idea
+
+An earlier line of work framed the problem almost exactly as verticalizing chain-of-thought.
+
+*Implicit Chain of Thought Reasoning via Knowledge Distillation* trains a teacher to reason explicitly, then distills intermediate reasoning into hidden states so that the student performs the computation across model depth rather than emitting it horizontally as tokens [6].
+
+### Horizontal reasoning
+
+$$
+x\rightarrow z_1\rightarrow z_2\rightarrow\cdots\rightarrow y.
+$$
+
+### Vertical reasoning
+
+$$
+H^{(1)}\rightarrow H^{(2)}\rightarrow\cdots\rightarrow H^{(L)}\rightarrow y.
+$$
+
+This is very close to the production principle:
+
+> train with an explicit decomposition, deploy without paying for the decomposition.
+
+The difference is task complexity. A math trace may contain many sequential reasoning states. A query rewrite model may need only a few bits:
+
+$$
+\text{rewrite?}
+$$
+
+and
+
+$$
+\text{which evidence sources matter?}
+$$
+
+The same principle appears in a much simpler regime.
+
+---
+
+## 42. TTT and looped reasoning are dual recurrent-state designs
+
+TTT and recurrent-depth reasoning now look surprisingly similar.
+
+### TTT recurrence
+
+$$
+W_{t+1}=U(W_t,x_t).
+$$
+
+The mutable state lives in **fast weights**.
+
+### Looped latent recurrence
+
+$$
+H_{t+1}=F_\theta(H_t,x).
+$$
+
+The mutable state lives in **activations**.
+
+So:
+
+$$
+\boxed{\text{TTT: recurrent state in parameters}}
+$$
+
+versus
+
+$$
+\boxed{\text{looped Transformer: recurrent state in activations}}.
+$$
+
+Both create a learned dynamical system, and both face the same question:
+
+$$
+\boxed{
+\text{What objective makes one transition step useful?}
+}
+$$
+
+For TTT, the challenge is designing a local loss whose gradient implements good memory writing.
+
+For latent recurrence, the challenge is training $F_\theta$ so repeated application performs progressively useful inference rather than repeated transformation.
+
+This suggests that TTT and latent reasoning belong to a larger design space of **recurrent computation substrates**.
+
+---
+
+## 43. Engram adds another axis: do not compute what can be looked up
+
+Engram introduces a complementary principle.
+
+Transformers often spend neural computation reconstructing local, static associations that could instead be retrieved directly. Engram adds conditional $N$-gram memory with deterministic lookup, creating a sparsity axis complementary to MoE [19].
+
+Its mechanistic analysis reports that externalizing static reconstruction relieves early Transformer layers and effectively leaves more depth available for harder reasoning.
+
+The broader principle is:
+
+$$
+\boxed{
+\text{do not spend general neural computation on a function
+that has a cheaper sufficient primitive}.
+}
+$$
+
+Engram applies this to
+
+$$
+\text{static association}
+\rightarrow
+\text{memory lookup}.
+$$
+
+Representation compilation applies it to
+
+$$
+\text{small intermediate decision}
+\rightarrow
+\text{activation}.
+$$
+
+TTT applies it differently:
+
+$$
+\text{long explicit context}
+\rightarrow
+\text{fast-weight state}.
+$$
+
+Tool use applies it in the opposite direction:
+
+$$
+\text{information not present internally}
+\rightarrow
+\text{external action}.
+$$
+
+These are all substrate-allocation decisions.
+
+---
+
+## 44. A substrate hierarchy for production intelligence
+
+The previous memory hierarchy can now be extended into a **computation hierarchy**.
+
+| Substrate | Best suited for | Main advantage | Main weakness |
+|---|---|---|---|
+| Static lookup memory | exact reusable associations | cheap retrieval | limited compositional computation |
+| Slow weights | broad reusable priors | amortized across requests | hard to update and attribute |
+| Single-pass activations | instance-specific simple decisions | very low serving overhead | fixed compute depth |
+| Recurrent/looped activations | iterative latent reasoning | scalable latent compute | harder credit assignment |
+| Fast weights / TTT state | adaptive contextual memory | persistent within stream | update stability and systems cost |
+| Generated tokens | explicit reasoning | inspectable, compositional | sequential decode cost |
+| External tools/actions | missing information or environment effects | access beyond model state | latency and orchestration |
+| Harness/controller | allocation among primitives | explicit control | itself needs a good policy |
+
+This suggests a stronger version of progressive compilation:
+
+$$
+\boxed{
+\text{for every intermediate computation,
+choose the cheapest substrate that remains sufficient}.
+}
+$$
+
+The word **sufficient** matters.
+
+Moving computation downward is not always desirable. A state should remain explicit when it is needed for tool invocation, auditability, coordination, user interaction, reversible planning, or branching.
+
+But if an intermediate state is only useful internally, repeatedly externalizing it may be wasted work.
+
+---
+
+## 45. The correct unit of compilation is not "reasoning"
+
+"Reasoning" is too broad.
+
+A single agent trajectory may contain:
+
+$$
+\begin{aligned}
+z_1 &: \text{classify whether action is needed},\\
+z_2 &: \text{select evidence},\\
+z_3 &: \text{retrieve unavailable information},\\
+z_4 &: \text{compare alternatives},\\
+z_5 &: \text{verify},\\
+z_6 &: \text{produce final action}.
+\end{aligned}
+$$
+
+These states should not necessarily share a substrate.
+
+For example, $z_1,z_2$ may be cheap enough to compile into one forward pass.
+
+But $z_3$ cannot be latentized if it requires genuinely new external information.
+
+Likewise, $z_4,z_5$ may require iterative latent compute for easy cases and explicit tool-backed reasoning for harder ones.
+
+So:
+
+$$
+\boxed{
+\text{reasoning trajectory}
+=
+\text{internally computable decisions}
++
+\text{adaptive latent computation}
++
+\text{necessary external actions}.
+}
+$$
+
+The engineering goal is not to eliminate reasoning tokens. It is to avoid paying token/action cost for steps that do not require an externalized interface.
+
+---
+
+## 46. Auxiliary supervision is useful only if it improves the primary policy
+
+The danger of representation supervision is that a human-designed label may force the representation to become easily classifiable in a way that damages the final action manifold.
+
+Let
+
+$$
+g_m=\nabla_\theta L_{\text{main}},
+\qquad
+g_a=\nabla_\theta L_{\text{aux}}.
+$$
+
+If
+
+$$
+g_m^\top g_a<0,
+$$
+
+the auxiliary objective locally conflicts with the main task.
+
+There are several responses.
+
+### 46.1 Remove the auxiliary task
+
+The simplest solution is often correct.
+
+### 46.2 Reduce or anneal its weight
+
+$$
+L_t
+=
+L_{\text{main}}
++
+\lambda_tL_{\text{aux}},
+\qquad
+\lambda_t\rightarrow 0.
+$$
+
+This is appropriate when auxiliary structure helps bootstrap representations but constrains the final policy.
+
+### 46.3 Restrict where the gradient flows
+
+If alignment is positive in early layers and negative in late layers, allow the auxiliary loss to update only the useful portion of the network.
+
+### 46.4 Modify conflicting gradients
+
+Methods such as PCGrad project conflicting components away [9].
+
+But gradient surgery should come after a simpler question:
+
+> Is this auxiliary variable actually a good abstraction of the task?
+
+Optimization machinery cannot rescue a fundamentally misleading taxonomy.
+
+---
+
+## 47. A practical research protocol for latentizing a production decision
+
+For a narrow low-latency task, the following sequence gives a clean experimental program.
+
+### Stage 0: direct baseline
+
+$$
+M_0:
+x\rightarrow y.
+$$
+
+### Stage 1: explicit intermediate reasoning
+
+$$
+M_1:
+x\rightarrow z\rightarrow y.
+$$
+
+This tests whether the decomposition is useful when it directly conditions generation.
+
+### Stage 2: trailing attribution
+
+$$
+M_2:
+x\rightarrow y\rightarrow z.
+$$
+
+This removes the causal conditioning path while retaining token-level auxiliary supervision.
+
+The comparison
+
+$$
+M_1-M_2
+$$
+
+estimates the value of serialized intermediate reasoning.
+
+### Stage 3: latent auxiliary head
+
+$$
+M_3:
+x\rightarrow H\rightarrow y,
+\qquad
+H\rightarrow z.
+$$
+
+The comparison
+
+$$
+M_2-M_3
+$$
+
+tests whether tokenized auxiliary prediction matters or a direct representation loss suffices.
+
+### Stage 4: diagnose depth
+
+Measure across layers:
+
+$$
+\text{probe}(z,H^{(l)}),
+$$
+
+$$
+\text{causal effect}(H^{(l)}\rightarrow y),
+$$
+
+and
+
+$$
+\cos(
+\nabla_{H^{(l)}}L_{\text{main}},
+\nabla_{H^{(l)}}L_{\text{aux}}
+).
+$$
+
+### Stage 5: add latent recurrence only if fixed depth is insufficient
+
+If the task requires more internal computation than one forward pass provides, introduce
+
+$$
+H^{(t+1)}=F_\theta(H^{(t)}).
+$$
+
+Then ask whether process supervision over recurrent states improves the latent trajectory.
+
+This avoids using looped architectures merely because latent reasoning is fashionable.
+
+---
+
+## 48. A new interpretation of test-time scaling
+
+The usual test-time-scaling axis is
+
+$$
+\text{more tokens}\rightarrow\text{more compute}.
+$$
+
+The substrate view reveals several orthogonal axes:
+
+$$
+\boxed{
+\begin{aligned}
+\text{token depth} &: \text{more autoregressive reasoning tokens},\\
+\text{latent depth} &: \text{more recurrent hidden-state steps},\\
+\text{parameter adaptation} &: \text{more test-time learning updates},\\
+\text{retrieval depth} &: \text{more external memory accesses},\\
+\text{tool depth} &: \text{more environment interactions}.
+\end{aligned}
+}
+$$
+
+A future inference controller should not merely choose:
+
+$$
+\text{how many tokens should I think?}
+$$
+
+It should choose:
+
+$$
+\boxed{
+\text{where should I spend the next unit of computation?}
+}
+$$
+
+For one problem, another latent recurrence may be cheapest. For another, retrieval may dominate all internal reasoning. For another, the model should answer immediately.
+
+Meta-reasoning becomes **compute allocation across substrates**.
+
+---
+
+## 49. Progressive compilation should operate across both time and substrate
+
+The original compilation hierarchy was:
+
+$$
+\text{experience}
+\rightarrow
+\text{verbalized skill}
+\rightarrow
+\text{structured skill}
+\rightarrow
+\text{learned controller}
+\rightarrow
+\text{weights}.
+$$
+
+The new perspective adds a second dimension.
+
+A procedure can migrate not only across persistence timescales but across **execution substrates**:
+
+$$
+\text{explicit CoT}
+\rightarrow
+\text{latent recurrent process}
+\rightarrow
+\text{single-pass representation}
+\rightarrow
+\text{weights}.
+$$
+
+Similarly:
+
+$$
+\text{explicit retrieval policy}
+\rightarrow
+\text{latent retrieval decision}
+\rightarrow
+\text{compiled routing prior}.
+$$
+
+This gives a two-dimensional picture:
+
+$$
+\boxed{
+\text{learning timescale}
+\times
+\text{execution substrate}.
+}
+$$
+
+A useful capability may begin explicit, slow, inspectable, and high-variance, then become implicit, fast, compressed, and automatic.
+
+That is closer to proceduralization than ordinary fine-tuning.
+
+---
+
+## 50. The deeper unification: intelligence as substrate allocation
+
+TTT, latent reasoning, external memory, tool use, and auxiliary representation learning initially look unrelated.
+
+They can instead be viewed as answers to one question:
+
+$$
+\boxed{
+\text{where should this information or computation live?}
+}
+$$
+
+Examples:
+
+- static phrase-level association $\rightarrow$ lookup memory;
+- general reusable linguistic or reasoning prior $\rightarrow$ slow weights;
+- current-request evidence selection $\rightarrow$ activations;
+- multi-step internal search $\rightarrow$ recurrent/looped latent state;
+- long-context adaptation $\rightarrow$ fast weights or persistent request state;
+- fresh external facts $\rightarrow$ retrieval/tool;
+- auditable multi-stage control $\rightarrow$ explicit harness.
+
+The central architecture problem becomes:
+
+$$
+\boxed{
+\text{Can a learned controller route computation and learning
+to the cheapest sufficient substrate?}
+}
+$$
+
+This extends the earlier idea of credit routing.
+
+Credit routing asks:
+
+$$
+\text{where should learning go?}
+$$
+
+Compute routing asks:
+
+$$
+\text{where should inference happen?}
+$$
+
+A mature continually intelligent system needs both.
+
+---
+
+## 51. Updated research agenda: representation compilation
+
+The substrate view suggests several concrete experiments.
+
+### 51.1 Distill production pipelines into one forward pass
+
+Start from
+
+$$
+x\rightarrow z_1\rightarrow z_2\rightarrow y.
+$$
+
+Train
+
+$$
+x\rightarrow y
+$$
+
+with auxiliary supervision on $z_1,z_2$.
+
+Measure whether serial classifier/router boundaries can be removed without losing final-task quality.
+
+### 51.2 Measure representation compilation depth
+
+For each auxiliary variable $z$, measure across layers:
+
+$$
+\text{decodability},
+\quad
+\text{causal importance},
+\quad
+\text{gradient alignment}.
+$$
+
+The goal is not to assign semantic names to layers, but to discover where useful computation becomes available and where auxiliary supervision begins to interfere.
+
+### 51.3 Distill explicit process supervision into recurrent latents
+
+For tasks where one forward pass is insufficient,
+
+$$
+z_1^{\text{text}},z_2^{\text{text}},\ldots
+$$
+
+can supervise
+
+$$
+H_1,H_2,\ldots
+$$
+
+without requiring those states to be decoded during inference. LOTUS provides a direct recent example [14].
+
+### 51.4 Learn the compute router
+
+Given state $s$, choose
+
+$$
+a
+\in
+\{
+\text{answer now},
+\text{one more latent loop},
+\text{retrieve},
+\text{use tool},
+\text{generate explicit reasoning},
+\text{adapt fast weights}
+\}.
+$$
+
+Optimize
+
+$$
+J
+=
+\mathbb E[
+R-\lambda C(a)
+].
+$$
+
+This is more general than token-budget allocation.
+
+### 51.5 Study when latentization fails
+
+Latentization should fail when the intermediate state must be communicated, audited, persisted, externally executed, independently verified, or branched over.
+
+A production architecture should not seek maximum implicitness. It should seek the correct boundary between internal and external computation.
+
+---
+
+## 52. Revised thesis: progressive compilation is also progressive internalization
+
+The original thesis of this note was:
+
+$$
+\text{explicit + plastic}
+\rightarrow
+\text{implicit + efficient}.
+$$
+
+The new evidence makes this more concrete.
+
+There are at least three forms of internalization:
+
+$$
+\boxed{
+\begin{aligned}
+\text{memory internalization}
+&:
+\text{episode/retrieval}
+\rightarrow
+\text{weights},\\
+\text{policy internalization}
+&:
+\text{harness rule}
+\rightarrow
+\text{learned controller},\\
+\text{computation internalization}
+&:
+\text{explicit reasoning/action}
+\rightarrow
+\text{latent representation}.
+\end{aligned}
+}
+$$
+
+Engram shows that some computation should move *out* of dense neural processing and into lookup.
+
+Coconut and recurrent-depth models show that some reasoning can move *out* of language and into continuous latent state.
+
+Representation auxiliary learning shows that some pipeline decisions can move *out* of separate models or generated tokens and into one forward pass.
+
+TTT shows that some context can move *out* of explicit token storage and into adaptive parameter state.
+
+These are not contradictions. They express the same optimization principle:
+
+$$
+\boxed{
+\text{place each computation in the substrate
+with the best trade-off among capacity, latency, plasticity,
+attribution, persistence, and control}.
+}
+$$
+
+That may be the more general architecture problem underneath continual intelligence.
+
+
+## References
+
+1. Sun, Y. et al. *Test-Time Training with Self-Supervision for Generalization under Distribution Shifts*. ICML 2020.  
+   <https://arxiv.org/abs/1909.13231>
+
+2. Zhang, T. et al. *Test-Time Training Done Right*. 2025.  
+   <https://arxiv.org/abs/2505.23884>
+
+3. Tandon, A. et al. *End-to-End Test-Time Training for Long Context*. 2025.  
+   <https://arxiv.org/abs/2512.23675>
+
+4. Liu, J. et al. *Test-Time Training with KV Binding Is Secretly Linear Attention*. 2026.  
+   <https://arxiv.org/abs/2602.21204>
+
+5. Feng, G. et al. *In-Place Test-Time Training*. 2026.  
+   <https://arxiv.org/abs/2604.06169>
+
+6. Deng, Y. et al. *Implicit Chain of Thought Reasoning via Knowledge Distillation*. 2023.  
+   <https://arxiv.org/abs/2311.01460>
+
+7. Goyal, S. et al. *Think Before You Speak: Training Language Models With Pause Tokens*. ICLR 2024.  
+   <https://arxiv.org/abs/2310.02226>
+
+8. Du, Y. et al. *Adapting Auxiliary Losses Using Gradient Similarity*. 2018.  
+   <https://arxiv.org/abs/1812.02224>
+
+9. Yu, T. et al. *Gradient Surgery for Multi-Task Learning*. NeurIPS 2020.  
+   <https://arxiv.org/abs/2001.06782>
+
+10. Søgaard, A. and Goldberg, Y. *Deep Multi-Task Learning with Low Level Tasks Supervised at Lower Layers*. ACL 2016.  
+    <https://aclanthology.org/P16-2038/>
+
+11. Hao, S. et al. *Training Large Language Models to Reason in a Continuous Latent Space*. COLM 2025.  
+    <https://arxiv.org/abs/2412.06769>
+
+12. Geiping, J. et al. *Scaling up Test-Time Compute with Latent Reasoning: A Recurrent Depth Approach*. 2025.  
+    <https://arxiv.org/abs/2502.05171>
+
+13. Lu, W. et al. *Latent Chain-of-Thought? Decoding the Depth-Recurrent Transformer*. 2025.  
+    <https://arxiv.org/abs/2507.02199>
+
+14. Fan, Y., Svete, A., and Lee, K. *Bridging the Gap Between Latent and Explicit Reasoning with Looped Transformers*. 2026.  
+    <https://www.microsoft.com/en-us/research/publication/bridging-the-gap-between-latent-and-explicit-reasoning-with-looped-transformers/>
+
+15. Hu, S. et al. *ST-P3: End-to-end Vision-based Autonomous Driving via Spatial-Temporal Feature Learning*. 2022.  
+    <https://arxiv.org/abs/2207.07601>
+
+16. Hu, Y. et al. *Planning-Oriented Autonomous Driving (UniAD)*. CVPR 2023.  
+    <https://openaccess.thecvf.com/content/CVPR2023/html/Hu_Planning-Oriented_Autonomous_Driving_CVPR_2023_paper.html>
+
+17. Jiang, B. et al. *VAD: Vectorized Scene Representation for Efficient Autonomous Driving*. ICCV 2023.  
+    <https://openaccess.thecvf.com/content/ICCV2023/html/Jiang_VAD_Vectorized_Scene_Representation_for_Efficient_Autonomous_Driving_ICCV_2023_paper.html>
+
+18. Zhang, Y. et al. *Do Latent Tokens Think? A Causal and Adversarial Analysis of Chain-of-Continuous-Thought*. 2025.  
+    <https://arxiv.org/abs/2512.21711>
+
+19. Cheng, X. et al. *Conditional Memory via Scalable Lookup: A New Axis of Sparsity for Large Language Models*. 2026.  
+    <https://arxiv.org/abs/2601.07372>
+
+20. Ren, H. *LSRL: Process-Supervised GRPO on Latent Recurrent States Improves Mathematical Reasoning*. Findings of EMNLP 2025.  
+    <https://aclanthology.org/2025.findings-emnlp.669/>

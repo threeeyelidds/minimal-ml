@@ -1,37 +1,33 @@
-/* Repo-wide text colors */
+/* Repo-wide text colors, tuned for dark backgrounds. */
 
 .blue {
-  color: #4f6b8a;
+  color: #91b8ff;
 }
 
 .green {
-  color: #5f7f6b;
+  color: #8dcba5;
 }
 
 .orange {
-  color: #b7794a;
+  color: #e5ad7c;
 }
 
 .purple {
-  color: #7a668f;
-}
-
-.purple {
-  color: #7c6fa6;
+  color: #bca9e8;
 }
 
 .pink {
-  color: #b96f8f;
+  color: #e5a0c0;
 }
 
 .rose {
-  color: #c57b72;
+  color: #e7aaa2;
 }
 
 .yellow {
-  color: #b8953f;
+  color: #ddc374;
 }
 
 .gray {
-  color: #7f7a86;
+  color: #a4adba;
 }
