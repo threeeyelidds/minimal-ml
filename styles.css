@@ -1,11 +1,12 @@
 :root {
-  --minimal-bg: #fcfcfb;
-  --minimal-surface: #ffffff;
-  --minimal-ink: #242629;
-  --minimal-muted: #74777d;
-  --minimal-line: #e6e7e8;
-  --minimal-accent: #3f63a8;
-  --minimal-accent-soft: #f2f5fb;
+  color-scheme: dark;
+  --minimal-bg: #15181d;
+  --minimal-surface: #1e232b;
+  --minimal-ink: #e2e6ec;
+  --minimal-muted: #a4adba;
+  --minimal-line: #343c48;
+  --minimal-accent: #91b8ff;
+  --minimal-accent-soft: #232f43;
 }
 
 html {
@@ -31,7 +32,7 @@ a {
 }
 
 a:hover {
-  color: #294d8d;
+  color: #bed4ff;
 }
 
 /* Navigation */
@@ -57,7 +58,7 @@ a:hover {
 }
 
 .navbar-nav .nav-link {
-  color: #60636a !important;
+  color: #a4adba !important;
   font-size: 0.88rem;
   font-weight: 500;
   padding-inline: 0.8rem !important;
@@ -86,7 +87,7 @@ main.content {
 .quarto-title h1.title {
   max-width: 760px;
   margin-bottom: 0.7rem;
-  color: #1d1f22;
+  color: #f1f4f8;
   font-size: clamp(1.8rem, 3vw, 2.25rem);
   font-weight: 680;
   line-height: 1.1;
@@ -113,7 +114,7 @@ main.content {
 
 .quarto-title-meta-heading {
   margin-bottom: 0.05rem;
-  color: #9a9ca1;
+  color: #a4adba;
   font-size: 0.67rem;
   font-weight: 650;
   letter-spacing: 0.07em;
@@ -128,7 +129,7 @@ h1,
 h2,
 h3,
 h4 {
-  color: #202226;
+  color: #f1f4f8;
   font-weight: 650;
   letter-spacing: -0.025em;
 }
@@ -170,8 +171,8 @@ hr {
 blockquote {
   margin: 1.8rem 0;
   padding: 0.15rem 1.1rem;
-  border-left: 3px solid #9cafcf;
-  color: #4b5058;
+  border-left: 3px solid #91b8ff;
+  color: #b9c2cf;
   font-size: 1.02rem;
 }
 
@@ -230,7 +231,7 @@ div.sourceCode {
 }
 
 .sidebar nav[role="doc-toc"] ul > li > a {
-  color: #85888e !important;
+  color: #a4adba !important;
   border-left-color: transparent;
 }
 
@@ -311,9 +312,9 @@ div.sourceCode {
 }
 
 .note-box {
-  border: 1px solid #d9d2e9;
-  border-left: 4px solid #8b7bb8;
-  background: #faf8fc;
+  border: 1px solid #4a405f;
+  border-left: 4px solid #b5a0e3;
+  background: #252131;
   border-radius: 8px;
   padding: 1rem 1.1rem;
   margin: 1rem 0;

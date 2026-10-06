@@ -6,8 +6,9 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
+<meta name="dcterms.date" content="2026-08-19">
 
-<title>From Test-Time Training to Continual Intelligence – Minimal ML</title>
+<title>From Test-Time Training to Continual Intelligence — Expanded Version – Minimal ML</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -250,6 +251,70 @@ window.Quarto = {
   </ul></li>
   <li><a href="#a-broader-decision-loop-interpretation" id="toc-a-broader-decision-loop-interpretation" class="nav-link" data-scroll-target="#a-broader-decision-loop-interpretation">27. A broader decision-loop interpretation</a></li>
   <li><a href="#conclusion" id="toc-conclusion" class="nav-link" data-scroll-target="#conclusion">28. Conclusion</a></li>
+  <li><a href="#a-missing-substrate-representation-level-computation" id="toc-a-missing-substrate-representation-level-computation" class="nav-link" data-scroll-target="#a-missing-substrate-representation-level-computation">29. A missing substrate: representation-level computation</a></li>
+  <li><a href="#representation-supervision-as-neural-compilation" id="toc-representation-supervision-as-neural-compilation" class="nav-link" data-scroll-target="#representation-supervision-as-neural-compilation">30. Representation supervision as neural compilation</a></li>
+  <li><a href="#explicit-reasoning-and-latent-supervision-are-not-equivalent" id="toc-explicit-reasoning-and-latent-supervision-are-not-equivalent" class="nav-link" data-scroll-target="#explicit-reasoning-and-latent-supervision-are-not-equivalent">31. Explicit reasoning and latent supervision are not equivalent</a></li>
+  <li><a href="#a-concrete-narrow-task-example-query-rewriting" id="toc-a-concrete-narrow-task-example-query-rewriting" class="nav-link" data-scroll-target="#a-concrete-narrow-task-example-query-rewriting">32. A concrete narrow-task example: query rewriting</a></li>
+  <li><a href="#what-end-to-end-autonomous-driving-actually-contributes" id="toc-what-end-to-end-autonomous-driving-actually-contributes" class="nav-link" data-scroll-target="#what-end-to-end-autonomous-driving-actually-contributes">33. What end-to-end autonomous driving actually contributes</a></li>
+  <li><a href="#do-not-assign-semantics-to-layers-too-early" id="toc-do-not-assign-semantics-to-layers-too-early" class="nav-link" data-scroll-target="#do-not-assign-semantics-to-layers-too-early">34. Do not assign semantics to layers too early</a></li>
+  <li><a href="#layer-wise-gradient-alignment-as-an-optimization-microscope" id="toc-layer-wise-gradient-alignment-as-an-optimization-microscope" class="nav-link" data-scroll-target="#layer-wise-gradient-alignment-as-an-optimization-microscope">35. Layer-wise gradient alignment as an optimization microscope</a></li>
+  <li><a href="#three-different-questions-for-interpretability" id="toc-three-different-questions-for-interpretability" class="nav-link" data-scroll-target="#three-different-questions-for-interpretability">36. Three different questions for interpretability</a>
+  <ul class="collapse">
+  <li><a href="#is-the-variable-decodable" id="toc-is-the-variable-decodable" class="nav-link" data-scroll-target="#is-the-variable-decodable">36.1 Is the variable decodable?</a></li>
+  <li><a href="#is-the-variable-causally-used" id="toc-is-the-variable-causally-used" class="nav-link" data-scroll-target="#is-the-variable-causally-used">36.2 Is the variable causally used?</a></li>
+  <li><a href="#does-training-on-the-variable-push-the-model-in-a-useful-direction" id="toc-does-training-on-the-variable-push-the-model-in-a-useful-direction" class="nav-link" data-scroll-target="#does-training-on-the-variable-push-the-model-in-a-useful-direction">36.3 Does training on the variable push the model in a useful direction?</a></li>
+  </ul></li>
+  <li><a href="#explicit-cot-is-only-one-way-to-buy-additional-computation" id="toc-explicit-cot-is-only-one-way-to-buy-additional-computation" class="nav-link" data-scroll-target="#explicit-cot-is-only-one-way-to-buy-additional-computation">37. Explicit CoT is only one way to buy additional computation</a>
+  <ul class="collapse">
+  <li><a href="#fixed-depth-latent-computation" id="toc-fixed-depth-latent-computation" class="nav-link" data-scroll-target="#fixed-depth-latent-computation">37.1 Fixed-depth latent computation</a></li>
+  <li><a href="#pause-token-computation" id="toc-pause-token-computation" class="nav-link" data-scroll-target="#pause-token-computation">37.2 Pause-token computation</a></li>
+  <li><a href="#recurrent-or-looped-latent-computation" id="toc-recurrent-or-looped-latent-computation" class="nav-link" data-scroll-target="#recurrent-or-looped-latent-computation">37.3 Recurrent or looped latent computation</a></li>
+  <li><a href="#explicit-token-reasoning" id="toc-explicit-token-reasoning" class="nav-link" data-scroll-target="#explicit-token-reasoning">37.4 Explicit token reasoning</a></li>
+  </ul></li>
+  <li><a href="#coconut-reason-without-committing-to-words" id="toc-coconut-reason-without-committing-to-words" class="nav-link" data-scroll-target="#coconut-reason-without-committing-to-words">38. Coconut: reason without committing to words</a></li>
+  <li><a href="#looped-transformers-turn-depth-into-test-time-compute" id="toc-looped-transformers-turn-depth-into-test-time-compute" class="nav-link" data-scroll-target="#looped-transformers-turn-depth-into-test-time-compute">39. Looped Transformers turn depth into test-time compute</a></li>
+  <li><a href="#lotus-supervise-the-latent-trajectory-not-only-the-endpoint" id="toc-lotus-supervise-the-latent-trajectory-not-only-the-endpoint" class="nav-link" data-scroll-target="#lotus-supervise-the-latent-trajectory-not-only-the-endpoint">40. LOTUS: supervise the latent trajectory, not only the endpoint</a></li>
+  <li><a href="#implicit-cot-distillation-anticipated-this-idea" id="toc-implicit-cot-distillation-anticipated-this-idea" class="nav-link" data-scroll-target="#implicit-cot-distillation-anticipated-this-idea">41. Implicit CoT distillation anticipated this idea</a>
+  <ul class="collapse">
+  <li><a href="#horizontal-reasoning" id="toc-horizontal-reasoning" class="nav-link" data-scroll-target="#horizontal-reasoning">Horizontal reasoning</a></li>
+  <li><a href="#vertical-reasoning" id="toc-vertical-reasoning" class="nav-link" data-scroll-target="#vertical-reasoning">Vertical reasoning</a></li>
+  </ul></li>
+  <li><a href="#ttt-and-looped-reasoning-are-dual-recurrent-state-designs" id="toc-ttt-and-looped-reasoning-are-dual-recurrent-state-designs" class="nav-link" data-scroll-target="#ttt-and-looped-reasoning-are-dual-recurrent-state-designs">42. TTT and looped reasoning are dual recurrent-state designs</a>
+  <ul class="collapse">
+  <li><a href="#ttt-recurrence" id="toc-ttt-recurrence" class="nav-link" data-scroll-target="#ttt-recurrence">TTT recurrence</a></li>
+  <li><a href="#looped-latent-recurrence" id="toc-looped-latent-recurrence" class="nav-link" data-scroll-target="#looped-latent-recurrence">Looped latent recurrence</a></li>
+  </ul></li>
+  <li><a href="#engram-adds-another-axis-do-not-compute-what-can-be-looked-up" id="toc-engram-adds-another-axis-do-not-compute-what-can-be-looked-up" class="nav-link" data-scroll-target="#engram-adds-another-axis-do-not-compute-what-can-be-looked-up">43. Engram adds another axis: do not compute what can be looked up</a></li>
+  <li><a href="#a-substrate-hierarchy-for-production-intelligence" id="toc-a-substrate-hierarchy-for-production-intelligence" class="nav-link" data-scroll-target="#a-substrate-hierarchy-for-production-intelligence">44. A substrate hierarchy for production intelligence</a></li>
+  <li><a href="#the-correct-unit-of-compilation-is-not-reasoning" id="toc-the-correct-unit-of-compilation-is-not-reasoning" class="nav-link" data-scroll-target="#the-correct-unit-of-compilation-is-not-reasoning">45. The correct unit of compilation is not “reasoning”</a></li>
+  <li><a href="#auxiliary-supervision-is-useful-only-if-it-improves-the-primary-policy" id="toc-auxiliary-supervision-is-useful-only-if-it-improves-the-primary-policy" class="nav-link" data-scroll-target="#auxiliary-supervision-is-useful-only-if-it-improves-the-primary-policy">46. Auxiliary supervision is useful only if it improves the primary policy</a>
+  <ul class="collapse">
+  <li><a href="#remove-the-auxiliary-task" id="toc-remove-the-auxiliary-task" class="nav-link" data-scroll-target="#remove-the-auxiliary-task">46.1 Remove the auxiliary task</a></li>
+  <li><a href="#reduce-or-anneal-its-weight" id="toc-reduce-or-anneal-its-weight" class="nav-link" data-scroll-target="#reduce-or-anneal-its-weight">46.2 Reduce or anneal its weight</a></li>
+  <li><a href="#restrict-where-the-gradient-flows" id="toc-restrict-where-the-gradient-flows" class="nav-link" data-scroll-target="#restrict-where-the-gradient-flows">46.3 Restrict where the gradient flows</a></li>
+  <li><a href="#modify-conflicting-gradients" id="toc-modify-conflicting-gradients" class="nav-link" data-scroll-target="#modify-conflicting-gradients">46.4 Modify conflicting gradients</a></li>
+  </ul></li>
+  <li><a href="#a-practical-research-protocol-for-latentizing-a-production-decision" id="toc-a-practical-research-protocol-for-latentizing-a-production-decision" class="nav-link" data-scroll-target="#a-practical-research-protocol-for-latentizing-a-production-decision">47. A practical research protocol for latentizing a production decision</a>
+  <ul class="collapse">
+  <li><a href="#stage-0-direct-baseline" id="toc-stage-0-direct-baseline" class="nav-link" data-scroll-target="#stage-0-direct-baseline">Stage 0: direct baseline</a></li>
+  <li><a href="#stage-1-explicit-intermediate-reasoning" id="toc-stage-1-explicit-intermediate-reasoning" class="nav-link" data-scroll-target="#stage-1-explicit-intermediate-reasoning">Stage 1: explicit intermediate reasoning</a></li>
+  <li><a href="#stage-2-trailing-attribution" id="toc-stage-2-trailing-attribution" class="nav-link" data-scroll-target="#stage-2-trailing-attribution">Stage 2: trailing attribution</a></li>
+  <li><a href="#stage-3-latent-auxiliary-head" id="toc-stage-3-latent-auxiliary-head" class="nav-link" data-scroll-target="#stage-3-latent-auxiliary-head">Stage 3: latent auxiliary head</a></li>
+  <li><a href="#stage-4-diagnose-depth" id="toc-stage-4-diagnose-depth" class="nav-link" data-scroll-target="#stage-4-diagnose-depth">Stage 4: diagnose depth</a></li>
+  <li><a href="#stage-5-add-latent-recurrence-only-if-fixed-depth-is-insufficient" id="toc-stage-5-add-latent-recurrence-only-if-fixed-depth-is-insufficient" class="nav-link" data-scroll-target="#stage-5-add-latent-recurrence-only-if-fixed-depth-is-insufficient">Stage 5: add latent recurrence only if fixed depth is insufficient</a></li>
+  </ul></li>
+  <li><a href="#a-new-interpretation-of-test-time-scaling" id="toc-a-new-interpretation-of-test-time-scaling" class="nav-link" data-scroll-target="#a-new-interpretation-of-test-time-scaling">48. A new interpretation of test-time scaling</a></li>
+  <li><a href="#progressive-compilation-should-operate-across-both-time-and-substrate" id="toc-progressive-compilation-should-operate-across-both-time-and-substrate" class="nav-link" data-scroll-target="#progressive-compilation-should-operate-across-both-time-and-substrate">49. Progressive compilation should operate across both time and substrate</a></li>
+  <li><a href="#the-deeper-unification-intelligence-as-substrate-allocation" id="toc-the-deeper-unification-intelligence-as-substrate-allocation" class="nav-link" data-scroll-target="#the-deeper-unification-intelligence-as-substrate-allocation">50. The deeper unification: intelligence as substrate allocation</a></li>
+  <li><a href="#updated-research-agenda-representation-compilation" id="toc-updated-research-agenda-representation-compilation" class="nav-link" data-scroll-target="#updated-research-agenda-representation-compilation">51. Updated research agenda: representation compilation</a>
+  <ul class="collapse">
+  <li><a href="#distill-production-pipelines-into-one-forward-pass" id="toc-distill-production-pipelines-into-one-forward-pass" class="nav-link" data-scroll-target="#distill-production-pipelines-into-one-forward-pass">51.1 Distill production pipelines into one forward pass</a></li>
+  <li><a href="#measure-representation-compilation-depth" id="toc-measure-representation-compilation-depth" class="nav-link" data-scroll-target="#measure-representation-compilation-depth">51.2 Measure representation compilation depth</a></li>
+  <li><a href="#distill-explicit-process-supervision-into-recurrent-latents" id="toc-distill-explicit-process-supervision-into-recurrent-latents" class="nav-link" data-scroll-target="#distill-explicit-process-supervision-into-recurrent-latents">51.3 Distill explicit process supervision into recurrent latents</a></li>
+  <li><a href="#learn-the-compute-router" id="toc-learn-the-compute-router" class="nav-link" data-scroll-target="#learn-the-compute-router">51.4 Learn the compute router</a></li>
+  <li><a href="#study-when-latentization-fails" id="toc-study-when-latentization-fails" class="nav-link" data-scroll-target="#study-when-latentization-fails">51.5 Study when latentization fails</a></li>
+  </ul></li>
+  <li><a href="#revised-thesis-progressive-compilation-is-also-progressive-internalization" id="toc-revised-thesis-progressive-compilation-is-also-progressive-internalization" class="nav-link" data-scroll-target="#revised-thesis-progressive-compilation-is-also-progressive-internalization">52. Revised thesis: progressive compilation is also progressive internalization</a></li>
   <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
   </ul>
 </nav>
@@ -259,7 +324,7 @@ window.Quarto = {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">From Test-Time Training to Continual Intelligence</h1>
+<h1 class="title">From Test-Time Training to Continual Intelligence — Expanded Version</h1>
 <p class="subtitle lead">A research-direction note on memory, reasoning, meta-learning, and the substrate of continual adaptation</p>
 </div>
 
@@ -268,6 +333,12 @@ window.Quarto = {
 <div class="quarto-title-meta">
 
     
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">August 19, 2026</p>
+    </div>
+  </div>
   
     
   </div>
@@ -287,8 +358,8 @@ window.Quarto = {
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>This is the original, shorter version of the argument.</p>
-<p><a href="../../notes/advanced/continual_intelligence_ttt_expanded.html">Read the expanded version</a>, which extends the framework to representation compilation, latent reasoning, auxiliary supervision, and compute routing.</p>
+<p>This expanded version retains the original TTT-to-continual-intelligence argument, then develops representation compilation, latent reasoning, auxiliary supervision, and compute routing in greater depth.</p>
+<p><a href="../../notes/advanced/continual_intelligence_ttt.html">Read the original, shorter note</a>.</p>
 </div>
 </div>
 <section id="thesis" class="level2">
@@ -332,12 +403,6 @@ window.Quarto = {
 }
 \]</span></p>
 <p>That gives a possible unifying framework for test-time training, long-context memory, skill libraries, agent harnesses, meta-learning, and eventually online RL.</p>
-<p>This note connects three other parts of the site:</p>
-<ul>
-<li><a href="../../notes/advanced/linear_attention.html">Linear Attention</a> for the algebraic view of fast-weight memory</li>
-<li><a href="../../notes/foundations/optimizers.html">Optimization</a> for SGD, Muon, and optimizer dynamics</li>
-<li><a href="../../notes/applied_ml/harness.html">Agent Harness</a> for explicit state, skills, verification, and meta-level control</li>
-</ul>
 <hr>
 </section>
 <section id="ttt-started-as-adaptation-not-memory" class="level2">
@@ -393,7 +458,7 @@ W_t
 =
 U(W_{t-1},x_t).
 \]</span></p>
-<p>The update operator (U) is typically implemented as an optimization step:</p>
+<p>The update operator <span class="math inline">\(U\)</span> is typically implemented as an optimization step:</p>
 <p><span class="math display">\[
 W_t
 =
@@ -441,7 +506,7 @@ o(q)
 <p><span class="math display">\[
 k_i \approx v_i,
 \]</span></p>
-<p>and no function (f) in ordinary attention that is supposed to map a key directly onto its value.</p>
+<p>and no function <span class="math inline">\(f\)</span> in ordinary attention that is supposed to map a key directly onto its value.</p>
 <p>The intended abstraction is different.</p>
 <p>An attention KV cache can be viewed as an explicit associative table:</p>
 <p><span class="math display">\[
@@ -457,7 +522,7 @@ f_W(k_i)\approx v_i.
 <p><span class="math display">\[
 f_W(q).
 \]</span></p>
-<p>Under this interpretation, the auxiliary loss is a <strong>memory-writing rule</strong>. It is not derived from the original attention equation. It is chosen because SGD on this objective is hoped to encode useful associations into (W).</p>
+<p>Under this interpretation, the auxiliary loss is a <strong>memory-writing rule</strong>. It is not derived from the original attention equation. It is chosen because SGD on this objective is hoped to encode useful associations into <span class="math inline">\(W\)</span>.</p>
 <p>That difference matters.</p>
 <p>The KVB objective does not follow inevitably from the task. It is an architectural hypothesis about how gradients should implement memory.</p>
 <hr>
@@ -523,7 +588,7 @@ f(k)\approx v.
 vk^\top.
 \]</span></p>
 <p>That makes the auxiliary objective look less like literal memory regression and more like a way to engineer a desired state-transition operator.</p>
-<p>The 2026 paper <a href="https://arxiv.org/abs/2602.21204">Test-Time Training with KV Binding Is Secretly Linear Attention</a> pushes this view further, arguing that a broad class of KV-binding TTT architectures can be rewritten as learned linear-attention operators. See <a href="../../notes/advanced/linear_attention.html">Linear Attention</a> for the underlying recurrent-state derivation.</p>
+<p>The 2026 paper <em>Test-Time Training with KV Binding Is Secretly Linear Attention</em> pushes this view further, arguing that a broad class of KV-binding TTT architectures can be rewritten as learned linear-attention operators.</p>
 <p>This is an important warning.</p>
 <div class="callout callout-style-default callout-note callout-titled">
 <div class="callout-header d-flex align-content-center">
@@ -575,7 +640,7 @@ L_{\text{NTP}}?
 <h3 class="anchored" data-anchor-id="systems-cost">5.1 Systems cost</h3>
 <p>A local auxiliary objective can update a small fast-weight module without backpropagating through the whole language model.</p>
 <p>Next-token prediction originates at the logits.</p>
-<p>If we update a parameter (W_l) in a lower layer,</p>
+<p>If we update a parameter <span class="math inline">\(W_l\)</span> in a lower layer,</p>
 <p><span class="math display">\[
 \nabla_{W_l}L_{\text{NTP}}
 \]</span></p>
@@ -660,7 +725,7 @@ B\approx16\text{--}64.
 \]</span></p>
 <p>small optimizer steps.</p>
 <p>Those operations are poorly shaped for modern accelerators.</p>
-<p><a href="https://arxiv.org/abs/2505.23884">Test-Time Training Done Right</a> introduces Large Chunk TTT (LaCT), increasing update chunks from tens of tokens to thousands or even much larger blocks depending on the modality.</p>
+<p><em>Test-Time Training Done Right</em> introduces Large Chunk TTT (LaCT), increasing update chunks from tens of tokens to thousands or even much larger blocks depending on the modality.</p>
 <p>Instead of</p>
 <p><span class="math display">\[
 x_{1:16}
@@ -706,7 +771,7 @@ x_{2049:4096}
 <section id="in-place-ttt-move-the-adaptive-state-into-the-existing-model" class="level2">
 <h2 class="anchored" data-anchor-id="in-place-ttt-move-the-adaptive-state-into-the-existing-model">7. In-Place TTT: move the adaptive state into the existing model</h2>
 <p>Another step is to question why TTT needs a specialized fast-weight memory module at all.</p>
-<p><a href="https://arxiv.org/abs/2604.06169">In-Place Test-Time Training</a> repurposes existing MLP parameters—in particular the final projection matrix of MLP blocks—as fast weights.</p>
+<p><em>In-Place Test-Time Training</em> repurposes existing MLP parameters—in particular the final projection matrix of MLP blocks—as fast weights.</p>
 <p>That changes the architecture from something like</p>
 <p><span class="math display">\[
 \text{Transformer}
@@ -736,7 +801,7 @@ x_{2049:4096}
 </section>
 <section id="ttt-e2e-train-the-model-for-its-own-future-learning-trajectory" class="level2">
 <h2 class="anchored" data-anchor-id="ttt-e2e-train-the-model-for-its-own-future-learning-trajectory">8. TTT-E2E: train the model for its own future learning trajectory</h2>
-<p><a href="https://arxiv.org/abs/2512.23675">End-to-End TTT</a> goes one level deeper.</p>
+<p>End-to-End TTT goes one level deeper.</p>
 <p>Instead of pretraining a static model and later applying some test-time updates, it asks:</p>
 <blockquote class="blockquote">
 <p>What initialization should we learn if we already know the model will continue learning during inference?</p>
@@ -752,14 +817,14 @@ x_{2049:4096}
 <blockquote class="blockquote">
 <p><strong>Find a parameter vector that is directly good at prediction.</strong></p>
 </blockquote>
-<p>But if inference will execute an update operator (U),</p>
+<p>But if inference will execute an update operator <span class="math inline">\(U\)</span>,</p>
 <p><span class="math display">\[
 \theta_1=U(\theta_0,x_1),
 \]</span></p>
 <p><span class="math display">\[
 \theta_2=U(\theta_1,x_2),
 \]</span></p>
-<p>and so on, then the actual deployed object is not (_0).</p>
+<p>and so on, then the actual deployed object is not <span class="math inline">\(\theta_0\)</span>.</p>
 <p>It is the entire trajectory</p>
 <p><span class="math display">\[
 \theta_0,\theta_1,\ldots,\theta_T.
@@ -986,7 +1051,7 @@ K
 \]</span></p>
 <p>Eventually it should learn something like:</p>
 <blockquote class="blockquote">
-<p>When this structure appears, search for invariant (X), transform with (Y), then recurse.</p>
+<p>When this structure appears, search for invariant <span class="math inline">\(X\)</span>, transform with <span class="math inline">\(Y\)</span>, then recurse.</p>
 </blockquote>
 <p>This is not a fact.</p>
 <p>It is a reusable <strong>procedure</strong>.</p>
@@ -1056,7 +1121,6 @@ R
 <li>downstream task success.</li>
 </ul>
 <p>This is closer to RL and decision learning than to pure prediction.</p>
-<p>Cursor Tab and Composer provide a concrete product-scale example: frequent on-policy RL improves action utility, but KL anchoring, task breadth, and regression gates—not RL by itself—provide partial protection against policy regression. See <a href="../../notes/applied_ml/cursor_continual_training.html">Cursor’s Continual Training Loop</a>.</p>
 <p>It also makes the trajectory-stability problem harder.</p>
 <p>A corrupted episodic memory can damage one task.</p>
 <p>A corrupted <strong>reasoning policy</strong> can systematically damage every later task.</p>
@@ -1305,7 +1369,7 @@ r_t
 \rightarrow
 s_{t+1}.
 \]</span></p>
-<p>An explicit <a href="../../notes/applied_ml/harness.html">agent harness</a> can maintain state and enforce control boundaries:</p>
+<p>An explicit harness can maintain state and enforce control boundaries:</p>
 <pre class="text"><code>observe
   ↓
 estimate state
@@ -1431,7 +1495,7 @@ S,
 \theta
 \}.
 \]</span></p>
-<p>where (e) is an experience.</p>
+<p>where <span class="math inline">\(e\)</span> is an experience.</p>
 <p>This is <strong>continual credit assignment over internal state types</strong>.</p>
 <p>I suspect this is more fundamental than choosing Adam versus SGD.</p>
 <hr>
@@ -1466,7 +1530,7 @@ H
 \xrightarrow{\pi_{\text{meta}}}
 a
 \]</span></p>
-<p>where (a) chooses a computation.</p>
+<p>where <span class="math inline">\(a\)</span> chooses a computation.</p>
 <p>The harness executes it:</p>
 <p><span class="math display">\[
 a
@@ -1592,7 +1656,7 @@ y.
 \]</span></p>
 <p>But this conflates three distinct things:</p>
 <ol type="1">
-<li><strong>reasoning execution</strong> — the current trajectory ();</li>
+<li><strong>reasoning execution</strong> — the current trajectory <span class="math inline">\(\tau\)</span>;</li>
 <li><strong>reasoning skill</strong> — the reusable policy that generates good trajectories;</li>
 <li><strong>meta-reasoning</strong> — the policy that chooses which reasoning method to invoke.</li>
 </ol>
@@ -1655,7 +1719,7 @@ y.
 <p>The framework above suggests several concrete research questions.</p>
 <section id="learn-the-credit-router" class="level3">
 <h3 class="anchored" data-anchor-id="learn-the-credit-router">26.1 Learn the credit router</h3>
-<p>Given an experience (e), predict:</p>
+<p>Given an experience <span class="math inline">\(e\)</span>, predict:</p>
 <p><span class="math display">\[
 C(e)
 \in
@@ -1903,6 +1967,1211 @@ p(x_{t+1}).
 <p>That may be the more useful bridge from today’s long-context TTT to genuinely continual reasoning systems.</p>
 <hr>
 </section>
+<section id="a-missing-substrate-representation-level-computation" class="level2">
+<h2 class="anchored" data-anchor-id="a-missing-substrate-representation-level-computation">29. A missing substrate: representation-level computation</h2>
+<p>The hierarchy above still hides an important distinction. So far, “working state” has mostly meant either ordinary activations inside one forward pass or explicit token-level reasoning traces. These are not the same computational substrate.</p>
+<p>A standard reasoning model often implements</p>
+<p><span class="math display">\[
+x
+\rightarrow
+z_1^{\text{text}}
+\rightarrow
+z_2^{\text{text}}
+\rightarrow
+\cdots
+\rightarrow
+y,
+\]</span></p>
+<p>where intermediate computation is serialized into language. This is easy to supervise and inspect, but inference cost grows with autoregressive reasoning length:</p>
+<p><span class="math display">\[
+T_{\text{reason}}
+\approx
+T_{\text{prefill}}
++
+N_{\text{reasoning tokens}}T_{\text{decode-step}}.
+\]</span></p>
+<p>For narrow production models, this can be an unnecessarily expensive way to implement a small amount of internal decision-making. A query rewriter, router, ranking model, moderation model, or tool selector may only need a few latent variables such as</p>
+<p><span class="math display">\[
+z=
+\{
+\text{act?},
+\text{which evidence matters?},
+\text{which source is required?}
+\}.
+\]</span></p>
+<p>That suggests another compilation step:</p>
+<p><span class="math display">\[
+\boxed{
+\text{explicit intermediate decisions}
+\rightarrow
+\text{supervised latent representation}
+\rightarrow
+\text{direct action}
+}
+\]</span></p>
+<p>The model can be trained to <em>know</em> the intermediate answer without being required to <em>say</em> it.</p>
+<hr>
+</section>
+<section id="representation-supervision-as-neural-compilation" class="level2">
+<h2 class="anchored" data-anchor-id="representation-supervision-as-neural-compilation">30. Representation supervision as neural compilation</h2>
+<p>Suppose a production task has input <span class="math inline">\(x\)</span>, final action <span class="math inline">\(y\)</span>, and an intermediate decision <span class="math inline">\(z\)</span>.</p>
+<p>A modular implementation is</p>
+<p><span class="math display">\[
+x
+\rightarrow
+C(x)=z
+\rightarrow
+G(x,z)=y.
+\]</span></p>
+<p>A language-model implementation may instead serialize the intermediate state:</p>
+<p><span class="math display">\[
+x
+\rightarrow
+z_{\text{text}}
+\rightarrow
+y.
+\]</span></p>
+<p>Both make <span class="math inline">\(z\)</span> part of the inference-time interface.</p>
+<p>A third option is</p>
+<p><span class="math display">\[
+x
+\rightarrow
+H(x)
+\rightarrow
+y,
+\]</span></p>
+<p>with an auxiliary training objective</p>
+<p><span class="math display">\[
+D(H(x))\rightarrow z,
+\]</span></p>
+<p>so that</p>
+<p><span class="math display">\[
+L
+=
+L_{\text{main}}(y)
++
+\lambda L_{\text{aux}}(z).
+\]</span></p>
+<p>At deployment time, <span class="math inline">\(D\)</span> can disappear. The intermediate decision has been <strong>compiled into the representation</strong>:</p>
+<p><span class="math display">\[
+\boxed{
+\text{training-time modularity}
+\longrightarrow
+\text{inference-time monolith}
+}
+\]</span></p>
+<p>This is more specific than ordinary knowledge distillation. The object being distilled is not merely a teacher distribution over final tokens, but an <strong>intermediate computation</strong>:</p>
+<p><span class="math display">\[
+\boxed{
+\text{intermediate-decision distillation into representations}.
+}
+\]</span></p>
+<p>This resembles compiler optimization. High-level code may contain explicit temporaries because they make the computation easy to specify:</p>
+<pre class="text"><code>evidence = select_evidence(x)
+decision = should_act(x, evidence)
+output = generate(x, evidence, decision)</code></pre>
+<p>The deployed machine code need not preserve those temporary variables as external interfaces. They only need to be represented sufficiently inside the computation graph to produce the right output.</p>
+<hr>
+</section>
+<section id="explicit-reasoning-and-latent-supervision-are-not-equivalent" class="level2">
+<h2 class="anchored" data-anchor-id="explicit-reasoning-and-latent-supervision-are-not-equivalent">31. Explicit reasoning and latent supervision are not equivalent</h2>
+<p>If the model emits <span class="math inline">\(z\)</span> before the answer,</p>
+<p><span class="math display">\[
+p(z,y\mid x)
+=
+p(z\mid x)p(y\mid x,z),
+\]</span></p>
+<p>then the final action causally conditions on the serialized intermediate decision.</p>
+<p>If the model instead emits the auxiliary explanation after the answer,</p>
+<p><span class="math display">\[
+p(y,z\mid x)
+=
+p(y\mid x)p(z\mid x,y),
+\]</span></p>
+<p>then the current answer cannot condition on <span class="math inline">\(z\)</span>. The trailing auxiliary tokens act primarily as attribution and representation supervision.</p>
+<p>This gives a clean causal experiment:</p>
+<p><span class="math display">\[
+\textbf{A:}\quad
+x\rightarrow z\rightarrow y
+\]</span></p>
+<p><span class="math display">\[
+\textbf{B:}\quad
+x\rightarrow y\rightarrow z
+\]</span></p>
+<p><span class="math display">\[
+\textbf{C:}\quad
+x\rightarrow H\rightarrow y,
+\qquad
+H\rightarrow z.
+\]</span></p>
+<p>If A strongly outperforms B, serialized intermediate reasoning is useful as an autoregressive state. If</p>
+<p><span class="math display">\[
+Q_A\approx Q_B,
+\]</span></p>
+<p>the benefit probably comes mainly from shared representation learning. If</p>
+<p><span class="math display">\[
+Q_C\approx Q_B\approx Q_A,
+\]</span></p>
+<p>then the explicit intermediate computation has been successfully latentized.</p>
+<p>For narrow production tasks, this A/B/C comparison is a much cleaner experiment than assuming in advance that latent reasoning should work.</p>
+<hr>
+</section>
+<section id="a-concrete-narrow-task-example-query-rewriting" class="level2">
+<h2 class="anchored" data-anchor-id="a-concrete-narrow-task-example-query-rewriting">32. A concrete narrow-task example: query rewriting</h2>
+<p>Consider a rewrite system whose deployed action is only</p>
+<p><span class="math display">\[
+(q,\text{context})\rightarrow q'.
+\]</span></p>
+<p>The useful intermediate variables may be small.</p>
+<p>One is</p>
+<p><span class="math display">\[
+r=\mathbf 1[\text{rewrite is needed}].
+\]</span></p>
+<p>Another is evidence usage:</p>
+<p><span class="math display">\[
+e=(e_p,e_k,e_g,e_t),
+\]</span></p>
+<p>where, for example,</p>
+<p><span class="math display">\[
+\begin{aligned}
+e_p &amp;: \text{personalized memory affects the rewrite},\\
+e_k &amp;: \text{model prior knowledge is required},\\
+e_g &amp;: \text{external web/search evidence affects the rewrite},\\
+e_t &amp;: \text{platform behavioral/retrieval evidence affects the rewrite}.
+\end{aligned}
+\]</span></p>
+<p>The distinction between <strong>evidence availability</strong> and <strong>evidence usage</strong> matters. A source may be present without affecting the optimal action.</p>
+<p>A more operational label is therefore</p>
+<p><span class="math display">\[
+u_i
+=
+\mathbf 1[
+\text{counterfactually removing source }i
+\text{ should change the rewrite}
+].
+\]</span></p>
+<p>For externally supplied evidence, counterfactual construction is possible:</p>
+<p><span class="math display">\[
+x\rightarrow y
+\]</span></p>
+<p>versus</p>
+<p><span class="math display">\[
+x\setminus e_i\rightarrow y'.
+\]</span></p>
+<p>If <span class="math inline">\(y'\)</span> should change, source <span class="math inline">\(i\)</span> is plausibly action-relevant.</p>
+<p>By contrast, “the model used its own knowledge” is hard to label rigorously because pretrained knowledge is not an observable input field. It may be better to supervise</p>
+<p><span class="math display">\[
+\text{is the rewrite supported by supplied evidence?}
+\]</span></p>
+<p>or</p>
+<p><span class="math display">\[
+\text{did the rewrite introduce unsupported external information?}
+\]</span></p>
+<p>than to claim perfect attribution to internal weights.</p>
+<p>This matters because an auxiliary label that merely explains the model is different from an auxiliary variable that corresponds to a real intervention on the task.</p>
+<hr>
+</section>
+<section id="what-end-to-end-autonomous-driving-actually-contributes" class="level2">
+<h2 class="anchored" data-anchor-id="what-end-to-end-autonomous-driving-actually-contributes">33. What end-to-end autonomous driving actually contributes</h2>
+<p>End-to-end autonomous driving provides a useful analogy, but only if used carefully.</p>
+<p>Systems such as ST-P3, UniAD, and VAD optimize toward planning while still supervising intermediate scene representations.</p>
+<p>ST-P3 jointly learns perception, prediction, and planning features rather than deploying each stage as an independently optimized system [15].</p>
+<p>UniAD organizes tracking, mapping, motion prediction, occupancy, and planning inside a planning-oriented network and uses learned query interfaces so that intermediate tasks contribute to the final planner [16].</p>
+<p>VAD pushes toward a more compact planning-relevant representation by replacing expensive dense rasterized scene representations with vectorized agent and map representations [17].</p>
+<p>The transferable lesson is not:</p>
+<blockquote class="blockquote">
+<p>every end-to-end system should contain human-named intermediate modules.</p>
+</blockquote>
+<p>It is:</p>
+<p><span class="math display">\[
+\boxed{
+\text{intermediate supervision can shape useful latent state
+without requiring independent inference-time systems}.
+}
+\]</span></p>
+<p>Driving has an important advantage, however. Variables such as</p>
+<p><span class="math display">\[
+\text{depth},
+\quad
+\text{occupancy},
+\quad
+\text{object motion},
+\quad
+\text{road geometry}
+\]</span></p>
+<p>have external semantics independent of the model.</p>
+<p>A rewrite taxonomy such as</p>
+<p><span class="math display">\[
+\text{personalized narrowing},
+\quad
+\text{intent enrichment},
+\quad
+\text{format conversion}
+\]</span></p>
+<p>may be only a human convenience.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Prefer externally identifiable auxiliary variables
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>An auxiliary variable deserves stronger emphasis when it corresponds to something that can be independently intervened on or evaluated.</p>
+<p>Evidence relevance is often stronger than a hand-designed rewrite taxonomy because evidence can be removed, replaced, or contradicted and the resulting action can be measured.</p>
+</div>
+</div>
+<hr>
+</section>
+<section id="do-not-assign-semantics-to-layers-too-early" class="level2">
+<h2 class="anchored" data-anchor-id="do-not-assign-semantics-to-layers-too-early">34. Do not assign semantics to layers too early</h2>
+<p>A tempting design is</p>
+<p><span class="math display">\[
+\text{layers 1--8}=\text{memory},
+\qquad
+\text{layers 9--16}=\text{decision},
+\qquad
+\text{layers 17--24}=\text{generation}.
+\]</span></p>
+<p>There is little reason to assume that a Transformer naturally implements such a clean serial decomposition.</p>
+<p>The better abstraction is to decompose <strong>variables</strong>, not necessarily layer ranges.</p>
+<p>Let</p>
+<p><span class="math display">\[
+H^{(1)},H^{(2)},\ldots,H^{(L)}
+\]</span></p>
+<p>denote hidden representations across depth.</p>
+<p>We may want evidence relevance or action necessity to be recoverable from these states, but should not prespecify exactly where the computation occurs unless the architecture itself imposes a bottleneck.</p>
+<p>Older deep multi-task learning already provides evidence that supervision depth matters. Søgaard and Goldberg found that low-level linguistic auxiliary tasks can be more useful when supervised at lower rather than outermost layers [10].</p>
+<p>The lesson is not that there is one universal semantic depth ordering. It is:</p>
+<p><span class="math display">\[
+\boxed{
+\text{the usefulness of an auxiliary objective can depend on representation depth}.
+}
+\]</span></p>
+<p>So measurement should precede architectural commitment.</p>
+<hr>
+</section>
+<section id="layer-wise-gradient-alignment-as-an-optimization-microscope" class="level2">
+<h2 class="anchored" data-anchor-id="layer-wise-gradient-alignment-as-an-optimization-microscope">35. Layer-wise gradient alignment as an optimization microscope</h2>
+<p>Suppose</p>
+<p><span class="math display">\[
+L_m
+\]</span></p>
+<p>is the main loss and</p>
+<p><span class="math display">\[
+L_a
+\]</span></p>
+<p>is an auxiliary loss.</p>
+<p>At representation <span class="math inline">\(H^{(l)}\)</span>, define</p>
+<p><span class="math display">\[
+g_m^{(l)}
+=
+\frac{\partial L_m}{\partial H^{(l)}},
+\qquad
+g_a^{(l)}
+=
+\frac{\partial L_a}{\partial H^{(l)}}.
+\]</span></p>
+<p>Then measure</p>
+<p><span class="math display">\[
+A_l
+=
+\cos\left(
+g_m^{(l)},
+g_a^{(l)}
+\right).
+\]</span></p>
+<p>A hypothetical result could look like:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: right;">depth</th>
+<th style="text-align: right;">evidence vs.&nbsp;rewrite</th>
+<th style="text-align: right;">rewrite-needed vs.&nbsp;rewrite</th>
+<th style="text-align: right;">taxonomy vs.&nbsp;rewrite</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">+0.31</td>
+<td style="text-align: right;">+0.08</td>
+<td style="text-align: right;">+0.04</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">+0.42</td>
+<td style="text-align: right;">+0.21</td>
+<td style="text-align: right;">+0.12</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">+0.35</td>
+<td style="text-align: right;">+0.34</td>
+<td style="text-align: right;">+0.17</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">+0.20</td>
+<td style="text-align: right;">+0.29</td>
+<td style="text-align: right;">-0.08</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">20</td>
+<td style="text-align: right;">+0.06</td>
+<td style="text-align: right;">+0.10</td>
+<td style="text-align: right;">-0.31</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">24</td>
+<td style="text-align: right;">-0.02</td>
+<td style="text-align: right;">-0.04</td>
+<td style="text-align: right;">-0.46</td>
+</tr>
+</tbody>
+</table>
+<p>This would suggest that a taxonomy helps form early semantic structure but interferes with the later representation needed for generation.</p>
+<p>The broader auxiliary-learning literature supports the diagnostic. Du et al.&nbsp;use cosine similarity between auxiliary and main gradients to decide when auxiliary updates are helpful [8]. PCGrad similarly treats conflicting task gradients as a source of negative transfer and projects away conflicting components [9].</p>
+<p>The key principle is:</p>
+<p><span class="math display">\[
+\boxed{
+\text{auxiliary accuracy is not the objective}.
+}
+\]</span></p>
+<p>The real criterion is improvement in the primary policy.</p>
+<hr>
+</section>
+<section id="three-different-questions-for-interpretability" class="level2">
+<h2 class="anchored" data-anchor-id="three-different-questions-for-interpretability">36. Three different questions for interpretability</h2>
+<p>The layer-wise view connects naturally to mechanistic interpretability, but three questions should remain distinct.</p>
+<section id="is-the-variable-decodable" class="level3">
+<h3 class="anchored" data-anchor-id="is-the-variable-decodable">36.1 Is the variable decodable?</h3>
+<p>Train a probe:</p>
+<p><span class="math display">\[
+P(z\mid H^{(l)}).
+\]</span></p>
+<p>High probe accuracy means information about <span class="math inline">\(z\)</span> is present.</p>
+</section>
+<section id="is-the-variable-causally-used" class="level3">
+<h3 class="anchored" data-anchor-id="is-the-variable-causally-used">36.2 Is the variable causally used?</h3>
+<p>Intervene on the relevant activation direction or token state:</p>
+<p><span class="math display">\[
+H^{(l)}
+\rightarrow
+\widetilde H^{(l)}
+\rightarrow
+\Delta y.
+\]</span></p>
+<p>This asks whether the representation participates in the computation.</p>
+</section>
+<section id="does-training-on-the-variable-push-the-model-in-a-useful-direction" class="level3">
+<h3 class="anchored" data-anchor-id="does-training-on-the-variable-push-the-model-in-a-useful-direction">36.3 Does training on the variable push the model in a useful direction?</h3>
+<p>Measure</p>
+<p><span class="math display">\[
+\cos(g_m^{(l)},g_a^{(l)}).
+\]</span></p>
+<p>This asks about optimization.</p>
+<p>These are different statements:</p>
+<p><span class="math display">\[
+\boxed{
+\text{what the model knows}
+\neq
+\text{what the model uses}
+\neq
+\text{where training wants to move it}.
+}
+\]</span></p>
+<p>A variable can be highly decodable yet causally irrelevant. It can also be causally relevant while a badly designed auxiliary loss pushes the representation in a harmful direction.</p>
+<p>This is where mechanistic analysis can become a training-design tool rather than merely post-hoc explanation.</p>
+<hr>
+</section>
+</section>
+<section id="explicit-cot-is-only-one-way-to-buy-additional-computation" class="level2">
+<h2 class="anchored" data-anchor-id="explicit-cot-is-only-one-way-to-buy-additional-computation">37. Explicit CoT is only one way to buy additional computation</h2>
+<p>Reasoning is often implicitly equated with emitted tokens:</p>
+<p><span class="math display">\[
+x\rightarrow\tau_{\text{text}}\rightarrow y.
+\]</span></p>
+<p>But there are at least four ways to spend computation before committing to <span class="math inline">\(y\)</span>.</p>
+<section id="fixed-depth-latent-computation" class="level3">
+<h3 class="anchored" data-anchor-id="fixed-depth-latent-computation">37.1 Fixed-depth latent computation</h3>
+<p><span class="math display">\[
+x
+\xrightarrow{L\text{ Transformer layers}}
+H
+\rightarrow y.
+\]</span></p>
+<p>Representation-level auxiliary supervision belongs here.</p>
+</section>
+<section id="pause-token-computation" class="level3">
+<h3 class="anchored" data-anchor-id="pause-token-computation">37.2 Pause-token computation</h3>
+<p><em>Think Before You Speak</em> inserts learnable pause tokens and delays output, allowing extra hidden-vector computation before the next meaningful output [7]:</p>
+<p><span class="math display">\[
+x\rightarrow[\text{pause}]^K\rightarrow y.
+\]</span></p>
+<p>The model spends extra compute without requiring each intermediate position to carry semantic language.</p>
+</section>
+<section id="recurrent-or-looped-latent-computation" class="level3">
+<h3 class="anchored" data-anchor-id="recurrent-or-looped-latent-computation">37.3 Recurrent or looped latent computation</h3>
+<p>A depth-recurrent Transformer repeatedly applies a shared block:</p>
+<p><span class="math display">\[
+H^{(t+1)}
+=
+F_\theta(H^{(t)},x).
+\]</span></p>
+<p>Now test-time compute scales with recurrent depth rather than generated text length.</p>
+</section>
+<section id="explicit-token-reasoning" class="level3">
+<h3 class="anchored" data-anchor-id="explicit-token-reasoning">37.4 Explicit token reasoning</h3>
+<p><span class="math display">\[
+x
+\rightarrow
+z_1^{\text{text}}
+\rightarrow
+\cdots
+\rightarrow
+z_T^{\text{text}}
+\rightarrow
+y.
+\]</span></p>
+<p>This is the most explicit substrate and integrates naturally with tools, but serializes internal computation through the vocabulary bottleneck.</p>
+<p>These mechanisms form a useful spectrum:</p>
+<p><span class="math display">\[
+\boxed{
+\text{fixed latent}
+&lt;
+\text{extra latent positions}
+&lt;
+\text{recurrent latent depth}
+&lt;
+\text{explicit token/action trajectory}
+}
+\]</span></p>
+<p>Moving right generally gives more flexible sequential computation but increases execution cost and discrete commitment.</p>
+<hr>
+</section>
+</section>
+<section id="coconut-reason-without-committing-to-words" class="level2">
+<h2 class="anchored" data-anchor-id="coconut-reason-without-committing-to-words">38. Coconut: reason without committing to words</h2>
+<p>Coconut attacks the vocabulary bottleneck directly.</p>
+<p>Instead of decoding the current hidden state into a token,</p>
+<p><span class="math display">\[
+h_t
+\rightarrow
+\operatorname{softmax}(Wh_t)
+\rightarrow
+x_{t+1},
+\]</span></p>
+<p>it feeds the hidden state itself back as the next input embedding:</p>
+<p><span class="math display">\[
+h_t
+\rightarrow
+e_{t+1}=h_t.
+\]</span></p>
+<p>Thus reasoning evolves in continuous space:</p>
+<p><span class="math display">\[
+h_1\rightarrow h_2\rightarrow\cdots\rightarrow h_K\rightarrow y.
+\]</span></p>
+<p>The Coconut work argues that language need not be an optimal internal reasoning representation and reports that continuous thoughts can preserve multiple candidate reasoning paths rather than forcing an early discrete commitment [11].</p>
+<p>Token reasoning repeatedly performs</p>
+<p><span class="math display">\[
+\text{continuous state}
+\rightarrow
+\text{discrete token}
+\rightarrow
+\text{embedding}
+\rightarrow
+\text{continuous state}.
+\]</span></p>
+<p>Every reasoning token introduces an information bottleneck:</p>
+<p><span class="math display">\[
+h_t\rightarrow z_t\in\mathcal V.
+\]</span></p>
+<p>Latent reasoning avoids this repeated quantization.</p>
+<p>But avoiding language does not automatically create useful reasoning. Later causal analyses have questioned whether latent trajectories are always faithful or causally meaningful [18].</p>
+<p>So the hard question is not:</p>
+<blockquote class="blockquote">
+<p>Can we create hidden states between input and answer?</p>
+</blockquote>
+<p>It is:</p>
+<p><span class="math display">\[
+\boxed{
+\text{How do we make the latent trajectory carry the right computation?}
+}
+\]</span></p>
+<p>That returns directly to process supervision and credit assignment.</p>
+<hr>
+</section>
+<section id="looped-transformers-turn-depth-into-test-time-compute" class="level2">
+<h2 class="anchored" data-anchor-id="looped-transformers-turn-depth-into-test-time-compute">39. Looped Transformers turn depth into test-time compute</h2>
+<p>A standard Transformer has fixed learned depth:</p>
+<p><span class="math display">\[
+H^{(l+1)}=F_l(H^{(l)}),
+\]</span></p>
+<p>with distinct parameters <span class="math inline">\(F_l\)</span>.</p>
+<p>A looped model reuses parameters:</p>
+<p><span class="math display">\[
+H^{(t+1)}=F_\theta(H^{(t)}).
+\]</span></p>
+<p>The model now has two resources:</p>
+<p><span class="math display">\[
+\text{parameter capacity}
+\]</span></p>
+<p>and</p>
+<p><span class="math display">\[
+\text{ponder depth}.
+\]</span></p>
+<p>Huginn demonstrates recurrent depth at 3.5B scale and shows that inference computation can increase without increasing parameter count [12].</p>
+<p>This gives a latent analogue of test-time scaling:</p>
+<p><span class="math display">\[
+\boxed{
+\text{more thinking}
+\neq
+\text{necessarily more generated tokens}.
+}
+\]</span></p>
+<p>But simply looping a block does not guarantee that each iteration learns one useful reasoning step. Analysis of Huginn found limited evidence that recurrent states naturally form an interpretable latent CoT on arithmetic tasks, and increased recurrence alone produced only modest gains in those probes [13].</p>
+<p>The analogy to TTT is strong:</p>
+<p><span class="math display">\[
+\text{having an update step}
+\neq
+\text{having a useful learning step},
+\]</span></p>
+<p>and</p>
+<p><span class="math display">\[
+\text{having an extra recurrent loop}
+\neq
+\text{having a useful reasoning step}.
+\]</span></p>
+<p>The transition operator itself must be trained.</p>
+<hr>
+</section>
+<section id="lotus-supervise-the-latent-trajectory-not-only-the-endpoint" class="level2">
+<h2 class="anchored" data-anchor-id="lotus-supervise-the-latent-trajectory-not-only-the-endpoint">40. LOTUS: supervise the latent trajectory, not only the endpoint</h2>
+<p>LOTUS makes this point explicit.</p>
+<p>It combines a looped Transformer with <strong>parallel supervision over latent positions</strong>. Latent blocks undergo repeated shared computation while each latent position is trained toward a corresponding gold CoT-step token [14].</p>
+<p>The key pattern is:</p>
+<p><span class="math display">\[
+H_1,H_2,\ldots,H_K
+\]</span></p>
+<p>are internal computation states, but training supplies process-level targets:</p>
+<p><span class="math display">\[
+H_i\rightarrow z_i^{\text{teacher}}.
+\]</span></p>
+<p>At inference time, the model need not autoregressively decode every <span class="math inline">\(z_i\)</span> before continuing.</p>
+<p>This is a stronger form of representation compilation:</p>
+<p><span class="math display">\[
+\boxed{
+\text{teacher reasoning trajectory}
+\rightarrow
+\text{supervised latent trajectory}.
+}
+\]</span></p>
+<p>A small production router may need one latent variable:</p>
+<p><span class="math display">\[
+H\rightarrow z.
+\]</span></p>
+<p>A difficult reasoning problem may require a sequence:</p>
+<p><span class="math display">\[
+H_1\rightarrow z_1,
+\quad
+H_2\rightarrow z_2,
+\quad
+\ldots,
+\quad
+H_K\rightarrow z_K.
+\]</span></p>
+<p>The principle scales from <strong>latent decision supervision</strong> to <strong>latent process supervision</strong>.</p>
+<p>LOTUS reports that this combination can close the gap to explicit CoT at 3B scale while reducing thought-phase latency, and its ablations indicate that both looping and parallel supervision are important [14].</p>
+<p>This supports a broader hypothesis:</p>
+<p><span class="math display">\[
+\boxed{
+\text{latent compute becomes much more useful when its trajectory is trained,
+not merely allocated}.
+}
+\]</span></p>
+<hr>
+</section>
+<section id="implicit-cot-distillation-anticipated-this-idea" class="level2">
+<h2 class="anchored" data-anchor-id="implicit-cot-distillation-anticipated-this-idea">41. Implicit CoT distillation anticipated this idea</h2>
+<p>An earlier line of work framed the problem almost exactly as verticalizing chain-of-thought.</p>
+<p><em>Implicit Chain of Thought Reasoning via Knowledge Distillation</em> trains a teacher to reason explicitly, then distills intermediate reasoning into hidden states so that the student performs the computation across model depth rather than emitting it horizontally as tokens [6].</p>
+<section id="horizontal-reasoning" class="level3">
+<h3 class="anchored" data-anchor-id="horizontal-reasoning">Horizontal reasoning</h3>
+<p><span class="math display">\[
+x\rightarrow z_1\rightarrow z_2\rightarrow\cdots\rightarrow y.
+\]</span></p>
+</section>
+<section id="vertical-reasoning" class="level3">
+<h3 class="anchored" data-anchor-id="vertical-reasoning">Vertical reasoning</h3>
+<p><span class="math display">\[
+H^{(1)}\rightarrow H^{(2)}\rightarrow\cdots\rightarrow H^{(L)}\rightarrow y.
+\]</span></p>
+<p>This is very close to the production principle:</p>
+<blockquote class="blockquote">
+<p>train with an explicit decomposition, deploy without paying for the decomposition.</p>
+</blockquote>
+<p>The difference is task complexity. A math trace may contain many sequential reasoning states. A query rewrite model may need only a few bits:</p>
+<p><span class="math display">\[
+\text{rewrite?}
+\]</span></p>
+<p>and</p>
+<p><span class="math display">\[
+\text{which evidence sources matter?}
+\]</span></p>
+<p>The same principle appears in a much simpler regime.</p>
+<hr>
+</section>
+</section>
+<section id="ttt-and-looped-reasoning-are-dual-recurrent-state-designs" class="level2">
+<h2 class="anchored" data-anchor-id="ttt-and-looped-reasoning-are-dual-recurrent-state-designs">42. TTT and looped reasoning are dual recurrent-state designs</h2>
+<p>TTT and recurrent-depth reasoning now look surprisingly similar.</p>
+<section id="ttt-recurrence" class="level3">
+<h3 class="anchored" data-anchor-id="ttt-recurrence">TTT recurrence</h3>
+<p><span class="math display">\[
+W_{t+1}=U(W_t,x_t).
+\]</span></p>
+<p>The mutable state lives in <strong>fast weights</strong>.</p>
+</section>
+<section id="looped-latent-recurrence" class="level3">
+<h3 class="anchored" data-anchor-id="looped-latent-recurrence">Looped latent recurrence</h3>
+<p><span class="math display">\[
+H_{t+1}=F_\theta(H_t,x).
+\]</span></p>
+<p>The mutable state lives in <strong>activations</strong>.</p>
+<p>So:</p>
+<p><span class="math display">\[
+\boxed{\text{TTT: recurrent state in parameters}}
+\]</span></p>
+<p>versus</p>
+<p><span class="math display">\[
+\boxed{\text{looped Transformer: recurrent state in activations}}.
+\]</span></p>
+<p>Both create a learned dynamical system, and both face the same question:</p>
+<p><span class="math display">\[
+\boxed{
+\text{What objective makes one transition step useful?}
+}
+\]</span></p>
+<p>For TTT, the challenge is designing a local loss whose gradient implements good memory writing.</p>
+<p>For latent recurrence, the challenge is training <span class="math inline">\(F_\theta\)</span> so repeated application performs progressively useful inference rather than repeated transformation.</p>
+<p>This suggests that TTT and latent reasoning belong to a larger design space of <strong>recurrent computation substrates</strong>.</p>
+<hr>
+</section>
+</section>
+<section id="engram-adds-another-axis-do-not-compute-what-can-be-looked-up" class="level2">
+<h2 class="anchored" data-anchor-id="engram-adds-another-axis-do-not-compute-what-can-be-looked-up">43. Engram adds another axis: do not compute what can be looked up</h2>
+<p>Engram introduces a complementary principle.</p>
+<p>Transformers often spend neural computation reconstructing local, static associations that could instead be retrieved directly. Engram adds conditional <span class="math inline">\(N\)</span>-gram memory with deterministic lookup, creating a sparsity axis complementary to MoE [19].</p>
+<p>Its mechanistic analysis reports that externalizing static reconstruction relieves early Transformer layers and effectively leaves more depth available for harder reasoning.</p>
+<p>The broader principle is:</p>
+<p><span class="math display">\[
+\boxed{
+\text{do not spend general neural computation on a function
+that has a cheaper sufficient primitive}.
+}
+\]</span></p>
+<p>Engram applies this to</p>
+<p><span class="math display">\[
+\text{static association}
+\rightarrow
+\text{memory lookup}.
+\]</span></p>
+<p>Representation compilation applies it to</p>
+<p><span class="math display">\[
+\text{small intermediate decision}
+\rightarrow
+\text{activation}.
+\]</span></p>
+<p>TTT applies it differently:</p>
+<p><span class="math display">\[
+\text{long explicit context}
+\rightarrow
+\text{fast-weight state}.
+\]</span></p>
+<p>Tool use applies it in the opposite direction:</p>
+<p><span class="math display">\[
+\text{information not present internally}
+\rightarrow
+\text{external action}.
+\]</span></p>
+<p>These are all substrate-allocation decisions.</p>
+<hr>
+</section>
+<section id="a-substrate-hierarchy-for-production-intelligence" class="level2">
+<h2 class="anchored" data-anchor-id="a-substrate-hierarchy-for-production-intelligence">44. A substrate hierarchy for production intelligence</h2>
+<p>The previous memory hierarchy can now be extended into a <strong>computation hierarchy</strong>.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Substrate</th>
+<th>Best suited for</th>
+<th>Main advantage</th>
+<th>Main weakness</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Static lookup memory</td>
+<td>exact reusable associations</td>
+<td>cheap retrieval</td>
+<td>limited compositional computation</td>
+</tr>
+<tr class="even">
+<td>Slow weights</td>
+<td>broad reusable priors</td>
+<td>amortized across requests</td>
+<td>hard to update and attribute</td>
+</tr>
+<tr class="odd">
+<td>Single-pass activations</td>
+<td>instance-specific simple decisions</td>
+<td>very low serving overhead</td>
+<td>fixed compute depth</td>
+</tr>
+<tr class="even">
+<td>Recurrent/looped activations</td>
+<td>iterative latent reasoning</td>
+<td>scalable latent compute</td>
+<td>harder credit assignment</td>
+</tr>
+<tr class="odd">
+<td>Fast weights / TTT state</td>
+<td>adaptive contextual memory</td>
+<td>persistent within stream</td>
+<td>update stability and systems cost</td>
+</tr>
+<tr class="even">
+<td>Generated tokens</td>
+<td>explicit reasoning</td>
+<td>inspectable, compositional</td>
+<td>sequential decode cost</td>
+</tr>
+<tr class="odd">
+<td>External tools/actions</td>
+<td>missing information or environment effects</td>
+<td>access beyond model state</td>
+<td>latency and orchestration</td>
+</tr>
+<tr class="even">
+<td>Harness/controller</td>
+<td>allocation among primitives</td>
+<td>explicit control</td>
+<td>itself needs a good policy</td>
+</tr>
+</tbody>
+</table>
+<p>This suggests a stronger version of progressive compilation:</p>
+<p><span class="math display">\[
+\boxed{
+\text{for every intermediate computation,
+choose the cheapest substrate that remains sufficient}.
+}
+\]</span></p>
+<p>The word <strong>sufficient</strong> matters.</p>
+<p>Moving computation downward is not always desirable. A state should remain explicit when it is needed for tool invocation, auditability, coordination, user interaction, reversible planning, or branching.</p>
+<p>But if an intermediate state is only useful internally, repeatedly externalizing it may be wasted work.</p>
+<hr>
+</section>
+<section id="the-correct-unit-of-compilation-is-not-reasoning" class="level2">
+<h2 class="anchored" data-anchor-id="the-correct-unit-of-compilation-is-not-reasoning">45. The correct unit of compilation is not “reasoning”</h2>
+<p>“Reasoning” is too broad.</p>
+<p>A single agent trajectory may contain:</p>
+<p><span class="math display">\[
+\begin{aligned}
+z_1 &amp;: \text{classify whether action is needed},\\
+z_2 &amp;: \text{select evidence},\\
+z_3 &amp;: \text{retrieve unavailable information},\\
+z_4 &amp;: \text{compare alternatives},\\
+z_5 &amp;: \text{verify},\\
+z_6 &amp;: \text{produce final action}.
+\end{aligned}
+\]</span></p>
+<p>These states should not necessarily share a substrate.</p>
+<p>For example, <span class="math inline">\(z_1,z_2\)</span> may be cheap enough to compile into one forward pass.</p>
+<p>But <span class="math inline">\(z_3\)</span> cannot be latentized if it requires genuinely new external information.</p>
+<p>Likewise, <span class="math inline">\(z_4,z_5\)</span> may require iterative latent compute for easy cases and explicit tool-backed reasoning for harder ones.</p>
+<p>So:</p>
+<p><span class="math display">\[
+\boxed{
+\text{reasoning trajectory}
+=
+\text{internally computable decisions}
++
+\text{adaptive latent computation}
++
+\text{necessary external actions}.
+}
+\]</span></p>
+<p>The engineering goal is not to eliminate reasoning tokens. It is to avoid paying token/action cost for steps that do not require an externalized interface.</p>
+<hr>
+</section>
+<section id="auxiliary-supervision-is-useful-only-if-it-improves-the-primary-policy" class="level2">
+<h2 class="anchored" data-anchor-id="auxiliary-supervision-is-useful-only-if-it-improves-the-primary-policy">46. Auxiliary supervision is useful only if it improves the primary policy</h2>
+<p>The danger of representation supervision is that a human-designed label may force the representation to become easily classifiable in a way that damages the final action manifold.</p>
+<p>Let</p>
+<p><span class="math display">\[
+g_m=\nabla_\theta L_{\text{main}},
+\qquad
+g_a=\nabla_\theta L_{\text{aux}}.
+\]</span></p>
+<p>If</p>
+<p><span class="math display">\[
+g_m^\top g_a&lt;0,
+\]</span></p>
+<p>the auxiliary objective locally conflicts with the main task.</p>
+<p>There are several responses.</p>
+<section id="remove-the-auxiliary-task" class="level3">
+<h3 class="anchored" data-anchor-id="remove-the-auxiliary-task">46.1 Remove the auxiliary task</h3>
+<p>The simplest solution is often correct.</p>
+</section>
+<section id="reduce-or-anneal-its-weight" class="level3">
+<h3 class="anchored" data-anchor-id="reduce-or-anneal-its-weight">46.2 Reduce or anneal its weight</h3>
+<p><span class="math display">\[
+L_t
+=
+L_{\text{main}}
++
+\lambda_tL_{\text{aux}},
+\qquad
+\lambda_t\rightarrow 0.
+\]</span></p>
+<p>This is appropriate when auxiliary structure helps bootstrap representations but constrains the final policy.</p>
+</section>
+<section id="restrict-where-the-gradient-flows" class="level3">
+<h3 class="anchored" data-anchor-id="restrict-where-the-gradient-flows">46.3 Restrict where the gradient flows</h3>
+<p>If alignment is positive in early layers and negative in late layers, allow the auxiliary loss to update only the useful portion of the network.</p>
+</section>
+<section id="modify-conflicting-gradients" class="level3">
+<h3 class="anchored" data-anchor-id="modify-conflicting-gradients">46.4 Modify conflicting gradients</h3>
+<p>Methods such as PCGrad project conflicting components away [9].</p>
+<p>But gradient surgery should come after a simpler question:</p>
+<blockquote class="blockquote">
+<p>Is this auxiliary variable actually a good abstraction of the task?</p>
+</blockquote>
+<p>Optimization machinery cannot rescue a fundamentally misleading taxonomy.</p>
+<hr>
+</section>
+</section>
+<section id="a-practical-research-protocol-for-latentizing-a-production-decision" class="level2">
+<h2 class="anchored" data-anchor-id="a-practical-research-protocol-for-latentizing-a-production-decision">47. A practical research protocol for latentizing a production decision</h2>
+<p>For a narrow low-latency task, the following sequence gives a clean experimental program.</p>
+<section id="stage-0-direct-baseline" class="level3">
+<h3 class="anchored" data-anchor-id="stage-0-direct-baseline">Stage 0: direct baseline</h3>
+<p><span class="math display">\[
+M_0:
+x\rightarrow y.
+\]</span></p>
+</section>
+<section id="stage-1-explicit-intermediate-reasoning" class="level3">
+<h3 class="anchored" data-anchor-id="stage-1-explicit-intermediate-reasoning">Stage 1: explicit intermediate reasoning</h3>
+<p><span class="math display">\[
+M_1:
+x\rightarrow z\rightarrow y.
+\]</span></p>
+<p>This tests whether the decomposition is useful when it directly conditions generation.</p>
+</section>
+<section id="stage-2-trailing-attribution" class="level3">
+<h3 class="anchored" data-anchor-id="stage-2-trailing-attribution">Stage 2: trailing attribution</h3>
+<p><span class="math display">\[
+M_2:
+x\rightarrow y\rightarrow z.
+\]</span></p>
+<p>This removes the causal conditioning path while retaining token-level auxiliary supervision.</p>
+<p>The comparison</p>
+<p><span class="math display">\[
+M_1-M_2
+\]</span></p>
+<p>estimates the value of serialized intermediate reasoning.</p>
+</section>
+<section id="stage-3-latent-auxiliary-head" class="level3">
+<h3 class="anchored" data-anchor-id="stage-3-latent-auxiliary-head">Stage 3: latent auxiliary head</h3>
+<p><span class="math display">\[
+M_3:
+x\rightarrow H\rightarrow y,
+\qquad
+H\rightarrow z.
+\]</span></p>
+<p>The comparison</p>
+<p><span class="math display">\[
+M_2-M_3
+\]</span></p>
+<p>tests whether tokenized auxiliary prediction matters or a direct representation loss suffices.</p>
+</section>
+<section id="stage-4-diagnose-depth" class="level3">
+<h3 class="anchored" data-anchor-id="stage-4-diagnose-depth">Stage 4: diagnose depth</h3>
+<p>Measure across layers:</p>
+<p><span class="math display">\[
+\text{probe}(z,H^{(l)}),
+\]</span></p>
+<p><span class="math display">\[
+\text{causal effect}(H^{(l)}\rightarrow y),
+\]</span></p>
+<p>and</p>
+<p><span class="math display">\[
+\cos(
+\nabla_{H^{(l)}}L_{\text{main}},
+\nabla_{H^{(l)}}L_{\text{aux}}
+).
+\]</span></p>
+</section>
+<section id="stage-5-add-latent-recurrence-only-if-fixed-depth-is-insufficient" class="level3">
+<h3 class="anchored" data-anchor-id="stage-5-add-latent-recurrence-only-if-fixed-depth-is-insufficient">Stage 5: add latent recurrence only if fixed depth is insufficient</h3>
+<p>If the task requires more internal computation than one forward pass provides, introduce</p>
+<p><span class="math display">\[
+H^{(t+1)}=F_\theta(H^{(t)}).
+\]</span></p>
+<p>Then ask whether process supervision over recurrent states improves the latent trajectory.</p>
+<p>This avoids using looped architectures merely because latent reasoning is fashionable.</p>
+<hr>
+</section>
+</section>
+<section id="a-new-interpretation-of-test-time-scaling" class="level2">
+<h2 class="anchored" data-anchor-id="a-new-interpretation-of-test-time-scaling">48. A new interpretation of test-time scaling</h2>
+<p>The usual test-time-scaling axis is</p>
+<p><span class="math display">\[
+\text{more tokens}\rightarrow\text{more compute}.
+\]</span></p>
+<p>The substrate view reveals several orthogonal axes:</p>
+<p><span class="math display">\[
+\boxed{
+\begin{aligned}
+\text{token depth} &amp;: \text{more autoregressive reasoning tokens},\\
+\text{latent depth} &amp;: \text{more recurrent hidden-state steps},\\
+\text{parameter adaptation} &amp;: \text{more test-time learning updates},\\
+\text{retrieval depth} &amp;: \text{more external memory accesses},\\
+\text{tool depth} &amp;: \text{more environment interactions}.
+\end{aligned}
+}
+\]</span></p>
+<p>A future inference controller should not merely choose:</p>
+<p><span class="math display">\[
+\text{how many tokens should I think?}
+\]</span></p>
+<p>It should choose:</p>
+<p><span class="math display">\[
+\boxed{
+\text{where should I spend the next unit of computation?}
+}
+\]</span></p>
+<p>For one problem, another latent recurrence may be cheapest. For another, retrieval may dominate all internal reasoning. For another, the model should answer immediately.</p>
+<p>Meta-reasoning becomes <strong>compute allocation across substrates</strong>.</p>
+<hr>
+</section>
+<section id="progressive-compilation-should-operate-across-both-time-and-substrate" class="level2">
+<h2 class="anchored" data-anchor-id="progressive-compilation-should-operate-across-both-time-and-substrate">49. Progressive compilation should operate across both time and substrate</h2>
+<p>The original compilation hierarchy was:</p>
+<p><span class="math display">\[
+\text{experience}
+\rightarrow
+\text{verbalized skill}
+\rightarrow
+\text{structured skill}
+\rightarrow
+\text{learned controller}
+\rightarrow
+\text{weights}.
+\]</span></p>
+<p>The new perspective adds a second dimension.</p>
+<p>A procedure can migrate not only across persistence timescales but across <strong>execution substrates</strong>:</p>
+<p><span class="math display">\[
+\text{explicit CoT}
+\rightarrow
+\text{latent recurrent process}
+\rightarrow
+\text{single-pass representation}
+\rightarrow
+\text{weights}.
+\]</span></p>
+<p>Similarly:</p>
+<p><span class="math display">\[
+\text{explicit retrieval policy}
+\rightarrow
+\text{latent retrieval decision}
+\rightarrow
+\text{compiled routing prior}.
+\]</span></p>
+<p>This gives a two-dimensional picture:</p>
+<p><span class="math display">\[
+\boxed{
+\text{learning timescale}
+\times
+\text{execution substrate}.
+}
+\]</span></p>
+<p>A useful capability may begin explicit, slow, inspectable, and high-variance, then become implicit, fast, compressed, and automatic.</p>
+<p>That is closer to proceduralization than ordinary fine-tuning.</p>
+<hr>
+</section>
+<section id="the-deeper-unification-intelligence-as-substrate-allocation" class="level2">
+<h2 class="anchored" data-anchor-id="the-deeper-unification-intelligence-as-substrate-allocation">50. The deeper unification: intelligence as substrate allocation</h2>
+<p>TTT, latent reasoning, external memory, tool use, and auxiliary representation learning initially look unrelated.</p>
+<p>They can instead be viewed as answers to one question:</p>
+<p><span class="math display">\[
+\boxed{
+\text{where should this information or computation live?}
+}
+\]</span></p>
+<p>Examples:</p>
+<ul>
+<li>static phrase-level association <span class="math inline">\(\rightarrow\)</span> lookup memory;</li>
+<li>general reusable linguistic or reasoning prior <span class="math inline">\(\rightarrow\)</span> slow weights;</li>
+<li>current-request evidence selection <span class="math inline">\(\rightarrow\)</span> activations;</li>
+<li>multi-step internal search <span class="math inline">\(\rightarrow\)</span> recurrent/looped latent state;</li>
+<li>long-context adaptation <span class="math inline">\(\rightarrow\)</span> fast weights or persistent request state;</li>
+<li>fresh external facts <span class="math inline">\(\rightarrow\)</span> retrieval/tool;</li>
+<li>auditable multi-stage control <span class="math inline">\(\rightarrow\)</span> explicit harness.</li>
+</ul>
+<p>The central architecture problem becomes:</p>
+<p><span class="math display">\[
+\boxed{
+\text{Can a learned controller route computation and learning
+to the cheapest sufficient substrate?}
+}
+\]</span></p>
+<p>This extends the earlier idea of credit routing.</p>
+<p>Credit routing asks:</p>
+<p><span class="math display">\[
+\text{where should learning go?}
+\]</span></p>
+<p>Compute routing asks:</p>
+<p><span class="math display">\[
+\text{where should inference happen?}
+\]</span></p>
+<p>A mature continually intelligent system needs both.</p>
+<hr>
+</section>
+<section id="updated-research-agenda-representation-compilation" class="level2">
+<h2 class="anchored" data-anchor-id="updated-research-agenda-representation-compilation">51. Updated research agenda: representation compilation</h2>
+<p>The substrate view suggests several concrete experiments.</p>
+<section id="distill-production-pipelines-into-one-forward-pass" class="level3">
+<h3 class="anchored" data-anchor-id="distill-production-pipelines-into-one-forward-pass">51.1 Distill production pipelines into one forward pass</h3>
+<p>Start from</p>
+<p><span class="math display">\[
+x\rightarrow z_1\rightarrow z_2\rightarrow y.
+\]</span></p>
+<p>Train</p>
+<p><span class="math display">\[
+x\rightarrow y
+\]</span></p>
+<p>with auxiliary supervision on <span class="math inline">\(z_1,z_2\)</span>.</p>
+<p>Measure whether serial classifier/router boundaries can be removed without losing final-task quality.</p>
+</section>
+<section id="measure-representation-compilation-depth" class="level3">
+<h3 class="anchored" data-anchor-id="measure-representation-compilation-depth">51.2 Measure representation compilation depth</h3>
+<p>For each auxiliary variable <span class="math inline">\(z\)</span>, measure across layers:</p>
+<p><span class="math display">\[
+\text{decodability},
+\quad
+\text{causal importance},
+\quad
+\text{gradient alignment}.
+\]</span></p>
+<p>The goal is not to assign semantic names to layers, but to discover where useful computation becomes available and where auxiliary supervision begins to interfere.</p>
+</section>
+<section id="distill-explicit-process-supervision-into-recurrent-latents" class="level3">
+<h3 class="anchored" data-anchor-id="distill-explicit-process-supervision-into-recurrent-latents">51.3 Distill explicit process supervision into recurrent latents</h3>
+<p>For tasks where one forward pass is insufficient,</p>
+<p><span class="math display">\[
+z_1^{\text{text}},z_2^{\text{text}},\ldots
+\]</span></p>
+<p>can supervise</p>
+<p><span class="math display">\[
+H_1,H_2,\ldots
+\]</span></p>
+<p>without requiring those states to be decoded during inference. LOTUS provides a direct recent example [14].</p>
+</section>
+<section id="learn-the-compute-router" class="level3">
+<h3 class="anchored" data-anchor-id="learn-the-compute-router">51.4 Learn the compute router</h3>
+<p>Given state <span class="math inline">\(s\)</span>, choose</p>
+<p><span class="math display">\[
+a
+\in
+\{
+\text{answer now},
+\text{one more latent loop},
+\text{retrieve},
+\text{use tool},
+\text{generate explicit reasoning},
+\text{adapt fast weights}
+\}.
+\]</span></p>
+<p>Optimize</p>
+<p><span class="math display">\[
+J
+=
+\mathbb E[
+R-\lambda C(a)
+].
+\]</span></p>
+<p>This is more general than token-budget allocation.</p>
+</section>
+<section id="study-when-latentization-fails" class="level3">
+<h3 class="anchored" data-anchor-id="study-when-latentization-fails">51.5 Study when latentization fails</h3>
+<p>Latentization should fail when the intermediate state must be communicated, audited, persisted, externally executed, independently verified, or branched over.</p>
+<p>A production architecture should not seek maximum implicitness. It should seek the correct boundary between internal and external computation.</p>
+<hr>
+</section>
+</section>
+<section id="revised-thesis-progressive-compilation-is-also-progressive-internalization" class="level2">
+<h2 class="anchored" data-anchor-id="revised-thesis-progressive-compilation-is-also-progressive-internalization">52. Revised thesis: progressive compilation is also progressive internalization</h2>
+<p>The original thesis of this note was:</p>
+<p><span class="math display">\[
+\text{explicit + plastic}
+\rightarrow
+\text{implicit + efficient}.
+\]</span></p>
+<p>The new evidence makes this more concrete.</p>
+<p>There are at least three forms of internalization:</p>
+<p><span class="math display">\[
+\boxed{
+\begin{aligned}
+\text{memory internalization}
+&amp;:
+\text{episode/retrieval}
+\rightarrow
+\text{weights},\\
+\text{policy internalization}
+&amp;:
+\text{harness rule}
+\rightarrow
+\text{learned controller},\\
+\text{computation internalization}
+&amp;:
+\text{explicit reasoning/action}
+\rightarrow
+\text{latent representation}.
+\end{aligned}
+}
+\]</span></p>
+<p>Engram shows that some computation should move <em>out</em> of dense neural processing and into lookup.</p>
+<p>Coconut and recurrent-depth models show that some reasoning can move <em>out</em> of language and into continuous latent state.</p>
+<p>Representation auxiliary learning shows that some pipeline decisions can move <em>out</em> of separate models or generated tokens and into one forward pass.</p>
+<p>TTT shows that some context can move <em>out</em> of explicit token storage and into adaptive parameter state.</p>
+<p>These are not contradictions. They express the same optimization principle:</p>
+<p><span class="math display">\[
+\boxed{
+\text{place each computation in the substrate
+with the best trade-off among capacity, latency, plasticity,
+attribution, persistence, and control}.
+}
+\]</span></p>
+<p>That may be the more general architecture problem underneath continual intelligence.</p>
+</section>
 <section id="references" class="level2">
 <h2 class="anchored" data-anchor-id="references">References</h2>
 <ol type="1">
@@ -1916,6 +3185,36 @@ p(x_{t+1}).
 <a href="https://arxiv.org/abs/2602.21204" class="uri">https://arxiv.org/abs/2602.21204</a></p></li>
 <li><p>Feng, G. et al.&nbsp;<em>In-Place Test-Time Training</em>. 2026.<br>
 <a href="https://arxiv.org/abs/2604.06169" class="uri">https://arxiv.org/abs/2604.06169</a></p></li>
+<li><p>Deng, Y. et al.&nbsp;<em>Implicit Chain of Thought Reasoning via Knowledge Distillation</em>. 2023.<br>
+<a href="https://arxiv.org/abs/2311.01460" class="uri">https://arxiv.org/abs/2311.01460</a></p></li>
+<li><p>Goyal, S. et al.&nbsp;<em>Think Before You Speak: Training Language Models With Pause Tokens</em>. ICLR 2024.<br>
+<a href="https://arxiv.org/abs/2310.02226" class="uri">https://arxiv.org/abs/2310.02226</a></p></li>
+<li><p>Du, Y. et al.&nbsp;<em>Adapting Auxiliary Losses Using Gradient Similarity</em>. 2018.<br>
+<a href="https://arxiv.org/abs/1812.02224" class="uri">https://arxiv.org/abs/1812.02224</a></p></li>
+<li><p>Yu, T. et al.&nbsp;<em>Gradient Surgery for Multi-Task Learning</em>. NeurIPS 2020.<br>
+<a href="https://arxiv.org/abs/2001.06782" class="uri">https://arxiv.org/abs/2001.06782</a></p></li>
+<li><p>Søgaard, A. and Goldberg, Y. <em>Deep Multi-Task Learning with Low Level Tasks Supervised at Lower Layers</em>. ACL 2016.<br>
+<a href="https://aclanthology.org/P16-2038/" class="uri">https://aclanthology.org/P16-2038/</a></p></li>
+<li><p>Hao, S. et al.&nbsp;<em>Training Large Language Models to Reason in a Continuous Latent Space</em>. COLM 2025.<br>
+<a href="https://arxiv.org/abs/2412.06769" class="uri">https://arxiv.org/abs/2412.06769</a></p></li>
+<li><p>Geiping, J. et al.&nbsp;<em>Scaling up Test-Time Compute with Latent Reasoning: A Recurrent Depth Approach</em>. 2025.<br>
+<a href="https://arxiv.org/abs/2502.05171" class="uri">https://arxiv.org/abs/2502.05171</a></p></li>
+<li><p>Lu, W. et al.&nbsp;<em>Latent Chain-of-Thought? Decoding the Depth-Recurrent Transformer</em>. 2025.<br>
+<a href="https://arxiv.org/abs/2507.02199" class="uri">https://arxiv.org/abs/2507.02199</a></p></li>
+<li><p>Fan, Y., Svete, A., and Lee, K. <em>Bridging the Gap Between Latent and Explicit Reasoning with Looped Transformers</em>. 2026.<br>
+<a href="https://www.microsoft.com/en-us/research/publication/bridging-the-gap-between-latent-and-explicit-reasoning-with-looped-transformers/" class="uri">https://www.microsoft.com/en-us/research/publication/bridging-the-gap-between-latent-and-explicit-reasoning-with-looped-transformers/</a></p></li>
+<li><p>Hu, S. et al.&nbsp;<em>ST-P3: End-to-end Vision-based Autonomous Driving via Spatial-Temporal Feature Learning</em>. 2022.<br>
+<a href="https://arxiv.org/abs/2207.07601" class="uri">https://arxiv.org/abs/2207.07601</a></p></li>
+<li><p>Hu, Y. et al.&nbsp;<em>Planning-Oriented Autonomous Driving (UniAD)</em>. CVPR 2023.<br>
+<a href="https://openaccess.thecvf.com/content/CVPR2023/html/Hu_Planning-Oriented_Autonomous_Driving_CVPR_2023_paper.html" class="uri">https://openaccess.thecvf.com/content/CVPR2023/html/Hu_Planning-Oriented_Autonomous_Driving_CVPR_2023_paper.html</a></p></li>
+<li><p>Jiang, B. et al.&nbsp;<em>VAD: Vectorized Scene Representation for Efficient Autonomous Driving</em>. ICCV 2023.<br>
+<a href="https://openaccess.thecvf.com/content/ICCV2023/html/Jiang_VAD_Vectorized_Scene_Representation_for_Efficient_Autonomous_Driving_ICCV_2023_paper.html" class="uri">https://openaccess.thecvf.com/content/ICCV2023/html/Jiang_VAD_Vectorized_Scene_Representation_for_Efficient_Autonomous_Driving_ICCV_2023_paper.html</a></p></li>
+<li><p>Zhang, Y. et al.&nbsp;<em>Do Latent Tokens Think? A Causal and Adversarial Analysis of Chain-of-Continuous-Thought</em>. 2025.<br>
+<a href="https://arxiv.org/abs/2512.21711" class="uri">https://arxiv.org/abs/2512.21711</a></p></li>
+<li><p>Cheng, X. et al.&nbsp;<em>Conditional Memory via Scalable Lookup: A New Axis of Sparsity for Large Language Models</em>. 2026.<br>
+<a href="https://arxiv.org/abs/2601.07372" class="uri">https://arxiv.org/abs/2601.07372</a></p></li>
+<li><p>Ren, H. <em>LSRL: Process-Supervised GRPO on Latent Recurrent States Improves Mathematical Reasoning</em>. Findings of EMNLP 2025.<br>
+<a href="https://aclanthology.org/2025.findings-emnlp.669/" class="uri">https://aclanthology.org/2025.findings-emnlp.669/</a></p></li>
 </ol>
 
 
