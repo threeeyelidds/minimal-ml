@@ -5,6 +5,7 @@ title: "Notes"
 ## Foundations
 
 - [Activation Functions](foundations/activations.qmd)
+- [悬链线、cosh 和激活函数：教科书没串起来的一条线](foundations/catenary-cosh-tanh.qmd)
 - [Losses from First Principles](foundations/losses.qmd)
 - [Prediction and Decision Losses](foundations/prediction_decision_losses.qmd)
 - [Distribution Learning Losses](foundations/generative_losses.qmd)

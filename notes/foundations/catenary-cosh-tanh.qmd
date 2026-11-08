@@ -1,0 +1,191 @@
+---
+title: "悬链线、cosh 和激活函数：教科书没串起来的一条线"
+subtitle: "为什么神经网络里到处是双曲函数，以及 tanh、sigmoid、ReLU 之间真正的关系"
+date: 2026-11-06
+categories: [machine-learning, math, deep-learning]
+format:
+  html:
+    toc: true
+    toc-depth: 2
+    code-fold: true
+    code-summary: "显示画图代码"
+jupyter: python3
+---
+
+有一天我盯着 $\tanh$ 的导数 $1/\cosh^2 x$ 发呆，忽然想起 $\cosh$ 是悬链线方程——一根两端挂起的链子自然垂下来的形状。激活函数和一根链子有什么关系？
+
+答案是：没有物理上的关系，但有一个共同的源头。把这条线理清楚之后，tanh、sigmoid、softplus、log-cosh 损失、LSTM 的门，甚至 GELU，都会变成同一件事的不同侧面。这篇文章就是把这条线串起来。
+
+## 1. 悬链线：高度、弧长、倾角
+
+一根均匀的链子挂起来，取最低点为 $x=0$，选合适的单位后它的形状是
+
+$$y = \cosh x = \frac{e^x + e^{-x}}{2}.$$
+
+这个式子来自受力平衡：链子每一小段受重力和两端张力，推出来的方程是 $y'' = \sqrt{1 + y'^2}$。验证一下 $\cosh$ 确实是解：$y' = \sinh x$，$y'' = \cosh x$，而 $\sqrt{1+\sinh^2 x} = \cosh x$。最后这一步用的就是双曲函数的基本恒等式
+
+$$\cosh^2 x - \sinh^2 x = 1.$$
+
+有意思的地方在于，链子上任意一点 $P=(x, \cosh x)$ 处，三个双曲函数各自对应一个几何量：
+
+| 量 | 表达式 | 几何意义 |
+|---|---|---|
+| 高度 | $\cosh x$ | $P$ 到地面的竖直距离 |
+| 弧长 | $\sinh x$ | 从最低点沿链子量到 $P$ 的长度（也等于 $P$ 处的斜率） |
+| 倾角 | $\tanh x = \sin\theta$ | 切线与水平方向夹角 $\theta$ 的正弦 |
+
+弧长等于斜率这件事可以直接算：$\int_0^x \sqrt{1 + \sinh^2 t}\,dt = \int_0^x \cosh t\,dt = \sinh x$。
+
+倾角那一行最值得看。在 $P$ 处沿切线画一个直角三角形，横边取 1，竖边就是斜率 $\sinh x$，斜边长 $\sqrt{1+\sinh^2 x} = \cosh x$。于是
+
+$$\tanh x = \frac{\sinh x}{\cosh x} = \frac{\text{竖边}}{\text{斜边}} = \sin\theta.$$
+
+这就是 $\cosh^2 - \sinh^2 = 1$ 的几何版本：**它就是那个切线三角形的勾股定理**。$\tanh$ 有界也立刻解释了——一个角的正弦当然在 $\pm 1$ 之间；链子再陡，也陡不过竖直。
+
+```{python}
+#| label: fig-catenary
+#| fig-cap: "悬链线 y = cosh x 上一点 P 处的三个量：高度 cosh、弧长 sinh、切线三角形的竖/斜 = tanh。"
+import numpy as np
+import matplotlib.pyplot as plt
+
+x0 = 1.0
+xs = np.linspace(-2.2, 2.2, 400)
+fig, ax = plt.subplots(figsize=(6.5, 5))
+ax.plot(xs, np.cosh(xs), color="#777", lw=2.5)
+
+# 弧长（从最低点到 P）
+xa = np.linspace(0, x0, 200)
+ax.plot(xa, np.cosh(xa), color="#ff9f43", lw=5, label=f"Arc length = sinh x = {np.sinh(x0):.3f}")
+# 高度
+ax.plot([x0, x0], [0, np.cosh(x0)], "--", color="#2f80ed", lw=2.5, label=f"Height = cosh x = {np.cosh(x0):.3f}")
+# 切线三角形
+L = 0.8
+P = np.array([x0, np.cosh(x0)])
+B = P + np.array([L, 0])
+Cpt = P + np.array([L, L * np.sinh(x0)])
+tri = np.array([P, B, Cpt, P])
+ax.fill(tri[:, 0], tri[:, 1], color="#27ae60", alpha=0.18)
+ax.plot(tri[:, 0], tri[:, 1], color="#27ae60", lw=2, label=f"Vertical / hypotenuse = tanh x = {np.tanh(x0):.3f}")
+ax.text(x0 + L / 2, np.cosh(x0) - 0.18, "1", ha="center", color="#27ae60")
+ax.text(Cpt[0] + 0.06, (B[1] + Cpt[1]) / 2, "sinh", color="#ff9f43")
+ax.text((P[0] + Cpt[0]) / 2 - 0.3, (P[1] + Cpt[1]) / 2 + 0.1, "cosh", color="#2f80ed")
+ax.plot(*P, "ko"); ax.text(P[0] - 0.22, P[1] + 0.1, "P")
+ax.axhline(0, color="k", lw=0.8); ax.axvline(0, color="k", lw=0.8)
+ax.set_aspect("equal"); ax.set_xlim(-2.3, 2.3); ax.set_ylim(-0.3, 4.3)
+ax.legend(loc="upper left", frameon=False)
+ax.set_title("Catenary y = cosh x")
+plt.show()
+```
+
+## 2. 它们都是 $e^x$ 的拼法
+
+把 $e^x$ 拆成偶函数部分和奇函数部分：
+
+$$e^x = \underbrace{\frac{e^x + e^{-x}}{2}}_{\cosh x} + \underbrace{\frac{e^x - e^{-x}}{2}}_{\sinh x}.$$
+
+$\cosh$ 是 $e^x$ 与 $e^{-x}$ 的平均，$\sinh$ 是它们差的一半，$\tanh$ 是两者之比。这就是"为什么到处都是 cosh"的全部秘密：**只要一个问题的答案里有 $e^x$，一做对称化就会跑出 $\cosh$ 和 $\sinh$。**
+
+而 $e^x$ 又为什么到处都是？因为它是微分的不动点——$(e^x)' = e^x$。任何"导数和自身有简单关系"的方程，解里都有它。悬链线的受力平衡是这样的方程；下面会看到，sigmoid 满足的方程 $\sigma' = \sigma(1-\sigma)$ 也是。
+
+```{python}
+#| label: fig-decomp
+#| fig-cap: "cosh 是 e^x 与 e^-x 的中点，sinh 是半差；tanh 被夹在 ±1 之间。"
+xs = np.linspace(-2.6, 2.6, 400)
+fig, ax = plt.subplots(figsize=(6.5, 4.2))
+ax.plot(xs, np.exp(xs), "--", color="#9b59b6", lw=1.3, label=r"$e^x,\ e^{-x}$")
+ax.plot(xs, np.exp(-xs), "--", color="#9b59b6", lw=1.3)
+ax.plot(xs, np.cosh(xs), color="#2f80ed", lw=2.5, label="cosh")
+ax.plot(xs, np.sinh(xs), color="#ff9f43", lw=2.5, label="sinh")
+ax.plot(xs, np.tanh(xs), color="#27ae60", lw=3, label="tanh")
+ax.axhspan(-1, 1, color="#27ae60", alpha=0.08)
+ax.axhline(0, color="k", lw=0.8); ax.axvline(0, color="k", lw=0.8)
+ax.set_ylim(-4, 4); ax.legend(frameon=False, loc="upper left")
+plt.show()
+```
+
+## 3. 为什么激活函数挑了 tanh
+
+三个函数里，$\cosh \ge 1$ 向上张开，$\sinh$ 穿过原点向两边无限增长，只有 $\tanh$ 有界。作为激活函数，输出有界意味着数值不会在层层传递中爆炸，所以三者里只有 $\tanh$ 是候选。
+
+它还有两个工程上的好处：
+
+- **零中心**：输出在 $(-1, 1)$，均值在 0 附近，下一层的输入正负都有。
+- **导数能用输出算**：$\tanh' x = 1 - \tanh^2 x = 1/\cosh^2 x$。反向传播时不需要再算一次前向，拿输出平方一下就行。
+
+代价也写在导数里：$1/\cosh^2 x$ 在原点是 1，往两边迅速趋于 0。这就是"饱和"，叠多层之后就是梯度消失。
+
+## 4. sigmoid 不是另一个函数，它就是 tanh
+
+教科书通常把 sigmoid 和 tanh 当两个并列的选项介绍。其实
+
+$$\sigma(x) = \frac{1}{1+e^{-x}} = \frac{1 + \tanh(x/2)}{2}.$$
+
+sigmoid 是把 tanh 横向拉长一倍、竖向压扁一半、再抬高一半。**形状完全相同**，所以它的饱和问题不可能比 tanh 轻。具体差在两点：
+
+1. **不是零中心**。输出全在 $(0,1)$，下一层的输入恒为正，导致该层权重的梯度符号全部一致，优化只能走"之"字形。
+2. **梯度小四倍**。$\sigma'(0) = 1/4$，而 $\tanh'(0) = 1$。多叠 $n$ 层，sigmoid 的梯度额外衰减 $4^n$ 倍。
+
+所以作为隐藏层激活，tanh 优于 sigmoid——LeCun 在 1998 年的 *Efficient BackProp* 里就是这么建议的。
+
+那 sigmoid 为什么还随处可见？因为它有 tanh 做不到的事：**输出一个 0 到 1 之间的数**。
+
+- **概率**：二分类、多标签分类的输出层。sigmoid 配交叉熵时梯度干净得出奇，就是 $\hat y - y$。它满足 $\sigma' = \sigma(1-\sigma)$——又一个"导数由自身决定"的方程，解里自然有 $e^x$。
+- **门**：LSTM 的遗忘门、输入门、输出门需要一个"开多少"的系数，用 sigmoid；而候选状态"写什么"用的是 tanh。一个开关、一个内容，分工明确。
+- **权重系数**：注意力里的门控、SE 模块的通道权重，搜索排序里把打分压成点击率，都是它。
+
+## 5. 现代激活函数：sigmoid 换了个位置回来了
+
+ReLU 取代 tanh/sigmoid 做隐藏层激活，解决的正是饱和：正半轴导数恒为 1。但看一眼它的平滑版本：
+
+- **Softplus** $= \log(1 + e^x)$，是 ReLU 的光滑近似，导数恰好是 sigmoid。
+- **SiLU / Swish** $= x \cdot \sigma(x)$。
+- **GELU** $= x \cdot \Phi(x)$，$\Phi$ 是标准正态的分布函数，形状和 $\sigma(1.702x)$ 几乎重合。
+
+SiLU 和 GELU 的结构都是"$x$ 乘上一个 0~1 的门"。$x$ 本身不饱和，sigmoid 只负责决定放过多少。sigmoid 没有消失，它从"激活函数"变成了"门"——和 LSTM 里的角色一样。
+
+顺手还有一个很少被提的恒等式：
+
+$$\text{softplus}(x) = \log(1+e^x) = \frac{x}{2} + \log\!\big(2\cosh\tfrac{x}{2}\big).$$
+
+softplus 去掉一条直线之后，剩下的就是 $\log\cosh$。
+
+## 6. log-cosh 损失：tanh 的原函数
+
+既然 $(\log\cosh x)' = \tanh x$，那 $\log\cosh$ 就是 tanh 的原函数。它作为回归损失有一个漂亮的性质：
+
+$$\log\cosh x \approx \begin{cases} x^2/2 & |x| \text{ 小} \\ |x| - \log 2 & |x| \text{ 大} \end{cases}$$
+
+小误差时像 MSE，大误差时像 MAE，而且处处二阶可导——比 Huber 损失光滑，不需要调阈值。它的梯度是 $\tanh x$，天然有界，这正是它对离群点稳健的原因。
+
+```{python}
+#| label: fig-logcosh
+#| fig-cap: "log cosh 在原点附近像 x²/2，远处像 |x| − log 2；它的导数是 tanh。"
+xs = np.linspace(-4, 4, 400)
+fig, ax = plt.subplots(figsize=(6.5, 4))
+ax.plot(xs, np.log(np.cosh(xs)), color="#2f80ed", lw=2.5, label="log cosh x")
+ax.plot(xs, xs**2 / 2, ":", color="#999", lw=1.5, label=r"$x^2/2$")
+ax.plot(xs, np.abs(xs) - np.log(2), "--", color="#999", lw=1.5, label=r"$|x| - \log 2$")
+ax.plot(xs, np.tanh(xs), color="#27ae60", lw=2, label="Derivative = tanh x")
+ax.set_ylim(-1.5, 4); ax.axhline(0, color="k", lw=0.8); ax.axvline(0, color="k", lw=0.8)
+ax.legend(frameon=False, loc="upper center")
+plt.show()
+```
+
+## 7. 把线收起来
+
+| 对象 | 是什么 | 在悬链线上 | 在神经网络里 |
+|---|---|---|---|
+| $\cosh$ | $e^x$ 的偶部分 | 高度 | $1/\cosh^2$ 是 tanh 的导数；$\log\cosh$ 是稳健损失 |
+| $\sinh$ | $e^x$ 的奇部分 | 弧长、斜率 | 几乎不用：无界 |
+| $\tanh$ | 奇/偶 | 倾角的正弦 | 隐藏层激活、LSTM 候选状态 |
+| $\sigma$ | $\tanh$ 的平移缩放 | — | 概率输出、门控、GELU/SiLU 里的门 |
+
+一根链子和一个神经网络没有任何因果关系。它们共享的只是一个数学事实：指数函数是微分的不动点，所以凡是"变化率由自身决定"的问题，答案里都有 $e^x$；把 $e^x$ 对称化，就得到双曲函数；三者中有界的那一个，恰好是你想要的激活函数。
+
+教科书把悬链线放在微积分课、把 tanh 放在深度学习课、把 log-cosh 放在损失函数一节，于是它们看起来像三件事。其实是一件。
+
+## 参考
+
+- LeCun, Bottou, Orr, Müller. *Efficient BackProp*. 1998. ——关于为什么隐藏层优先用 tanh 而不是 sigmoid。
+- Hendrycks & Gimpel. *Gaussian Error Linear Units (GELUs)*. 2016.
+- Ramachandran, Zoph, Le. *Searching for Activation Functions*. 2017. ——Swish/SiLU。
