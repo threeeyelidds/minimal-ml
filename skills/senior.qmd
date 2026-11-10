@@ -82,7 +82,7 @@ Tick an item when you can explain it without notes; ticks are saved in this brow
 - <input type="checkbox" class="chk" data-chk="senior.ownership.4"> Can explain ownership as accountability for the outcome and give an example outside their formal remit
 
 <details class="qa" id="senior-001">
-<summary><span class="tag tag-core">core</span><span class="tag tag-type">behavioural</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Walk me through the most significant project you have owned. (This is the project deep-dive; how do you structure it?)</summary>
+<summary><span class="tag tag-core">core</span><span class="tag tag-type">behavioural</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Anthropic, OpenAI, Nvidia</span> Walk me through the most significant project you have owned. (This is the project deep-dive; how do you structure it?)</summary>
 
 **What is tested.** Whether you made the decisions, whether you understand them below the surface, and whether the result was real. It is the round that most often sets the level.
 
@@ -112,6 +112,16 @@ Tick an item when you can explain it without notes; ticks are saved in this brow
 
 - What was the simplest baseline, and how much of the gain came on top of it?
 - If you started again today, what would you build differently?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- Anthropic, Machine Learning Engineer, undated: The hardest part of tuning or fine-tuning a model in a past project ([Aced (formerly Exponent)](https://www.aced.io/questions/6263/describe-past-project-model-tuning))
+- OpenAI, Machine Learning Engineer, undated: The project you are most proud of ([Aced (formerly Exponent)](https://www.aced.io/questions/1031/project-you-are-most-proud-of))
+- Nvidia, Applied Scientist, Sep 2026: Deep dive on your own model-training project ([PracHub](https://prachub.com/interview-questions/research-project-deep-dive-motivation-training-pipeline-results-and-takeaways))
+
+</div>
 
 </details>
 
@@ -151,7 +161,7 @@ Tick an item when you can explain it without notes; ticks are saved in this brow
 </details>
 
 <details class="qa" id="senior-004">
-<summary><span class="tag tag-core">core</span><span class="tag tag-type">behavioural</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Tell me about a time you failed, or a project that did not work.</summary>
+<summary><span class="tag tag-core">core</span><span class="tag tag-type">behavioural</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at OpenAI</span> Tell me about a time you failed, or a project that did not work.</summary>
 
 **What is tested.** Ownership without blame, honesty, and whether the lesson changed your behaviour.
 
@@ -181,6 +191,14 @@ Spend about half the time on steps 4 to 7.
 
 - What was the earliest signal you missed?
 - What do you do differently now as a direct result?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- OpenAI, Machine Learning Engineer, undated: A time you made a mistake ([Aced (formerly Exponent)](https://www.aced.io/questions/240/mistake))
+
+</div>
 
 </details>
 
@@ -266,7 +284,7 @@ The hiring manager's underlying question is: can I hand this person a problem an
 - <input type="checkbox" class="chk" data-chk="senior.xfn.3"> Can say no to scope by trading rather than refusing
 
 <details class="qa" id="senior-005">
-<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">behavioural</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Tell me about a disagreement with a researcher or a product manager. How was it resolved?</summary>
+<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">behavioural</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at OpenAI, Anthropic</span> Tell me about a disagreement with a researcher or a product manager. How was it resolved?</summary>
 
 **What is tested.** Whether you can disagree on substance and keep the working relationship, whether you look for the other person's real constraint, and whether you commit once a decision is made.
 
@@ -301,6 +319,15 @@ If no agreement is reached, escalate together, with both positions written down,
 
 - What was their strongest argument?
 - Tell me about a time you lost the argument. What did you do next?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- OpenAI / Anthropic, Machine Learning Engineer, undated: A conflict with someone and how you resolved it ([Aced (formerly Exponent)](https://www.aced.io/questions/140/conflict-resolution-learning))
+- OpenAI, Machine Learning Engineer, undated: A disagreement with your manager ([Aced (formerly Exponent)](https://www.aced.io/questions/241/disagreement-manager))
+
+</div>
 
 </details>
 

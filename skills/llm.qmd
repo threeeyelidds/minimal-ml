@@ -85,7 +85,7 @@ Tick an item when you can explain it without notes; ticks are saved in this brow
 - <input type="checkbox" class="chk" data-chk="llm.llm-general.4"> Weigh an open-weights model against a hosted API for a product
 
 <details class="qa" id="llm-001">
-<summary><span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> How is a decoder-only language model trained, and how does that differ from how it is used at inference? Define perplexity while you are at it.</summary>
+<summary><span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Google, Amazon</span> How is a decoder-only language model trained, and how does that differ from how it is used at inference? Define perplexity while you are at it.</summary>
 
 **Training.** The model defines a distribution over the next token given the previous
 ones, and is trained by maximum likelihood on text:
@@ -125,10 +125,19 @@ come from the data and from post-training.
 - Why can you not compare the perplexity of two models with different tokenizers?
 - What is exposure bias, and why does it matter less for large models than the argument suggests?
 
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- Google, Machine Learning Engineer, Aug 2026: Interpret perplexity for an autoregressive language model ([PracHub](https://prachub.com/interview-questions/interpret-language-model-perplexity))
+- Amazon, Software Engineer, Sep 2026: How a decoder-only transformer produces next-token probabilities and how an inference engine serves it efficiently ([PracHub](https://prachub.com/interview-questions/explain-decoder-only-llm-architecture-and-how-vllm-serves-it-efficiently))
+
+</div>
+
 </details>
 
 <details class="qa" id="llm-002">
-<summary><span class="tag tag-core">core</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Compare encoder-only, decoder-only and encoder-decoder transformers. Decoder-only models dominate; when would you still choose one of the others?</summary>
+<summary><span class="tag tag-core">core</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Amazon</span> Compare encoder-only, decoder-only and encoder-decoder transformers. Decoder-only models dominate; when would you still choose one of the others?</summary>
 
 | Family | Attention | Trained with | Natural use |
 |-|-|-|-|
@@ -166,10 +175,18 @@ that the large model produced.
 - Why is a bidirectional encoder a poor generator?
 - You need to classify 100 million documents a day. Sketch the model choice and the cost argument.
 
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- Amazon, Software Engineer, Jul 2025: Attention and transformers, including BERT versus GPT ([PracHub](https://prachub.com/interview-questions/explain-attention-and-transformers))
+
+</div>
+
 </details>
 
 <details class="qa" id="llm-003">
-<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Why do language models hallucinate? Answer from the training side: what in the objective, the data and the evaluation produces confident false statements?</summary>
+<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at OpenAI, Anthropic</span> Why do language models hallucinate? Answer from the training side: what in the objective, the data and the evaluation produces confident false statements?</summary>
 
 Several causes stack.
 
@@ -210,10 +227,21 @@ but the incentive problem means it does not vanish by scale alone.
 - How would you build an evaluation that does not reward guessing?
 - Why does retrieval reduce hallucination but not eliminate it?
 
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- OpenAI, Machine Learning Engineer, Dec 2025: Fallback for an assistant that cannot answer reliably ([PracHub](https://prachub.com/interview-questions/design-a-chatbot-fallback-for-unknown-questions))
+- OpenAI, Product Manager, Apr 2026: What an LLM hallucination is, its types and causes ([PracHub](https://prachub.com/interview-questions/pinning-down-what-an-llm-hallucination-is-types-causes-and-boundaries))
+- OpenAI / Anthropic, Machine Learning Engineer, undated: Handle hallucinations in a generative model deployed to users ([Aced (formerly Exponent)](https://www.aced.io/questions/5611/handle-hallucinations-deployed-ai-model))
+- OpenAI / Anthropic, Machine Learning Engineer, undated: Define hallucinations in LLMs ([Aced (formerly Exponent)](https://www.aced.io/questions/5610/define-llm-hallucinations))
+
+</div>
+
 </details>
 
 <details class="qa" id="llm-004">
-<summary><span class="tag tag-core">core</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> A model does not perform well enough on your task. How do you decide between better prompting, retrieval, fine-tuning and training your own model?</summary>
+<summary><span class="tag tag-core">core</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Anthropic, OpenAI, Google</span> A model does not perform well enough on your task. How do you decide between better prompting, retrieval, fine-tuning and training your own model?</summary>
 
 Diagnose the failure first; each tool fixes a different one.
 
@@ -252,6 +280,16 @@ before choosing.
 
 - You have 200 labelled examples. Is that enough to fine-tune, and how would you find out?
 - Why is fine-tuning a poor way to add new facts?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- Anthropic, Product Manager, Apr 2026: Choose between prompting, retrieval and fine-tuning to specialise a model ([PracHub](https://prachub.com/interview-questions/choosing-between-prompting-retrieval-and-fine-tuning-to-specialize-an-llm))
+- OpenAI / Anthropic, Machine Learning Engineer, undated: Adapt a generative model to perform well in a specific domain ([Aced (formerly Exponent)](https://www.aced.io/questions/5608/adapt-gen-ai-model-for-domain))
+- Google, Product Manager, Oct 2026: When an LLM feature should use prompting or fine-tuning instead of retrieval ([PracHub](https://prachub.com/interview-questions/when-an-llm-feature-should-use-prompting-or-fine-tuning-instead-of-retrieval))
+
+</div>
 
 </details>
 
@@ -616,7 +654,7 @@ softmax.
 </details>
 
 <details class="qa" id="llm-028">
-<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> How does a vision-language model feed an image to a language model? Describe the architecture, the cost in tokens, and the usual training stages.</summary>
+<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at TikTok, Apple</span> How does a vision-language model feed an image to a language model? Describe the architecture, the cost in tokens, and the usual training stages.</summary>
 
 **Architecture.** The common design has three parts.
 
@@ -663,6 +701,15 @@ Larger systems train all parts jointly on interleaved image-text data from the s
 
 - How many tokens does a 1344 by 1344 image cost with tiling, and what does that do to latency?
 - Why freeze the language model in the first stage?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- TikTok, Machine Learning Engineer, Dec 2025: End-to-end deep dive on a vision-language model project ([PracHub](https://prachub.com/interview-questions/explain-your-vlm-project-end-to-end))
+- Apple, Machine Learning Engineer, Nov 2025: Vision encoders and the bottleneck into a language model ([PracHub](https://prachub.com/interview-questions/explain-vision-encoders-and-llm-bottlenecks))
+
+</div>
 
 </details>
 
@@ -774,7 +821,7 @@ wins, resolution is the bottleneck.
 - <input type="checkbox" class="chk" data-chk="llm.post-training.4"> Describe how intended model behaviour is specified, trained and evaluated
 
 <details class="qa" id="llm-014">
-<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> Walk through reinforcement learning from human feedback as originally practised. What are the stages, what is each loss, and what is the KL term for?</summary>
+<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Google, Meta</span> Walk through reinforcement learning from human feedback as originally practised. What are the stages, what is each loss, and what is the KL term for?</summary>
 
 **Stage 1: supervised fine-tuning.** Train the pretrained model on demonstrations of the
 desired behaviour (prompt and good response) with the usual next-token loss. This gives
@@ -815,10 +862,19 @@ explicit reward model and the sampling loop.
 - What does the policy do if the KL coefficient is set to zero?
 - Why are pairwise comparisons preferred over 1-to-5 ratings?
 
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- Google, Machine Learning Engineer, Aug 2026: Compare supervised, reward-based, preference-based and group-relative post-training ([PracHub](https://prachub.com/interview-questions/compare-language-model-post-training-methods))
+- Meta, Machine Learning Engineer, Sep 2025: Asynchronous RLHF-style post-training system for a production chat model ([PracHub](https://prachub.com/interview-questions/architect-an-asynchronous-rl-post-training-system))
+
+</div>
+
 </details>
 
 <details class="qa" id="llm-015">
-<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">derivation</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> Derive the DPO loss. How does it turn preference data into a supervised objective without a reward model?</summary>
+<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">derivation</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at TikTok</span> Derive the DPO loss. How does it turn preference data into a supervised objective without a reward model?</summary>
 
 **Start from the RLHF objective** for a fixed reward $r$:
 
@@ -863,6 +919,14 @@ two of the frozen reference per example.
 
 - Why does the partition function cancel?
 - Both log-probabilities are falling during training but the loss improves. Is that a problem?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- TikTok, Software Engineer, Dec 2025: Explain DPO and construct its training data ([PracHub](https://prachub.com/interview-questions/explain-dpo-and-construct-its-training-data))
+
+</div>
 
 </details>
 
@@ -921,7 +985,7 @@ batch per model, and cache the reference values.
 </details>
 
 <details class="qa" id="llm-017">
-<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> When would you fine-tune a language model with reinforcement learning on a task reward, instead of supervised fine-tuning or preference optimisation? How do policy-gradient methods with a group baseline work?</summary>
+<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Anthropic, Google, Amazon</span> When would you fine-tune a language model with reinforcement learning on a task reward, instead of supervised fine-tuning or preference optimisation? How do policy-gradient methods with a group baseline work?</summary>
 
 **Choose by the signal you have.**
 
@@ -970,10 +1034,21 @@ held-out evaluation that the reward cannot see.
 - Every sample in a group scores zero. What does the model learn, and what do you change?
 - Why is a learned critic hard for long token sequences?
 
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- Anthropic, Software Engineer, Feb 2026: Find the bugs in a simplified GRPO training step and explain the importance ratios ([PracHub](https://prachub.com/interview-questions/debug-a-grpo-training-loop-and-explain-ratios))
+- Google, Machine Learning Engineer, Aug 2026: Compare supervised, reward-based, preference-based and group-relative post-training ([PracHub](https://prachub.com/interview-questions/compare-language-model-post-training-methods))
+- Amazon, Machine Learning Engineer, Jan 2026: GRPO computations in NumPy: group-relative advantages and shaped rewards ([PracHub](https://prachub.com/interview-questions/grpo-in-numpy-group-relative-advantages-process-rewards-and-shaped-rewards))
+- Amazon, Applied Scientist, Jun 2026: Critic-free RL for a reasoning model: parallelism and reward design ([PracHub](https://prachub.com/interview-questions/grpo-deep-dive-critic-free-rl-parallelism-mla-and-reward-design-for-a-reasoning-llm))
+
+</div>
+
 </details>
 
 <details class="qa" id="llm-018">
-<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">debugging</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> During RL or preference tuning against a learned reward model or an LLM judge, the reward keeps rising but human raters say the outputs are getting worse. What is happening and what do you do?</summary>
+<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">debugging</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Google</span> During RL or preference tuning against a learned reward model or an LLM judge, the reward keeps rising but human raters say the outputs are getting worse. What is happening and what do you do?</summary>
 
 This is over-optimisation of a proxy. The reward model is an approximation fitted on a
 limited distribution of outputs. The policy is an optimiser that searches for whatever
@@ -1020,10 +1095,18 @@ measure to check it.
 - How would you detect a length bias in a reward model before training against it?
 - Why does retraining the reward model on the current policy's outputs help?
 
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- Google, Machine Learning Engineer, Aug 2026: Reward hacking in LLM post-training and how to detect and prevent it ([PracHub](https://prachub.com/interview-questions/detect-and-prevent-reward-hacking))
+
+</div>
+
 </details>
 
 <details class="qa" id="llm-019">
-<summary><span class="tag tag-staff">staff</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> How is the intended behaviour of an assistant model (what it helps with, what it refuses, its tone and honesty) specified and trained in? Describe the loop from specification to evaluation.</summary>
+<summary><span class="tag tag-staff">staff</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Anthropic</span> How is the intended behaviour of an assistant model (what it helps with, what it refuses, its tone and honesty) specified and trained in? Describe the loop from specification to evaluation.</summary>
 
 Behaviour is shaped in layers, and the hard part is keeping them consistent.
 
@@ -1068,6 +1151,15 @@ published accounts.
 - How do you measure over-refusal?
 - Why might training on explanations generalise better than training on rules?
 
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- Anthropic, Machine Learning Engineer, undated: Align a model with intended objectives and prevent harmful behaviour ([Aced (formerly Exponent)](https://www.aced.io/questions/6235/align-ai-model-objectives-prevent-harm))
+- Anthropic, Machine Learning Engineer, undated: Prevent a generative model from producing harmful content ([Aced (formerly Exponent)](https://www.aced.io/questions/5607/gen-ai-address-harmful-content))
+
+</div>
+
 </details>
 
 
@@ -1078,7 +1170,7 @@ published accounts.
 - <input type="checkbox" class="chk" data-chk="llm.model-arch-research.2"> Explain mixture-of-experts layers and their trade-offs
 
 <details class="qa" id="llm-038">
-<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> What do scaling laws for language models say, and how do practitioners use them?</summary>
+<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Meta</span> What do scaling laws for language models say, and how do practitioners use them?</summary>
 
 **The empirical finding.** For transformer language models, test loss falls smoothly and
 predictably as a power law in each of three quantities, when the other two are not the
@@ -1121,6 +1213,14 @@ the time had been under-trained.
 
 - Why would you deliberately train a model that is smaller than compute-optimal?
 - A new architecture beats the baseline at 50 million parameters. What else do you need to see?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- Meta, Machine Learning Engineer, Jun 2026: Fundamentals: optimisers, scaling laws and clustering ([PracHub](https://prachub.com/interview-questions/machine-learning-fundamentals-optimizers-scaling-laws-and-clustering))
+
+</div>
 
 </details>
 
@@ -1177,7 +1277,7 @@ the whole question.
 </details>
 
 <details class="qa" id="llm-040">
-<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> What is a mixture-of-experts transformer layer? What does it buy, and what does it make harder in training and serving?</summary>
+<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Meta</span> What is a mixture-of-experts transformer layer? What does it buy, and what does it make harder in training and serving?</summary>
 
 **The layer.** In a standard transformer block every token passes through the same
 feed-forward network. A mixture-of-experts (MoE) layer replaces it with $E$ feed-forward
@@ -1226,6 +1326,14 @@ usually simpler and as good.
 
 - Why does an MoE model not save memory at inference?
 - What happens if the load-balancing loss is too strong?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- Meta, Machine Learning Engineer, Sep 2025: Large-scale mixture-of-experts pretraining pipeline ([PracHub](https://prachub.com/interview-questions/design-a-scalable-moe-pretraining-pipeline))
+
+</div>
 
 </details>
 
@@ -1451,7 +1559,7 @@ them, and tracing circuits in terms of features instead of neurons.
 </details>
 
 <details class="qa" id="llm-035">
-<summary><span class="tag tag-core">core</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> A regulator or a customer asks why your model made a particular decision. What can Shapley-value explanations tell them, where do they mislead, and what are the alternatives?</summary>
+<summary><span class="tag tag-core">core</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at TikTok</span> A regulator or a customer asks why your model made a particular decision. What can Shapley-value explanations tell them, where do they mislead, and what are the alternatives?</summary>
 
 **What SHAP gives.** For one prediction, each feature receives an attribution $\phi_i$,
 its average marginal contribution to the output over all orders in which features could
@@ -1500,6 +1608,14 @@ impact separately, since an explanation does not establish fairness.
 
 - Two features are almost perfectly correlated. How will their attributions behave?
 - Why might you choose a monotonic boosted model over a more accurate unconstrained one?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- TikTok, Data Scientist, Oct 2025: SHAP versus variance inflation under collinearity ([PracHub](https://prachub.com/interview-questions/explain-shap-vs-vif-under-collinearity))
+
+</div>
 
 </details>
 
@@ -1721,7 +1837,7 @@ tokens per parameter than that.
 </details>
 
 <details class="qa" id="llm-007">
-<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> Describe the data pipeline for pretraining a language model. What decisions matter most for the quality of the resulting model?</summary>
+<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at OpenAI, Nvidia</span> Describe the data pipeline for pretraining a language model. What decisions matter most for the quality of the resulting model?</summary>
 
 **Stages.**
 
@@ -1764,6 +1880,15 @@ process.
 
 - How would you measure whether a quality filter helps before committing to a full run?
 - How do you detect that a benchmark leaked into the training data?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- OpenAI, Machine Learning Engineer, Dec 2025: Pipeline that selects high-quality math documents from web crawls ([PracHub](https://prachub.com/interview-questions/select-high-quality-math-documents-from-crawls))
+- Nvidia, Product Manager, Jun 2026: How raw text becomes an LLM training set: filtering, deduplication, mixing, evaluation ([PracHub](https://prachub.com/interview-questions/plan-how-raw-text-becomes-llm-training-data-filtering-dedup-mixing-evaluation))
+
+</div>
 
 </details>
 
@@ -1981,7 +2106,7 @@ outputs to make tests pass.
 </details>
 
 <details class="qa" id="llm-037">
-<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">AI</span> <span class="tag tag-track">MLE</span> Your company wants its coding assistant to work well on a large private codebase with in-house frameworks. Do you fine-tune, build retrieval, or both? Describe the system and its evaluation.</summary>
+<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">AI</span> <span class="tag tag-track">MLE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Meta</span> Your company wants its coding assistant to work well on a large private codebase with in-house frameworks. Do you fine-tune, build retrieval, or both? Describe the system and its evaluation.</summary>
 
 **Start with context, not weights.** What a general model lacks is knowledge of this
 codebase: its APIs, conventions and current state. Code changes daily, so that knowledge
@@ -2033,6 +2158,14 @@ fine-tuning helps completion latency and house idioms.
 
 - Why hold out evaluation tasks by date and not at random?
 - How do you keep repository permissions intact in retrieval?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- Meta, Machine Learning Engineer, Jun 2026: LLM-based coding assistant end to end ([PracHub](https://prachub.com/interview-questions/design-an-llm-based-coding-assistant))
+
+</div>
 
 </details>
 
@@ -2274,7 +2407,7 @@ same kind of subword vocabulary.
 </details>
 
 <details class="qa" id="llm-026">
-<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> How does the choice of tokenizer affect a language model? Discuss vocabulary size and the failure modes that trace back to tokenization.</summary>
+<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Amazon</span> How does the choice of tokenizer affect a language model? Discuss vocabulary size and the failure modes that trace back to tokenization.</summary>
 
 **Vocabulary size is a trade.**
 
@@ -2324,6 +2457,14 @@ sequences.
 
 - Your product's costs are 3 times higher for one language. How do you confirm that tokenization is the cause?
 - Why is letting user input produce special tokens a security problem?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- Amazon, Applied Scientist, Jun 2026: Subword tokenisation design and KL-regularised fine-tuning ([PracHub](https://prachub.com/interview-questions/llm-fundamentals-tokenization-design-and-kl-regularized-sft))
+
+</div>
 
 </details>
 

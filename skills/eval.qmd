@@ -314,7 +314,7 @@ live traffic.
 - <input type="checkbox" class="chk" data-chk="eval.ml-observability.4"> Investigate a quality drop with no deploy, including upstream model and data dependencies
 
 <details class="qa" id="eval-034">
-<summary><span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> What is the difference between data drift and concept drift, how do you detect each, and what do you do about it?</summary>
+<summary><span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Nvidia</span> What is the difference between data drift and concept drift, how do you detect each, and what do you do about it?</summary>
 
 - **Covariate (data) drift**: the input distribution $P(X)$ changes; the relation
   $P(Y \mid X)$ may be intact.
@@ -353,6 +353,14 @@ drift; alerts handle abrupt changes.
 
 - Labels arrive 30 days late. How do you know today that the model is failing?
 - Which drift alerts would you page on, and which only log?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- Nvidia, Machine Learning Engineer, Feb 2026: Bias-variance trade-off, calibration and model drift ([PracHub](https://prachub.com/interview-questions/explain-bias-variance-calibration-and-model-drift))
+
+</div>
 
 </details>
 
@@ -602,7 +610,7 @@ Practical rules:
 </details>
 
 <details class="qa" id="eval-003">
-<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> When is an LLM judge trustworthy? How do you validate one and what biases do you look for?</summary>
+<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Apple</span> When is an LLM judge trustworthy? How do you validate one and what biases do you look for?</summary>
 
 A judge is a classifier and is trusted only as far as it has been measured.
 
@@ -640,6 +648,14 @@ changes.
 
 - Judge-human agreement is 85% and human-human is 80%. What does that mean?
 - How does the correction formula behave when TPR is close to FPR?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- Apple, Machine Learning Engineer, Aug 2025: Annotation agreement, and LLM versus human judges ([PracHub](https://prachub.com/interview-questions/explain-annotation-agreement-and-llm-vs-human-judges))
+
+</div>
 
 </details>
 
@@ -682,7 +698,7 @@ A rubric that humans cannot apply consistently will not be applied consistently 
 </details>
 
 <details class="qa" id="eval-005">
-<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> How is evaluating an agent different from evaluating a single model response?</summary>
+<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at OpenAI</span> How is evaluating an agent different from evaluating a single model response?</summary>
 
 An agent produces a trajectory with side effects, is more variable, and costs far more per
 example.
@@ -719,6 +735,14 @@ same model scores differently under different scaffolds.
 
 - A task passes 3 of 5 trials. How do you count it?
 - How do you evaluate an agent whose tasks touch the live web?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- OpenAI, Machine Learning Engineer, Apr 2026: Agent harness and evaluation system for a tool-using agent ([PracHub](https://prachub.com/interview-questions/design-an-agent-harness-and-evaluation-system))
+
+</div>
 
 </details>
 
@@ -774,7 +798,7 @@ model upgrades.
 - <input type="checkbox" class="chk" data-chk="eval.metrics.5"> Make and defend a ship decision when metrics move in different directions
 
 <details class="qa" id="eval-011">
-<summary><span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Which classification metric do you use when positives are rare, and why is accuracy or ROC-AUC not enough?</summary>
+<summary><span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Meta, TikTok</span> Which classification metric do you use when positives are rare, and why is accuracy or ROC-AUC not enough?</summary>
 
 Definitions: precision $= TP/(TP+FP)$, recall $= TP/(TP+FN)$, false positive rate
 $= FP/(FP+TN)$. ROC-AUC is the probability that a random positive is scored above a random
@@ -811,6 +835,15 @@ training or evaluation, correct for it before reporting precision.
 
 - Two models have the same ROC-AUC. How can one be much better in production?
 - How does negative downsampling affect precision and calibration?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- Meta, Data Scientist, Oct 2025: Metrics for a fake-user classifier ([PracHub](https://prachub.com/interview-questions/choose-metrics-for-fake-user-classifier))
+- TikTok, Data Scientist, Nov 2025: When to prioritise precision or recall ([PracHub](https://prachub.com/interview-questions/when-prioritize-precision-vs-recall))
+
+</div>
 
 </details>
 

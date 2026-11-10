@@ -101,8 +101,38 @@ def check(path: pathlib.Path, seen_ids: set) -> list[str]:
     return errs
 
 
+def check_reported(path: pathlib.Path, card_ids: set) -> list[str]:
+    """bank/reported.yml: questions that third-party sites list as asked in interviews."""
+    errs = []
+    try:
+        d = yaml.safe_load(path.read_text()) or {}
+    except yaml.YAMLError as e:
+        return [f"YAML error: {e}"]
+    sources = d.get("sources") or {}
+    if not d.get("retrieved"):
+        errs.append("missing retrieved date")
+    for i, r in enumerate(d.get("reports") or []):
+        tag = f"report {i + 1} ({str(r.get('path'))[-50:]})"
+        for k in ("company", "role", "source", "path", "topic"):
+            if not r.get(k):
+                errs.append(f"{tag}: missing {k}")
+        if r.get("source") not in sources:
+            errs.append(f"{tag}: unknown source {r.get('source')!r}")
+        if not isinstance(r.get("company"), list):
+            errs.append(f"{tag}: company must be a list")
+        if not str(r.get("path", "")).startswith("/"):
+            errs.append(f"{tag}: path must start with /")
+        if r.get("date") and not re.fullmatch(r"\d{4}-\d{2}", str(r["date"])):
+            errs.append(f"{tag}: date must be YYYY-MM or empty")
+        for c in r.get("cards") or []:
+            if c not in card_ids:
+                errs.append(f"{tag}: unknown card id {c!r}")
+    return errs
+
+
 def main():
-    paths = [pathlib.Path(p) for p in sys.argv[1:]] or sorted((ROOT / "bank").glob("*.yml"))
+    paths = [pathlib.Path(p) for p in sys.argv[1:]] or sorted(
+        p for p in (ROOT / "bank").glob("*.yml") if p.name != "reported.yml")
     seen, bad, total = set(), 0, 0
     for p in paths:
         errs = check(p, seen)
@@ -119,6 +149,14 @@ def main():
             if dom not in have:
                 print(f"missing bank file for area: {dom}")
                 bad += 1
+        rp = ROOT / "bank" / "reported.yml"
+        if rp.exists():
+            errs = check_reported(rp, seen)
+            n = len((yaml.safe_load(rp.read_text()) or {}).get("reports") or [])
+            print(f"{rp.name:16s} {n:3d} reports {'OK' if not errs else f'{len(errs)} problem(s)'}")
+            for e in errs:
+                print("   -", e)
+            bad += bool(errs)
     print(f"{total} cards in {len(paths)} files; {'all good' if not bad else f'{bad} file(s) with problems'}")
     sys.exit(1 if bad else 0)
 

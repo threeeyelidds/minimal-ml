@@ -502,7 +502,7 @@ The prior alone is a strong baseline because most mentions refer to the most com
 - <input type="checkbox" class="chk" data-chk="recsys.personalization.4"> Design notification ranking as an incremental-value problem with a volume budget
 
 <details class="qa" id="recsys-010">
-<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> How do ranking models use a user's behaviour history? Explain DIN-style target attention and what you do when the history has thousands of events.</summary>
+<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at TikTok</span> How do ranking models use a user's behaviour history? Explain DIN-style target attention and what you do when the history has thousands of events.</summary>
 
 The simplest user representation mean-pools the embeddings of recent items. It is one fixed vector regardless of the candidate, so a user with several interests is blurred into their average.
 
@@ -521,10 +521,18 @@ Serving details matter as much as the architecture: the short-term sequence must
 - Self-attention over the history or target attention from the candidate - when does each win?
 - How do you keep the sequence feature consistent between training and serving?
 
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- TikTok, Machine Learning Engineer, Dec 2025: Query, key and value for cross-attention in a recommender ([PracHub](https://prachub.com/interview-questions/define-qkv-for-recommender-cross-attention))
+
+</div>
+
 </details>
 
 <details class="qa" id="recsys-029">
-<summary><span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> How do you handle cold start for a new user and for a new item? They are different problems; treat them separately.</summary>
+<summary><span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Google</span> How do you handle cold start for a new user and for a new item? They are different problems; treat them separately.</summary>
 
 **New user**: no history, so personalised models fall back to priors.
 
@@ -545,6 +553,14 @@ Trade-offs: exploration spends impressions on unproven items, a short-term cost 
 
 - How would you measure whether the new-item exploration budget is the right size?
 - What about a new market where both users and items are new?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- Google, Machine Learning Engineer, Mar 2026: Cold-start strategies for ranking ([PracHub](https://prachub.com/interview-questions/explain-ranking-cold-start-strategies))
+
+</div>
 
 </details>
 
@@ -724,7 +740,7 @@ Then decide: fix and rerun, or accept that the offline metric is not predictive 
 </details>
 
 <details class="qa" id="recsys-042">
-<summary><span class="tag tag-core">core</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> Design the ranking system for a home feed of short videos or posts, for a product with a hundred million daily users.</summary>
+<summary><span class="tag tag-core">core</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at OpenAI, Meta</span> Design the ranking system for a home feed of short videos or posts, for a product with a hundred million daily users.</summary>
 
 **1. Objective.** The business goal is long-term retention; it is too slow to train on, so predict short-term actions and combine them. Positive: watch time or completion, like, share, comment, follow. Negative: quick skip, hide, report. Guardrails: content safety, creator-side exposure, latency (p99 under roughly 200 ms for the ranking path).
 
@@ -751,6 +767,15 @@ State your assumptions on scale and ask what the product optimises before drawin
 - Which single component would you build first with a team of three?
 - How do you handle watch time across videos of very different length?
 
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- OpenAI, Machine Learning Engineer, Dec 2025: End-to-end recommendation system for a personalised feed ([PracHub](https://prachub.com/interview-questions/design-a-recommendation-system-end-to-end))
+- Meta, Machine Learning Engineer, Dec 2025: Comment ranking for a news feed ([PracHub](https://prachub.com/interview-questions/design-comment-ranking-for-a-news-feed))
+
+</div>
+
 </details>
 
 
@@ -764,7 +789,7 @@ State your assumptions on scale and ask what the product optimises before drawin
 - <input type="checkbox" class="chk" data-chk="recsys.ranking.5"> Describe MMR and DPP re-ranking and when whole-page optimisation is needed
 
 <details class="qa" id="recsys-009">
-<summary><span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> Walk me through the main ranking architectures: Wide & Deep, DeepFM, DCN. Why do ranking models need explicit feature crosses when an MLP is a universal approximator?</summary>
+<summary><span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Apple</span> Walk me through the main ranking architectures: Wide & Deep, DeepFM, DCN. Why do ranking models need explicit feature crosses when an MLP is a universal approximator?</summary>
 
 Ranking inputs are mostly sparse categorical features (user id, item id, category, context) embedded and concatenated with dense features. The signal is largely in interactions, such as user-language × item-language or user-segment × creator. An MLP on concatenated embeddings can represent a product of two inputs only approximately and needs many units and samples to do it, so architectures add multiplicative structure explicitly.
 
@@ -783,6 +808,14 @@ Practical points:
 
 - Why is a dot product hard for an MLP to learn?
 - Where would you put a new high-cardinality feature, and how do you handle its tail?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- Apple, Machine Learning Engineer, Mar 2026: Compare DCN v1 and v2, then design an A/B test ([PracHub](https://prachub.com/interview-questions/compare-dcn-v1-vs-v2-and-a-b-test))
+
+</div>
 
 </details>
 
@@ -1096,7 +1129,7 @@ What makes it hard:
 </details>
 
 <details class="qa" id="recsys-023">
-<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> People say "for organic ranking only the order matters, but for ads you need calibration". Explain why, and where the statement is too simple.</summary>
+<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Meta</span> People say "for organic ranking only the order matters, but for ads you need calibration". Explain why, and where the statement is too simple.</summary>
 
 In a single-objective organic ranker, the page is the top-$k$ by score. Any strictly increasing transform of the score gives the same page, so AUC or NDCG is what matters and the absolute value is irrelevant.
 
@@ -1120,6 +1153,14 @@ Practical consequence: ads models are evaluated on normalised log loss and calib
 
 - How would you measure calibration for ads that rarely win an auction?
 - Can a post-hoc calibrator change the auction outcome?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- Meta, Machine Learning Engineer, Jan 2026: Low-latency ads ranking with calibration ([PracHub](https://prachub.com/interview-questions/design-an-ads-ranking-system-with-calibration))
+
+</div>
 
 </details>
 
@@ -1284,7 +1325,7 @@ Sparse tasks usually benefit most from sharing; dense tasks have the least to ga
 </details>
 
 <details class="qa" id="recsys-012">
-<summary><span class="tag tag-staff">staff</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> The ranker outputs a dozen predictions. How do you combine them into one ranking score, and how are the weights chosen?</summary>
+<summary><span class="tag tag-staff">staff</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at TikTok</span> The ranker outputs a dozen predictions. How do you combine them into one ranking score, and how are the weights chosen?</summary>
 
 The usual form is a value model, a weighted combination of calibrated predictions:
 
@@ -1310,10 +1351,18 @@ Failure modes to name:
 - Why must the heads be calibrated for the weights to be meaningful?
 - How would you personalise the weights, and what is the risk?
 
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- TikTok, Data Scientist, Oct 2025: Multi-objective recommender balancing growth and monetisation ([PracHub](https://prachub.com/interview-questions/design-recommendations-objective-balancing-growth-and-monetization))
+
+</div>
+
 </details>
 
 <details class="qa" id="recsys-030">
-<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> Explain the exploration-exploitation problem in recommendation. Compare epsilon-greedy, UCB and Thompson sampling, and tell me how exploration is actually done with a deep ranker.</summary>
+<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Google</span> Explain the exploration-exploitation problem in recommendation. Compare epsilon-greedy, UCB and Thompson sampling, and tell me how exploration is actually done with a deep ranker.</summary>
 
 A recommender learns only from what it shows. Always showing the current best estimate (pure exploitation) means items and interests with uncertain estimates never get data, so errors persist. Exploration spends some impressions to reduce uncertainty.
 
@@ -1333,6 +1382,14 @@ Measuring value is the hard part. In a standard user-level A/B test, the data ga
 
 - Why is Thompson sampling more robust than UCB to delayed feedback?
 - How would you explore over users' interests rather than over items?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- Google, Machine Learning Engineer, Jul 2025: Feedback-driven contextual bandit recommender ([PracHub](https://prachub.com/interview-questions/design-feedback-driven-recommender))
+
+</div>
 
 </details>
 

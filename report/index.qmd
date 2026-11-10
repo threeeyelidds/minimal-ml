@@ -217,6 +217,59 @@ Two consequences for preparation. First, coding and behavioural rounds carry mor
 posting text suggests. Second, the design round is where the posting's skills are tested together, so the
 [design cases](../skills/cases.qmd) are the best single place to practise them.
 
+## Questions candidates report being asked {#reported}
+
+The cards on this site were written from the skills the postings name. They were not copied from interviews.
+To check them against practice, {{< var n_reports >}} questions that two third-party sites list as asked in
+interviews at {{< var n_report_companies >}} employers from the sample were collected on
+{{< var reports_retrieved >}}. Each is matched to the cards that cover its topic.
+
+{{< include _gen/reported_summary.md >}}
+
+{{< var n_reports_carded >}} of the reported questions are covered by {{< var n_reported_cards >}} cards.
+Those cards carry an "asked at" tag on the [skill pages](../skills/index.qmd) and in the
+[review app](../review/index.qmd), which can filter to them or run them as a mock round.
+{{< var n_reports_nocard >}} reported questions have no card yet; they are listed below with their source so
+they can be practised from there.
+
+**How far to trust this.**
+
+- The reports are self-submitted to those sites by candidates and are not verified here. PracHub describes
+  its listings as real questions from candidate reports; Aced (formerly Exponent) is a user-contributed
+  question bank plus first-person interview write-ups. Three entries are first-person write-ups; the rest are
+  single listings.
+- The topic column is a paraphrase. A card "covers" a report when it treats the same topic, not when it
+  reproduces the question. Follow the link for the source's own wording.
+- The sample is what was readable without an account. Glassdoor, 1Point3Acres and Blind hold more reports
+  behind logins and were not used.
+- Roles are as the source lists them and include some product manager and data scientist interviews, whose
+  ML questions overlap with engineering ones.
+- Interview questions change. Treat these as evidence about what kind of question is asked, not as a list
+  to memorise.
+
+**What the reports show.**
+
+- *OpenAI, ML coding.* A small set of exercises recurs: debugging a small transformer with planted bugs and
+  then adding a KV cache (10 of 68 reports), backpropagation by hand (6), a vectorised nearest-neighbour
+  classifier (6), prefix products with their backward pass (4), and cleaning labels from noisy annotators
+  (4). The design questions are mostly retrieval and enterprise search (10).
+- *Anthropic.* 18 of 50 reports are inference-system design: batching, routing and scheduling on a GPU pool,
+  and distributing model weights. Several others ask about safety and model behaviour.
+- *Meta.* Recommendation, ranking and place recommendation (10 of 27) and integrity classifiers (5), with
+  LLM system designs appearing in 2026.
+- *Across employers.* Implementing attention is the single most reported coding task (11 reports at six
+  employers). Behavioural questions are the standard ones: a mistake, a conflict, the project you are most
+  proud of.
+
+This agrees with the [interview loop table](#loops): coding and design carry the rounds, and the design
+round tests the posting's skills together.
+
+::: {.callout-note collapse="true"}
+## All reported questions, by employer
+
+{{< include _gen/reported.md >}}
+:::
+
 ## Coverage of this site
 
 Every skill in the inventory has a checklist and at least one question card; `tools/validate_bank.py` checks

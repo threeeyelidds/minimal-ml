@@ -64,3 +64,29 @@ cards:
   personal stories.
 - Quote YAML carefully: use `>-` for questions and `|` for answers; inside `|`
   blocks LaTeX backslashes need no escaping.
+
+## Questions reported from interviews
+
+`reported.yml` records questions that third-party sites list as asked in interviews. It is not a card
+file. Each entry has the employer(s), the role and month as the source gives them, the source and the
+path on it, a paraphrased topic, and `cards`: the ids of the cards that cover the topic (empty when there
+is none yet).
+
+```yaml
+reports:
+  - company: [OpenAI]
+    role: Machine Learning Engineer
+    date: 2026-09            # YYYY-MM as listed by the source, or '' when undated
+    source: prachub          # key in `sources`
+    path: /interview-questions/...
+    topic: Paraphrase of what the question is about
+    cards: [dl-019]
+```
+
+`tools/build_site.py` uses it to tag matched cards ("asked at ..."), to list the sources under each
+answer, to give the review app its "Asked in interviews" filter and mock round, and to build the table
+in the report. `tools/validate_bank.py` checks the fields and that every card id exists.
+
+Rules: paraphrase the topic and link to the source instead of copying its text; record only what the
+source states; the reports are self-submitted and unverified, and the site says so wherever it shows
+them. Sources that need a login or refuse automated reading are not used.

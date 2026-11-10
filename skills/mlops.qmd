@@ -148,7 +148,7 @@ restore the model, its preprocessing and its feature definitions together.
 </details>
 
 <details class="qa" id="mlops-003">
-<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">debugging</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Three days after a launch that looked good offline and in the first day of the experiment, the online metric for the new model falls below control. How do you investigate?</summary>
+<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">debugging</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at OpenAI</span> Three days after a launch that looked good offline and in the first day of the experiment, the online metric for the new model falls below control. How do you investigate?</summary>
 
 Establish what changed before theorising about the model.
 
@@ -178,6 +178,14 @@ logs. Close with the missing guardrail, such as a freshness alert or a slice mon
 
 - How would you distinguish a novelty effect from a real regression?
 - Which of these checks can be automated as a pre-launch gate?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- OpenAI, Software Engineer, Aug 2025: Diagnose a sudden accuracy drop in a deployed ML pipeline ([PracHub](https://prachub.com/interview-questions/debug-a-machine-learning-pipeline))
+
+</div>
 
 </details>
 
@@ -506,7 +514,7 @@ periodic "retrain from the registry record" job that proves reproduction still w
 </details>
 
 <details class="qa" id="mlops-008">
-<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Design the monitoring for a model whose labels arrive weeks after the prediction. What do you alert on?</summary>
+<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Google</span> Design the monitoring for a model whose labels arrive weeks after the prediction. What do you alert on?</summary>
 
 Monitor four layers, from the fastest and least specific signal to the slowest and most
 meaningful.
@@ -541,6 +549,14 @@ retraining pipeline must handle.
 
 - Which of these would have caught your last incident?
 - How do you choose thresholds without paging on every holiday?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- Google, Product Manager, Apr 2026: Metrics for the health of a production ML pipeline ([PracHub](https://prachub.com/interview-questions/measuring-the-health-of-a-production-ml-system-from-data-quality-to-business-impact))
+
+</div>
 
 </details>
 
@@ -1010,7 +1026,7 @@ the endpoint, and a response plan that includes retraining from clean data.
 </details>
 
 <details class="qa" id="mlops-023">
-<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Your training data and request logs contain personal data. How do you handle it, and what happens when a user asks for their data to be deleted?</summary>
+<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Anthropic</span> Your training data and request logs contain personal data. How do you handle it, and what happens when a user asks for their data to be deleted?</summary>
 
 **Minimise first.** Collect and keep only the fields the model needs. Drop or coarsen the
 rest at ingestion (precise location to region, birth date to age band). Data that was
@@ -1049,6 +1065,15 @@ usable for training. Record the permitted purposes with the dataset.
 
 - How do you find every place a user's data has been copied to?
 - What would you log from an LLM product's requests, and for how long?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- Anthropic, Machine Learning Engineer, undated: Handle a model that exposes sensitive training data ([Aced (formerly Exponent)](https://www.aced.io/questions/5601/handle-model-exposing-data-from-training-set))
+- Anthropic, Machine Learning Engineer, undated: Keep user data safe and private when building AI systems ([Aced (formerly Exponent)](https://www.aced.io/questions/5602/build-ai-systems-data-safety-privacy))
+
+</div>
 
 </details>
 

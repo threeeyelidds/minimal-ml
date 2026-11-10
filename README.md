@@ -14,6 +14,7 @@ from first principles.
 | Report | `report/index.qmd`, `report/_prose/` | What the postings ask for, by track, role type, employer and level |
 | Skills | `bank/*.yml` → `skills/` | One page per skill area: demand, senior bar, checklist, questions with answers |
 | Review | `bank/*.yml` → `review/` | The same cards with spaced repetition, mock rounds and readiness per track |
+| Reported questions | `bank/reported.yml` → tags on cards, a section of the report | Questions that third-party sites list as asked in interviews, matched to cards; unverified |
 | Plan | `plan/index.qmd` | Order of areas per track, schedule, daily loop |
 | Open roles | `data/postings.json` → `jobs/` | The postings, filterable by track, role type and skill |
 | Notes, Essays | `notes/`, `essays/` | Long-form deep dives |
@@ -42,7 +43,7 @@ quarto preview
 Cards live in `bank/<area>.yml`; the format and writing rules are in `bank/README.md`.
 
 ```bash
-.venv/bin/python tools/validate_bank.py   # format, skill ids, every skill covered
+.venv/bin/python tools/validate_bank.py   # format, skill ids, every skill covered, reported.yml
 quarto preview                            # rebuilds the skill pages and the review app
 ```
 

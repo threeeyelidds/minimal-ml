@@ -52,9 +52,62 @@ def load():
     postings = json.loads((ROOT / "data/postings.json").read_text())
     bank = {}
     for p in sorted((ROOT / "bank").glob("*.yml")):
+        if p.name == "reported.yml":
+            continue
         d = yaml.safe_load(p.read_text())
         bank[d["domain"]] = d
     return skills, summary, postings, bank
+
+
+# Questions that third-party sites list as asked in interviews (bank/reported.yml).
+REPORTED = dict(reports=[], sources={}, retrieved="", by_card={})
+MONTHS = "Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec".split()
+
+
+def load_reported():
+    p = ROOT / "bank" / "reported.yml"
+    if not p.exists():
+        return
+    d = yaml.safe_load(p.read_text()) or {}
+    REPORTED.update(reports=d.get("reports") or [], sources=d.get("sources") or {}, retrieved=str(d.get("retrieved", "")))
+    by = collections.defaultdict(list)
+    for r in REPORTED["reports"]:
+        for c in r.get("cards") or []:
+            by[c].append(r)
+    REPORTED["by_card"] = by
+
+
+def rep_url(r) -> str:
+    return REPORTED["sources"][r["source"]]["base"] + r["path"]
+
+
+def rep_when(r) -> str:
+    d = str(r.get("date") or "")
+    return f"{MONTHS[int(d[5:7]) - 1]} {d[:4]}" if d else "undated"
+
+
+def rep_companies(cid) -> list:
+    seen = []
+    for r in REPORTED["by_card"].get(cid, []):
+        for c in r["company"]:
+            if c not in seen:
+                seen.append(c)
+    return seen
+
+
+def rep_line(r) -> str:
+    src = REPORTED["sources"][r["source"]]["name"]
+    return (f'{" / ".join(r["company"])}, {r["role"]}, {rep_when(r)}: {md_cell(r["topic"])} '
+            f'([{src}]({rep_url(r)}))')
+
+
+def reported_md(c) -> str:
+    """Block shown under a card's answer on the skill pages."""
+    rs = REPORTED["by_card"].get(c["id"])
+    if not rs:
+        return ""
+    return ('<div class="reported">\n\n**Reported in interviews** (candidate reports on third-party sites, not verified)\n\n'
+            + "".join(f"- {rep_line(r)}\n" for r in rs) + "\n</div>\n\n")
 
 
 def bar(pct: float, cls: str = "") -> str:
@@ -78,8 +131,11 @@ def write(path: str, text: str):
 
 def card_tags(c) -> str:
     tracks = " ".join(f'<span class="tag tag-track">{t.upper()}</span>' for t in c["tracks"])
+    cos = rep_companies(c["id"])
+    rep = (f'<span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">'
+           f'asked at {esc(", ".join(cos[:3]))}{" +" + str(len(cos) - 3) if len(cos) > 3 else ""}</span>') if cos else ""
     return (f'<span class="tag tag-{c["level"]}">{c["level"]}</span>'
-            f'<span class="tag tag-type">{TYPE_NAME[c["type"]]}</span>{tracks}')
+            f'<span class="tag tag-type">{TYPE_NAME[c["type"]]}</span>{tracks}{rep}')
 
 
 def one_line(s: str) -> str:
@@ -140,6 +196,7 @@ def area_page(dom, bank_d, skill_names, n_posts) -> str:
                 out.append(f'<details class="qa" id="{c["id"]}">\n<summary>{card_tags(c)} {one_line(c["q"])}</summary>\n\n{c["a"].rstrip()}\n\n')
                 if c.get("probes"):
                     out.append("**Follow-ups**\n\n" + "".join(f"- {one_line(p)}\n" for p in c["probes"]) + "\n")
+                out.append(reported_md(c))
                 out.append("</details>\n\n")
     else:
         out.append("\n*Review cards for this area are not written yet.*\n")
@@ -194,6 +251,7 @@ def cases_page(b) -> str:
         out.append(f'<details class="qa" id="{c["id"]}">\n<summary>{card_tags(c)} {one_line(c["q"])}</summary>\n\n{c["a"].rstrip()}\n\n')
         if c.get("probes"):
             out.append("**Follow-ups**\n\n" + "".join(f"- {one_line(p)}\n" for p in c["probes"]) + "\n")
+        out.append(reported_md(c))
         out.append("</details>\n\n")
     return "".join(out)
 
@@ -210,10 +268,13 @@ def review_page(skills, bank, skill_names) -> str:
         for c in (bank.get(a) or {}).get("cards") or []:
             also = " ".join(c.get("also") or [])
             out.append(f'\n:::: {{.rv-card data-id="{c["id"]}" data-area="{a}" data-skill="{c["skill"]}" data-also="{also}" '
-                       f'data-type="{c["type"]}" data-level="{c["level"]}" data-tracks="{" ".join(c["tracks"])}"}}\n\n'
+                       f'data-type="{c["type"]}" data-level="{c["level"]}" data-tracks="{" ".join(c["tracks"])}" '
+                       f'data-reported="{"|".join(rep_companies(c["id"]))}"}}\n\n'
                        f'::: {{.rv-q}}\n{one_line(c["q"])}\n:::\n\n::: {{.rv-a}}\n{c["a"].rstrip()}\n:::\n\n')
             if c.get("probes"):
                 out.append("::: {.rv-probes}\n" + "".join(f"- {one_line(p)}\n" for p in c["probes"]) + ":::\n\n")
+            if REPORTED["by_card"].get(c["id"]):
+                out.append("::: {.rv-reported}\n" + "".join(f"- {rep_line(r)}\n" for r in REPORTED["by_card"][c["id"]]) + ":::\n\n")
             out.append("::::\n")
     out.append("\n:::::\n")
     return "".join(out)
@@ -351,6 +412,30 @@ def report_tables(skills, summary, bank, skill_names):
     # high-demand skills without a deep-dive note: the writing backlog
     noted_areas = {a for a, b in bank.items() if b.get("notes")}
     rows = [s for s in top if s["area"] not in noted_areas and s["area"] != "senior"][:15]
+    # questions reported from interviews
+    R = REPORTED["reports"]
+    card_area = {c["id"]: a for a, b in bank.items() for c in b.get("cards") or []}
+    cos = collections.Counter(c for r in R for c in r["company"])
+    t = "| Employer | Reported questions | With a card here | No card yet |\n|:--|--:|--:|--:|\n"
+    for co, k in cos.most_common():
+        has = sum(1 for r in R if co in r["company"] and r.get("cards"))
+        t += f"| {co} | {k} | {has} | {k - has} |\n"
+    t += f"| **All** | **{len(R)}** | **{sum(1 for r in R if r.get('cards'))}** | **{sum(1 for r in R if not r.get('cards'))}** |\n"
+    g["reported_summary"] = t
+    t = ""
+    for co, _ in cos.most_common():
+        co_rows = [r for r in R if r["company"][0] == co]
+        if not co_rows:
+            continue
+        t += (f"\n### {co} {{#reported-{re.sub('[^a-z0-9]+', '-', co.lower())}}}\n\n"
+              "| Reported | Role | Topic of the question | Source | Cards |\n|:--|:--|:--|:--|:--|\n")
+        for r in sorted(co_rows, key=lambda r: str(r.get("date") or ""), reverse=True):
+            links = ", ".join(f'[{c}](../skills/{card_area[c]}.qmd#{c})' for c in r.get("cards") or []) or '<span class="muted">none yet</span>'
+            also = f' (also listed for {", ".join(r["company"][1:])})' if len(r["company"]) > 1 else ""
+            t += (f'| {rep_when(r)} | {md_cell(r["role"])} | {md_cell(r["topic"])}{also} | '
+                  f'[{REPORTED["sources"][r["source"]]["name"]}]({rep_url(r)}) | {links} |\n')
+    g["reported"] = t
+
     g["backlog"] = "".join(f'- {s["name"]} ({s["pct"]:.0f}% of postings; {SHORT[s["area"]]})\n' for s in rows) or "- None.\n"
     return g
 
@@ -370,6 +455,12 @@ def variables(skills, summary, bank) -> str:
         n_skills=len(flat), n_areas=len(dom),
         n_cards=sum(len(b.get("cards") or []) for b in bank.values()),
         n_cases=len((bank.get("cases") or {}).get("cards") or []),
+        n_reports=len(REPORTED["reports"]),
+        n_reports_carded=sum(1 for r in REPORTED["reports"] if r.get("cards")),
+        n_reports_nocard=sum(1 for r in REPORTED["reports"] if not r.get("cards")),
+        n_reported_cards=len(REPORTED["by_card"]),
+        n_report_companies=len({c for r in REPORTED["reports"] for c in r["company"]}),
+        reports_retrieved=fetched_local(REPORTED["retrieved"] + "T12:00:00") if REPORTED["retrieved"] else "",
         fetched=fetched_local(max(x for x in summary["fetched"].values() if x)),
         us_share=f'{summary["us_share"]:.0f}', phd_share=f'{summary["phd_share"]:.0f}',
         yoe_median=f'{summary["yoe"]["median"]:.0f}', yoe_share=f'{summary["yoe"]["share_stated"]:.0f}',
@@ -401,6 +492,7 @@ def variables(skills, summary, bank) -> str:
 
 def main():
     skills, summary, postings, bank = load()
+    load_reported()
     n = skills["n"]
     skill_names = {s["id"]: s["name"] for d in skills["domains"] for s in d["skills"]}
     for d in skills["domains"]:

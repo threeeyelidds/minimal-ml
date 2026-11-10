@@ -527,7 +527,7 @@ Governance is the set of processes that make someone accountable for a model's b
 - <input type="checkbox" class="chk" data-chk="research.research-taste.5"> Can describe kill criteria and a time-boxed investigation plan with decision points
 
 <details class="qa" id="research-007">
-<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> How do you decide what to work on? Give me the criteria you use to choose between research directions.</summary>
+<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at OpenAI</span> How do you decide what to work on? Give me the criteria you use to choose between research directions.</summary>
 
 I compare directions on expected value per unit of time, and I make the terms explicit:
 
@@ -547,6 +547,14 @@ The failure mode I watch for in myself is picking problems because the method is
 
 - Give an example where the ceiling experiment changed your mind.
 - How do you weigh a direction with a small chance of a very large payoff?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- OpenAI, Machine Learning Engineer, Apr 2026: Defend a research direction and design its experiments ([PracHub](https://prachub.com/interview-questions/defend-a-research-direction-and-experiment-design))
+
+</div>
 
 </details>
 
@@ -999,7 +1007,7 @@ The honest caveat: threshold placement is a judgment under uncertainty, and the 
 </details>
 
 <details class="qa" id="research-030">
-<summary><span class="tag tag-core">core</span><span class="tag tag-type">behavioural</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Why do you want to work on AI safety?</summary>
+<summary><span class="tag tag-core">core</span><span class="tag tag-type">behavioural</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Anthropic</span> Why do you want to work on AI safety?</summary>
 
 **What is tested.** Sincerity, knowledge of what the work consists of, and the ability to reason about uncertain claims. Interviewers at safety-focused labs hear rehearsed answers constantly and probe past them.
 
@@ -1018,6 +1026,16 @@ If your motivation is partly that the problems are technically interesting and t
 
 - Which argument for concern about advanced AI do you find weakest, and why?
 - How would you feel about working on capability evaluations that might show the model is safe to release?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- Anthropic, Software Engineer, Aug 2026: Identify the most important AI safety risk ([PracHub](https://prachub.com/interview-questions/identify-the-most-important-ai-safety-risk))
+- Anthropic, Machine Learning Engineer, undated: Your views on AI safety, ethics, guardrails and governance ([Aced (formerly Exponent)](https://www.aced.io/questions/6266/explain-ai-safety-ethics-governance))
+- Anthropic, Machine Learning Engineer, undated: Why this company ([Aced (formerly Exponent)](https://www.aced.io/questions/5596/why-anthropic))
+
+</div>
 
 </details>
 

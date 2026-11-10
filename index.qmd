@@ -63,6 +63,8 @@ harnesses ({{< var p_orchestration_ai >}}%), backend ({{< var p_backend_ai >}}%)
 - **[Review](review/index.qmd)**: the same cards with spaced repetition, mock interview rounds, and a readiness
   figure per track that shows the highest-demand skills you have not covered.
 - **[Plan](plan/index.qmd)**: the order of areas per track, a six-week schedule and the daily loop.
+- **[Reported questions](report/index.qmd#reported)**: {{< var n_reports >}} questions that candidates report being asked at
+  {{< var n_report_companies >}} of these employers, matched to the cards that cover them. Unverified, with a link to each source.
 - **[Open roles](jobs/index.qmd)**: the postings themselves, filterable by track, role type and skill.
 - **[Notes](notes/index.qmd)**: long-form deep dives from first principles, linked from the skill pages.
 

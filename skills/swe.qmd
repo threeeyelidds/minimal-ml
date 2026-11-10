@@ -786,7 +786,7 @@ PyTorch is a Python front end over a C++ core; ONNX Runtime, TensorRT, Triton an
 - <input type="checkbox" class="chk" data-chk="swe.frontend.2"> Can list the security rules for rendering model output in a browser
 
 <details class="qa" id="swe-019">
-<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">AI</span> Design the client side of a streaming chat interface in React. How do tokens get from the server to the screen, and what breaks in production?</summary>
+<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">AI</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at OpenAI</span> Design the client side of a streaming chat interface in React. How do tokens get from the server to the screen, and what breaks in production?</summary>
 
 **Transport.** POST the request with `fetch` and read `response.body` as a stream of SSE frames. The browser's `EventSource` only does GET without custom headers or a body, which is why most LLM clients parse SSE over `fetch` themselves. Use WebSocket only when the client also streams to the server (voice, collaborative editing). Decode with `TextDecoder` in streaming mode and buffer until a blank line: network chunks align with neither event boundaries nor UTF-8 character boundaries.
 
@@ -815,6 +815,14 @@ PyTorch is a Python front end over a C++ core; ONNX Runtime, TensorRT, Triton an
 
 - Why can you not use EventSource for a chat completion request?
 - The UI freezes on long answers containing code blocks. Where do you look?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- OpenAI, Software Engineer, Aug 2025: AI chatbot system with a front-end focus and storage constraints ([PracHub](https://prachub.com/interview-questions/design-ai-chat-bot-system))
+
+</div>
 
 </details>
 

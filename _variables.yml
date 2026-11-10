@@ -628,6 +628,11 @@ n_level_unlevelled: 723
 n_mle: 890
 n_postings: 2253
 n_raw: 3211
+n_report_companies: 8
+n_reported_cards: 86
+n_reports: 201
+n_reports_carded: 127
+n_reports_nocard: 74
 n_research_engineer: 262
 n_skills: 146
 n_unique: 2617
@@ -1219,6 +1224,7 @@ phd_ai_engineer: '17'
 phd_mle: '38'
 phd_research_engineer: '40'
 phd_share: '28'
+reports_retrieved: 10 November 2026
 skills_per_posting: '27'
 us_share: '74'
 yoe_median: '5'

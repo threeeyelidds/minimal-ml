@@ -120,7 +120,7 @@ available than a hard dependency unless it has a fallback.
 </details>
 
 <details class="qa" id="serving-029">
-<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> The model your product depends on is slow or unavailable. Design the fallbacks and the degradation path.</summary>
+<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Anthropic</span> The model your product depends on is slow or unavailable. Design the fallbacks and the degradation path.</summary>
 
 Decide in advance what the product does at each level of impairment, so that an incident
 executes a plan.
@@ -166,10 +166,21 @@ work: checkpoint and resume, or roll back side effects.
 - Which direction is the safe default when a fraud model times out?
 - How do you keep a fallback model's quality from being discovered during the incident?
 
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- Anthropic, Software Engineer, Aug 2026: Review and scale an inference service design ([PracHub](https://prachub.com/interview-questions/review-and-scale-an-inference-service-design))
+- Anthropic, Software Engineer, Aug 2026: Improve an inference service with admission control, batching, shedding, caching and idempotency ([PracHub](https://prachub.com/interview-questions/improve-an-ml-inference-service))
+- Anthropic, Machine Learning Engineer, Jan 2026: Production ML serving system with focus on scaling and reliability ([PracHub](https://prachub.com/interview-questions/design-a-production-ml-serving-system))
+- Anthropic, Software Engineer, Sep 2025: Review an inference API design for scale ([PracHub](https://prachub.com/interview-questions/review-an-inference-api-design-for-scale))
+
+</div>
+
 </details>
 
 <details class="qa" id="serving-030">
-<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> How do you set timeouts and retries for calls to a model service without making an outage worse? Where do hedged requests fit?</summary>
+<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Anthropic</span> How do you set timeouts and retries for calls to a model service without making an outage worse? Where do hedged requests fit?</summary>
 
 **Timeouts.** Every call needs one, derived from the caller's remaining deadline. Too
 long, and threads pile up behind a dead dependency; too short, and normal tail requests
@@ -208,6 +219,14 @@ everyone than a slow timeout.
 
 - Explain how retries can turn a brief slowdown into a sustained outage.
 - Why must hedging be disabled or capped when the service is overloaded?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- Anthropic, Software Engineer, Aug 2026: Improve an inference service with admission control, batching, shedding, caching and idempotency ([PracHub](https://prachub.com/interview-questions/improve-an-ml-inference-service))
+
+</div>
 
 </details>
 
@@ -307,7 +326,7 @@ high-fan-out systems.
 </details>
 
 <details class="qa" id="serving-010">
-<summary><span class="tag tag-core">core</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> You are given a 200 ms p99 budget for an endpoint that calls a model. How do you break it down, and how do you make sure each part is measured?</summary>
+<summary><span class="tag tag-core">core</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Anthropic</span> You are given a 200 ms p99 budget for an endpoint that calls a model. How do you break it down, and how do you make sure each part is measured?</summary>
 
 Write the request path as stages and give each a budget that sums to less than the
 total, leaving slack for variance.
@@ -353,6 +372,15 @@ shorter context), or renegotiating the budget with evidence.
 
 - The model stage is within budget but end-to-end p99 is 400 ms. Where do you look first?
 - How would this breakdown change for a streaming LLM response?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- Anthropic, Software Engineer, Jul 2026: Low-latency GPU inference service ([PracHub](https://prachub.com/interview-questions/design-a-low-latency-gpu-inference-service))
+- Anthropic, Software Engineer, Sep 2025: Low-latency synchronous inference API ([PracHub](https://prachub.com/interview-questions/design-a-low-latency-ml-inference-api))
+
+</div>
 
 </details>
 
@@ -493,7 +521,7 @@ compile or fuse the model to cut per-operation overhead; fix shapes or bucket th
 - <input type="checkbox" class="chk" data-chk="serving.model-serving.3"> Design serving for many models on few GPUs, including loading, routing and isolation
 
 <details class="qa" id="serving-001">
-<summary><span class="tag tag-core">core</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Online, batch, streaming or asynchronous inference: how do you choose for a given feature?</summary>
+<summary><span class="tag tag-core">core</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Anthropic</span> Online, batch, streaming or asynchronous inference: how do you choose for a given feature?</summary>
 
 Choose by when the input is known and how soon the output is needed.
 
@@ -522,10 +550,19 @@ path times out.
 - Your nightly batch scores cover users who never log in. How would you cut that waste?
 - What changes when a batch feature moves online?
 
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- Anthropic, Machine Learning Engineer, Feb 2026: Batch inference pipeline design ([PracHub](https://prachub.com/interview-questions/explain-batch-inference-design))
+- Anthropic, Software Engineer, Sep 2025: Asynchronous post-and-poll batch inference API ([PracHub](https://prachub.com/interview-questions/design-a-batch-inference-api))
+
+</div>
+
 </details>
 
 <details class="qa" id="serving-002">
-<summary><span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> What is dynamic batching in a model server, why does it help on a GPU, and how do you set its parameters?</summary>
+<summary><span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Anthropic</span> What is dynamic batching in a model server, why does it help on a GPU, and how do you set its parameters?</summary>
 
 A model server receives single requests but a GPU is most efficient on batches. Dynamic
 batching holds incoming requests briefly, groups them into one tensor, runs one forward
@@ -562,10 +599,19 @@ by continuous batching at the token step.
 - At low traffic, dynamic batching makes latency worse. What do you do?
 - How does padding waste change your choice of batch composition?
 
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- Anthropic, Software Engineer, Mar 2026: Request batching for GPU inference ([PracHub](https://prachub.com/interview-questions/design-gpu-inference-request-batching))
+- Anthropic, Machine Learning Engineer, undated: Inference batching system for one GPU, up to 100 inputs per batch, synchronous callers ([Aced (formerly Exponent)](https://www.aced.io/questions/5780/inference-batching-system))
+
+</div>
+
 </details>
 
 <details class="qa" id="serving-003">
-<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Implement a dynamic batcher with asyncio: requests are awaited individually, and the model is called on batches of up to N items or after at most T milliseconds.</summary>
+<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Anthropic</span> Implement a dynamic batcher with asyncio: requests are awaited individually, and the model is called on batches of up to N items or after at most T milliseconds.</summary>
 
 ```python
 import asyncio
@@ -630,10 +676,19 @@ batch size and queue time.
 - How would you drop requests whose client has already given up?
 - What happens to latency if `infer_fn` is called on the event loop thread?
 
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- Anthropic, Software Engineer, Mar 2026: Request batching for GPU inference ([PracHub](https://prachub.com/interview-questions/design-gpu-inference-request-batching))
+- Anthropic, Machine Learning Engineer, undated: Inference batching system for one GPU, up to 100 inputs per batch, synchronous callers ([Aced (formerly Exponent)](https://www.aced.io/questions/5780/inference-batching-system))
+
+</div>
+
 </details>
 
 <details class="qa" id="serving-004">
-<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Design a serving platform for several hundred models, most of them rarely called, on a limited pool of GPUs.</summary>
+<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Anthropic</span> Design a serving platform for several hundred models, most of them rarely called, on a limited pool of GPUs.</summary>
 
 One GPU per model is unaffordable when most models are idle, so the design is about
 sharing memory and absorbing cold starts.
@@ -672,6 +727,14 @@ popular new model evicting many small ones.
 
 - How do you detect and stop thrashing?
 - What changes if the models are adapters over one shared base model?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- Anthropic, Software Engineer, Aug 2025: GPU-backed inference API for multiple models ([PracHub](https://prachub.com/interview-questions/design-a-gpu-inference-api))
+
+</div>
 
 </details>
 
@@ -1134,7 +1197,7 @@ Be honest about how much of this you have done yourself.
 - <input type="checkbox" class="chk" data-chk="serving.llm-inference.4"> Compare the main open inference engines and a hosted API for a given workload
 
 <details class="qa" id="serving-005">
-<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> How does an LLM inference engine serve many concurrent requests efficiently? Explain prefill and decode, continuous batching and how the KV cache is managed.</summary>
+<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Amazon</span> How does an LLM inference engine serve many concurrent requests efficiently? Explain prefill and decode, continuous batching and how the KV cache is managed.</summary>
 
 **Two phases.** *Prefill* processes the whole prompt in one parallel pass and fills the
 KV cache; its time grows with prompt length and determines time to first token (TTFT).
@@ -1168,6 +1231,14 @@ GPU, and queue time, each at p50 and p99 and as a function of load.
 
 - Why is decode bound by memory bandwidth and prefill by compute?
 - Throughput is high but streaming stutters. Which scheduling decision is responsible?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- Amazon, Software Engineer, Sep 2026: How a decoder-only transformer produces next-token probabilities and how an inference engine serves it efficiently ([PracHub](https://prachub.com/interview-questions/explain-decoder-only-llm-architecture-and-how-vllm-serves-it-efficiently))
+
+</div>
 
 </details>
 
@@ -1311,7 +1382,7 @@ before committing.
 - <input type="checkbox" class="chk" data-chk="serving.quantization.3"> Say what 8-bit and 4-bit weight quantization do to an LLM and how to check the damage
 
 <details class="qa" id="serving-014">
-<summary><span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Explain quantization for inference. What is the mapping, and how do post-training quantization and quantization-aware training differ?</summary>
+<summary><span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Nvidia</span> Explain quantization for inference. What is the mapping, and how do post-training quantization and quantization-aware training differ?</summary>
 
 Quantization stores and computes with low-precision integers instead of 32-bit floats.
 The affine mapping from a real value $x$ to an integer $q$ in $[q_{\min}, q_{\max}]$:
@@ -1350,10 +1421,18 @@ ranges. Keep sensitive layers (often the first and last) at higher precision.
 - Why must the zero point be an exact integer?
 - Your calibration set does not cover a rare input type. What happens at inference?
 
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- Nvidia, Software Engineer, Sep 2026: Convert 32-bit float tensors to int8: scale, zero point, clipping and outliers ([PracHub](https://prachub.com/interview-questions/fp32-to-int8-tensor-quantization-scale-zero-point-clipping-and-outliers))
+
+</div>
+
 </details>
 
 <details class="qa" id="serving-015">
-<summary><span class="tag tag-core">core</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> Implement uniform affine quantization and dequantization of a tensor in NumPy, for both the asymmetric and the symmetric case.</summary>
+<summary><span class="tag tag-core">core</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Nvidia</span> Implement uniform affine quantization and dequantization of a tensor in NumPy, for both the asymmetric and the symmetric case.</summary>
 
 ```python
 import numpy as np
@@ -1401,6 +1480,14 @@ Follow-ups an interviewer may ask for:
 
 - Why does one outlier weight hurt min-max quantization so much?
 - How many distinct values can a 4-bit symmetric quantizer represent, and what does that imply for the scale?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- Nvidia, Software Engineer, Sep 2026: Convert 32-bit float tensors to int8: scale, zero point, clipping and outliers ([PracHub](https://prachub.com/interview-questions/fp32-to-int8-tensor-quantization-scale-zero-point-clipping-and-outliers))
+
+</div>
 
 </details>
 

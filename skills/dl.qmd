@@ -231,7 +231,7 @@ Details that matter in practice:
 </details>
 
 <details class="qa" id="dl-002">
-<summary><span class="tag tag-core">core</span><span class="tag tag-type">derivation</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> Derive the backward pass of a linear layer Y = X W^T + b for a batch of inputs, given the upstream gradient dL/dY. State all shapes.</summary>
+<summary><span class="tag tag-core">core</span><span class="tag tag-type">derivation</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at OpenAI, Anthropic</span> Derive the backward pass of a linear layer Y = X W^T + b for a batch of inputs, given the upstream gradient dL/dY. State all shapes.</summary>
 
 Shapes: $X\in\mathbb{R}^{B\times d_{in}}$, $W\in\mathbb{R}^{d_{out}\times d_{in}}$, $b\in\mathbb{R}^{d_{out}}$, $Y\in\mathbb{R}^{B\times d_{out}}$, and the upstream gradient $G=\partial L/\partial Y\in\mathbb{R}^{B\times d_{out}}$.
 
@@ -263,6 +263,17 @@ Checks and consequences:
 
 - How would you compute per-example gradient norms for the whole network in one backward pass?
 - What changes for a convolution?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- OpenAI, Machine Learning Engineer, Apr 2026: Debug a small GPT and backpropagate through a matrix multiply ([PracHub](https://prachub.com/interview-questions/debug-minigpt-and-backpropagate-matmul))
+- OpenAI, Machine Learning Engineer, Apr 2026: Backpropagation for a tiny network by hand ([PracHub](https://prachub.com/interview-questions/implement-backprop-for-a-tiny-network))
+- OpenAI, Software Engineer, Sep 2025: Implement and debug backpropagation for a two-layer network in NumPy ([PracHub](https://prachub.com/interview-questions/implement-and-debug-backprop-in-numpy))
+- Anthropic, Software Engineer, Sep 2025: Implement and derive backprop for a single-neuron classifier ([PracHub](https://prachub.com/interview-questions/implement-and-derive-backprop-from-scratch))
+
+</div>
 
 </details>
 
@@ -753,7 +764,7 @@ Caveats:
 </details>
 
 <details class="qa" id="dl-019">
-<summary><span class="tag tag-core">core</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Implement scaled dot-product attention and multi-head self-attention with a causal mask in PyTorch. How do you test that it is correct?</summary>
+<summary><span class="tag tag-core">core</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Anthropic, Meta, Nvidia +3</span> Implement scaled dot-product attention and multi-head self-attention with a causal mask in PyTorch. How do you test that it is correct?</summary>
 
 ```python
 import math
@@ -799,6 +810,22 @@ What an interviewer checks:
 
 - Add a key-padding mask for variable-length batches.
 - Change this to grouped-query attention. Which shapes change?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- Anthropic, Software Engineer, Sep 2025: Numerically stable scaled dot-product attention in PyTorch ([PracHub](https://prachub.com/interview-questions/implement-and-analyze-custom-attention))
+- Meta, Machine Learning Engineer, Sep 2026: Forward pass of multi-head attention from scratch ([PracHub](https://prachub.com/interview-questions/implement-the-forward-pass-of-multi-head-attention-from-scratch))
+- Meta, Machine Learning Engineer, Jun 2026: Self-attention: implementation, complexity and efficient variants ([PracHub](https://prachub.com/interview-questions/self-attention-implementation-complexity-and-efficient-variants))
+- Nvidia, Software Engineer, Jul 2025: Transformers and the query, key and value matrices ([PracHub](https://prachub.com/interview-questions/explain-transformers-and-qkv-matrices))
+- TikTok, Machine Learning Engineer, Feb 2026: Pseudocode for self-attention and cross-entropy ([PracHub](https://prachub.com/interview-questions/write-self-attention-and-cross-entropy-pseudocode))
+- Amazon, Machine Learning Engineer, Jan 2026: Multi-head attention with a KV cache and grouped-query attention ([PracHub](https://prachub.com/interview-questions/implement-multi-head-attention-with-a-kv-cache-and-cached-grouped-query-attention))
+- Amazon, Applied Scientist, Jul 2026: Numerically stable sigmoid, softmax and scaled dot-product attention ([PracHub](https://prachub.com/interview-questions/implement-stable-sigmoid-softmax-and-scaled-dot-product-attention))
+- Apple, Machine Learning Engineer, Apr 2026: Masked multi-head self-attention ([PracHub](https://prachub.com/interview-questions/implement-masked-multi-head-self-attention))
+- Apple, Software Engineer, Sep 2025: Multi-head self-attention, implemented correctly ([PracHub](https://prachub.com/interview-questions/implement-multi-head-self-attention-correctly))
+
+</div>
 
 </details>
 
@@ -948,7 +975,7 @@ Properties of RoPE: it is applied to queries and keys in every attention layer, 
 </details>
 
 <details class="qa" id="dl-024">
-<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> What is the KV cache in autoregressive decoding? Derive its memory footprint and the compute it saves, and explain what it changes about serving.</summary>
+<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at TikTok, Amazon</span> What is the KV cache in autoregressive decoding? Derive its memory footprint and the compute it saves, and explain what it changes about serving.</summary>
 
 In a causal decoder the keys and values of earlier tokens, at every layer, do not depend on later tokens. So at each step only the new token is run through the network: compute its query, key and value in each layer, append the key and value to the cache, and attend from the single new query over all cached keys.
 
@@ -975,10 +1002,19 @@ $$
 - Why are keys and values cached but not queries?
 - Why is prefill compute bound and decode memory-bandwidth bound?
 
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- TikTok, Machine Learning Engineer, Jan 2026: FlashAttention, the KV cache and rotary position embeddings ([PracHub](https://prachub.com/interview-questions/explain-flashattention-kv-cache-and-rope))
+- Amazon, Machine Learning Engineer, Jan 2026: Multi-head attention with a KV cache and grouped-query attention ([PracHub](https://prachub.com/interview-questions/implement-multi-head-attention-with-a-kv-cache-and-cached-grouped-query-attention))
+
+</div>
+
 </details>
 
 <details class="qa" id="dl-025">
-<summary><span class="tag tag-staff">staff</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> What do multi-query attention, grouped-query attention and FlashAttention each change relative to standard multi-head attention, and what does each leave unchanged?</summary>
+<summary><span class="tag tag-staff">staff</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Meta, TikTok</span> What do multi-query attention, grouped-query attention and FlashAttention each change relative to standard multi-head attention, and what does each leave unchanged?</summary>
 
 **Baseline (MHA).** $h$ heads, each with its own query, key and value projections. The cache holds $2\,h\,d_h$ numbers per token and layer.
 
@@ -1005,6 +1041,15 @@ $$
 - Write the KV-cache size under MHA, GQA and MQA for the same model.
 - If FLOPs are unchanged, where exactly does FlashAttention's speed-up come from?
 - Can you get attention maps out of a FlashAttention forward pass?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- Meta, Machine Learning Engineer, Jun 2026: Self-attention: implementation, complexity and efficient variants ([PracHub](https://prachub.com/interview-questions/self-attention-implementation-complexity-and-efficient-variants))
+- TikTok, Machine Learning Engineer, Jan 2026: FlashAttention, the KV cache and rotary position embeddings ([PracHub](https://prachub.com/interview-questions/explain-flashattention-kv-cache-and-rope))
+
+</div>
 
 </details>
 
@@ -1258,7 +1303,7 @@ With large pretrained models a training loss near zero is normal, so judge by th
 - <input type="checkbox" class="chk" data-chk="dl.generative.4"> Write the autoregressive likelihood and implement temperature, top-k and nucleus sampling
 
 <details class="qa" id="dl-026">
-<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Implement next-token sampling with temperature, top-k and nucleus (top-p) filtering in PyTorch. Explain what each control does and the order in which they are applied.</summary>
+<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Anthropic</span> Implement next-token sampling with temperature, top-k and nucleus (top-p) filtering in PyTorch. Explain what each control does and the order in which they are applied.</summary>
 
 ```python
 import torch
@@ -1301,10 +1346,18 @@ What an interviewer checks:
 - With temperature 0.7 and top_p 0.9, what changes if you apply top-p before the temperature?
 - How does beam search differ in what it optimises, and why is it rarely used for open-ended generation?
 
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- Anthropic, Machine Learning Engineer, undated: Adjust the creativity of a generative model ([Aced (formerly Exponent)](https://www.aced.io/questions/5609/adjust-gen-ai-model-creativity))
+
+</div>
+
 </details>
 
 <details class="qa" id="dl-029">
-<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">derivation</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> Derive the evidence lower bound for a VAE, interpret its two terms, and explain the reparameterisation trick and posterior collapse.</summary>
+<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">derivation</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Google</span> Derive the evidence lower bound for a VAE, interpret its two terms, and explain the reparameterisation trick and posterior collapse.</summary>
 
 The model is $p_\theta(x,z)=p(z)\,p_\theta(x\mid z)$, and $\log p_\theta(x)=\log\int p(z)\,p_\theta(x\mid z)\,dz$ is intractable. Introduce an encoder $q_\phi(z\mid x)$. For any $q$:
 
@@ -1332,6 +1385,14 @@ The last term is non-negative, so the ELBO is a lower bound, tight when the enco
 
 - Why is the bound loose with a diagonal-Gaussian encoder?
 - Derive the closed-form KL between a diagonal Gaussian and the standard normal.
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- Google, Machine Learning Engineer, Aug 2026: VAEs, the ELBO, the KL term and reparameterisation ([PracHub](https://prachub.com/interview-questions/explain-vaes-elbo-kl-and-reparameterization))
+
+</div>
 
 </details>
 

@@ -251,7 +251,7 @@ why vanilla policy gradient is on-policy and uses each batch once.
 </details>
 
 <details class="qa" id="rl-006">
-<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">derivation</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> What is generalized advantage estimation? Write it down and explain what lambda trades off.</summary>
+<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">derivation</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at TikTok</span> What is generalized advantage estimation? Write it down and explain what lambda trades off.</summary>
 
 The policy gradient needs an estimate of $A^\pi(s_t, a_t)$. Two extremes:
 
@@ -280,6 +280,14 @@ estimator reduces variance by ignoring far-future rewards at the price of bias.
 
 - Early in training the critic is poor. Would you raise or lower $\lambda$?
 - How do you handle an episode that was cut off by a time limit?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- TikTok, Software Engineer, Jan 2026: RL policy types and modern policy-gradient methods (TRPO, PPO, GAE) ([PracHub](https://prachub.com/interview-questions/explain-rl-policy-types-and-modern-policy-gradients))
+
+</div>
 
 </details>
 
@@ -328,7 +336,7 @@ Pitfalls an interviewer looks for:
 </details>
 
 <details class="qa" id="rl-008">
-<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> Explain the PPO clipped objective and write the loss in PyTorch. Which implementation details decide whether it works?</summary>
+<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at TikTok</span> Explain the PPO clipped objective and write the loss in PyTorch. Which implementation details decide whether it works?</summary>
 
 PPO wants several gradient epochs from each on-policy batch without moving the policy so
 far that the batch stops being representative. With the ratio
@@ -363,6 +371,14 @@ Clipping alone does not bound the KL, so monitor it and the fraction of clipped 
 
 - The approximate KL spikes after the second epoch. What do you change?
 - How is this loss used when the policy is a language model generating a sequence of tokens?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- TikTok, Software Engineer, Jan 2026: RL policy types and modern policy-gradient methods (TRPO, PPO, GAE) ([PracHub](https://prachub.com/interview-questions/explain-rl-policy-types-and-modern-policy-gradients))
+
+</div>
 
 </details>
 
@@ -827,7 +843,7 @@ the optimum is preserved.
 </details>
 
 <details class="qa" id="rl-018">
-<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Agents exploit their reward. How do you design a reward, and what process catches specification gaming before it ships?</summary>
+<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Google</span> Agents exploit their reward. How do you design a reward, and what process catches specification gaming before it ships?</summary>
 
 Treat the reward as a specification that an optimiser will satisfy literally. Wherever
 it differs from what you want, a strong enough learner finds the difference: collecting
@@ -863,6 +879,14 @@ outcome.
 
 - Reward rises steadily while held-out task success is flat. What do you check?
 - How does this apply when the reward is another model's judgement?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- Google, Machine Learning Engineer, Aug 2026: Reward hacking in LLM post-training and how to detect and prevent it ([PracHub](https://prachub.com/interview-questions/detect-and-prevent-reward-hacking))
+
+</div>
 
 </details>
 

@@ -21,11 +21,17 @@
     return {
       id: d.id, area: d.area, skill: d.skill, also: (d.also || "").split(" ").filter(Boolean),
       type: d.type, level: d.level, tracks: (d.tracks || "").split(" ").filter(Boolean), el: el,
+      reported: (d.reported || "").split("|").filter(Boolean),
       text: (el.querySelector(".rv-q") || el).textContent.trim()
     };
   });
   var byId = {};
   cards.forEach(function (c) { byId[c.id] = c; });
+  // employers for which a third-party site lists a question on a card's topic as asked in an interview
+  var repCount = {};
+  cards.forEach(function (c) { c.reported.forEach(function (co) { repCount[co] = (repCount[co] || 0) + 1; }); });
+  var REPORTED = [["", "All cards"], ["any", "Reported in interviews"]].concat(
+    Object.keys(repCount).sort(function (a, b) { return repCount[b] - repCount[a]; }).map(function (co) { return [co, "Reported at " + co + " (" + repCount[co] + ")"]; }));
 
   var TRACKS = [["all", "All tracks"], ["mle", "ML engineer"], ["ai", "AI engineer"], ["re", "Research engineer"]];
   var TYPES = [["concept", "Concept"], ["tradeoff", "Trade-off"], ["design", "Design"], ["debug", "Debugging"], ["coding", "Coding"],
@@ -77,7 +83,7 @@
   }
 
   /* ---------- filters ---------- */
-  var f = { track: store.set.track || "all", areas: [], skill: "", level: "", type: "", status: "", q: "" };
+  var f = { track: store.set.track || "all", areas: [], skill: "", level: "", type: "", status: "", rep: "", q: "" };
   function readHash() {
     var h = location.hash.replace(/^#/, "");
     h.split("&").forEach(function (kv) {
@@ -85,6 +91,7 @@
       if (p[0] === "area" && p[1]) f.areas = p[1].split(",").filter(function (a) { return areaInfo[a]; });
       if (p[0] === "skill" && skillInfo[p[1]]) { f.skill = p[1]; f.areas = [skillInfo[p[1]].area]; }
       if (p[0] === "track" && p[1]) f.track = p[1];
+      if (p[0] === "reported" && p[1]) f.rep = p[1] === "1" ? "any" : decodeURIComponent(p[1]);
       if (p[0] === "view" && p[1]) view = p[1];
     });
   }
@@ -99,6 +106,7 @@
     if (f.skill && c.skill !== f.skill && c.also.indexOf(f.skill) < 0) return false;
     if (f.level && c.level !== f.level) return false;
     if (f.type && c.type !== f.type) return false;
+    if (f.rep && (f.rep === "any" ? !c.reported.length : c.reported.indexOf(f.rep) < 0)) return false;
     if (f.status) {
       var st = status(c.id);
       if (f.status === "due") { if (!isDue(c.id)) return false; }
@@ -134,6 +142,13 @@
     c.querySelectorAll("[id]").forEach(function (n) { n.removeAttribute("id"); });
     return c;
   }
+  function reportedBox(card) {
+    var r = part(card, "rv-reported");
+    if (!r) return null;
+    r.className = "rv-probesbox rv-reportedbox";
+    r.insertBefore(h("div", { class: "rv-probetitle", text: "Reported in interviews (candidate reports on third-party sites, not verified)" }), r.firstChild);
+    return r;
+  }
   function shuffle(a) { for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
   function tags(card) {
     var s = skillInfo[card.skill], a = areaInfo[card.area];
@@ -143,6 +158,7 @@
     wrap.appendChild(h("span", { class: "tag tag-type", text: (TYPES.filter(function (t) { return t[0] === card.type; })[0] || [0, card.type])[1].toLowerCase() }));
     if (s) wrap.appendChild(h("span", { class: "tag tag-demand", title: "Share of postings naming this skill" + (f.track === "all" ? "" : " in the selected track"), text: Math.round(demand(card)) + "% of postings" }));
     wrap.appendChild(h("span", { class: "tag tag-status st-" + status(card.id), text: status(card.id) }));
+    if (card.reported.length) wrap.appendChild(h("span", { class: "tag tag-rep", title: "A third-party site lists a question on this topic as asked in an interview", text: "asked at " + card.reported.slice(0, 3).join(", ") + (card.reported.length > 3 ? " +" + (card.reported.length - 3) : "") }));
     return wrap;
   }
 
@@ -195,6 +211,7 @@
     box.appendChild(select("Skill", skillOpts, f.skill, function (v) { f.skill = v; onChange(); }));
     box.appendChild(select("Level", [["", "Any level"]].concat(LEVELS), f.level, function (v) { f.level = v; onChange(); }));
     box.appendChild(select("Type", [["", "Any type"]].concat(TYPES), f.type, function (v) { f.type = v; onChange(); }));
+    if (REPORTED.length > 2) box.appendChild(select("Asked in interviews", REPORTED, f.rep, function (v) { f.rep = v; onChange(); }));
     box.appendChild(select("Status", [["", "Any status"], ["new", "New"], ["learning", "Learning"], ["known", "Known"], ["due", "Due now"]], f.status, function (v) { f.status = v; onChange(); }));
     var inp = h("input", { type: "search", placeholder: "Search cards", value: f.q, "aria-label": "Search cards" });
     var t; inp.addEventListener("input", function () { clearTimeout(t); t = setTimeout(function () { f.q = inp.value.trim(); onChange(true); }, 200); });
@@ -264,6 +281,7 @@
       var a = part(card, "rv-a"); a.className = "rv-answer"; stage.appendChild(a);
       var p = part(card, "rv-probes");
       if (p) { p.className = "rv-probesbox"; p.insertBefore(h("div", { class: "rv-probetitle", text: "Follow-ups an interviewer would ask" }), p.firstChild); stage.appendChild(p); }
+      var rb = reportedBox(card); if (rb) stage.appendChild(rb);
       var rec = store.cards[card.id];
       var labels = [["Again", "missed it"], ["Hard", "partly"], ["Good", "got it"], ["Easy", "cold"]];
       stage.appendChild(h("div", { class: "rv-grades" }, labels.map(function (l, g) {
@@ -329,6 +347,7 @@
           det.appendChild(tags(c));
           var a = part(c, "rv-a"); a.className = "rv-answer"; det.appendChild(a);
           var p = part(c, "rv-probes"); if (p) { p.className = "rv-probesbox"; p.insertBefore(h("div", { class: "rv-probetitle", text: "Follow-ups" }), p.firstChild); det.appendChild(p); }
+          var rb = reportedBox(c); if (rb) det.appendChild(rb);
           typeset(det);
         }
       });
@@ -347,6 +366,7 @@
     { id: "llmapp", title: "AI engineering deep dive", desc: "Eight questions on agents, retrieval, evaluation and serving LLM products.", pick: function (t) { return draw(t, { areas: ["llmapp", "eval", "serving"], level: ["senior", "staff"] }, 8); } },
     { id: "ranking", title: "Search and recommendation deep dive", desc: "Eight senior questions on retrieval, ranking, ads and experimentation.", pick: function (t) { return draw(t, { areas: ["recsys"], level: ["senior", "staff"] }, 8); } },
     { id: "research", title: "Research engineering deep dive", desc: "Eight questions on training, research practice and infrastructure.", pick: function (t) { return draw(t, { areas: ["research", "llm", "dl", "infra", "rl"], level: ["senior", "staff"] }, 8); } },
+    { id: "reported", title: "Reported in interviews", desc: "Eight cards on topics that candidates report being asked, across all areas. The reports are unverified.", pick: function (t) { return draw(t, { reported: true }, 8); } },
     { id: "debug", title: "Debugging round", desc: "Six \"this is broken, what do you do\" questions.", pick: function (t) { return draw(t, { type: ["debug"] }, 6); } },
     { id: "behavioral", title: "Behavioural and leadership", desc: "Five questions. Answer each with a real story in under three minutes.", pick: function (t) { return draw(t, { areas: ["senior"], type: ["behavioral"] }, 5); } },
     { id: "loop", title: "Full loop", desc: "One design case, two coding, six breadth, three behavioural. About two and a half hours.", pick: function (t) {
@@ -359,6 +379,7 @@
       if (spec.areas && spec.areas.indexOf(c.area) < 0) return false;
       if (spec.type && spec.type.indexOf(c.type) < 0) return false;
       if (spec.level && spec.level.indexOf(c.level) < 0) return false;
+      if (spec.reported && !c.reported.length) return false;
       return true;
     });
     // weight towards cards not yet known

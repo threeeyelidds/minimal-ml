@@ -68,7 +68,7 @@ Prioritisation (what not to build in version one), trade-offs stated with their 
 </details>
 
 <details class="qa" id="cases-002">
-<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">design case</span><span class="tag tag-track">MLE</span> Design the home-feed recommendation system for a short-video product.</summary>
+<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">design case</span><span class="tag tag-track">MLE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at OpenAI, Google, Meta</span> Design the home-feed recommendation system for a short-video product.</summary>
 
 **Clarify.** Assume 100M daily users, about 40 feed requests per user per day returning 8 videos each, a corpus of 1B videos with 20M uploads per day. That is 4B requests per day: about 46k QPS on average and 120k at peak. Server budget 200 ms at p99. The goal is long-term retention, not clicks.
 
@@ -97,6 +97,18 @@ Prioritisation (what not to build in version one), trade-offs stated with their 
 - How do you set the weights in the value function, and who owns that decision?
 - Retention is flat but time spent is up 2%. Do you launch?
 - How would you add a generative or sequence-based retriever to this funnel?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- OpenAI, Machine Learning Engineer, Dec 2025: End-to-end recommendation system for a personalised feed ([PracHub](https://prachub.com/interview-questions/design-a-recommendation-system-end-to-end))
+- Google, Machine Learning Engineer, Aug 2026: Watch-next video recommender, with its losses and optimiser updates derived ([PracHub](https://prachub.com/interview-questions/design-a-watch-next-video-recommender-and-derive-its-losses-and-optimizer-update-rules))
+- Google, Machine Learning Engineer, Dec 2025: Real-time recommendation system ([PracHub](https://prachub.com/interview-questions/design-a-real-time-recommendation-system))
+- Meta, Machine Learning Engineer, Jul 2026: Large-scale personalised recommendation system end to end ([PracHub](https://prachub.com/interview-questions/design-a-large-scale-personalized-recommendation-system-end-to-end))
+- Meta, Machine Learning Engineer, Feb 2026: Short-video recommendation system ([PracHub](https://prachub.com/interview-questions/design-a-short-video-recommendation-system-2))
+
+</div>
 
 </details>
 
@@ -135,7 +147,7 @@ Prioritisation (what not to build in version one), trade-offs stated with their 
 </details>
 
 <details class="qa" id="cases-004">
-<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">design case</span><span class="tag tag-track">MLE</span> Design click-through-rate prediction and the auction for feed ads.</summary>
+<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">design case</span><span class="tag tag-track">MLE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Meta, TikTok</span> Design click-through-rate prediction and the auction for feed ads.</summary>
 
 **Clarify.** Assume 1B ad requests per day: 12k QPS on average and 35k at peak. 10M active ads. The ad decision has about 100 ms inside the page request. Advertisers bid per click or optimise for conversions.
 
@@ -165,6 +177,16 @@ Calibration matters because the prediction multiplies a bid: a 10% over-predicti
 - Why does a model with better AUC sometimes lose revenue?
 - How do you handle conversions that arrive seven days after the click?
 - What changes when advertisers use automated bidding?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- Meta, Machine Learning Engineer, Jan 2026: Low-latency ads ranking with calibration ([PracHub](https://prachub.com/interview-questions/design-an-ads-ranking-system-with-calibration))
+- Meta, Data Scientist, Oct 2025: Ad recommendation and ranking system ([PracHub](https://prachub.com/interview-questions/design-an-ad-recommendation-and-ranking-system))
+- TikTok, Data Scientist, Oct 2025: Ad selection across three advertiser objectives ([PracHub](https://prachub.com/interview-questions/design-an-ad-selection-system-across-objectives))
+
+</div>
 
 </details>
 
@@ -202,7 +224,7 @@ The rewrite is an extra recall path merged with the original query's results, wh
 </details>
 
 <details class="qa" id="cases-006">
-<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">design case</span><span class="tag tag-track">AI</span> <span class="tag tag-track">MLE</span> Design an enterprise assistant that answers questions over company documents, where each document has access permissions.</summary>
+<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">design case</span><span class="tag tag-track">AI</span> <span class="tag tag-track">MLE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at OpenAI</span> Design an enterprise assistant that answers questions over company documents, where each document has access permissions.</summary>
 
 **Clarify.** Assume 50k employees, 20M documents across wikis, drives, tickets and chat, with source-system permissions by user and group. 20 questions per user per day is 1M per day: about 12 QPS on average, perhaps 100 at peak. Load is small; the hard parts are permissions, freshness and answer quality.
 
@@ -230,6 +252,16 @@ The rewrite is an extra recall path merged with the original query's results, wh
 - A user is in 2,000 groups. How do you filter efficiently?
 - How quickly must a permission revocation take effect, and how do you guarantee it?
 - The answer is right but cites the wrong document. How do you measure and fix that?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- OpenAI, Machine Learning Engineer, Sep 2026: Multi-tenant enterprise RAG assistant with hybrid retrieval, reranking and access controls ([PracHub](https://prachub.com/interview-questions/design-a-multi-tenant-enterprise-rag-assistant-hybrid-retrieval-reranking-acls))
+- OpenAI, Machine Learning Engineer, Aug 2025: End-to-end enterprise RAG search ([PracHub](https://prachub.com/interview-questions/design-enterprise-rag-search-system))
+- OpenAI, Software Engineer, Dec 2025: Enterprise assistant over internal documents ([PracHub](https://prachub.com/interview-questions/design-an-enterprise-rag-assistant-for-internal-docs))
+
+</div>
 
 </details>
 
@@ -266,7 +298,7 @@ The rewrite is an extra recall path merged with the original query's results, wh
 </details>
 
 <details class="qa" id="cases-008">
-<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">design case</span><span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Design a coding agent harness with sandboxed execution.</summary>
+<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">design case</span><span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at OpenAI, Meta</span> Design a coding agent harness with sandboxed execution.</summary>
 
 **Clarify.** The agent takes a task in a repository, edits files, runs commands and tests, and returns a diff. Assume 5,000 concurrent sessions, tasks of 20 to 100 model turns, both interactive and background use. Code and commands are untrusted: generated by a model that reads untrusted text.
 
@@ -296,6 +328,15 @@ The rewrite is an extra recall path merged with the original query's results, wh
 - The agent needs to install a package from the internet. How do you allow it safely?
 - How do you detect that the agent passed the tests by weakening them?
 - What state must survive a crash so that a session can resume?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- OpenAI, Machine Learning Engineer, Apr 2026: Agent harness and evaluation system for a tool-using agent ([PracHub](https://prachub.com/interview-questions/design-an-agent-harness-and-evaluation-system))
+- Meta, Machine Learning Engineer, Jun 2026: LLM-based coding assistant end to end ([PracHub](https://prachub.com/interview-questions/design-an-llm-based-coding-assistant))
+
+</div>
 
 </details>
 
@@ -368,7 +409,7 @@ The rewrite is an extra recall path merged with the original query's results, wh
 </details>
 
 <details class="qa" id="cases-011">
-<summary><span class="tag tag-staff">staff</span><span class="tag tag-type">design case</span><span class="tag tag-track">RE</span> <span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Design a fine-tuning and post-training pipeline for a domain model, supervised fine-tuning followed by RL or preference tuning, with evaluation gates.</summary>
+<summary><span class="tag tag-staff">staff</span><span class="tag tag-type">design case</span><span class="tag tag-track">RE</span> <span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Meta</span> Design a fine-tuning and post-training pipeline for a domain model, supervised fine-tuning followed by RL or preference tuning, with evaluation gates.</summary>
 
 **Clarify.** A base model must reach a quality bar on a domain task (assume structured generation with a checkable outcome), at a fixed serving budget, with releases every few weeks. The pipeline must be repeatable by someone who did not build it.
 
@@ -397,6 +438,14 @@ The rewrite is an extra recall path merged with the original query's results, wh
 - Reward goes up for 1,000 steps while the independent metric falls. What do you do?
 - When would you choose DPO over policy-gradient RL here?
 - How do you choose which RL checkpoint to ship?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- Meta, Machine Learning Engineer, Sep 2025: Asynchronous RLHF-style post-training system for a production chat model ([PracHub](https://prachub.com/interview-questions/architect-an-asynchronous-rl-post-training-system))
+
+</div>
 
 </details>
 
@@ -437,7 +486,7 @@ I would choose compressed vectors in memory with full-precision re-scoring, shar
 </details>
 
 <details class="qa" id="cases-013">
-<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">design case</span><span class="tag tag-track">MLE</span> Design real-time fraud detection for card payments.</summary>
+<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">design case</span><span class="tag tag-track">MLE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Google, TikTok</span> Design real-time fraud detection for card payments.</summary>
 
 **Clarify.** Assume 100M transactions per day: 1,200 per second on average and 5,000 at peak. A decision is needed inside the authorisation flow; the model has 30 ms of a 100 ms budget. Fraud is about 0.1% of transactions. Actions: approve, step-up authentication, decline, or queue for review.
 
@@ -466,10 +515,19 @@ I would choose compressed vectors in memory with full-precision re-scoring, shar
 - A new attack pattern appears at 2 a.m. What in your design responds, and how fast?
 - How do you set thresholds differently for a 5-unit and a 5,000-unit transaction?
 
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- Google, Machine Learning Engineer, Jan 2026: Fraud detection system ([PracHub](https://prachub.com/interview-questions/design-a-fraud-detection-system-2))
+- TikTok, Data Scientist, Jul 2025: Real-time card fraud detection ([PracHub](https://prachub.com/interview-questions/design-real-time-credit-card-fraud-detection-system))
+
+</div>
+
 </details>
 
 <details class="qa" id="cases-014">
-<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">design case</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Design a content moderation system for a platform with text, image and video uploads.</summary>
+<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">design case</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Meta</span> Design a content moderation system for a platform with text, image and video uploads.</summary>
 
 **Clarify.** Assume 500M items per day, about 5,800 per second, of which 100M are videos. Policies cover many categories with different severity; the most severe must be blocked before publication, others can be actioned after. Policies change and differ by region.
 
@@ -500,6 +558,17 @@ I would choose compressed vectors in memory with full-precision re-scoring, shar
 - How do you measure recall when you cannot label everything?
 - A new policy takes effect next week and there are no labels. What do you do?
 - How do you handle a live stream as opposed to an upload?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- Meta, Machine Learning Engineer, Feb 2026: Image copyright-violation detection ([PracHub](https://prachub.com/interview-questions/design-an-image-copyright-violation-detection-system))
+- Meta, Machine Learning Engineer, Dec 2025: Detect weapon-selling ads in posts using several modalities ([PracHub](https://prachub.com/interview-questions/design-weapon-selling-ad-detection-from-posts))
+- Meta, Machine Learning Engineer, Jan 2026: Weapon-sale ad detection system ([PracHub](https://prachub.com/interview-questions/design-a-weapon-sale-ad-detection-system))
+- Meta, Machine Learning Engineer, Nov 2025: Harmful-content text classifier ([PracHub](https://prachub.com/interview-questions/build-harmful-content-text-classifier))
+
+</div>
 
 </details>
 

@@ -88,7 +88,7 @@ Tick an item when you can explain it without notes; ticks are saved in this brow
 - <input type="checkbox" class="chk" data-chk="llmapp.agents.5"> Write a minimal tool-calling loop from memory
 
 <details class="qa" id="llmapp-001">
-<summary><span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> What is an agent, concretely? Walk me through the loop and tell me which parts belong to the model and which to your code.</summary>
+<summary><span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Google</span> What is an agent, concretely? Walk me through the loop and tell me which parts belong to the model and which to your code.</summary>
 
 An agent is a model run in a loop where the model, not the code, picks the next action from
 what it has observed so far. It has four parts:
@@ -115,10 +115,18 @@ flow is fixed in code and the model only fills in steps, it is a workflow, not a
 - Which stop conditions would you enforce in code even if the prompt already states them?
 - What does the model see when a tool call fails?
 
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- Google, Software Engineer, Jul 2026: Scalable and safe agentic system with deterministic controls ([PracHub](https://prachub.com/interview-questions/design-a-scalable-and-safe-agentic-system))
+
+</div>
+
 </details>
 
 <details class="qa" id="llmapp-002">
-<summary><span class="tag tag-core">core</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> When does a fixed workflow beat an agent, and when is an agent worth it?</summary>
+<summary><span class="tag tag-core">core</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Anthropic</span> When does a fixed workflow beat an agent, and when is an agent worth it?</summary>
 
 Use the least autonomy that solves the task. A single call for classification, extraction or
 Q&A; a workflow (code-defined steps, model fills each one) when the steps are known in
@@ -145,6 +153,14 @@ and the model makes local decisions or runs a bounded loop inside one stage.
 
 - Give an example you would build as a workflow that a team wanted to build as an agent.
 - How does a verifier change the $p^n$ argument?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- Anthropic, Machine Learning Engineer, undated: Design an agentic system that adapts to new tasks ([Aced (formerly Exponent)](https://www.aced.io/questions/5606/design-agentic-ai-system))
+
+</div>
 
 </details>
 
@@ -396,7 +412,7 @@ tools" in a prompt makes a hard rule probabilistic and wastes context.
 </details>
 
 <details class="qa" id="llmapp-009">
-<summary><span class="tag tag-staff">staff</span><span class="tag tag-type">design</span><span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Design the harness for a coding agent that works in a developer's repository and can run shell commands.</summary>
+<summary><span class="tag tag-staff">staff</span><span class="tag tag-type">design</span><span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at OpenAI</span> Design the harness for a coding agent that works in a developer's repository and can run shell commands.</summary>
 
 **Tools.** Search (grep, glob), read with line ranges, edit by exact string replacement or
 patch (cheaper and safer than whole-file rewrites), shell, and a way to run tests. Tool
@@ -441,6 +457,14 @@ radius when the prompt-level defences fail.
 - Why edit by string replacement instead of rewriting files?
 - How would you let the agent work unattended overnight without widening the risk?
 - A post-tool hook finds a secret in the diff. What can it still prevent?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- OpenAI, Machine Learning Engineer, Apr 2026: Agent harness and evaluation system for a tool-using agent ([PracHub](https://prachub.com/interview-questions/design-an-agent-harness-and-evaluation-system))
+
+</div>
 
 </details>
 
@@ -686,7 +710,7 @@ repeated-action rate with and without compaction.
 </details>
 
 <details class="qa" id="llmapp-019">
-<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Context windows now reach a million tokens. Why still build retrieval, and when would you just put everything in the prompt?</summary>
+<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at OpenAI</span> Context windows now reach a million tokens. Why still build retrieval, and when would you just put everything in the prompt?</summary>
 
 Put it all in the prompt when the corpus is small enough to fit comfortably, changes
 rarely, and every user may see all of it. With prompt caching the repeated prefix is cheap
@@ -721,6 +745,15 @@ and question types, and confirm with an eval rather than by argument.
 
 - How would you measure the distractor effect on your own data?
 - What does per-user access control do to your cache hit rate?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- OpenAI, Product Manager, Apr 2026: How context window length affects quality, cost and latency ([PracHub](https://prachub.com/interview-questions/how-context-window-length-shapes-llm-quality-cost-and-latency))
+- OpenAI, Machine Learning Engineer, undated: Effect of adjusting an LLM's context window size ([Aced (formerly Exponent)](https://www.aced.io/questions/5612/adjust-llm-context-window-size))
+
+</div>
 
 </details>
 
@@ -765,7 +798,7 @@ with no visible behaviour change.
 </details>
 
 <details class="qa" id="llmapp-021">
-<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">AI</span> How do you run prompt engineering as an engineering discipline rather than trial and error?</summary>
+<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">AI</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at OpenAI, Anthropic</span> How do you run prompt engineering as an engineering discipline rather than trial and error?</summary>
 
 Treat prompts, tool descriptions and model settings as code with tests.
 
@@ -796,6 +829,14 @@ dataset, and its output is reviewed and tested like a human-written prompt.
 - A prompt change fixes one customer's issue and lowers the suite score by a point. Ship?
 - How large does the golden set need to be to detect a 3-point regression?
 
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- OpenAI / Anthropic, Machine Learning Engineer, undated: Your approach to prompt engineering ([Aced (formerly Exponent)](https://www.aced.io/questions/5603/prompt-engineering-approach))
+
+</div>
+
 </details>
 
 
@@ -809,7 +850,7 @@ dataset, and its output is reviewed and tested like a human-written prompt.
 - <input type="checkbox" class="chk" data-chk="llmapp.rag.5"> Evaluate retrieval (recall@k, nDCG) separately from generation (faithfulness, correctness, abstention)
 
 <details class="qa" id="llmapp-022">
-<summary><span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Walk me through a RAG system end to end, offline and online, and say where it usually breaks.</summary>
+<summary><span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at OpenAI, Amazon</span> Walk me through a RAG system end to end, offline and online, and say where it usually breaks.</summary>
 
 **Offline (ingestion).**
 
@@ -843,6 +884,18 @@ Changing the embedding model means re-embedding the whole corpus, so version the
 
 - Which stage would you instrument first, and with what metric?
 - How do you handle a question the corpus cannot answer?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- OpenAI, Machine Learning Engineer, Dec 2025: Design and optimise a RAG system over a private corpus ([PracHub](https://prachub.com/interview-questions/design-and-optimize-a-rag-system))
+- OpenAI, Machine Learning Engineer, Aug 2025: Production RAG for enterprise document question answering ([PracHub](https://prachub.com/interview-questions/design-a-production-rag-system))
+- OpenAI, Machine Learning Engineer, Jul 2025: Enterprise search using RAG ([PracHub](https://prachub.com/interview-questions/design-an-ml-search-system-with-rag))
+- OpenAI, Machine Learning Engineer, Jul 2025: Low-latency RAG for customer support ([PracHub](https://prachub.com/interview-questions/design-a-low-latency-rag-system))
+- Amazon, Data Scientist, Jan 2026: Design and evaluate a RAG system for internal Q&A ([PracHub](https://prachub.com/interview-questions/design-and-evaluate-a-rag-system))
+
+</div>
 
 </details>
 
@@ -1023,7 +1076,7 @@ Pitfalls:
 </details>
 
 <details class="qa" id="llmapp-027">
-<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">debugging</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Users report that your RAG assistant gives confidently wrong answers. How do you find the cause and fix it?</summary>
+<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">debugging</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at OpenAI, Anthropic, Google</span> Users report that your RAG assistant gives confidently wrong answers. How do you find the cause and fix it?</summary>
 
 Take a sample of wrong answers with their traces and assign each to the first stage that
 failed:
@@ -1060,10 +1113,20 @@ and groundedness on sampled production traffic.
 - Two retrieved documents contradict each other. What should the system do?
 - How do you measure abstention quality without making the system refuse everything?
 
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- OpenAI / Anthropic, Machine Learning Engineer, undated: Handle hallucinations in a generative model deployed to users ([Aced (formerly Exponent)](https://www.aced.io/questions/5611/handle-hallucinations-deployed-ai-model))
+- Anthropic, Machine Learning Engineer, undated: Fix a conversational model that is confidently wrong in high-risk contexts ([Aced (formerly Exponent)](https://www.aced.io/questions/5788/fix-overly-confident-model))
+- Google, Product Manager, Oct 2026: Detect and contain confident false outputs in a customer-facing product ([PracHub](https://prachub.com/interview-questions/detecting-and-containing-llm-hallucinations-in-a-customer-facing-ai-product))
+
+</div>
+
 </details>
 
 <details class="qa" id="llmapp-028">
-<summary><span class="tag tag-staff">staff</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Design enterprise RAG over documents with access controls (SharePoint, Drive, Confluence, Slack) for a company with tens of thousands of employees.</summary>
+<summary><span class="tag tag-staff">staff</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at OpenAI, Google</span> Design enterprise RAG over documents with access controls (SharePoint, Drive, Confluence, Slack) for a company with tens of thousands of employees.</summary>
 
 **Requirements to pin down.** Sources and volume, freshness target for content and for
 permission changes, the non-negotiable (a user never sees content they cannot open at
@@ -1110,10 +1173,20 @@ degrading ANN recall, and re-embedding the corpus on a model change.
 - Why is filtering the generated answer not sufficient?
 - How would you test for a permission leak before launch?
 
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- OpenAI, Machine Learning Engineer, Sep 2026: Multi-tenant enterprise RAG assistant with hybrid retrieval, reranking and access controls ([PracHub](https://prachub.com/interview-questions/design-a-multi-tenant-enterprise-rag-assistant-hybrid-retrieval-reranking-acls))
+- OpenAI, Machine Learning Engineer, Sep 2025: Multi-tenant enterprise document search with ML ranking ([PracHub](https://prachub.com/interview-questions/design-an-ml-search-system))
+- Google, Software Engineer, Aug 2026: Internal document-search agent with permissions and citations ([PracHub](https://prachub.com/interview-questions/design-an-agent-for-internal-document-search))
+
+</div>
+
 </details>
 
 <details class="qa" id="llmapp-029">
-<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> How do you evaluate a RAG system? Be specific about retrieval versus generation.</summary>
+<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Amazon</span> How do you evaluate a RAG system? Be specific about retrieval versus generation.</summary>
 
 Evaluate the stages separately, then end to end, because an end-to-end score cannot tell
 you which stage to fix.
@@ -1149,6 +1222,14 @@ sampled traces scored by the same graders.
 
 - Your labelled set only marks one relevant chunk per query but several exist. What happens to your metrics?
 - How would you get retrieval labels cheaply?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- Amazon, Data Scientist, Jan 2026: Design and evaluate a RAG system for internal Q&A ([PracHub](https://prachub.com/interview-questions/design-and-evaluate-a-rag-system))
+
+</div>
 
 </details>
 
@@ -1418,7 +1499,7 @@ cycle time and cost per invoice.
 - <input type="checkbox" class="chk" data-chk="llmapp.guardrails.4"> Measure a guardrail with both attack success rate and false positive rate on benign traffic
 
 <details class="qa" id="llmapp-033">
-<summary><span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> What is prompt injection, what is indirect prompt injection, and why can you not fix it with a better system prompt?</summary>
+<summary><span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Anthropic</span> What is prompt injection, what is indirect prompt injection, and why can you not fix it with a better system prompt?</summary>
 
 A language model receives instructions and data in one token stream and has no reliable
 way to tell them apart. Prompt injection exploits this.
@@ -1453,6 +1534,14 @@ Defence in depth:
 
 - Your agent summarises a web page and can send email. What is the attack and what do you remove?
 - Why does markdown image rendering matter?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- Anthropic, Product Manager, Apr 2026: Dual-use requests, jailbreaks and layered defences ([PracHub](https://prachub.com/interview-questions/keeping-llm-output-safe-dual-use-requests-jailbreaks-and-layered-defenses))
+
+</div>
 
 </details>
 
@@ -1512,7 +1601,7 @@ approvals in code bound the damage.
 - <input type="checkbox" class="chk" data-chk="llmapp.llm-cost.4"> Explain time to first token versus total latency and what streaming does and does not fix
 
 <details class="qa" id="llmapp-038">
-<summary><span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> What determines the cost and latency of an LLM feature, and which levers do you pull first?</summary>
+<summary><span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Google</span> What determines the cost and latency of an LLM feature, and which levers do you pull first?</summary>
 
 **Cost per request** is
 $\text{uncached input} \times p_{in} + \text{cached input} \times p_{cache} + \text{output} \times p_{out}$.
@@ -1545,6 +1634,14 @@ task and latency percentiles per route.
 
 - Streaming is on and users still complain it is slow. What do you look at?
 - When is a semantic cache a bad idea?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- Google, Software Engineer, Jan 2026: Choose between fast and cheap model options ([PracHub](https://prachub.com/interview-questions/choose-fast-or-cheap-models))
+
+</div>
 
 </details>
 

@@ -515,7 +515,7 @@ checkpointing, visibility into why a job is waiting, and accounting of GPU hours
 </details>
 
 <details class="qa" id="infra-010">
-<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> On a shared GPU cluster, how do quotas, priorities and preemption work, and why can GPUs sit idle while jobs are waiting?</summary>
+<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Anthropic</span> On a shared GPU cluster, how do quotas, priorities and preemption work, and why can GPUs sit idle while jobs are waiting?</summary>
 
 **The policy tools.**
 
@@ -554,6 +554,14 @@ users why their job is pending.
 
 - How does backfilling work, and why does it need job time limits?
 - A team complains its jobs are preempted too often. What do you look at?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- Anthropic, Software Engineer, Aug 2026: Schedule one-GPU and eight-GPU jobs fairly ([PracHub](https://prachub.com/interview-questions/schedule-one-gpu-and-eight-gpu-model-jobs))
+
+</div>
 
 </details>
 
@@ -620,7 +628,7 @@ with an uninterrupted run.
 - <input type="checkbox" class="chk" data-chk="infra.dist-training.4"> Derive a checkpoint interval from checkpoint cost and failure rate
 
 <details class="qa" id="infra-012">
-<summary><span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> What are the ways to parallelise training across GPUs? Say what each one splits and what it has to communicate.</summary>
+<summary><span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Google, Nvidia</span> What are the ways to parallelise training across GPUs? Say what each one splits and what it has to communicate.</summary>
 
 | Method | Splits | Communicates | Use when |
 |-|-|-|-|
@@ -653,6 +661,15 @@ time, or when the larger effective batch stops improving optimisation per sample
 
 - Why does FSDP save memory compared with DDP, and what does it pay?
 - Which of these would you combine for a model ten times too large for one GPU?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- Google, Machine Learning Engineer, Aug 2026: Pipeline parallelism in RL post-training ([PracHub](https://prachub.com/interview-questions/explain-pipeline-parallelism-in-grpo-training))
+- Nvidia, Software Engineer, Sep 2025: Training optimisation and tensor versus pipeline parallelism ([PracHub](https://prachub.com/interview-questions/explain-optimization-and-tensor-vs-pipeline-parallelism))
+
+</div>
 
 </details>
 
@@ -1658,7 +1675,7 @@ it is why inference under a no-gradient context needs so much less.
 </details>
 
 <details class="qa" id="infra-031">
-<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> Implement a minimal scalar reverse-mode autodiff engine in Python that supports addition, multiplication and tanh, with a backward method.</summary>
+<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at OpenAI</span> Implement a minimal scalar reverse-mode autodiff engine in Python that supports addition, multiplication and tanh, with a backward method.</summary>
 
 ```python
 import math
@@ -1734,6 +1751,14 @@ with broadcasting to undo.
 
 - Add subtraction, division and a power operation using what is already there.
 - What changes when values are tensors and addition broadcasts?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- OpenAI, Software Engineer, Sep 2026: Minimal reverse-mode autograd engine on tensors ([PracHub](https://prachub.com/interview-questions/implement-a-minimal-reverse-mode-autograd-engine-on-pytorch-tensors))
+
+</div>
 
 </details>
 

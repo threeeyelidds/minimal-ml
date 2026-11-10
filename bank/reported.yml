@@ -1,0 +1,1782 @@
+retrieved: '2026-11-10'
+note: Questions that third-party sites list as asked in interviews. Self-reported by candidates to those sites and
+  not verified. Topics are paraphrased; follow the link for the source's wording.
+sources:
+  prachub:
+    name: PracHub
+    base: https://prachub.com
+    claim: lists questions as real questions from candidate reports
+    links: spot-checked; the site refuses scripted link checks
+  aced:
+    name: Aced (formerly Exponent)
+    base: https://www.aced.io
+    claim: user-contributed questions tagged by company, and first-person interview experiences
+    links: every link checked to resolve on the retrieval date
+reports:
+- company:
+  - OpenAI
+  role: Machine Learning Engineer
+  date: 2026-09
+  source: prachub
+  path: /interview-questions/design-a-multi-tenant-enterprise-rag-assistant-hybrid-retrieval-reranking-acls
+  topic: Multi-tenant enterprise RAG assistant with hybrid retrieval, reranking and access controls
+  cards:
+  - llmapp-028
+  - cases-006
+- company:
+  - OpenAI
+  role: Machine Learning Engineer
+  date: 2025-12
+  source: prachub
+  path: /interview-questions/design-and-optimize-a-rag-system
+  topic: Design and optimise a RAG system over a private corpus
+  cards:
+  - llmapp-022
+- company:
+  - OpenAI
+  role: Machine Learning Engineer
+  date: 2026-04
+  source: prachub
+  path: /interview-questions/design-an-agent-harness-and-evaluation-system
+  topic: Agent harness and evaluation system for a tool-using agent
+  cards:
+  - llmapp-009
+  - cases-008
+  - eval-005
+- company:
+  - OpenAI
+  role: Machine Learning Engineer
+  date: 2026-04
+  source: prachub
+  path: /interview-questions/mine-novel-images-from-unlabeled-data
+  topic: Mine novel images from a massive unlabelled corpus
+  cards: []
+- company:
+  - OpenAI
+  role: Software Engineer
+  date: 2026-05
+  source: prachub
+  path: /interview-questions/design-a-text-to-video-generation-system
+  topic: Text-to-video generation system
+  cards: []
+- company:
+  - OpenAI
+  role: Machine Learning Engineer
+  date: 2025-12
+  source: prachub
+  path: /interview-questions/design-a-recommendation-system-end-to-end
+  topic: End-to-end recommendation system for a personalised feed
+  cards:
+  - cases-002
+  - recsys-042
+- company:
+  - OpenAI
+  role: Machine Learning Engineer
+  date: 2026-04
+  source: prachub
+  path: /interview-questions/design-a-real-time-sensor-intelligence-system
+  topic: Real-time sensor intelligence system
+  cards: []
+- company:
+  - OpenAI
+  role: Machine Learning Engineer
+  date: 2025-08
+  source: prachub
+  path: /interview-questions/design-a-production-rag-system
+  topic: Production RAG for enterprise document question answering
+  cards:
+  - llmapp-022
+- company:
+  - OpenAI
+  role: Software Engineer
+  date: 2025-08
+  source: prachub
+  path: /interview-questions/design-ai-chat-bot-system
+  topic: AI chatbot system with a front-end focus and storage constraints
+  cards:
+  - swe-019
+- company:
+  - OpenAI
+  role: Software Engineer
+  date: 2026-07
+  source: prachub
+  path: /interview-questions/design-a-video-generation-service-with-gpu-fleet-management
+  topic: Asynchronous video generation service with GPU fleet scheduling
+  cards: []
+- company:
+  - OpenAI
+  role: Machine Learning Engineer
+  date: 2026-01
+  source: prachub
+  path: /interview-questions/how-would-you-build-an-image-classifier-with-dirty-data
+  topic: Image classifier trained on dirty data
+  cards: []
+- company:
+  - OpenAI
+  role: Machine Learning Engineer
+  date: 2025-09
+  source: prachub
+  path: /interview-questions/design-an-ml-search-system
+  topic: Multi-tenant enterprise document search with ML ranking
+  cards:
+  - llmapp-028
+- company:
+  - OpenAI
+  role: Software Engineer
+  date: 2026-06
+  source: prachub
+  path: /interview-questions/design-a-text-to-video-generation-platform-sora-style
+  topic: Text-to-video platform around a large model
+  cards: []
+- company:
+  - OpenAI
+  role: Machine Learning Engineer
+  date: 2025-07
+  source: prachub
+  path: /interview-questions/design-an-ml-search-system-with-rag
+  topic: Enterprise search using RAG
+  cards:
+  - llmapp-022
+- company:
+  - OpenAI
+  role: Machine Learning Engineer
+  date: 2025-12
+  source: prachub
+  path: /interview-questions/design-an-ood-detection-system
+  topic: Out-of-distribution detection with production monitoring
+  cards: []
+- company:
+  - OpenAI
+  role: Machine Learning Engineer
+  date: 2025-07
+  source: prachub
+  path: /interview-questions/design-a-low-latency-rag-system
+  topic: Low-latency RAG for customer support
+  cards:
+  - llmapp-022
+- company:
+  - OpenAI
+  role: Machine Learning Engineer
+  date: 2025-08
+  source: prachub
+  path: /interview-questions/design-enterprise-rag-search-system
+  topic: End-to-end enterprise RAG search
+  cards:
+  - cases-006
+- company:
+  - OpenAI
+  role: Software Engineer
+  date: 2025-12
+  source: prachub
+  path: /interview-questions/design-an-enterprise-rag-assistant-for-internal-docs
+  topic: Enterprise assistant over internal documents
+  cards:
+  - cases-006
+- company:
+  - OpenAI
+  role: Machine Learning Engineer
+  date: 2025-12
+  source: prachub
+  path: /interview-questions/design-a-chatbot-fallback-for-unknown-questions
+  topic: Fallback for an assistant that cannot answer reliably
+  cards:
+  - llm-003
+- company:
+  - OpenAI
+  role: Machine Learning Engineer
+  date: 2025-12
+  source: prachub
+  path: /interview-questions/select-high-quality-math-documents-from-crawls
+  topic: Pipeline that selects high-quality math documents from web crawls
+  cards:
+  - llm-007
+- company:
+  - OpenAI
+  role: Machine Learning Engineer
+  date: 2026-10
+  source: prachub
+  path: /interview-questions/majority-vote-labels-from-three-noisy-annotators-then-beat-the-baseline
+  topic: Majority-vote labels from three noisy annotators, then beat that baseline
+  cards: []
+- company:
+  - OpenAI
+  role: Machine Learning Engineer
+  date: 2026-09
+  source: prachub
+  path: /interview-questions/debug-a-small-pytorch-transformer-with-four-bugs-then-add-a-kv-cache
+  topic: Debug a small PyTorch transformer with planted bugs, then add a KV cache
+  cards: []
+- company:
+  - OpenAI
+  role: Machine Learning Engineer
+  date: 2026-09
+  source: prachub
+  path: /interview-questions/hand-written-gradients-prefix-product-backward-pass-and-stable-cross-entropy
+  topic: Hand-written gradients for a prefix product and a stable cross-entropy
+  cards: []
+- company:
+  - OpenAI
+  role: Machine Learning Engineer
+  date: 2026-09
+  source: prachub
+  path: /interview-questions/vectorized-1-nearest-neighbor-in-numpy-and-its-equivalence-to-a-linear-layer
+  topic: Vectorised 1-nearest-neighbour in NumPy and its equivalence to a linear layer
+  cards: []
+- company:
+  - OpenAI
+  role: Machine Learning Engineer
+  date: 2026-09
+  source: prachub
+  path: /interview-questions/debug-a-transformer-implementation-and-implement-a-kv-cache-for-decoding
+  topic: Debug a transformer implementation and add a KV cache for decoding
+  cards: []
+- company:
+  - OpenAI
+  role: Machine Learning Engineer
+  date: 2026-09
+  source: prachub
+  path: /interview-questions/implement-a-1-nearest-neighbor-classifier-with-a-manhattan-distance-follow-up
+  topic: 1-nearest-neighbour classifier with a Manhattan-distance follow-up
+  cards: []
+- company:
+  - OpenAI
+  role: Software Engineer
+  date: 2026-09
+  source: prachub
+  path: /interview-questions/implement-a-minimal-reverse-mode-autograd-engine-on-pytorch-tensors
+  topic: Minimal reverse-mode autograd engine on tensors
+  cards:
+  - infra-031
+- company:
+  - OpenAI
+  role: Machine Learning Engineer
+  date: 2026-06
+  source: prachub
+  path: /interview-questions/implement-masked-cross-entropy-with-label-smoothing
+  topic: Masked cross-entropy with label smoothing
+  cards: []
+- company:
+  - OpenAI
+  role: Machine Learning Engineer
+  date: 2026-08
+  source: prachub
+  path: /interview-questions/vectorize-one-nearest-neighbor-and-express-it-as-a-neural-forward-pass
+  topic: Vectorise 1-nearest-neighbour and express it as a network forward pass
+  cards: []
+- company:
+  - OpenAI
+  role: Machine Learning Engineer
+  date: 2026-04
+  source: prachub
+  path: /interview-questions/improve-training-with-noisy-annotators
+  topic: Improve training when labels come from noisy annotators
+  cards: []
+- company:
+  - OpenAI
+  role: Machine Learning Engineer
+  date: 2026-04
+  source: prachub
+  path: /interview-questions/derive-sharded-matrix-multiplication-and-backpropagation
+  topic: Sharded matrix multiplication and its backpropagation
+  cards: []
+- company:
+  - OpenAI
+  role: Machine Learning Engineer
+  date: 2026-04
+  source: prachub
+  path: /interview-questions/compute-entropy-and-implement-1-nn
+  topic: Compute entropy and implement 1-nearest-neighbour
+  cards: []
+- company:
+  - OpenAI
+  role: Machine Learning Engineer
+  date: 2026-04
+  source: prachub
+  path: /interview-questions/debug-minigpt-and-backpropagate-matmul
+  topic: Debug a small GPT and backpropagate through a matrix multiply
+  cards:
+  - dl-002
+- company:
+  - OpenAI
+  role: Machine Learning Engineer
+  date: 2026-04
+  source: prachub
+  path: /interview-questions/compute-matrix-prefix-products-and-gradients
+  topic: Matrix prefix products and their gradients
+  cards: []
+- company:
+  - OpenAI
+  role: Machine Learning Engineer
+  date: 2026-02
+  source: prachub
+  path: /interview-questions/improve-classifier-with-noisy-multi-annotator-labels
+  topic: Improve a classifier trained on noisy multi-annotator labels
+  cards: []
+- company:
+  - OpenAI
+  role: Data Scientist
+  date: 2025-10
+  source: prachub
+  path: /interview-questions/debug-and-fix-a-pytorch-transformer-training-loop
+  topic: Debug and fix a PyTorch transformer training loop
+  cards: []
+- company:
+  - OpenAI
+  role: Machine Learning Engineer
+  date: 2026-04
+  source: prachub
+  path: /interview-questions/implement-backprop-for-a-tiny-network
+  topic: Backpropagation for a tiny network by hand
+  cards:
+  - dl-002
+- company:
+  - OpenAI
+  role: Machine Learning Engineer
+  date: 2026-04
+  source: prachub
+  path: /interview-questions/filter-bad-human-annotations
+  topic: Filter bad human annotations
+  cards: []
+- company:
+  - OpenAI
+  role: Machine Learning Engineer
+  date: 2026-03
+  source: prachub
+  path: /interview-questions/debug-a-broken-transformer
+  topic: Debug a broken transformer
+  cards: []
+- company:
+  - OpenAI
+  role: Machine Learning Engineer
+  date: 2026-05
+  source: prachub
+  path: /interview-questions/implement-1nn-with-numpy
+  topic: 1-nearest-neighbour classifier in NumPy
+  cards: []
+- company:
+  - OpenAI
+  role: Software Engineer
+  date: 2025-09
+  source: prachub
+  path: /interview-questions/implement-and-debug-backprop-in-numpy
+  topic: Implement and debug backpropagation for a two-layer network in NumPy
+  cards:
+  - dl-002
+- company:
+  - OpenAI
+  role: Machine Learning Engineer
+  date: 2025-08
+  source: prachub
+  path: /interview-questions/debug-transformer-and-train-classifier
+  topic: Debug a transformer text classifier, then train and evaluate it
+  cards: []
+- company:
+  - OpenAI
+  role: Software Engineer
+  date: 2025-08
+  source: prachub
+  path: /interview-questions/debug-a-machine-learning-pipeline
+  topic: Diagnose a sudden accuracy drop in a deployed ML pipeline
+  cards:
+  - mlops-003
+- company:
+  - OpenAI
+  role: Machine Learning Engineer
+  date: 2025-07
+  source: prachub
+  path: /interview-questions/debug-a-transformer-training-pipeline
+  topic: Debug an encoder-decoder transformer training pipeline
+  cards: []
+- company:
+  - OpenAI
+  role: Machine Learning Engineer
+  date: 2026-02
+  source: prachub
+  path: /interview-questions/derive-backpropagation-for-matrix-product-layers
+  topic: Backpropagation through a product of weight matrices
+  cards: []
+- company:
+  - OpenAI
+  role: Machine Learning Engineer
+  date: 2026-04
+  source: prachub
+  path: /interview-questions/defend-a-research-direction-and-experiment-design
+  topic: Defend a research direction and design its experiments
+  cards:
+  - research-007
+- company:
+  - OpenAI
+  role: Machine Learning Engineer
+  date: 2026-02
+  source: prachub
+  path: /interview-questions/debug-transformer-and-add-kv-cache
+  topic: Debug a transformer and add a KV cache for generation
+  cards: []
+- company:
+  - OpenAI
+  role: Machine Learning Engineer
+  date: 2025-09
+  source: prachub
+  path: /interview-questions/train-a-classifier-and-analyze-dataset
+  topic: End-to-end binary classifier workflow with data analysis, fairness and a report
+  cards: []
+- company:
+  - OpenAI
+  role: Software Engineer
+  date: 2026-01
+  source: prachub
+  path: /interview-questions/design-restart-strategy-for-oracle-solver
+  topic: Restart strategy for a randomised solver from its runtime distribution
+  cards: []
+- company:
+  - OpenAI
+  role: Machine Learning Engineer
+  date: 2025-08
+  source: prachub
+  path: /interview-questions/implement-prefix-products-and-their-backward-pass
+  topic: Prefix products and their backward pass, including zeros
+  cards: []
+- company:
+  - OpenAI
+  role: Machine Learning Engineer
+  date: 2025-08
+  source: prachub
+  path: /interview-questions/diagnose-transformer-training-and-inference-bugs
+  topic: Diagnose transformer training and inference bugs
+  cards: []
+- company:
+  - OpenAI
+  role: Machine Learning Engineer
+  date: 2026-01
+  source: prachub
+  path: /interview-questions/debug-a-broken-transformer-implementation
+  topic: Debug a transformer that runs but behaves wrongly
+  cards: []
+- company:
+  - OpenAI
+  role: Software Engineer
+  date: 2025-07
+  source: prachub
+  path: /interview-questions/debug-a-failing-ml-classifier
+  topic: Debug a churn classifier that generalises poorly
+  cards:
+  - mlfund-005
+- company:
+  - OpenAI
+  role: Machine Learning Engineer
+  date: 2025-07
+  source: prachub
+  path: /interview-questions/build-and-troubleshoot-image-classification-and-backprop
+  topic: Build and troubleshoot an image classifier on noisy data, with backprop
+  cards: []
+- company:
+  - OpenAI
+  role: Data Scientist
+  date: 2026-02
+  source: prachub
+  path: /interview-questions/implement-numpy-neural-network-layers
+  topic: Neural-network layers in NumPy, with matrix multiplication and broadcasting
+  cards: []
+- company:
+  - OpenAI
+  role: Product Manager
+  date: 2026-04
+  source: prachub
+  path: /interview-questions/pinning-down-what-an-llm-hallucination-is-types-causes-and-boundaries
+  topic: What an LLM hallucination is, its types and causes
+  cards:
+  - llm-003
+- company:
+  - OpenAI
+  role: Product Manager
+  date: 2026-04
+  source: prachub
+  path: /interview-questions/how-context-window-length-shapes-llm-quality-cost-and-latency
+  topic: How context window length affects quality, cost and latency
+  cards:
+  - llmapp-019
+- company:
+  - OpenAI
+  role: Research Engineer
+  date: 2026-08
+  source: prachub
+  path: /interview-experiences/openai-research-engineer-interview-experience-two-back-to-back-screens-no-break-rejected
+  topic: 'First-person report of two screens: a five-part grid simulation of infection spread; vectorised 1-nearest-neighbour,
+    then as a network forward pass, then with L1 distance'
+  cards: []
+- company:
+  - OpenAI
+  role: Research Engineer
+  date: ''
+  source: aced
+  path: /experiences/openai-senior-machine-learning-engineer-interview-9b7da4
+  topic: 'First-person report: code a system that distributes work between people and AI under a list of partly
+    underspecified requirements'
+  cards: []
+- company:
+  - Anthropic
+  role: Software Engineer
+  date: 2026-02
+  source: prachub
+  path: /interview-questions/debug-a-grpo-training-loop-and-explain-ratios
+  topic: Find the bugs in a simplified GRPO training step and explain the importance ratios
+  cards:
+  - llm-017
+- company:
+  - Anthropic
+  role: Software Engineer
+  date: 2026-08
+  source: prachub
+  path: /interview-questions/identify-the-most-important-ai-safety-risk
+  topic: Identify the most important AI safety risk
+  cards:
+  - research-030
+- company:
+  - Anthropic
+  role: Machine Learning Engineer
+  date: 2026-04
+  source: prachub
+  path: /interview-questions/design-a-double-descent-experiment
+  topic: Design an experiment to study sample-wise double descent
+  cards:
+  - mlfund-004
+- company:
+  - Anthropic
+  role: Product Manager
+  date: 2026-04
+  source: prachub
+  path: /interview-questions/choosing-between-prompting-retrieval-and-fine-tuning-to-specialize-an-llm
+  topic: Choose between prompting, retrieval and fine-tuning to specialise a model
+  cards:
+  - llm-004
+- company:
+  - Anthropic
+  role: Software Engineer
+  date: 2025-09
+  source: prachub
+  path: /interview-questions/implement-and-derive-backprop-from-scratch
+  topic: Implement and derive backprop for a single-neuron classifier
+  cards:
+  - dl-002
+- company:
+  - Anthropic
+  role: Machine Learning Engineer
+  date: 2026-02
+  source: prachub
+  path: /interview-questions/explain-batch-inference-design
+  topic: Batch inference pipeline design
+  cards:
+  - serving-001
+- company:
+  - Anthropic
+  role: Product Manager
+  date: 2026-04
+  source: prachub
+  path: /interview-questions/keeping-llm-output-safe-dual-use-requests-jailbreaks-and-layered-defenses
+  topic: Dual-use requests, jailbreaks and layered defences
+  cards:
+  - llmapp-033
+- company:
+  - Anthropic
+  role: Software Engineer
+  date: 2025-09
+  source: prachub
+  path: /interview-questions/implement-and-analyze-custom-attention
+  topic: Numerically stable scaled dot-product attention in PyTorch
+  cards:
+  - dl-019
+- company:
+  - Anthropic
+  role: Software Engineer
+  date: 2026-09
+  source: prachub
+  path: /interview-questions/performance-model-a-sharded-matrix-multiply-flops-memory-network-and-roofline
+  topic: 'Performance model of a sharded matrix multiply: FLOPs, memory, network'
+  cards: []
+- company:
+  - Anthropic
+  role: Software Engineer
+  date: 2026-09
+  source: prachub
+  path: /interview-questions/route-and-batch-inference-with-eight-gpus
+  topic: Route and batch inference across eight GPUs
+  cards: []
+- company:
+  - Anthropic
+  role: Machine Learning Engineer
+  date: 2026-08
+  source: prachub
+  path: /interview-questions/schedule-large-and-small-model-inference-on-an-eight-gpu-pool
+  topic: Schedule large-model and small-model inference on an eight-GPU pool
+  cards: []
+- company:
+  - Anthropic
+  role: Software Engineer
+  date: 2026-08
+  source: prachub
+  path: /interview-questions/review-and-scale-an-inference-service-design
+  topic: Review and scale an inference service design
+  cards:
+  - serving-029
+- company:
+  - Anthropic
+  role: Software Engineer
+  date: 2026-08
+  source: prachub
+  path: /interview-questions/schedule-one-gpu-and-eight-gpu-model-jobs
+  topic: Schedule one-GPU and eight-GPU jobs fairly
+  cards:
+  - infra-010
+- company:
+  - Anthropic
+  role: Software Engineer
+  date: 2026-04
+  source: prachub
+  path: /interview-questions/design-model-weight-distribution
+  topic: Distribute large model weight files to a GPU worker fleet
+  cards: []
+- company:
+  - Anthropic
+  role: Software Engineer
+  date: 2026-07
+  source: prachub
+  path: /interview-questions/design-a-low-latency-gpu-inference-service
+  topic: Low-latency GPU inference service
+  cards:
+  - serving-010
+- company:
+  - Anthropic
+  role: Software Engineer
+  date: 2026-03
+  source: prachub
+  path: /interview-questions/design-gpu-inference-request-batching
+  topic: Request batching for GPU inference
+  cards:
+  - serving-002
+  - serving-003
+- company:
+  - Anthropic
+  role: Software Engineer
+  date: 2025-08
+  source: prachub
+  path: /interview-questions/design-a-gpu-inference-api
+  topic: GPU-backed inference API for multiple models
+  cards:
+  - serving-004
+- company:
+  - Anthropic
+  role: Software Engineer
+  date: 2026-03
+  source: prachub
+  path: /interview-questions/estimate-ffn-compute-memory-and-sharding-communication
+  topic: Estimate feed-forward layer compute, memory and sharding communication
+  cards: []
+- company:
+  - Anthropic
+  role: Software Engineer
+  date: 2026-08
+  source: prachub
+  path: /interview-questions/improve-an-ml-inference-service
+  topic: Improve an inference service with admission control, batching, shedding, caching and idempotency
+  cards:
+  - serving-029
+  - serving-030
+- company:
+  - Anthropic
+  role: Machine Learning Engineer
+  date: 2025-09
+  source: prachub
+  path: /interview-questions/design-an-inference-routing-and-scheduling-layer
+  topic: Routing and scheduling layer for heterogeneous GPU and CPU backends
+  cards: []
+- company:
+  - Anthropic
+  role: Software Engineer
+  date: 2025-09
+  source: prachub
+  path: /interview-questions/design-a-batch-inference-api
+  topic: Asynchronous post-and-poll batch inference API
+  cards:
+  - serving-001
+- company:
+  - Anthropic
+  role: Machine Learning Engineer
+  date: 2026-01
+  source: prachub
+  path: /interview-questions/design-a-production-ml-serving-system
+  topic: Production ML serving system with focus on scaling and reliability
+  cards:
+  - serving-029
+- company:
+  - Anthropic
+  role: Machine Learning Engineer
+  date: 2026-02
+  source: prachub
+  path: /interview-questions/design-a-model-downloader
+  topic: Model downloader with versioning and integrity checks
+  cards: []
+- company:
+  - Anthropic
+  role: Software Engineer
+  date: 2025-09
+  source: prachub
+  path: /interview-questions/design-an-llm-based-binary-classifier
+  topic: Binary text classifier using only an LLM log-probability helper
+  cards: []
+- company:
+  - Anthropic
+  role: Software Engineer
+  date: 2026-05
+  source: prachub
+  path: /interview-questions/design-safe-distribution-and-activation-of-model-weights
+  topic: Distribute and activate model weights without exposing partial state
+  cards: []
+- company:
+  - Anthropic
+  role: Software Engineer
+  date: 2025-09
+  source: prachub
+  path: /interview-questions/review-an-inference-api-design-for-scale
+  topic: Review an inference API design for scale
+  cards:
+  - serving-029
+- company:
+  - Anthropic
+  role: Software Engineer
+  date: 2025-09
+  source: prachub
+  path: /interview-questions/design-a-low-latency-ml-inference-api
+  topic: Low-latency synchronous inference API
+  cards:
+  - serving-010
+- company:
+  - Anthropic
+  role: Machine Learning Engineer
+  date: ''
+  source: aced
+  path: /questions/5780/inference-batching-system
+  topic: Inference batching system for one GPU, up to 100 inputs per batch, synchronous callers
+  cards:
+  - serving-002
+  - serving-003
+- company:
+  - Anthropic
+  role: Machine Learning Engineer
+  date: ''
+  source: aced
+  path: /questions/3625/lru-cache
+  topic: Implement an LRU cache
+  cards: []
+- company:
+  - Anthropic
+  role: Machine Learning Engineer
+  date: ''
+  source: aced
+  path: /questions/6237/implement-inmemory-database-codesignal
+  topic: Implement an in-memory database in a timed assessment
+  cards: []
+- company:
+  - Anthropic
+  role: Machine Learning Engineer
+  date: ''
+  source: aced
+  path: /questions/6236/implement-streaming-database-constraints-requirements
+  topic: Implement a streaming database under given constraints
+  cards: []
+- company:
+  - Anthropic
+  role: Machine Learning Engineer
+  date: ''
+  source: aced
+  path: /questions/5606/design-agentic-ai-system
+  topic: Design an agentic system that adapts to new tasks
+  cards:
+  - llmapp-002
+- company:
+  - OpenAI
+  - Anthropic
+  role: Machine Learning Engineer
+  date: ''
+  source: aced
+  path: /questions/5611/handle-hallucinations-deployed-ai-model
+  topic: Handle hallucinations in a generative model deployed to users
+  cards:
+  - llm-003
+  - llmapp-027
+- company:
+  - OpenAI
+  - Anthropic
+  role: Machine Learning Engineer
+  date: ''
+  source: aced
+  path: /questions/5610/define-llm-hallucinations
+  topic: Define hallucinations in LLMs
+  cards:
+  - llm-003
+- company:
+  - OpenAI
+  - Anthropic
+  role: Machine Learning Engineer
+  date: ''
+  source: aced
+  path: /questions/5603/prompt-engineering-approach
+  topic: Your approach to prompt engineering
+  cards:
+  - llmapp-021
+- company:
+  - OpenAI
+  - Anthropic
+  role: Machine Learning Engineer
+  date: ''
+  source: aced
+  path: /questions/5608/adapt-gen-ai-model-for-domain
+  topic: Adapt a generative model to perform well in a specific domain
+  cards:
+  - llm-004
+- company:
+  - OpenAI
+  role: Machine Learning Engineer
+  date: ''
+  source: aced
+  path: /questions/5612/adjust-llm-context-window-size
+  topic: Effect of adjusting an LLM's context window size
+  cards:
+  - llmapp-019
+- company:
+  - Anthropic
+  role: Machine Learning Engineer
+  date: ''
+  source: aced
+  path: /questions/6266/explain-ai-safety-ethics-governance
+  topic: Your views on AI safety, ethics, guardrails and governance
+  cards:
+  - research-030
+- company:
+  - Anthropic
+  role: Machine Learning Engineer
+  date: ''
+  source: aced
+  path: /questions/5596/why-anthropic
+  topic: Why this company
+  cards:
+  - research-030
+- company:
+  - Anthropic
+  role: Machine Learning Engineer
+  date: ''
+  source: aced
+  path: /questions/6235/align-ai-model-objectives-prevent-harm
+  topic: Align a model with intended objectives and prevent harmful behaviour
+  cards:
+  - llm-019
+- company:
+  - Anthropic
+  role: Machine Learning Engineer
+  date: ''
+  source: aced
+  path: /questions/5607/gen-ai-address-harmful-content
+  topic: Prevent a generative model from producing harmful content
+  cards:
+  - llm-019
+- company:
+  - Anthropic
+  role: Machine Learning Engineer
+  date: ''
+  source: aced
+  path: /questions/5609/adjust-gen-ai-model-creativity
+  topic: Adjust the creativity of a generative model
+  cards:
+  - dl-026
+- company:
+  - Anthropic
+  role: Machine Learning Engineer
+  date: ''
+  source: aced
+  path: /questions/5788/fix-overly-confident-model
+  topic: Fix a conversational model that is confidently wrong in high-risk contexts
+  cards:
+  - llmapp-027
+- company:
+  - Anthropic
+  role: Machine Learning Engineer
+  date: ''
+  source: aced
+  path: /questions/5601/handle-model-exposing-data-from-training-set
+  topic: Handle a model that exposes sensitive training data
+  cards:
+  - mlops-023
+- company:
+  - Anthropic
+  role: Machine Learning Engineer
+  date: ''
+  source: aced
+  path: /questions/5602/build-ai-systems-data-safety-privacy
+  topic: Keep user data safe and private when building AI systems
+  cards:
+  - mlops-023
+- company:
+  - Anthropic
+  role: Machine Learning Engineer
+  date: ''
+  source: aced
+  path: /questions/6263/describe-past-project-model-tuning
+  topic: The hardest part of tuning or fine-tuning a model in a past project
+  cards:
+  - senior-001
+- company:
+  - Anthropic
+  role: Machine Learning Engineer
+  date: ''
+  source: aced
+  path: /questions/6267/solve-tooling-scenario-make-plan
+  topic: Plan and execute a tool-use scenario
+  cards: []
+- company:
+  - Anthropic
+  role: Machine Learning Engineer
+  date: ''
+  source: aced
+  path: /questions/7110/improve-pdf-workflow-reliability-performance
+  topic: Improve the reliability and performance of a PDF workflow with long context windows
+  cards: []
+- company:
+  - Anthropic
+  role: Machine Learning Engineer
+  date: ''
+  source: aced
+  path: /questions/6264/design-claude-api-implementation-regulated-industry
+  topic: Design a model-API implementation for a customer in a regulated industry
+  cards: []
+- company:
+  - Anthropic
+  role: Machine Learning Engineer
+  date: ''
+  source: aced
+  path: /questions/5605/agentic-ai-systems-ethical-risk
+  topic: Ethical risks of deploying agentic AI in high-stakes environments
+  cards: []
+- company:
+  - OpenAI
+  role: Machine Learning Engineer
+  date: ''
+  source: aced
+  path: /questions/240/mistake
+  topic: A time you made a mistake
+  cards:
+  - senior-004
+- company:
+  - OpenAI
+  - Anthropic
+  role: Machine Learning Engineer
+  date: ''
+  source: aced
+  path: /questions/140/conflict-resolution-learning
+  topic: A conflict with someone and how you resolved it
+  cards:
+  - senior-005
+- company:
+  - OpenAI
+  role: Machine Learning Engineer
+  date: ''
+  source: aced
+  path: /questions/241/disagreement-manager
+  topic: A disagreement with your manager
+  cards:
+  - senior-005
+- company:
+  - OpenAI
+  role: Machine Learning Engineer
+  date: ''
+  source: aced
+  path: /questions/1031/project-you-are-most-proud-of
+  topic: The project you are most proud of
+  cards:
+  - senior-001
+- company:
+  - Google
+  role: Machine Learning Engineer
+  date: 2026-08
+  source: prachub
+  path: /interview-questions/explain-kl-divergence-in-language-models
+  topic: KL divergence in language models, including direction and support
+  cards: []
+- company:
+  - Google
+  role: Machine Learning Engineer
+  date: 2026-08
+  source: prachub
+  path: /interview-questions/detect-and-prevent-reward-hacking
+  topic: Reward hacking in LLM post-training and how to detect and prevent it
+  cards:
+  - llm-018
+  - rl-018
+- company:
+  - Google
+  role: Machine Learning Engineer
+  date: 2026-08
+  source: prachub
+  path: /interview-questions/explain-importance-sampling-in-llm-training
+  topic: Importance sampling in LLM training, including variance and clipping
+  cards: []
+- company:
+  - Google
+  role: Machine Learning Engineer
+  date: 2026-08
+  source: prachub
+  path: /interview-questions/compare-language-model-post-training-methods
+  topic: Compare supervised, reward-based, preference-based and group-relative post-training
+  cards:
+  - llm-017
+  - llm-014
+- company:
+  - Google
+  role: Machine Learning Engineer
+  date: 2026-08
+  source: prachub
+  path: /interview-questions/explain-vaes-elbo-kl-and-reparameterization
+  topic: VAEs, the ELBO, the KL term and reparameterisation
+  cards:
+  - dl-029
+- company:
+  - Google
+  role: Machine Learning Engineer
+  date: 2026-08
+  source: prachub
+  path: /interview-questions/interpret-language-model-perplexity
+  topic: Interpret perplexity for an autoregressive language model
+  cards:
+  - llm-001
+- company:
+  - Google
+  role: Machine Learning Engineer
+  date: 2026-03
+  source: prachub
+  path: /interview-questions/explain-ranking-cold-start-strategies
+  topic: Cold-start strategies for ranking
+  cards:
+  - recsys-029
+- company:
+  - Google
+  role: Product Manager
+  date: 2026-10
+  source: prachub
+  path: /interview-questions/when-an-llm-feature-should-use-prompting-or-fine-tuning-instead-of-retrieval
+  topic: When an LLM feature should use prompting or fine-tuning instead of retrieval
+  cards:
+  - llm-004
+- company:
+  - Google
+  role: Product Manager
+  date: 2026-10
+  source: prachub
+  path: /interview-questions/detecting-and-containing-llm-hallucinations-in-a-customer-facing-ai-product
+  topic: Detect and contain confident false outputs in a customer-facing product
+  cards:
+  - llmapp-027
+- company:
+  - Google
+  role: Product Manager
+  date: 2026-04
+  source: prachub
+  path: /interview-questions/measuring-the-health-of-a-production-ml-system-from-data-quality-to-business-impact
+  topic: Metrics for the health of a production ML pipeline
+  cards:
+  - mlops-008
+- company:
+  - Google
+  role: Machine Learning Engineer
+  date: 2025-12
+  source: prachub
+  path: /interview-questions/explain-grpo-style-training-for-diffusion-models
+  topic: GRPO-style reinforcement training for diffusion models
+  cards: []
+- company:
+  - Google
+  role: Machine Learning Engineer
+  date: 2026-08
+  source: prachub
+  path: /interview-questions/design-a-watch-next-video-recommender-and-derive-its-losses-and-optimizer-update-rules
+  topic: Watch-next video recommender, with its losses and optimiser updates derived
+  cards:
+  - cases-002
+- company:
+  - Google
+  role: Machine Learning Engineer
+  date: 2026-08
+  source: prachub
+  path: /interview-questions/explain-pipeline-parallelism-in-grpo-training
+  topic: Pipeline parallelism in RL post-training
+  cards:
+  - infra-012
+- company:
+  - Google
+  role: Software Engineer
+  date: 2026-07
+  source: prachub
+  path: /interview-questions/design-a-scalable-and-safe-agentic-system
+  topic: Scalable and safe agentic system with deterministic controls
+  cards:
+  - llmapp-001
+- company:
+  - Google
+  role: Software Engineer
+  date: 2026-08
+  source: prachub
+  path: /interview-questions/design-an-agent-for-internal-document-search
+  topic: Internal document-search agent with permissions and citations
+  cards:
+  - llmapp-028
+- company:
+  - Google
+  role: Machine Learning Engineer
+  date: 2026-02
+  source: prachub
+  path: /interview-questions/design-a-chatbot-over-structured-and-unstructured-data
+  topic: Chatbot over structured and unstructured data
+  cards: []
+- company:
+  - Google
+  role: Machine Learning Engineer
+  date: 2025-12
+  source: prachub
+  path: /interview-questions/design-a-real-time-recommendation-system
+  topic: Real-time recommendation system
+  cards:
+  - cases-002
+- company:
+  - Google
+  role: Machine Learning Engineer
+  date: 2026-01
+  source: prachub
+  path: /interview-questions/design-a-fraud-detection-system-2
+  topic: Fraud detection system
+  cards:
+  - cases-013
+- company:
+  - Google
+  role: Machine Learning Engineer
+  date: 2025-09
+  source: prachub
+  path: /interview-questions/design-multi-gpu-matrix-multiplication
+  topic: Multi-GPU matrix multiplication
+  cards: []
+- company:
+  - Google
+  role: Software Engineer
+  date: 2026-01
+  source: prachub
+  path: /interview-questions/choose-fast-or-cheap-models
+  topic: Choose between fast and cheap model options
+  cards:
+  - llmapp-038
+- company:
+  - Google
+  role: Machine Learning Engineer
+  date: 2025-07
+  source: prachub
+  path: /interview-questions/design-feedback-driven-recommender
+  topic: Feedback-driven contextual bandit recommender
+  cards:
+  - recsys-030
+- company:
+  - Google
+  role: Machine Learning Engineer
+  date: 2026-02
+  source: prachub
+  path: /interview-questions/design-an-app-store-app-recommendation-system
+  topic: App-store recommendation system
+  cards: []
+- company:
+  - Google
+  role: Software Engineer
+  date: 2026-10
+  source: prachub
+  path: /interview-questions/design-an-llm-agent-for-manufacturing-production-status-work-orders-and-quotes
+  topic: LLM agent for manufacturing status, work orders and quotes
+  cards: []
+- company:
+  - Meta
+  role: Machine Learning Engineer
+  date: 2026-09
+  source: prachub
+  path: /interview-questions/design-a-real-time-question-answering-chatbot-training-data-rl-tasks-and-rewards
+  topic: Real-time question-answering chatbot, including training data and RL rewards
+  cards: []
+- company:
+  - Meta
+  role: Machine Learning Engineer
+  date: 2026-07
+  source: prachub
+  path: /interview-questions/design-a-large-scale-personalized-recommendation-system-end-to-end
+  topic: Large-scale personalised recommendation system end to end
+  cards:
+  - cases-002
+- company:
+  - Meta
+  role: Machine Learning Engineer
+  date: 2026-06
+  source: prachub
+  path: /interview-questions/design-an-llm-based-conversational-assistant-chatbot
+  topic: LLM-based conversational assistant covering pretraining, alignment, retrieval and serving
+  cards: []
+- company:
+  - Meta
+  role: Machine Learning Engineer
+  date: 2026-06
+  source: prachub
+  path: /interview-questions/design-an-llm-based-coding-assistant
+  topic: LLM-based coding assistant end to end
+  cards:
+  - cases-008
+  - llm-037
+- company:
+  - Meta
+  role: Machine Learning Engineer
+  date: 2026-04
+  source: prachub
+  path: /interview-questions/prevent-private-code-leakage-in-coding-agents
+  topic: Prevent private code leakage in coding agents
+  cards: []
+- company:
+  - Meta
+  role: Machine Learning Engineer
+  date: 2026-01
+  source: prachub
+  path: /interview-questions/design-nearby-and-notification-ranking
+  topic: Real-time nearby-place and notification ranking
+  cards: []
+- company:
+  - Meta
+  role: Machine Learning Engineer
+  date: 2026-02
+  source: prachub
+  path: /interview-questions/design-an-image-copyright-violation-detection-system
+  topic: Image copyright-violation detection
+  cards:
+  - cases-014
+- company:
+  - Meta
+  role: Machine Learning Engineer
+  date: 2025-12
+  source: prachub
+  path: /interview-questions/design-weapon-selling-ad-detection-from-posts
+  topic: Detect weapon-selling ads in posts using several modalities
+  cards:
+  - cases-014
+- company:
+  - Meta
+  role: Machine Learning Engineer
+  date: 2026-02
+  source: prachub
+  path: /interview-questions/design-a-short-video-recommendation-system-2
+  topic: Short-video recommendation system
+  cards:
+  - cases-002
+- company:
+  - Meta
+  role: Machine Learning Engineer
+  date: 2025-09
+  source: prachub
+  path: /interview-questions/design-a-scalable-moe-pretraining-pipeline
+  topic: Large-scale mixture-of-experts pretraining pipeline
+  cards:
+  - llm-040
+- company:
+  - Meta
+  role: Machine Learning Engineer
+  date: 2025-09
+  source: prachub
+  path: /interview-questions/architect-an-asynchronous-rl-post-training-system
+  topic: Asynchronous RLHF-style post-training system for a production chat model
+  cards:
+  - llm-014
+  - cases-011
+- company:
+  - Meta
+  role: Machine Learning Engineer
+  date: 2026-01
+  source: prachub
+  path: /interview-questions/design-a-location-recommendation-system
+  topic: Location recommendation system
+  cards: []
+- company:
+  - Meta
+  role: Machine Learning Engineer
+  date: 2026-01
+  source: prachub
+  path: /interview-questions/design-a-weapon-sale-ad-detection-system
+  topic: Weapon-sale ad detection system
+  cards:
+  - cases-014
+- company:
+  - Meta
+  role: Machine Learning Engineer
+  date: 2025-09
+  source: prachub
+  path: /interview-questions/design-a-newsfeed-dislike-model
+  topic: Model that predicts the probability a user dislikes a feed item
+  cards: []
+- company:
+  - Meta
+  role: Machine Learning Engineer
+  date: 2026-01
+  source: prachub
+  path: /interview-questions/design-an-ads-ranking-system-with-calibration
+  topic: Low-latency ads ranking with calibration
+  cards:
+  - recsys-023
+  - cases-004
+- company:
+  - Meta
+  role: Machine Learning Engineer
+  date: 2025-12
+  source: prachub
+  path: /interview-questions/design-comment-ranking-for-a-news-feed
+  topic: Comment ranking for a news feed
+  cards:
+  - recsys-042
+- company:
+  - Meta
+  role: Machine Learning Engineer
+  date: 2026-03
+  source: prachub
+  path: /interview-questions/design-place-recommendation-system
+  topic: Place recommendation for a maps or local-discovery product
+  cards: []
+- company:
+  - Meta
+  role: Machine Learning Engineer
+  date: 2025-09
+  source: prachub
+  path: /interview-questions/design-nearby-place-recommendations
+  topic: Real-time nearby place recommendations for a mobile app
+  cards: []
+- company:
+  - Meta
+  role: Machine Learning Engineer
+  date: 2025-08
+  source: prachub
+  path: /interview-questions/design-image-and-multimodal-generation-systems
+  topic: Image and multimodal generation systems
+  cards: []
+- company:
+  - Meta
+  role: Machine Learning Engineer
+  date: 2026-09
+  source: prachub
+  path: /interview-questions/implement-the-forward-pass-of-multi-head-attention-from-scratch
+  topic: Forward pass of multi-head attention from scratch
+  cards:
+  - dl-019
+- company:
+  - Meta
+  role: Machine Learning Engineer
+  date: 2026-09
+  source: prachub
+  path: /interview-questions/implement-k-means-clustering-from-scratch-3
+  topic: k-means clustering from scratch
+  cards:
+  - mlfund-011
+- company:
+  - Meta
+  role: Machine Learning Engineer
+  date: 2026-06
+  source: prachub
+  path: /interview-questions/self-attention-implementation-complexity-and-efficient-variants
+  topic: 'Self-attention: implementation, complexity and efficient variants'
+  cards:
+  - dl-019
+  - dl-025
+- company:
+  - Meta
+  role: Machine Learning Engineer
+  date: 2026-06
+  source: prachub
+  path: /interview-questions/machine-learning-fundamentals-optimizers-scaling-laws-and-clustering
+  topic: 'Fundamentals: optimisers, scaling laws and clustering'
+  cards:
+  - llm-038
+- company:
+  - Meta
+  role: Machine Learning Engineer
+  date: 2026-05
+  source: prachub
+  path: /interview-questions/implement-1nn-embeddings-and-forward-pass
+  topic: 1-nearest-neighbour on embeddings and a forward pass
+  cards: []
+- company:
+  - Meta
+  role: Machine Learning Engineer
+  date: 2025-11
+  source: prachub
+  path: /interview-questions/build-harmful-content-text-classifier
+  topic: Harmful-content text classifier
+  cards:
+  - cases-014
+- company:
+  - Meta
+  role: Data Scientist
+  date: 2025-10
+  source: prachub
+  path: /interview-questions/design-an-ad-recommendation-and-ranking-system
+  topic: Ad recommendation and ranking system
+  cards:
+  - cases-004
+- company:
+  - Meta
+  role: Data Scientist
+  date: 2025-10
+  source: prachub
+  path: /interview-questions/choose-metrics-for-fake-user-classifier
+  topic: Metrics for a fake-user classifier
+  cards:
+  - eval-011
+- company:
+  - Nvidia
+  role: Software Engineer
+  date: 2026-09
+  source: prachub
+  path: /interview-questions/fp32-to-int8-tensor-quantization-scale-zero-point-clipping-and-outliers
+  topic: 'Convert 32-bit float tensors to int8: scale, zero point, clipping and outliers'
+  cards:
+  - serving-014
+  - serving-015
+- company:
+  - Nvidia
+  role: Product Manager
+  date: 2026-06
+  source: prachub
+  path: /interview-questions/plan-how-raw-text-becomes-llm-training-data-filtering-dedup-mixing-evaluation
+  topic: 'How raw text becomes an LLM training set: filtering, deduplication, mixing, evaluation'
+  cards:
+  - llm-007
+- company:
+  - Nvidia
+  role: Machine Learning Engineer
+  date: 2026-02
+  source: prachub
+  path: /interview-questions/explain-bias-variance-calibration-and-model-drift
+  topic: Bias-variance trade-off, calibration and model drift
+  cards:
+  - mlfund-001
+  - mlfund-035
+  - eval-034
+- company:
+  - Nvidia
+  role: Software Engineer
+  date: 2025-07
+  source: prachub
+  path: /interview-questions/explain-transformers-and-qkv-matrices
+  topic: Transformers and the query, key and value matrices
+  cards:
+  - dl-019
+- company:
+  - Nvidia
+  role: Software Engineer
+  date: 2025-09
+  source: prachub
+  path: /interview-questions/explain-optimization-and-tensor-vs-pipeline-parallelism
+  topic: Training optimisation and tensor versus pipeline parallelism
+  cards:
+  - infra-012
+- company:
+  - Nvidia
+  role: Software Engineer
+  date: 2026-01
+  source: prachub
+  path: /interview-questions/derive-mlp-shapes-and-explain-pytorch-broadcasting
+  topic: MLP tensor shapes and PyTorch broadcasting
+  cards: []
+- company:
+  - Nvidia
+  role: Applied Scientist
+  date: 2026-09
+  source: prachub
+  path: /interview-questions/research-project-deep-dive-motivation-training-pipeline-results-and-takeaways
+  topic: Deep dive on your own model-training project
+  cards:
+  - senior-001
+- company:
+  - TikTok
+  role: Machine Learning Engineer
+  date: 2026-02
+  source: prachub
+  path: /interview-questions/write-self-attention-and-cross-entropy-pseudocode
+  topic: Pseudocode for self-attention and cross-entropy
+  cards:
+  - dl-019
+- company:
+  - TikTok
+  role: Machine Learning Engineer
+  date: 2025-12
+  source: prachub
+  path: /interview-questions/explain-your-vlm-project-end-to-end
+  topic: End-to-end deep dive on a vision-language model project
+  cards:
+  - llm-028
+- company:
+  - TikTok
+  role: Machine Learning Engineer
+  date: 2025-12
+  source: prachub
+  path: /interview-questions/define-qkv-for-recommender-cross-attention
+  topic: Query, key and value for cross-attention in a recommender
+  cards:
+  - recsys-010
+- company:
+  - TikTok
+  role: Machine Learning Engineer
+  date: 2026-01
+  source: prachub
+  path: /interview-questions/explain-flashattention-kv-cache-and-rope
+  topic: FlashAttention, the KV cache and rotary position embeddings
+  cards:
+  - dl-024
+  - dl-025
+- company:
+  - TikTok
+  role: Data Scientist
+  date: 2025-10
+  source: prachub
+  path: /interview-questions/design-an-ad-selection-system-across-objectives
+  topic: Ad selection across three advertiser objectives
+  cards:
+  - cases-004
+- company:
+  - TikTok
+  role: Software Engineer
+  date: 2026-01
+  source: prachub
+  path: /interview-questions/implement-auc-roc-softmax-and-logistic-regression
+  topic: Implement ROC-AUC, softmax and logistic regression
+  cards:
+  - mlfund-012
+  - mlfund-010
+- company:
+  - TikTok
+  role: Data Scientist
+  date: 2025-10
+  source: prachub
+  path: /interview-questions/design-recommendations-objective-balancing-growth-and-monetization
+  topic: Multi-objective recommender balancing growth and monetisation
+  cards:
+  - recsys-012
+- company:
+  - TikTok
+  role: Data Scientist
+  date: 2025-07
+  source: prachub
+  path: /interview-questions/design-real-time-credit-card-fraud-detection-system
+  topic: Real-time card fraud detection
+  cards:
+  - cases-013
+- company:
+  - TikTok
+  role: Data Scientist
+  date: 2025-10
+  source: prachub
+  path: /interview-questions/explain-shap-vs-vif-under-collinearity
+  topic: SHAP versus variance inflation under collinearity
+  cards:
+  - llm-035
+- company:
+  - TikTok
+  role: Data Scientist
+  date: 2025-11
+  source: prachub
+  path: /interview-questions/when-prioritize-precision-vs-recall
+  topic: When to prioritise precision or recall
+  cards:
+  - eval-011
+- company:
+  - TikTok
+  role: Data Scientist
+  date: 2025-10
+  source: prachub
+  path: /interview-questions/explain-and-tune-xgboost-prevent-overfitting
+  topic: Tune XGBoost and prevent overfitting
+  cards:
+  - mlfund-023
+- company:
+  - TikTok
+  role: Software Engineer
+  date: 2026-01
+  source: prachub
+  path: /interview-questions/explain-rl-policy-types-and-modern-policy-gradients
+  topic: RL policy types and modern policy-gradient methods (TRPO, PPO, GAE)
+  cards:
+  - rl-008
+  - rl-006
+- company:
+  - TikTok
+  role: Software Engineer
+  date: 2025-12
+  source: prachub
+  path: /interview-questions/explain-dpo-and-construct-its-training-data
+  topic: Explain DPO and construct its training data
+  cards:
+  - llm-015
+- company:
+  - TikTok
+  role: Machine Learning Engineer
+  date: 2026-02
+  source: prachub
+  path: /interview-questions/explain-overfitting-dropout-normalization-rl-post-training
+  topic: Overfitting, dropout, normalisation and RL post-training
+  cards: []
+- company:
+  - Amazon
+  role: Data Scientist
+  date: 2026-01
+  source: prachub
+  path: /interview-questions/design-and-evaluate-a-rag-system
+  topic: Design and evaluate a RAG system for internal Q&A
+  cards:
+  - llmapp-022
+  - llmapp-029
+- company:
+  - Amazon
+  role: Software Engineer
+  date: 2026-09
+  source: prachub
+  path: /interview-questions/explain-decoder-only-llm-architecture-and-how-vllm-serves-it-efficiently
+  topic: How a decoder-only transformer produces next-token probabilities and how an inference engine serves it
+    efficiently
+  cards:
+  - llm-001
+  - serving-005
+- company:
+  - Amazon
+  role: Machine Learning Engineer
+  date: 2026-01
+  source: prachub
+  path: /interview-questions/implement-multi-head-attention-with-a-kv-cache-and-cached-grouped-query-attention
+  topic: Multi-head attention with a KV cache and grouped-query attention
+  cards:
+  - dl-019
+  - dl-024
+- company:
+  - Amazon
+  role: Applied Scientist
+  date: 2026-06
+  source: prachub
+  path: /interview-questions/llm-fundamentals-tokenization-design-and-kl-regularized-sft
+  topic: Subword tokenisation design and KL-regularised fine-tuning
+  cards:
+  - llm-026
+- company:
+  - Amazon
+  role: Machine Learning Engineer
+  date: 2026-01
+  source: prachub
+  path: /interview-questions/grpo-in-numpy-group-relative-advantages-process-rewards-and-shaped-rewards
+  topic: 'GRPO computations in NumPy: group-relative advantages and shaped rewards'
+  cards:
+  - llm-017
+- company:
+  - Amazon
+  role: Applied Scientist
+  date: 2026-06
+  source: prachub
+  path: /interview-questions/grpo-deep-dive-critic-free-rl-parallelism-mla-and-reward-design-for-a-reasoning-llm
+  topic: 'Critic-free RL for a reasoning model: parallelism and reward design'
+  cards:
+  - llm-017
+- company:
+  - Amazon
+  role: Applied Scientist
+  date: 2026-07
+  source: prachub
+  path: /interview-questions/implement-stable-sigmoid-softmax-and-scaled-dot-product-attention
+  topic: Numerically stable sigmoid, softmax and scaled dot-product attention
+  cards:
+  - dl-019
+- company:
+  - Amazon
+  role: Software Engineer
+  date: 2025-07
+  source: prachub
+  path: /interview-questions/explain-attention-and-transformers
+  topic: Attention and transformers, including BERT versus GPT
+  cards:
+  - llm-002
+- company:
+  - Amazon
+  role: Data Scientist
+  date: 2025-10
+  source: prachub
+  path: /interview-questions/explain-core-ml-concepts-and-metrics
+  topic: Core ML concepts and metrics, including bias-variance
+  cards:
+  - mlfund-001
+- company:
+  - Apple
+  role: Machine Learning Engineer
+  date: 2026-04
+  source: prachub
+  path: /interview-questions/implement-masked-multi-head-self-attention
+  topic: Masked multi-head self-attention
+  cards:
+  - dl-019
+- company:
+  - Apple
+  role: Machine Learning Engineer
+  date: 2026-03
+  source: prachub
+  path: /interview-questions/compare-dcn-v1-vs-v2-and-a-b-test
+  topic: Compare DCN v1 and v2, then design an A/B test
+  cards:
+  - recsys-009
+- company:
+  - Apple
+  role: Machine Learning Engineer
+  date: 2025-08
+  source: prachub
+  path: /interview-questions/explain-annotation-agreement-and-llm-vs-human-judges
+  topic: Annotation agreement, and LLM versus human judges
+  cards:
+  - mlfund-038
+  - eval-003
+- company:
+  - Apple
+  role: Machine Learning Engineer
+  date: 2025-11
+  source: prachub
+  path: /interview-questions/explain-vision-encoders-and-llm-bottlenecks
+  topic: Vision encoders and the bottleneck into a language model
+  cards:
+  - llm-028
+- company:
+  - Apple
+  role: Software Engineer
+  date: 2025-09
+  source: prachub
+  path: /interview-questions/implement-multi-head-self-attention-correctly
+  topic: Multi-head self-attention, implemented correctly
+  cards:
+  - dl-019
+- company:
+  - Apple
+  role: Data Scientist
+  date: 2025-07
+  source: prachub
+  path: /interview-questions/write-the-logistic-regression-loss-function
+  topic: Write the logistic regression loss
+  cards:
+  - mlfund-007
+- company:
+  - Apple
+  role: Data Scientist
+  date: 2026-01
+  source: prachub
+  path: /interview-questions/design-siri-vs-gpt-query-routing
+  topic: Route queries between an assistant and a large model
+  cards: []
+- company:
+  - Apple
+  role: Machine Learning Engineer
+  date: ''
+  source: aced
+  path: /experiences/apple-senior-machine-learning-engineer-interview-649eca
+  topic: 'First-person report of a phone screen: implement intersection over union, then mean average precision'
+  cards: []
