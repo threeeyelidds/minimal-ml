@@ -1,51 +1,73 @@
 ---
 title: "Notes"
+subtitle: "Long-form deep dives, grouped by the skill area they support"
 ---
 
-## Foundations
+These notes go deeper than the question cards. Each group links to its [skill area](../skills/index.qmd), where
+the demand numbers, checklist and questions are.
 
-- [Activation Functions](foundations/activations.qmd)
-- [悬链线、cosh 和激活函数：教科书没串起来的一条线](foundations/catenary-cosh-tanh.qmd)
+## ML fundamentals
+
+Area page: [ML fundamentals and statistics](../skills/mlfund.qmd)
+
 - [Losses from First Principles](foundations/losses.qmd)
 - [Prediction and Decision Losses](foundations/prediction_decision_losses.qmd)
-- [Distribution Learning Losses](foundations/generative_losses.qmd)
-- [Distillation: Learning from a Teacher](foundations/distillation.qmd)
-- [Representation Learning from First Principles](foundations/representation_learning.qmd)
-- [Zeroth-, First-, and Second-Order Optimization](foundations/optimizers.qmd)
-- [RNNs and LSTMs](foundations/rnn_lstm.qmd)
-
-## Transformers
-
-- [Tokenization Across Modalities: language, vision, item IDs](tokenization.qmd)
-- [Attention](transformers/attention.qmd)
-- [Transformers](transformers/transformer.qmd)
-- [Positional Encoding: RoPE or NoPE](transformers/positional_encoding.qmd)
-
-## Advanced
-
-- [Attention Techniques in Modern LLMs](advanced/advanced_attention.qmd)
-- [Linear Attention](advanced/linear_attention.qmd)
-- [From Test-Time Training to Continual Intelligence — Original Version](advanced/continual_intelligence_ttt.qmd)
-- [From Test-Time Training to Continual Intelligence — Expanded Version](advanced/continual_intelligence_ttt_expanded.qmd)
-
-## Applied ML
-
-- [Agentic Search: is it a fake problem](applied_ml/agentic_search.qmd)
-- [Agent Harness: turning prediction into decision](applied_ml/harness.qmd)
-- [Case Study: Cursor's Continual Training Loop](applied_ml/cursor_continual_training.qmd)
-- [Codex: anatomy of an open-source coding agent](applied_ml/codex.qmd)
-
-
-## Algorithms
-
-- [Dynamic Programming and Graph Algorithms from First Principles](algorithms/dynamic_programming_and_graph_algorithms.qmd)
-- [From Graph Algorithms to Reinforcement Learning](algorithms/rl_algo.qmd)
+- [Model Calibration: From CTR/CVR to Calibrated Decisions](foundations/calibration.qmd)
 - [Probabilistic modeling tricks](algorithms/probabilistic_modeling_tricks.qmd)
 - [Probabilistic Modeling Practice: 20 Worked Problems](algorithms/probabilistic-modeling-practice-solutions.qmd)
 
+## Deep learning
+
+Area page: [Deep learning](../skills/dl.qmd)
+
+- [Activation Functions](foundations/activations.qmd)
+- [悬链线、cosh 和激活函数：教科书没串起来的一条线](foundations/catenary-cosh-tanh.qmd)
+- [Zeroth-, First-, and Second-Order Optimization](foundations/optimizers.qmd)
+- [Distribution Learning Losses](foundations/generative_losses.qmd)
+- [Representation Learning from First Principles](foundations/representation_learning.qmd)
+- [RNNs and LSTMs](foundations/rnn_lstm.qmd)
+- [Attention](transformers/attention.qmd)
+- [Transformers](transformers/transformer.qmd)
+- [Positional Encoding: RoPE or NoPE](transformers/positional_encoding.qmd)
+- [Attention Techniques in Modern LLMs](advanced/advanced_attention.qmd)
+- [Linear Attention](advanced/linear_attention.qmd)
+
+## LLMs and foundation models
+
+Area page: [LLMs and foundation models](../skills/llm.qmd)
+
+- [Tokenization Across Modalities: language, vision, item IDs](tokenization.qmd)
+- [Distillation: Learning from a Teacher](foundations/distillation.qmd)
+- [From Test-Time Training to Continual Intelligence — Original Version](advanced/continual_intelligence_ttt.qmd)
+- [From Test-Time Training to Continual Intelligence — Expanded Version](advanced/continual_intelligence_ttt_expanded.qmd)
+- [Case Study: Cursor's Continual Training Loop](applied_ml/cursor_continual_training.qmd)
+
+## LLM applications and agents
+
+Area page: [LLM application engineering](../skills/llmapp.qmd)
+
+- [Agent Harness: turning prediction into decision](applied_ml/harness.qmd)
+- [Codex: anatomy of an open-source coding agent](applied_ml/codex.qmd)
+- [Agentic Search: is it a fake problem](applied_ml/agentic_search.qmd)
+
+## Reinforcement learning
+
+Area page: [Reinforcement learning and decision making](../skills/rl.qmd)
+
+- [From Graph Algorithms to Reinforcement Learning](algorithms/rl_algo.qmd)
+
+## Coding
+
+Area page: [Programming and software engineering](../skills/swe.qmd)
+
+- [Dynamic Programming and Graph Algorithms from First Principles](algorithms/dynamic_programming_and_graph_algorithms.qmd)
+
 ## Coming next
 
-- post-train
+The [plan](../plan/index.qmd) lists the high-demand skills that have question cards but no deep dive yet.
+Planned before the rewrite and still open:
+
+- post-training
 - modern recommender as a decision system
 - density estimation, from energy-based models to flow matching
 - causality and counterfactuals

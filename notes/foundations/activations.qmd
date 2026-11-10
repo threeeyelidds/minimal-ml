@@ -557,7 +557,7 @@ for name, fn in {
 ```
 
 For stable output-activation and objective pairings, continue to
-[Loss Functions](losses.qmd#logits-probabilities-and-numerical-stability).
+[Prediction and decision losses](prediction_decision_losses.qmd#numerical-stability-and-reduction).
 
 ## Initialization Interaction
 

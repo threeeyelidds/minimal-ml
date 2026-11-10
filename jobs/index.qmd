@@ -1,0 +1,24 @@
+---
+title: "Open roles"
+subtitle: "The postings behind the skill map, filterable by track, role type and skill"
+toc: false
+format:
+  html:
+    css: ../review/app.css
+    include-after-body:
+      - text: |
+          <script src="../review/skills.js"></script>
+          <script src="postings.js"></script>
+          <script src="jobs.js"></script>
+resources:
+  - postings.js
+  - jobs.js
+---
+
+These are the {{< var n_postings >}} senior-eligible postings from {{< var n_companies >}} employers that the
+[report](../report/index.qmd) analyses, as fetched on {{< var fetched >}}. Each links to the employer's own page;
+postings close, so a dead link means the role is gone. The skill tags are the skills the description names
+(green means you already know that skill, from your [review](../review/index.qmd) progress).
+Refresh the list with `python tools/fetch_jobs.py && python tools/analyze_skills.py`.
+
+<div id="jobs-app"><noscript>The jobs browser needs JavaScript.</noscript></div>

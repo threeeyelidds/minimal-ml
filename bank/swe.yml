@@ -1,0 +1,1621 @@
+domain: swe
+title: Programming and software engineering
+summary: >-
+  The coding round and the general system-design round as they are run for senior ML candidates:
+  algorithmic patterns, Python depth, the systems languages behind inference stacks, SQL, backend and
+  distributed-systems fundamentals, testing and profiling of ML code, and working with AI coding agents.
+  Almost every posting names something in this area (Python alone is in about 60%), because a senior ML
+  engineer is hired to ship and operate software, and a model that cannot be tested, profiled or served
+  reliably is not a product.
+senior_bar:
+  - States the invariant and the complexity before writing code, then tests the edge cases unprompted (empty input, ties, duplicates, overflow of memory rather than of integers)
+  - Explains performance from the mechanism (GIL, copies, cache misses, queueing, network round trips) and measures before changing anything
+  - Designs for failure by default, so every remote call has a timeout, a retry policy, an idempotency story and a backpressure path
+  - Gives numbers in system design (QPS, bytes, p99 budget, cost) and picks the simplest design that meets them, then says what breaks at 10x
+  - Treats ML code as software with unit tests on transforms and losses, golden tests on a frozen checkpoint, a tiny end-to-end run in CI, and tolerance bands instead of exact equality
+  - Uses coding agents with a verification loop and stays accountable for the diff, and can say where generated code typically fails
+rounds:
+  - Coding (algorithms and data structures)
+  - Practical coding (ML or backend task, often AI-assisted)
+  - System design (general)
+  - Debugging and performance round
+  - Code review round
+notes:
+  - notes/algorithms/dynamic_programming_and_graph_algorithms.qmd
+  - notes/applied_ml/harness.qmd
+  - notes/applied_ml/codex.qmd
+checklist:
+  - skill: python
+    items:
+      - Can explain what the GIL blocks and what it does not, and why DataLoader uses processes
+      - Can explain reference counting, the cyclic GC and why RSS stays high after objects are freed
+      - Can turn an eager pipeline into a generator pipeline and name the single-pass pitfall
+      - Can vectorise a nested loop with broadcasting or einsum and estimate the size of every temporary
+      - Can say where the per-object overhead of Python containers comes from and what to use instead (NumPy, Arrow, slots)
+  - skill: cpp
+    items:
+      - Can explain RAII and why destructors give deterministic release without a garbage collector
+      - Can explain unique_ptr vs shared_ptr vs raw pointers as ownership statements
+      - Can explain what std::move does and why move constructors should be noexcept
+      - Can give four concrete reasons inference runtimes are written in C++
+  - skill: rust
+    items:
+      - Can state the ownership and borrowing rules and which bug classes they remove at compile time
+      - Can explain Send and Sync and what safe Rust still does not prevent
+      - Can name where Rust sits in the ML stack and how it is bound to Python (PyO3)
+  - skill: go
+    items:
+      - Can write a streaming HTTP handler with flush, heartbeat and context cancellation
+      - Can explain goroutines and channels and how an unbuffered channel gives backpressure
+      - Can describe how a goroutine leak happens and how context prevents it
+  - skill: jvm
+    items:
+      - Can explain JIT warm-up and GC pauses and how they show up in p99 latency
+      - Can explain why Python UDFs are slow in Spark and what to use instead
+      - Can compare calling a model server over gRPC with in-process inference from a JVM service
+  - skill: typescript
+    items:
+      - Can model messages and stream events as discriminated unions and narrow them safely
+      - Can validate model-produced tool arguments at runtime and feed errors back to the model
+      - Can consume a streamed response with an async iterator and cancel it with AbortController
+  - skill: frontend
+    items:
+      - Can explain SSE vs fetch streaming vs WebSocket for a chat UI
+      - Can keep a token stream from re-rendering the whole message list on every token
+      - Can list the security rules for rendering model output in a browser
+  - skill: sql
+    items:
+      - Can write a sessionisation query with LAG and a running SUM (gaps and islands)
+      - Can explain ROW_NUMBER vs RANK vs DENSE_RANK and the default window frame
+      - Can find and fix join fan-out, NULL handling in NOT IN, and a LEFT JOIN turned into an inner join
+      - Can write a point-in-time join for a training set and explain the leakage it prevents
+  - skill: backend
+    items:
+      - Can design a sync endpoint, a streaming endpoint and an async job API for the same model
+      - Can specify idempotency keys, error taxonomy, pagination, versioning and deadlines
+      - Can choose between REST and gRPC and state the schema-evolution rules of protobuf
+      - Can place caches in a serving path and explain stampedes, staleness and versioned keys
+  - skill: distsys
+    items:
+      - Can explain why exactly-once delivery is not achievable and how idempotent processing replaces it
+      - Can write a retry policy with exponential backoff, jitter and a retry budget
+      - Can compare linearizable, causal and eventual consistency and pick one per use case
+      - Can explain consistent hashing, hot keys and tail-latency amplification under fan-out
+      - Can explain why an unbounded queue does not fix overload and what to do instead
+  - skill: dsa
+    items:
+      - Can map problem signals to a pattern (hash map, two pointers, sliding window, heap, binary search on answer, intervals, graph, union-find, DP, trie)
+      - Can implement sliding window, top-k with a heap, binary search on the answer, Kahn topological sort and union-find without notes
+      - Can prove reservoir sampling is uniform and implement weighted sampling without replacement
+      - Can name the streaming structure for mean and variance, quantiles, distinct counts and heavy hitters, with its error bound
+      - Can derive a DP by defining the state in one sentence and say when the state graph needs BFS or Dijkstra instead
+  - skill: swe-practice
+    items:
+      - Can list the test layers for ML code (unit, numerical, tiny end-to-end, golden, data)
+      - Can make a training run reproducible and say what remains non-deterministic
+      - Can describe the release gates of a model pipeline and the stages of a rollout
+      - Can review an ML pull request for leakage and eval validity, not only style
+  - skill: sysdesign
+    items:
+      - Can run a 45-minute design in a fixed order (requirements with numbers, estimates, API and data model, diagram, deep dive, failures)
+      - Can do back-of-envelope estimates for QPS, storage and fleet size
+      - Can design a durable execution service with leases, heartbeats, idempotent steps and replay
+  - skill: debug-perf
+    items:
+      - Can choose between py-spy, cProfile, line_profiler and torch.profiler and read a flame graph
+      - Can time GPU code correctly (warm-up, synchronize)
+      - Can prove or rule out a GPU-starved input pipeline with two experiments
+      - Can investigate a p99 regression where p50 is unchanged
+  - skill: concurrency
+    items:
+      - Can choose between asyncio, threads and processes for a given workload and justify it
+      - Can write bounded-concurrency async code with timeouts, retries and ordered results
+      - Can explain a data race, a deadlock and the fork-with-threads problem
+  - skill: linux
+    items:
+      - Can interpret exit codes 137 and 139, the OOM killer and cgroup limits
+      - Can explain the role of /dev/shm, file-descriptor limits and the page cache in data loading
+      - Can walk through DNS, TCP, TLS and HTTP/2 for one request and say where latency comes from
+      - Can explain L4 vs L7 load balancing and why long-lived gRPC connections balance badly
+  - skill: ai-coding-tools
+    items:
+      - Can describe a delegation workflow (brief, plan, feedback loop, small diffs, independent verification)
+      - Can list the typical failure modes of generated code and the review step that catches each
+      - Can explain why context should be kept small and how (fresh sessions, instruction files, subagents)
+      - Can say how to measure whether agents made a team faster without counting lines of code
+cards:
+  - id: swe-001
+    skill: dsa
+    type: concept
+    level: core
+    tracks: [mle, ai, re]
+    q: >-
+      You have 40 minutes and an unfamiliar problem. Which signals in the problem statement tell you which
+      technique applies?
+    a: |
+      Read the constraints first, then match the shape of the question to a pattern.
+
+      | Signal | Pattern | Cost |
+      |---|---|---|
+      | "seen before", counts, pair with a target sum | hash map / set | $O(n)$ |
+      | sorted input, pairs or triples, in-place partition | two pointers | $O(n)$ after sort |
+      | best contiguous subarray or substring under a constraint | sliding window | $O(n)$ |
+      | k largest, merge k sorted lists, running median, earliest deadline | heap | $O(n \log k)$ |
+      | "minimise the maximum", smallest $x$ such that `feasible(x)` | binary search on the answer | $O(n \log R)$ |
+      | overlapping ranges, calendars | sort by start (merge) or by end (greedy), or a sweep line | $O(n \log n)$ |
+      | grid or graph, fewest steps | BFS; dependencies: topological sort | $O(V+E)$ |
+      | connectivity while edges are added | union-find | near $O(1)$ amortised |
+      | count the ways, optimum over choices, overlapping subproblems | dynamic programming | states x transitions |
+      | prefix queries over many strings | trie | $O(L)$ per operation |
+      | one pass over data of unknown size | reservoir sampling, sketches | $O(1)$ per item |
+
+      Constraints narrow it further: $n \le 20$ suggests bitmasks, $n \le 500$ allows $O(n^3)$, $n \approx 10^5$ needs $O(n \log n)$ or better.
+
+      Intervals have three standard moves: merge (sort by start, extend the last interval), maximum non-overlapping set (sort by end, take greedily), minimum rooms (min-heap of end times). A trie is a dict of dicts with an end marker.
+
+      Process: restate the problem, give the brute force and its cost, name the pattern and the invariant, code, then walk one normal case and the edge cases (empty, one element, duplicates, all equal). Interviewers at senior level mark down candidates who code before stating the approach.
+    probes:
+      - How do you tell a sliding-window problem from a prefix-sum problem?
+      - When is greedy by earliest end time provably optimal?
+
+  - id: swe-002
+    skill: dsa
+    type: coding
+    level: core
+    tracks: [mle, ai, re]
+    q: >-
+      Return the length of the longest substring with at most k distinct characters. Then tell me when the
+      sliding-window technique is not valid.
+    a: |
+      ```python
+      from collections import defaultdict
+
+      def longest_k_distinct(s: str, k: int) -> int:
+          count = defaultdict(int)
+          best = left = 0
+          for right, ch in enumerate(s):
+              count[ch] += 1
+              while len(count) > k:          # shrink until the window is valid again
+                  c = s[left]
+                  count[c] -= 1
+                  if count[c] == 0:
+                      del count[c]
+                  left += 1
+              best = max(best, right - left + 1)
+          return best
+      ```
+
+      Invariant: after the inner loop, `s[left:right+1]` is the longest valid window ending at `right`. Each index enters and leaves the window once, so the time is $O(n)$ amortised and the memory is $O(k)$.
+
+      The technique needs monotonicity: extending the window can only break the constraint and shrinking can only repair it. That holds for "at most k distinct" and for sums of non-negative numbers. It fails for sums with negative numbers: use prefix sums with a hash map (count of subarrays with sum $k$) or a monotonic deque (shortest subarray with sum at least $k$).
+
+      Pitfalls interviewers check:
+
+      - Deleting keys whose count reaches zero, otherwise `len(count)` is wrong.
+      - `k = 0` and the empty string (both return 0 here).
+      - "Exactly k" is not monotone; compute `at_most(k) - at_most(k - 1)`.
+      - For a fixed-size window, add the new element and remove the one that leaves; do not recompute the window.
+    probes:
+      - Count the subarrays whose sum equals k when values can be negative.
+      - How would you return the substring itself, and what does that change?
+
+  - id: swe-003
+    skill: dsa
+    type: coding
+    level: core
+    tracks: [mle, ai, re]
+    q: >-
+      Return the k most frequent items in a list of n items. What changes when the data is a stream that
+      does not fit in memory?
+    a: |
+      ```python
+      import heapq
+      from collections import Counter
+
+      def top_k_frequent(items, k):
+          counts = Counter(items)                 # O(n)
+          heap = []                               # min-heap of (count, seq, item), size <= k
+          for seq, (item, c) in enumerate(counts.items()):
+              if len(heap) < k:
+                  heapq.heappush(heap, (c, seq, item))
+              elif c > heap[0][0]:
+                  heapq.heapreplace(heap, (c, seq, item))
+          return [item for c, _, item in sorted(heap, reverse=True)]
+      ```
+
+      A min-heap of size $k$ keeps the current winners with the weakest on top, so each of the $m$ distinct items costs $O(\log k)$: $O(n + m \log k)$ time, $O(m)$ memory for the counts. The `seq` field breaks ties so that items are never compared (they may not be orderable).
+
+      Alternatives: `heapq.nlargest(k, counts.items(), key=lambda kv: kv[1])`; bucket by count for $O(n)$; quickselect for $O(m)$ on average. On arrays use `np.argpartition(x, -k)[-k:]`, which is $O(n)$ and unsorted, or `torch.topk`.
+
+      On an unbounded stream the exact answer needs $O(m)$ memory. Bounded-memory options:
+
+      - Misra-Gries (or Space-Saving) with $k-1$ counters: every item with frequency above $n/k$ is retained, and counts are underestimated by at most $n/k$.
+      - Count-min sketch plus a heap of candidates: counts are overestimates.
+      - In a distributed job, partition by key so each key is counted in one place, then merge per-partition top-k lists. Merging top-k lists from arbitrary splits is wrong, because an item can be just below the cut in every split.
+    probes:
+      - Why a min-heap and not a max-heap?
+      - Merge k sorted lists with a heap. What is the complexity?
+
+  - id: swe-004
+    skill: dsa
+    type: coding
+    level: senior
+    tracks: [mle, ai, re]
+    q: >-
+      Split an array of non-negative sizes into at most m contiguous batches so that the largest batch sum
+      is as small as possible. Solve it and state the loop invariant.
+    a: |
+      Binary search on the answer: "can we do it with cap $c$?" is monotone in $c$, and a greedy pass answers it.
+
+      ```python
+      def min_largest_sum(nums: list[int], m: int) -> int:
+          def feasible(cap: int) -> bool:
+              parts, cur = 1, 0
+              for x in nums:
+                  if cur + x > cap:
+                      parts += 1
+                      cur = x
+                  else:
+                      cur += x
+              return parts <= m
+
+          lo, hi = max(nums), sum(nums)      # the answer lies in [lo, hi]
+          while lo < hi:
+              mid = (lo + hi) // 2
+              if feasible(mid):
+                  hi = mid                    # mid works: keep it
+              else:
+                  lo = mid + 1                # mid fails: discard it
+          return lo
+      ```
+
+      Invariant: `feasible(hi)` is true and every value below `lo` is infeasible. The interval shrinks every iteration because `mid < hi`. Cost: $O(n \log(\text{sum} - \text{max}))$.
+
+      Pitfalls:
+
+      - `lo` must start at `max(nums)`; below that the greedy check is meaningless because one element alone exceeds the cap.
+      - For "largest $x$ that works" use `mid = (lo + hi + 1) // 2` with `lo = mid`, or the loop never ends.
+      - For a real-valued answer, run a fixed number of iterations (about 50 halvings) instead of comparing floats.
+      - Say why the predicate is monotone; that is the whole correctness argument.
+
+      The same pattern appears in ML work: the largest batch size that fits in memory, the threshold that reaches a target precision, the temperature that gives a target entropy.
+    probes:
+      - What does `bisect_left` return, in terms of an invariant?
+      - Solve the same problem with DP. What is the complexity and when would you prefer it?
+
+  - id: swe-005
+    skill: dsa
+    type: coding
+    level: senior
+    tracks: [mle, ai, re]
+    q: >-
+      Given n tasks and dependency pairs, return a valid execution order or report a cycle. Then implement
+      union-find and tell me when you would use it instead of BFS or DFS.
+    a: |
+      ```python
+      from collections import deque
+
+      def topo_order(n: int, edges: list[tuple[int, int]]) -> list[int] | None:
+          """Edge (u, v) means u must run before v. Returns None if there is a cycle."""
+          adj = [[] for _ in range(n)]
+          indeg = [0] * n
+          for u, v in edges:
+              adj[u].append(v)
+              indeg[v] += 1
+          queue = deque(i for i in range(n) if indeg[i] == 0)
+          order = []
+          while queue:
+              u = queue.popleft()
+              order.append(u)
+              for v in adj[u]:
+                  indeg[v] -= 1
+                  if indeg[v] == 0:
+                      queue.append(v)
+          return order if len(order) == n else None
+
+
+      class DSU:
+          def __init__(self, n: int):
+              self.parent = list(range(n))
+              self.size = [1] * n
+
+          def find(self, x: int) -> int:
+              while self.parent[x] != x:
+                  self.parent[x] = self.parent[self.parent[x]]   # path halving
+                  x = self.parent[x]
+              return x
+
+          def union(self, a: int, b: int) -> bool:
+              ra, rb = self.find(a), self.find(b)
+              if ra == rb:
+                  return False                                   # already connected
+              if self.size[ra] < self.size[rb]:
+                  ra, rb = rb, ra
+              self.parent[rb] = ra
+              self.size[ra] += self.size[rb]
+              return True
+      ```
+
+      Kahn's algorithm is $O(V+E)$; nodes on a cycle never reach in-degree zero, so a short `order` means a cycle. The DFS alternative uses three colours and reports a cycle on a back edge; in Python write it iteratively, because the default recursion limit is 1000.
+
+      Union-find with path compression and union by size costs $O(\alpha(n))$ amortised per operation, effectively constant. Use it when edges arrive over time and the only question is "same component?": Kruskal's MST, detecting a cycle in an undirected graph, clustering near-duplicate pairs. It cannot delete edges and does not give paths; for those use BFS or DFS.
+
+      Topological order is what a DAG scheduler, a build system and reverse-mode autodiff all compute.
+    probes:
+      - How do you return the lexicographically smallest valid order?
+      - How would you detect which nodes are on a cycle?
+
+  - id: swe-006
+    skill: dsa
+    also: [statistics]
+    type: coding
+    level: senior
+    tracks: [mle, ai, re]
+    q: >-
+      Sample k items uniformly from a stream of unknown length in one pass and prove it is uniform. Then
+      extend it to weighted sampling without replacement.
+    a: |
+      ```python
+      import heapq
+      import math
+      import random
+
+      def reservoir(stream, k):
+          res = []
+          for i, x in enumerate(stream):            # i is 0-based
+              if i < k:
+                  res.append(x)
+              else:
+                  j = random.randint(0, i)           # inclusive on both ends
+                  if j < k:
+                      res[j] = x
+          return res
+
+      def weighted_reservoir(stream, k):
+          """stream yields (item, weight > 0). Efraimidis-Spirakis A-Res."""
+          heap = []                                  # min-heap of (key, seq, item)
+          for seq, (x, w) in enumerate(stream):
+              u = 1.0 - random.random()              # in (0, 1], so log is defined
+              key = math.log(u) / w                  # log of u ** (1 / w)
+              if len(heap) < k:
+                  heapq.heappush(heap, (key, seq, x))
+              elif key > heap[0][0]:
+                  heapq.heapreplace(heap, (key, seq, x))
+          return [x for _, _, x in heap]
+      ```
+
+      Proof for the uniform case: item $n$ (1-based) enters with probability $k/n$. At a later step $t$ it is evicted with probability $\frac{k}{t}\cdot\frac{1}{k} = \frac{1}{t}$, so it survives with $\frac{t-1}{t}$. The product telescopes:
+
+      $$\frac{k}{n}\cdot\frac{n}{n+1}\cdots\frac{N-1}{N} = \frac{k}{N}.$$
+
+      Weighted: give each item the key $u_i^{1/w_i}$ and keep the $k$ largest keys. This is equivalent to drawing items one at a time with probability proportional to weight among those remaining. It does not make the inclusion probability proportional to $w_i$ when $k > 1$. Taking logs twice shows it is the Gumbel top-k trick: rank by $\log w_i + G_i$.
+
+      Pitfalls: `randint` bounds (off by one breaks uniformity), `random.random()` can return 0, working in log space to avoid underflow for small weights. Keyed reservoirs merge across shards by keeping the top $k$ keys overall, which is how you sample uniformly from a distributed log.
+    probes:
+      - How would you sample without generating a random number for every item (skip-ahead)?
+      - You need each item included with probability exactly proportional to its weight. What changes?
+
+  - id: swe-007
+    skill: dsa
+    also: [statistics]
+    type: concept
+    level: senior
+    tracks: [mle, ai, re]
+    q: >-
+      You need the mean, variance, p99, distinct count and heavy hitters of a stream of billions of events
+      in bounded memory. What do you use for each, and what are the error guarantees?
+    a: |
+      Pick structures that are **mergeable**, so partial results from shards or time windows combine without the raw data.
+
+      - **Mean and variance**: Welford's update, exact and numerically stable in $O(1)$ memory:
+        $$\mu_n = \mu_{n-1} + \frac{x_n - \mu_{n-1}}{n},\qquad M_n = M_{n-1} + (x_n - \mu_{n-1})(x_n - \mu_n),\qquad s^2 = \frac{M_n}{n-1}.$$
+        Accumulating $\sum x^2$ and subtracting loses precision by cancellation. For a recency-weighted mean use an EMA $m_t = (1-\alpha)m_{t-1} + \alpha x_t$ with bias correction $m_t / (1 - (1-\alpha)^t)$, as Adam does.
+      - **Median, exact**: two heaps (max-heap for the lower half, min-heap for the upper), $O(\log n)$ per insert but $O(n)$ memory.
+      - **Quantiles, approximate**: t-digest (most accurate at the tails, which is what p99 needs), KLL or Greenwald-Khanna (rank error at most $\epsilon n$), or fixed-bucket histograms (error bounded by the bucket width). Averaging per-host p99 values does not give the fleet p99; merge sketches or histograms.
+      - **Distinct count**: HyperLogLog, relative standard error about $1.04/\sqrt{m}$ for $m$ registers; $2^{14}$ registers give about 0.8% in roughly 12 KB.
+      - **Frequencies**: count-min sketch with width $\lceil e/\epsilon \rceil$ and depth $\lceil \ln(1/\delta) \rceil$ overestimates a count by at most $\epsilon N$ with probability $1-\delta$. Misra-Gries or Space-Saving for the top items.
+      - **Membership**: Bloom filter, no false negatives, false-positive rate $(1 - e^{-kn/m})^k$; about 10 bits per item gives 1%.
+
+      Typical ML uses: feature statistics for normalisation and drift monitoring, latency percentiles, deduplicating crawl or training data, vocabulary counts.
+    probes:
+      - Why can you not average percentiles, and what do you ship from each host instead?
+      - How do you keep a median over a sliding window?
+
+  - id: swe-008
+    skill: dsa
+    type: derivation
+    level: senior
+    tracks: [mle, ai, re]
+    q: >-
+      Show how you derive a dynamic program from scratch, using edit distance. Then tell me how you
+      recognise that a problem needs BFS or Dijkstra instead of a DP table.
+    a: |
+      A DP is value propagation over a graph of states whose dependency order is known in advance. The derivation is mechanical:
+
+      1. **Brute force as decisions.** Align the last characters of $a[1..i]$ and $b[1..j]$: match or substitute, delete from $a$, or insert into $a$.
+      2. **State.** What must the remaining problem know? Only the two prefix lengths. Say it in one sentence: $d[i][j]$ is the minimum number of edits turning $a[1..i]$ into $b[1..j]$.
+      3. **Recurrence from the last decision.**
+         $$d[i][j] = \min\big(d[i-1][j] + 1,\; d[i][j-1] + 1,\; d[i-1][j-1] + [a_i \ne b_j]\big)$$
+      4. **Base cases.** $d[i][0] = i$, $d[0][j] = j$.
+      5. **Order.** Each state depends on smaller $i$ or $j$, so row by row is a valid topological order.
+      6. **Cost.** $O(mn)$ time; $O(\min(m, n))$ memory with two rolling rows, unless the alignment itself must be recovered.
+
+      Common state families: one prefix index (house robber, LIS), two indices (LCS, edit distance), interval $[i, j]$ (matrix chain), index plus capacity (knapsack, pseudo-polynomial), bitmask for $n \le 20$ (TSP in $O(n^2 2^n)$), tree DP, and (node, resource used) for constrained shortest paths.
+
+      A table works only when the state graph is acyclic. If states can be revisited (moves in four directions on a grid, cyclic graph), the order must be discovered: BFS for unit costs, 0-1 BFS for costs in $\{0, 1\}$, Dijkstra for non-negative costs, Bellman-Ford with negative edges.
+
+      ML instances: word error rate is edit distance over words; Viterbi and the CTC forward pass are DPs over (time, state); beam search is an approximation, not a DP.
+    probes:
+      - Recover the actual edit script. What memory does that need?
+      - Why does Dijkstra fail with negative edges, in terms of the order in which states are finalised?
+
+  - id: swe-009
+    skill: python
+    also: [concurrency]
+    type: concept
+    level: core
+    tracks: [mle, ai, re]
+    q: >-
+      What is the GIL, and what does it mean concretely for a PyTorch data loader and for a Python model
+      server?
+    a: |
+      The GIL is a lock in CPython that lets only one thread execute Python bytecode at a time. Threads still help when the work releases the lock: blocking I/O, and C extensions that drop it during long calls (NumPy on large arrays, PyTorch operators, most compression and many image-decoding libraries). Pure-Python CPU work (per-sample augmentation logic, JSON parsing, a tokenizer written in Python) gets no speed-up from threads.
+
+      **Data loading.** `DataLoader(num_workers=N)` uses worker processes for this reason. The costs are those of processes:
+
+      - Batches cross a process boundary (pickled, tensors through shared memory).
+      - Each worker holds the dataset object. With `fork` the pages start shared, but reference-count updates write to them, so a large Python list of objects is gradually copied into every worker. Store samples in NumPy or Arrow buffers instead.
+      - Worker start-up is paid every epoch unless `persistent_workers=True`.
+
+      **Serving.** One Python process runs Python code on one core. The usual designs:
+
+      - Several worker processes behind a load balancer; each loads its own copy of the model, which multiplies GPU memory.
+      - One model process with dynamic batching, where the forward pass runs in C++/CUDA with the GIL released, and Python only orchestrates.
+      - Move CPU-heavy pre-processing out of Python: Rust tokenizers, a C++ or dedicated inference server.
+
+      CPU-bound code inside an `async` handler is worse than slow: it blocks the event loop for every request.
+
+      Version note: CPython 3.13 added an experimental free-threaded build (PEP 703) and 3.14 made it officially supported but still optional. Single-thread overhead and extension support are the practical limits, so check each library before relying on it.
+    probes:
+      - Why does a thread pool speed up downloading images but not resizing them in pure Python?
+      - Why can the memory of DataLoader workers grow during an epoch even when nothing leaks?
+
+  - id: swe-010
+    skill: python
+    type: debug
+    level: senior
+    tracks: [mle, ai, re]
+    q: >-
+      A preprocessing job over a 200 GB JSONL file is killed for running out of memory. Explain enough of
+      Python's memory behaviour to find the cause and fix it.
+    a: |
+      Something is materialising the data. Look for `readlines()`, `list(...)`, `sorted(...)`, `json.load` of the whole file, a list that accumulates results, or a DataFrame built from Python objects.
+
+      **Why Python objects are expensive.** Everything is a heap object with a header. On 64-bit CPython an `int` is 28 bytes, a `float` 24, an empty `str` about 50, an empty `dict` 64, and a list stores 8-byte pointers to its elements. A list of $10^8$ floats costs about $(8 + 24) \times 10^8 = 3.2$ GB against 0.8 GB as a `float64` array. A list of dicts per record is the worst case.
+
+      **How memory is released.** Reference counting frees an object when its count reaches zero; the cyclic garbage collector handles reference cycles later. Freed memory goes back to CPython's allocator and not necessarily to the OS, so RSS can stay near its peak. Hidden references keep objects alive: a global cache, a closure, a stored traceback, a list of losses that still hold a graph.
+
+      **Fixes.**
+
+      - Stream with generators: `for line in f` reads lazily; a generator pipeline (`parse(filter(read(f)))`) holds one record at a time. Generators are single-pass, and their exceptions surface at iteration time, not at creation.
+      - Process in bounded chunks (`itertools.islice`, or `itertools.batched` from 3.12) and write each chunk out, for example to partitioned Parquet.
+      - Columnar storage for what must stay in memory: NumPy, Arrow, `__slots__` or `dataclass(slots=True)` for small records.
+      - Shard the file and run one process per shard; `np.memmap` or Arrow memory mapping for random access.
+      - Know which operations copy: NumPy basic slicing returns a view, boolean and fancy indexing copy, and so does most pandas filtering.
+
+      Measure with `tracemalloc` or `memray`, and peak RSS with `/usr/bin/time -v`. `sys.getsizeof` is shallow and undercounts containers.
+    probes:
+      - What is the difference between a generator expression and a list comprehension at run time?
+      - RSS does not drop after `del big_list`. Is that a leak?
+
+  - id: swe-011
+    skill: python
+    also: [data-analysis]
+    type: coding
+    level: core
+    tracks: [mle, ai, re]
+    q: >-
+      Compute all pairwise squared Euclidean distances between X of shape (n, d) and Y of shape (m, d)
+      without Python loops. What are the memory and numerical pitfalls?
+    a: |
+      ```python
+      import numpy as np
+
+      def pairwise_sq_dists(X: np.ndarray, Y: np.ndarray) -> np.ndarray:
+          # ||x - y||^2 = ||x||^2 + ||y||^2 - 2 x.y   -> (n, m)
+          x2 = np.einsum("ij,ij->i", X, X)[:, None]     # (n, 1)
+          y2 = np.einsum("ij,ij->i", Y, Y)[None, :]     # (1, m)
+          d2 = x2 + y2 - 2.0 * (X @ Y.T)                # one BLAS matmul
+          np.maximum(d2, 0.0, out=d2)                   # clamp rounding error
+          return d2
+      ```
+
+      Why not plain broadcasting: `((X[:, None, :] - Y[None, :, :]) ** 2).sum(-1)` builds an $(n, m, d)$ temporary. With $n = m = 10^4$, $d = 768$ in float32 that is $10^8 \times 768 \times 4$ bytes, about 307 GB. The expanded form needs only the $(n, m)$ output, 400 MB.
+
+      Pitfalls:
+
+      - Cancellation: for near-identical points the three terms nearly cancel and the result can be slightly negative, which becomes NaN under `sqrt`. Clamp at zero, and use float64 if small distances matter.
+      - Even $(n, m)$ may not fit: chunk over rows of `X` and reduce each chunk (top-k, min) before moving on.
+      - For top-k per row use `np.argpartition(d2, k, axis=1)[:, :k]`, $O(m)$ per row, and sort only those $k$.
+      - Shape discipline: keep `[:, None]` and `[None, :]` explicit and assert the output shape.
+
+      Why vectorised code is fast: the loop runs in compiled code over contiguous typed memory, with SIMD and multi-threaded BLAS, and without creating a Python object per element. The gain over a Python loop is typically one to two orders of magnitude. It stops paying when the expression creates many large temporaries, since memory bandwidth then dominates; use in-place operations, `numexpr`, Numba, or move to the GPU (`torch.cdist`).
+    probes:
+      - Rewrite it for cosine similarity. What must be true of the inputs?
+      - When is a Python loop over chunks faster than a single vectorised expression?
+
+  - id: swe-012
+    skill: concurrency
+    also: [python]
+    type: tradeoff
+    level: core
+    tracks: [mle, ai, re]
+    q: >-
+      asyncio, threads or processes: how do you choose in Python? Give one ML workload that fits each.
+    a: |
+      Choose by what the work is waiting on.
+
+      | | asyncio | threads | processes |
+      |---|---|---|---|
+      | Parallel Python CPU work | no | no (GIL) | yes |
+      | Scheduling | cooperative, switches only at `await` | pre-emptive | pre-emptive |
+      | Cost per unit | kilobytes per task | an OS thread and its stack | a full interpreter, plus start-up |
+      | Shared state | one thread, no data races between awaits | shared memory, needs locks | none; arguments and results are pickled |
+      | Main hazard | one blocking call stalls every task | races, deadlocks | serialisation cost, memory duplication, fork problems |
+
+      - **asyncio**: thousands of concurrent waits on the network. Example: send 50,000 evaluation prompts to an LLM API with 64 in flight, or a server that streams tokens to many clients. Anything blocking (`requests`, `time.sleep`, CPU work) must go through `asyncio.to_thread` or an executor.
+      - **Threads**: blocking I/O through libraries with no async API, or C extensions that release the GIL. Example: reading objects from cloud storage, or calling a model whose forward pass runs in C++. `x += 1` is still not atomic, so shared counters need a lock.
+      - **Processes**: CPU-bound Python. Example: JPEG decode and augmentation in DataLoader workers, tokenising a corpus with `ProcessPoolExecutor`. Send large arrays through shared memory or files, not pickles.
+
+      Process hazards specific to ML: CUDA cannot be re-initialised in a forked child, so use the `spawn` start method when workers touch the GPU; forking a process that has running threads can copy a held lock and deadlock the child.
+
+      Beyond one machine the same split continues as a task queue, Ray or Spark.
+    probes:
+      - What happens to the other requests when an async handler calls a synchronous HTTP client?
+      - Why is `spawn` slower to start than `fork`, and what does it require of the worker function?
+
+  - id: swe-013
+    skill: concurrency
+    also: [python, llm-apis]
+    type: coding
+    level: senior
+    tracks: [mle, ai, re]
+    q: >-
+      Write an async function that sends N prompts to a rate-limited LLM API with bounded concurrency,
+      timeouts and retries, and returns results in input order. What goes wrong at 100,000 prompts?
+    a: |
+      ```python
+      import asyncio
+      import random
+
+      class Retryable(Exception):
+          """Raised by `call` for 429, 5xx and connection errors."""
+
+      async def run_all(prompts, call, max_concurrency=32, max_attempts=5, timeout_s=60.0):
+          sem = asyncio.Semaphore(max_concurrency)
+
+          async def one(prompt):
+              async with sem:
+                  for attempt in range(max_attempts):
+                      try:
+                          return await asyncio.wait_for(call(prompt), timeout_s)
+                      except (Retryable, asyncio.TimeoutError):
+                          if attempt == max_attempts - 1:
+                              raise
+                          cap = min(30.0, 0.5 * 2 ** attempt)
+                          await asyncio.sleep(random.uniform(0, cap))   # full jitter
+
+          return await asyncio.gather(*(one(p) for p in prompts), return_exceptions=True)
+      ```
+
+      What the interviewer checks:
+
+      - `gather` returns results in input order regardless of completion order. `return_exceptions=True` keeps one failure from discarding every other result.
+      - The semaphore bounds in-flight requests. It is held during backoff on purpose, so errors reduce the request rate.
+      - Retry only retryable errors, with exponential backoff and jitter, and honour `Retry-After` when the server sends it.
+      - Never swallow `asyncio.CancelledError`; cancellation must propagate.
+      - A timeout per attempt. Without one, a hung connection holds a slot forever.
+
+      At 100,000 prompts:
+
+      - All results live in memory and a crash loses them. Write each result to disk as it completes, keyed by a stable id, and skip finished ids on restart.
+      - 100,000 tasks are created up front. Use a bounded `asyncio.Queue` with a fixed set of worker tasks so the producer is slowed down.
+      - Provider limits are usually on tokens per minute as well as requests; add a token bucket in front of the call.
+      - Retrying is safe for pure generation but not for calls with side effects; those need an idempotency key.
+      - Check the HTTP client's connection-pool limit, which can cap concurrency below the semaphore.
+
+      On Python 3.11+ `asyncio.TaskGroup` and `asyncio.timeout` give cleaner cancellation.
+    probes:
+      - Rewrite it with a bounded queue and worker tasks. Where does backpressure appear?
+      - Why jitter? What happens without it after a provider outage?
+
+  - id: swe-014
+    skill: cpp
+    type: concept
+    level: senior
+    tracks: [mle, re]
+    q: >-
+      As an ML engineer, what should you be able to explain about C++ ownership (RAII, smart pointers,
+      move semantics), and why are inference runtimes written in C++?
+    a: |
+      **RAII.** A resource's lifetime is tied to an object's scope: the constructor acquires, the destructor releases, and the destructor runs deterministically at scope exit, including when an exception unwinds the stack. It covers memory, file handles, mutexes (`std::lock_guard`) and GPU buffers. There is no garbage collector, so there are no collector pauses.
+
+      **Ownership in the type.**
+
+      - `std::unique_ptr<T>`: single owner, no overhead, move-only.
+      - `std::shared_ptr<T>`: shared ownership through an atomic reference count; copying it costs an atomic increment. `std::weak_ptr` breaks cycles.
+      - Raw pointers and references mean "not the owner".
+      - Rule of zero: let members manage resources. If you write one of destructor, copy or move operations, you probably need all five.
+
+      **Move semantics.** `std::move` is a cast to an rvalue reference. The move constructor then takes over the source's buffer in $O(1)$ instead of deep-copying in $O(n)$; the source stays valid but unspecified. Mark move constructors `noexcept`, otherwise `std::vector` copies elements when it reallocates. Returning by value is cheap through copy elision. Pass large read-only objects by `const&` or `std::span`.
+
+      **Typical bugs.** Dangling references, use-after-free, iterator invalidation after `push_back`, data races, undefined behaviour. Tools: AddressSanitizer, ThreadSanitizer, UBSan.
+
+      **Why inference stacks use it.**
+
+      - Real multi-threading with no GIL.
+      - Control over memory layout and allocation (arenas, pinned memory, zero-copy between stages).
+      - Direct access to CUDA, TensorRT, SIMD intrinsics.
+      - No interpreter overhead per operation, which matters for small models at high QPS.
+      - Predictable tail latency, and it embeds in non-Python hosts (mobile, vehicles, trading systems).
+
+      PyTorch is a Python front end over a C++ core; ONNX Runtime, TensorRT, Triton and llama.cpp are C++.
+    probes:
+      - What does a moved-from `std::vector` contain?
+      - When would you pass a `shared_ptr` by value rather than by const reference?
+
+  - id: swe-015
+    skill: rust
+    type: concept
+    level: senior
+    tracks: [mle, ai, re]
+    q: >-
+      What does Rust's ownership model guarantee, what does it not guarantee, and where does Rust actually
+      appear in ML systems?
+    a: |
+      **Rules.**
+
+      - Every value has exactly one owner and is dropped when the owner goes out of scope (RAII, no garbage collector).
+      - Assignment and argument passing move by default; using a moved value is a compile error.
+      - Borrowing: at any time either any number of shared references `&T` or exactly one mutable reference `&mut T`, and no reference may outlive its referent (lifetimes).
+      - `Send` and `Sync` mark which types may be moved to or shared between threads; shared mutable state is written as `Arc<Mutex<T>>`.
+      - Errors are values: `Result<T, E>` with `?`, and `Option<T>` in place of null.
+
+      **Guaranteed in safe code, at compile time:** no use-after-free, no double free, no iterator invalidation, no data races.
+
+      **Not guaranteed:** deadlocks, logic errors, leaks through `Rc` cycles, panics, and anything inside `unsafe` (which FFI to C or CUDA libraries requires).
+
+      **Costs.** Long compile times, a real learning curve, awkward graph-shaped data structures (use indices or arenas), and a much thinner GPU and numerical ecosystem than C++.
+
+      **Where it appears.** Hugging Face `tokenizers` and `safetensors`, Polars, `pydantic-core`, the `uv` and `ruff` tools, vector databases such as Qdrant and LanceDB, the request router of text-generation-inference, and the Candle and Burn frameworks. The usual shape is a Rust core with Python bindings through PyO3, which lets the library release the GIL and parallelise across cores.
+
+      Against C++: same performance class; Rust enforces by default what C++ leaves to discipline and sanitizers; C++ still owns GPU kernels and the existing runtimes. For an ML engineer the interview level is usually "explain ownership and read the code", unless the role is an inference or infrastructure role that lists Rust as a requirement.
+    probes:
+      - Why is a data race impossible in safe Rust but a deadlock is not?
+      - How does a Rust extension release the GIL, and why does that matter for tokenisation throughput?
+
+  - id: swe-016
+    skill: go
+    also: [backend, llm-apis]
+    type: coding
+    level: senior
+    tracks: [ai, mle]
+    q: >-
+      Write a Go HTTP handler that relays a streaming LLM response to the client as Server-Sent Events. How
+      do cancellation and backpressure work in your code?
+    a: |
+      ```go
+      func streamHandler(w http.ResponseWriter, r *http.Request) {
+          flusher, ok := w.(http.Flusher)
+          if !ok {
+              http.Error(w, "streaming unsupported", http.StatusInternalServerError)
+              return
+          }
+          w.Header().Set("Content-Type", "text/event-stream")
+          w.Header().Set("Cache-Control", "no-cache")
+
+          ctx := r.Context()               // cancelled when the client disconnects
+          tokens, errc := generate(ctx, r) // unbuffered <-chan string, buffered <-chan error
+
+          heartbeat := time.NewTicker(15 * time.Second)
+          defer heartbeat.Stop()
+          for {
+              select {
+              case <-ctx.Done():
+                  return // generate sees the same ctx and stops
+              case tok, open := <-tokens:
+                  if !open {
+                      if err := <-errc; err != nil {
+                          fmt.Fprintf(w, "event: error\ndata: %q\n\n", err.Error())
+                      } else {
+                          fmt.Fprint(w, "data: [DONE]\n\n")
+                      }
+                      flusher.Flush()
+                      return
+                  }
+                  payload, _ := json.Marshal(map[string]string{"delta": tok})
+                  fmt.Fprintf(w, "data: %s\n\n", payload)
+                  flusher.Flush()
+              case <-heartbeat.C:
+                  fmt.Fprint(w, ": ping\n\n")
+                  flusher.Flush()
+              }
+          }
+      }
+      ```
+
+      - **Framing.** An SSE event is `data:` lines ended by a blank line. Tokens are JSON-encoded because a raw newline in a token would break the framing. Lines starting with `:` are comments, used as heartbeats so idle proxies do not close the connection.
+      - **Flush.** Without `Flush` the response is buffered and the client sees nothing until the end. Reverse proxies may buffer too and must be configured not to.
+      - **Cancellation.** `r.Context()` is cancelled on disconnect and must be passed to the upstream call, so the GPU stops generating for a client that left. The producer goroutine must also select on `ctx.Done()` when sending, or it blocks forever on the channel: a goroutine leak.
+      - **Backpressure.** The channel is unbuffered, so the producer blocks until the handler has written the previous token; the write blocks when the client's TCP window is full. A slow client therefore holds an upstream slot, so set a write deadline (`http.ResponseController`) and a total deadline.
+      - **Errors after the 200.** The status line is already sent, so errors travel in-band as an event.
+
+      SSE fits one-way token streams over plain HTTP; WebSocket is for bidirectional sessions such as voice. Go suits gateways because goroutines are cheap, the scheduler uses all cores and deployment is one static binary.
+    probes:
+      - Where exactly would a goroutine leak in this design, and how do you test for it?
+      - How do you resume a stream after the connection drops halfway?
+
+  - id: swe-017
+    skill: jvm
+    type: concept
+    level: core
+    tracks: [mle, ai]
+    q: >-
+      Your ML code is Python, but the data platform and the product backend run on the JVM. What do you
+      need to know about the JVM to work across that boundary?
+    a: |
+      **Where it is.** Spark (Scala), Flink, Kafka, Hadoop, Lucene/Elasticsearch and Cassandra are JVM systems, and many product backends are Java or Kotlin. ML engineers meet it in data pipelines and at the serving boundary.
+
+      **Runtime behaviour.**
+
+      - Bytecode is JIT-compiled as it gets hot, so a fresh instance is slow for its first requests. Benchmark after warm-up and warm new instances before they take traffic.
+      - Real threads, no GIL. Since Java 21, virtual threads make one-thread-per-request cheap for I/O-bound services.
+      - Garbage collection: the heap is capped by `-Xmx`. Stop-the-world pauses show up in p99 latency; G1 is the default collector, ZGC and Shenandoah trade throughput for very short pauses. In a container, heap plus off-heap memory must fit the cgroup limit or the process is OOM-killed.
+
+      **PySpark.** The Python driver sends a plan to the JVM, and DataFrame operations run inside the JVM. A row-wise Python UDF serialises every row to a Python worker and back, which is often an order of magnitude slower. Prefer built-in functions, then pandas UDFs, which exchange Arrow batches. Executor failures come in two kinds: JVM heap exhaustion, and the Python worker exceeding the memory overhead allowance.
+
+      **Serving from a JVM service.**
+
+      - Call a Python or C++ model server over gRPC: the usual choice; independent scaling and deployment, one extra network hop.
+      - In-process inference (ONNX Runtime's Java API, XGBoost4J): no hop, but native memory lives outside the heap and a native crash takes down the JVM.
+
+      **Skew risk.** Features computed in Python offline and re-implemented in Java online drift apart. Share one definition (a feature store or a common library) and add a parity test that pushes the same raw records through both paths.
+    probes:
+      - Why is a pandas UDF faster than a row-wise Python UDF?
+      - A Java service shows a latency spike every few minutes. What do you check first?
+
+  - id: swe-018
+    skill: typescript
+    also: [tool-use]
+    type: coding
+    level: senior
+    tracks: [ai]
+    q: >-
+      Write a typed tool-calling loop in TypeScript: the model returns text or tool calls; run the tools
+      with validated arguments and feed the results back. What are the failure modes?
+    a: |
+      ```ts
+      import { z } from "zod";
+
+      type ToolCall = { id: string; name: string; arguments: string }; // raw JSON from the model
+      type Message =
+        | { role: "user"; content: string }
+        | { role: "assistant"; content: string }
+        | { role: "assistant"; toolCalls: ToolCall[] }
+        | { role: "tool"; toolCallId: string; content: string };
+
+      interface Tool<S extends z.ZodTypeAny> {
+        description: string;
+        schema: S;
+        run(args: z.infer<S>, signal: AbortSignal): Promise<unknown>;
+      }
+      const defineTool = <S extends z.ZodTypeAny>(t: Tool<S>) => t;
+
+      const tools: Record<string, Tool<any>> = {
+        getWeather: defineTool({
+          description: "Current weather for a city",
+          schema: z.object({ city: z.string(), unit: z.enum(["c", "f"]).default("c") }),
+          run: async ({ city, unit }) => ({ city, unit, temp: 21 }),
+        }),
+      };
+
+      async function execute(call: ToolCall, signal: AbortSignal): Promise<Message> {
+        const reply = (body: unknown): Message => ({
+          role: "tool", toolCallId: call.id, content: JSON.stringify(body),
+        });
+        const tool = tools[call.name];
+        if (!tool) return reply({ error: `unknown tool ${call.name}` });
+        let raw: unknown;
+        try { raw = JSON.parse(call.arguments); }
+        catch { return reply({ error: "arguments are not valid JSON" }); }
+        const parsed = tool.schema.safeParse(raw);
+        if (!parsed.success) return reply({ error: parsed.error.issues });
+        try { return reply(await tool.run(parsed.data, signal)); }
+        catch (e) { return reply({ error: String(e) }); }
+      }
+
+      async function agent(
+        history: Message[],
+        llm: (h: Message[], s: AbortSignal) => Promise<Message>,
+        signal: AbortSignal,
+        maxSteps = 8,
+      ): Promise<Message> {
+        for (let step = 0; step < maxSteps; step++) {
+          const msg = await llm(history, signal);
+          history.push(msg);
+          if (!("toolCalls" in msg)) return msg;
+          history.push(...(await Promise.all(msg.toolCalls.map((c) => execute(c, signal)))));
+        }
+        throw new Error("step limit reached");
+      }
+      ```
+
+      - Types are erased at run time, and the model's output is untrusted input: validate at the boundary. Keep one schema as the source for both the validator and the JSON Schema sent to the model.
+      - Return validation and tool errors to the model as tool results so it can correct itself; throw only for programming errors. Every tool-call id must receive exactly one result.
+      - Bound the loop (steps, time, spend) and thread an `AbortSignal` through the model call and the tools.
+      - `Promise.all` is right only for independent, read-only tools. Tools with side effects need sequencing, idempotency keys and often user confirmation.
+      - When streaming, tool arguments arrive as partial JSON fragments; accumulate per call before parsing.
+      - Tool output can carry injected instructions; treat it as data.
+
+      Provider wire formats differ, so keep an internal message type like this one and adapt at the edge.
+    probes:
+      - How do you keep the type of `args` specific to each tool instead of `any`?
+      - A tool call times out after it has already charged a card. What does the loop do?
+
+  - id: swe-019
+    skill: frontend
+    also: [typescript, llm-apis]
+    type: design
+    level: senior
+    tracks: [ai]
+    q: >-
+      Design the client side of a streaming chat interface in React. How do tokens get from the server to
+      the screen, and what breaks in production?
+    a: |
+      **Transport.** POST the request with `fetch` and read `response.body` as a stream of SSE frames. The browser's `EventSource` only does GET without custom headers or a body, which is why most LLM clients parse SSE over `fetch` themselves. Use WebSocket only when the client also streams to the server (voice, collaborative editing). Decode with `TextDecoder` in streaming mode and buffer until a blank line: network chunks align with neither event boundaries nor UTF-8 character boundaries.
+
+      **State and rendering.**
+
+      - Keep finished messages in state and memoise them; only the streaming message should re-render.
+      - Do not call `setState` per token. Append deltas to a buffer and commit once per animation frame or every 30 to 50 ms; otherwise the app re-parses Markdown hundreds of times per second.
+      - Incremental Markdown must tolerate unfinished constructs (an open code fence, half a table).
+      - Virtualise long conversations. Auto-scroll only while the user is at the bottom.
+      - Type stream events as a discriminated union on `type` (text delta, tool call, error, done) shared with the server.
+
+      **Cancellation.** An `AbortController` per request, aborted on stop, on a new submission and on unmount. The server must stop generating when the connection closes, or cancelled requests still cost money.
+
+      **Failures.**
+
+      - Errors after the 200 status arrive as in-band events; show the partial text and a retry.
+      - Proxies that buffer the response turn streaming into one late chunk.
+      - Mobile browsers kill streams in the background, so persist the response server-side and let the client re-fetch by message id.
+      - Do not retry automatically if the request triggered tools with side effects.
+
+      **Security.** Model output is untrusted: sanitise rendered HTML, never inject it raw, and restrict image and link targets, since a Markdown image URL can exfiltrate conversation data. API keys stay on the server; the browser talks to your backend.
+
+      **Perceived latency.** Time to first token is the number users feel; show tool progress while nothing is streaming.
+    probes:
+      - Why can you not use EventSource for a chat completion request?
+      - The UI freezes on long answers containing code blocks. Where do you look?
+
+  - id: swe-020
+    skill: sql
+    type: coding
+    level: core
+    tracks: [mle, ai]
+    q: >-
+      Given events(user_id, ts), assign session ids where a session ends after 30 minutes of inactivity,
+      then return each user's session count and median session length. Which window functions do you need?
+    a: |
+      Gaps and islands: `LAG` flags the rows that start a session, and a running `SUM` of the flags numbers the sessions.
+
+      ```sql
+      WITH flagged AS (
+        SELECT
+          user_id,
+          ts,
+          CASE
+            WHEN LAG(ts) OVER (PARTITION BY user_id ORDER BY ts) IS NULL
+              OR ts - LAG(ts) OVER (PARTITION BY user_id ORDER BY ts) > INTERVAL '30 minutes'
+            THEN 1 ELSE 0
+          END AS is_new_session
+        FROM events
+      ),
+      sessionized AS (
+        SELECT
+          user_id,
+          ts,
+          SUM(is_new_session) OVER (
+            PARTITION BY user_id ORDER BY ts
+            ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+          ) AS session_seq
+        FROM flagged
+      ),
+      sessions AS (
+        SELECT user_id, session_seq,
+               MIN(ts) AS started_at, MAX(ts) AS ended_at, COUNT(*) AS n_events
+        FROM sessionized
+        GROUP BY user_id, session_seq
+      )
+      SELECT
+        user_id,
+        COUNT(*) AS n_sessions,
+        PERCENTILE_CONT(0.5) WITHIN GROUP (
+          ORDER BY EXTRACT(EPOCH FROM ended_at - started_at)
+        ) AS median_session_seconds
+      FROM sessions
+      GROUP BY user_id;
+      ```
+
+      This is PostgreSQL syntax; interval arithmetic and the median function differ by engine.
+
+      Points to state:
+
+      - Window functions are evaluated after `WHERE`, `GROUP BY` and `HAVING`, so they cannot be filtered in `WHERE`: use a CTE, or `QUALIFY` where the engine has it.
+      - With `ORDER BY` and no frame, the default frame is `RANGE ... CURRENT ROW`, which includes all rows tied on the ordering key. Write `ROWS` explicitly for running totals.
+      - `ROW_NUMBER` is unique, `RANK` leaves gaps after ties, `DENSE_RANK` does not. Latest row per key is `ROW_NUMBER() OVER (PARTITION BY id ORDER BY updated_at DESC) = 1`.
+      - Data issues: duplicate events, time zones, one-event sessions of length zero, and a bot with millions of events making one partition very expensive to sort.
+      - Incremental daily runs need a look-back, because a session can cross midnight.
+    probes:
+      - How would you compute this incrementally, day by day?
+      - Add the constraint that a session also ends when the device changes.
+
+  - id: swe-021
+    skill: sql
+    also: [feature-eng]
+    type: debug
+    level: senior
+    tracks: [mle, ai]
+    q: >-
+      A revenue number doubled after someone joined the orders table to a new table. Which join pitfalls do
+      you check, including the ones specific to building training sets?
+    a: |
+      Start with row counts: compare `COUNT(*)` and `COUNT(DISTINCT order_id)` before and after the join. If they differ, the join key is not unique on the other side.
+
+      **General pitfalls.**
+
+      - **Fan-out.** Joining to a table with several rows per key multiplies rows, and `SUM` double-counts. Aggregate the many-side to the join grain first, or dedupe it with `ROW_NUMBER`.
+      - **LEFT JOIN turned inner.** A `WHERE` predicate on the right table removes the NULL-extended rows. Put the predicate in the `ON` clause.
+      - **NULL semantics.** `NULL = NULL` is not true, so NULL keys never match. `x NOT IN (subquery)` returns no rows if the subquery yields any NULL; use `NOT EXISTS`. `COUNT(col)` and `AVG(col)` skip NULLs.
+      - **Type and format mismatches.** String `'007'` against integer 7, trailing spaces, case, timestamps in different time zones.
+      - **Upstream duplicates.** Replayed or late events; make the key unique before joining.
+      - **Skew.** One key value (NULL, 0, a default id) carries a large share of rows, and one task of the distributed join runs for hours. Filter it or salt the key.
+
+      **Training-set pitfalls.**
+
+      - **Point-in-time correctness.** Join each label row to the feature values as of the event time (latest row with `feature_ts <= event_ts`), not to today's snapshot. Otherwise the features contain information from after the label, which is leakage that inflates offline metrics. Implement it with `ROW_NUMBER` over the eligible feature rows, or with `ASOF JOIN` where the engine has one.
+      - **Window overlap.** A 7-day aggregate that includes the label period.
+      - **Survivorship.** An inner join to a table that exists only for converted or retained users silently drops the negatives.
+
+      Habits that prevent all of these: assert key uniqueness, log row counts at each step, and reconcile one total against a trusted source.
+    probes:
+      - Write the point-in-time join with a window function.
+      - Why does the filter placement matter for a LEFT JOIN but not for an INNER JOIN?
+
+  - id: swe-022
+    skill: backend
+    also: [model-serving]
+    type: design
+    level: senior
+    tracks: [mle, ai]
+    q: >-
+      Design the API of an inference service that has a fast synchronous path and jobs that run for
+      minutes. What do you specify beyond the endpoints?
+    a: |
+      **Shape.**
+
+      - Synchronous: `POST /v1/embeddings` returns the result; a streaming variant returns SSE.
+      - Long-running: `POST /v1/jobs` returns `202` with a job id; `GET /v1/jobs/{id}` returns the state (`queued`, `running`, `succeeded`, `failed`, `cancelled`), progress and a result location; `POST /v1/jobs/{id}/cancel`; optionally a signed webhook on completion. Do not hold an HTTP request open for minutes: load-balancer idle timeouts cut it, and the client's retry starts the work again.
+
+      **What a senior design specifies.**
+
+      - **Idempotency.** `POST` accepts an `Idempotency-Key`; the server stores key to response for a retention period (for example 24 h) and replays it. Same key with a different body is an error.
+      - **Errors.** One envelope (code, message, request id), with status codes that tell the client what to do: 400/422 fix the request, 401/403, 404, 409, 429 with `Retry-After`, 503 overloaded, 504 deadline exceeded. State which are retryable.
+      - **Deadlines and cancellation.** The client sends a deadline; it propagates to downstream calls, and a cancelled request frees its GPU slot.
+      - **Limits.** Payload size, batch size, rate limits per key in requests and in tokens, returned in headers.
+      - **Versioning.** Additive changes only within `/v1`. The model version is separate from the API version: the client can pin a model id, and every response reports which model produced it.
+      - **Pagination.** Opaque cursors, not offsets.
+      - **Observability.** Request id, trace context, and usage (tokens, latency) in the response.
+      - **Security.** Authentication, per-tenant isolation, and a stated policy on logging request content.
+
+      **REST or gRPC.** gRPC (HTTP/2, protobuf, generated clients, deadlines and streaming built in) for internal service-to-service calls; JSON over HTTP with SSE for public and browser clients. With protobuf, never reuse or renumber fields; add new optional fields only.
+    probes:
+      - The client times out and retries a job submission. Walk through what happens with and without an idempotency key.
+      - How do you deprecate a model version that customers have pinned?
+
+  - id: swe-023
+    skill: backend
+    also: [distsys, model-serving]
+    type: tradeoff
+    level: senior
+    tracks: [mle, ai]
+    q: >-
+      Where would you put caches in an ML serving path, and what goes wrong with each?
+    a: |
+      **What is cacheable.**
+
+      - Feature lookups per user or item, with a TTL of seconds to minutes.
+      - Embeddings, keyed by content hash and model version.
+      - Whole responses for deterministic requests, keyed by a hash of model version, normalised input and parameters.
+      - Retrieval results and, for LLMs, the computed state of a shared prompt prefix.
+
+      Whether it pays depends on the request distribution: head-heavy traffic caches well, a long tail does not. Expected latency is $h\,t_{\text{hit}} + (1-h)\,t_{\text{miss}}$, but the tail does not improve unless the hit rate $h$ exceeds the percentile: with 90% hits, p99 is still a miss.
+
+      **Patterns.** Cache-aside (read cache, on miss read the source and populate) is the default; write-through keeps the cache current at the cost of write latency. Invalidate by TTL or, better, by versioned keys: put the model or feature version in the key so a deploy invalidates naturally.
+
+      **Failure modes.**
+
+      - **Stampede.** A hot key expires and many requests recompute it at once. Use single-flight (one loader per key), jittered TTLs, or serve stale while refreshing.
+      - **Cold start.** After a deploy or restart the cache is empty, latency jumps and the backends take full load. Warm it, or ramp traffic gradually. If the system cannot survive an empty cache, the cache is a hard dependency and its failure is an outage.
+      - **Staleness.** Acceptable for a slowly changing embedding, not for a price or an account balance.
+      - **Wrong key.** A personalised response stored under a shared key leaks data between users; a key without the experiment arm or model version contaminates A/B tests.
+      - **Nondeterminism.** Caching a sampled generation changes product behaviour: the same question always gets the same answer.
+      - **Write races.** Updating the database and the cache separately can leave them inconsistent; delete the cache entry after the write commits and rely on TTL as the backstop.
+
+      Monitor hit rate, latency by hit and miss, eviction rate and entry age.
+    probes:
+      - How does single-flight work across several server instances?
+      - Hit rate is 95% but p99 did not move. Why?
+
+  - id: swe-024
+    skill: distsys
+    type: concept
+    level: core
+    tracks: [mle, ai, re]
+    q: >-
+      Explain at-most-once, at-least-once and exactly-once. How do you make a retried request or a
+      redelivered message safe?
+    a: |
+      A sender that gets no reply cannot tell whether the request was lost or the reply was. It has two choices: do not retry (at-most-once, work may be lost) or retry (at-least-once, work may be duplicated). Exactly-once *delivery* is not achievable under failures. What systems provide is exactly-once *effect*: at-least-once delivery plus processing that is idempotent or transactional.
+
+      **Idempotency.** An operation whose effect is the same applied once or many times.
+
+      - Naturally idempotent: set a value, delete by id, upsert keyed by event id, overwrite a partition.
+      - Made idempotent: the client generates a unique key per logical operation; the server records the key and the result in the same transaction as the effect, and replays the stored result on a repeat.
+      - Consumers: a dedup table keyed by message id, or committing the input offset atomically with the output. Kafka transactions make consume-process-produce atomic inside Kafka; an email, a payment or a launched GPU job outside it is still at-least-once.
+
+      **Retry policy.**
+
+      - Retry only errors that can succeed later (timeouts, 503, 429), never validation errors.
+      - Exponential backoff with jitter: sleep a random time in $[0, \min(\text{cap}, \text{base}\cdot 2^{n})]$. Without jitter, clients that failed together retry together.
+      - Bound attempts and add a retry budget (for example, retries at most 10% of requests), so an outage is not amplified into a retry storm.
+      - Retries multiply across layers: three layers with three attempts each can produce 27 calls. Retry at one layer and propagate deadlines.
+
+      ML examples: a replayed event stream double-counts clicks in training data; an agent tool sends the same email twice after a timeout; a re-run batch-inference job appends duplicate rows instead of overwriting its date partition.
+    probes:
+      - Where exactly must the idempotency key be stored for the guarantee to hold?
+      - Is an LLM generation call idempotent? Does it matter?
+
+  - id: swe-025
+    skill: distsys
+    type: tradeoff
+    level: senior
+    tracks: [mle, ai, re]
+    q: >-
+      What consistency guarantees can a replicated store offer, and which would you pick for an online
+      feature store, a model registry and a rate-limit counter?
+    a: |
+      **The models, strongest first.**
+
+      - **Linearizable.** The store behaves like a single copy: once a write completes, every later read sees it. Needs consensus (Raft, Paxos): a majority must acknowledge, so $2f+1$ nodes tolerate $f$ failures, writes cost a quorum round trip, and a minority partition cannot serve.
+      - **Causal and session guarantees.** Read-your-writes, monotonic reads: weaker, but enough for most user-facing flows.
+      - **Eventual.** Replicas converge once writes stop. Concurrent writes need a resolution rule: last-writer-wins (silently drops writes under clock skew), version vectors, or CRDTs.
+
+      Quorum replication with $N$ replicas, $W$ write acknowledgements and $R$ read replicas makes a read overlap the latest write when $R + W > N$ (for example $N=3$, $W=2$, $R=2$). That alone is not linearizability.
+
+      CAP says that during a partition you choose consistency or availability; PACELC adds that without a partition you still trade latency against consistency. Isolation levels (serializable, snapshot) are a separate axis about concurrent transactions.
+
+      **Choices.**
+
+      - **Online feature store.** Eventual with bounded staleness. Features are already seconds to hours old, and availability and p99 matter more. Monitor replication lag as a feature-freshness metric.
+      - **Model registry and deployment config** ("which version is production"). Linearizable or transactional: small data, few writes, and two servers disagreeing about the live model is a correctness bug. Use a relational database or etcd.
+      - **Rate-limit counter.** Approximate: local counters synchronised periodically; slight over-admission is acceptable.
+      - **Usage and billing ledger.** Transactional and idempotent.
+
+      The classic failure is assuming read-after-write on an asynchronous replica: the user updates a setting, the next request reads a lagging replica and sees the old value. Route those reads to the leader or carry a version token.
+    probes:
+      - Why is R + W > N not sufficient for linearizability?
+      - What does a client observe during a leader election in a Raft-based store?
+
+  - id: swe-026
+    skill: distsys
+    also: [vector-db]
+    type: tradeoff
+    level: senior
+    tracks: [mle, ai, re]
+    q: >-
+      How do you partition data or traffic across nodes, and how do you handle rebalancing, hot keys and
+      queries that must touch every shard?
+    a: |
+      **Schemes.**
+
+      - **Hash, `hash(key) mod N`.** Even load, but changing $N$ remaps almost every key.
+      - **Consistent hashing.** Keys and nodes are hashed onto a ring; a key belongs to the next node clockwise. Adding or removing a node moves about $K/N$ of $K$ keys. Virtual nodes (many ring positions per machine) even out the load. Rendezvous hashing, or a fixed number of logical partitions assigned to nodes (Redis Cluster uses 16,384 slots), achieve the same.
+      - **Range.** Supports ordered scans, but sequential keys such as timestamps all land on the last partition. Prefix the key with a hash bucket.
+
+      **Rebalancing.** Move whole partitions, not individual keys; throttle the copy; serve reads from both the old and new owner during the move.
+
+      **Hot keys.** A celebrity account, a NULL key, one very popular prompt. Hashing does not help, because one key is one partition. Options: cache in front, split the key with a suffix and aggregate on read, isolate it on dedicated capacity, or limit it.
+
+      **Scatter-gather.** A query that fans out to $n$ shards waits for the slowest one. If each shard exceeds its p99 with probability 0.01, at least one does with probability $1 - 0.99^{n}$: 63% for $n = 100$. Mitigate with hedged requests, per-shard deadlines with partial results, and fewer, larger shards.
+
+      **In ML systems.**
+
+      - A sharded vector index queries every shard for its top $k$ and merges, so tail latency grows with the shard count.
+      - Routing by conversation or user id with consistent hashing keeps a session on the same replica, so prefix caches stay warm.
+      - In Kafka the partition key decides ordering (guaranteed only within a partition) and the unit of parallelism.
+      - Sharded embedding tables: skewed id frequency makes some shards much hotter than others.
+    probes:
+      - Why do virtual nodes reduce load variance?
+      - You shard a vector index by tenant. What goes wrong with one very large tenant?
+
+  - id: swe-027
+    skill: distsys
+    also: [backend, model-serving]
+    type: design
+    level: staff
+    tracks: [mle, ai]
+    q: >-
+      Requests arrive faster than your GPU fleet can serve them. Walk through queues, backpressure, rate
+      limiting and load shedding, and say what you would build first.
+    a: |
+      A queue absorbs bursts; it does not fix sustained overload. With arrival rate $\lambda$ and service rate $\mu$, the M/M/1 mean time in system is $1/(\mu - \lambda)$: it grows without bound as utilisation $\rho = \lambda/\mu$ approaches 1, and for $\lambda > \mu$ the queue grows forever. So queues must be bounded and the system must be able to say no.
+
+      **Layers, in the order I would build them.**
+
+      1. **Bounded queue with deadlines.** Reject when full (429 or 503 with `Retry-After`): that is backpressure to the caller. Drop requests whose deadline has already passed instead of computing answers nobody is waiting for.
+      2. **Concurrency limits per replica.** For LLMs, limit in-flight requests or in-flight tokens rather than requests per second, because the cost of one request varies by two orders of magnitude.
+      3. **Per-tenant rate limits and fairness.** A token bucket per key, charged in tokens (estimate before, reconcile after), separate queues per tenant or priority class so one tenant cannot starve the rest, and interactive traffic ahead of batch.
+      4. **Degradation.** A smaller model, a lower output cap, a cached or stale answer, skipping the reranker.
+      5. **Retry control.** Retry budgets and circuit breakers. Without them the system can stay overloaded after the original spike has passed, because retries keep the load up.
+      6. **Autoscaling.** Necessary, but a GPU node plus model load takes minutes, so shedding has to cover the gap.
+
+      ```python
+      import time
+
+      class TokenBucket:
+          def __init__(self, rate: float, burst: float):
+              self.rate, self.burst = rate, burst
+              self.tokens, self.t = burst, time.monotonic()
+
+          def allow(self, cost: float = 1.0) -> bool:
+              now = time.monotonic()
+              self.tokens = min(self.burst, self.tokens + (now - self.t) * self.rate)
+              self.t = now
+              if self.tokens >= cost:
+                  self.tokens -= cost
+                  return True
+              return False
+      ```
+
+      Across many gateway instances, keep the bucket in a shared store with an atomic update, or use local buckets with periodic synchronisation and accept approximate limits.
+
+      Metrics to alert on: queue depth, time spent queued, rejection rate by tenant, and goodput (requests completed within their deadline), which is the number that falls in an overload while throughput looks healthy.
+    probes:
+      - Under overload, is FIFO the right queue discipline?
+      - How do you charge a rate limit for a streaming request whose output length is unknown?
+
+  - id: swe-028
+    skill: sysdesign
+    type: concept
+    level: core
+    tracks: [mle, ai, re]
+    q: >-
+      Give me your structure for a 45-minute system design interview. Where do senior candidates lose
+      points?
+    a: |
+      A fixed order, with rough timings:
+
+      1. **Requirements (5 min).** The two or three core flows, what is out of scope, and non-functional targets as numbers: QPS, p99 latency, data volume, availability, consistency, cost.
+      2. **Estimates (3 min).** A day has about $10^5$ seconds, so $10^9$ requests per day is roughly 12,000 QPS on average; plan for a peak of two to three times that. Storage is records x size x retention. The estimates decide whether one machine, one database or a sharded fleet is needed.
+      3. **API and data model (5 min).** Endpoints, entities, keys and access patterns; the access patterns choose the store.
+      4. **High-level design (10 min).** Client, load balancer, stateless services, storage, cache, queue. Trace one read and one write through the diagram.
+      5. **Deep dive (15 min).** One or two hard parts: the hot path, the consistency problem, the scaling bottleneck. Offer candidates and let the interviewer pick.
+      6. **Failure and operations (5 min).** What happens when each component dies, overload behaviour, monitoring, rollout, cost.
+      7. **Wrap-up.** Trade-offs taken, and what changes at 10x.
+
+      Where points are lost:
+
+      - Drawing boxes before asking for numbers.
+      - Naming technologies instead of requirements ("Kafka" instead of "a durable log, because two consumers need replay").
+      - Presenting one design with no alternative and no stated trade-off.
+      - Waiting to be led. At senior level the candidate drives and checks in.
+      - Designing for scale the requirements do not ask for.
+      - No write path, no data model, no failure story.
+      - For ML candidates: all model and no system, or the reverse.
+
+      Useful magnitudes: a main-memory reference is about 100 ns, an SSD random read about 100 microseconds, a round trip inside a datacentre about 0.5 ms, across continents 100 to 150 ms.
+    probes:
+      - How do you decide how deep to go on a component the interviewer has not asked about?
+      - Estimate the storage for one year of request logs for the system you just described.
+
+  - id: swe-029
+    skill: sysdesign
+    also: [distsys, agents]
+    type: design
+    level: staff
+    tracks: [mle, ai]
+    q: >-
+      Design a durable execution service for long-running agent or batch-inference jobs: steps take
+      minutes to hours, workers crash, and steps call external tools with side effects.
+    a: |
+      **Requirements.** Submit, cancel and inspect jobs; a job survives worker and orchestrator crashes and resumes without redoing completed steps; every step runs at least once with an idempotent effect; timeouts and retries per step. Assume tens of thousands of concurrent jobs.
+
+      **Core idea.** Persist progress as an append-only event history per job (step scheduled, started, completed with its result). Workers are stateless; the orchestrator's state can always be rebuilt by replaying the history. Workflow engines such as Temporal follow this model.
+
+      **Components.**
+
+      - API and a transactional metadata store (jobs, steps, history).
+      - Task queues with leases: a worker claims a step, heartbeats to extend the lease, and the step is redelivered if the lease expires.
+      - Timer service for retries, timeouts and scheduled wake-ups.
+      - Blob store for large inputs and outputs; the history holds references.
+
+      **Semantics.**
+
+      - Lease expiry means redelivery, so steps are at-least-once. Each step passes a stable idempotency key (job id plus step id) to external tools.
+      - Completing a step and enqueueing the next one must be atomic: write both in one transaction and publish from an outbox table, otherwise a crash between them strands the job.
+      - A worker that lost its lease may still be running. Give each claim a fencing token and reject completions that carry a stale one.
+      - On replay, orchestration code must take the same decisions. Model calls, tool results, clock reads and random numbers are recorded as step results and read back, never re-executed.
+
+      **Long steps.** Heartbeats carry a progress checkpoint (for example the batch offset), so a retry resumes mid-step. GPU pre-emption is handled the same way.
+
+      **Failure policy.** Per-step backoff and attempt limits, non-retryable error classes, a dead-letter state for human intervention, and compensation steps (a saga) to undo earlier side effects.
+
+      **Scale and fairness.** Partition history by job id; separate queues per tenant and priority; admission control at submit.
+
+      **Operations.** A per-job timeline, detection of jobs with no heartbeat, cost per job.
+
+      **Trade-offs.** Adopting an existing engine is usually right. Histories grow without bound for very long jobs, so snapshot and truncate. A DAG scheduler such as Airflow recovers at task granularity and suits batch pipelines, not interactive agents.
+    probes:
+      - A step charged a customer and the worker died before recording completion. What happens next?
+      - Why must LLM calls be recorded rather than re-run on replay?
+
+  - id: swe-030
+    skill: swe-practice
+    also: [pytorch]
+    type: design
+    level: senior
+    tracks: [mle, ai, re]
+    q: >-
+      How do you test ML code, given that training has no obvious expected output?
+    a: |
+      Split the code into parts that do have an expected output, and test stochastic parts through invariants and tolerances.
+
+      1. **Unit tests on deterministic pieces.** Transforms, tokenisation, collation, masks, metrics, and losses against a hand-computed case or a slow reference implementation. Assert shapes and dtypes.
+      2. **Invariance tests.** Padding a sequence, or batching it with others, must not change its output. With a causal mask, changing token $t+1$ must not change the output at $t$. Permuting set-valued inputs must not matter.
+      3. **Numerical tests.** `torch.autograd.gradcheck` in float64 for custom autograd code. Compare with `torch.testing.assert_close` and a tolerance, never with exact equality.
+      4. **Tiny end-to-end run** (seconds, on CPU, in CI). Overfit one batch to near-zero loss. Initial loss is about $\ln C$ for a $C$-class softmax. One optimiser step changes every trainable parameter and no frozen one. Save, load and get the same outputs. Resuming from a checkpoint matches an uninterrupted run.
+      5. **Golden tests.** A frozen checkpoint and fixed inputs produce stored outputs within tolerance. This catches silent changes in preprocessing, tokenizer versions and post-processing. Updating a golden file is a reviewed change with a stated reason.
+      6. **Data tests.** Schema, ranges, null rates, label distribution, no id overlap between train and test, and a parity test that sends the same raw record through the offline and online feature paths.
+      7. **LLM applications.** Stub the model in unit tests (record and replay), and run a fixed evaluation set with pass thresholds as a slower gate.
+
+      **Determinism.** Seed Python, NumPy and PyTorch, seed DataLoader workers and pass a generator, and use `torch.use_deterministic_algorithms(True)`. Results still differ across GPU models, library versions and thread counts, so regression tests use bands, not bit equality.
+
+      What not to do: assert a metric from a stochastic training run to three decimals, or put hour-long tests on every pull request.
+    probes:
+      - Which bug does the "overfit one batch" test catch that unit tests miss?
+      - A golden test fails after a dependency upgrade with differences of 1e-4. What do you do?
+
+  - id: swe-031
+    skill: swe-practice
+    also: [mlops]
+    type: design
+    level: staff
+    tracks: [mle, ai]
+    q: >-
+      What does CI/CD look like for a model, as opposed to a stateless service? What gates a model release?
+    a: |
+      A service release is determined by code. A model release is determined by code, data, configuration, random seed and environment, and its quality is statistical. So the pipeline versions more things and the gates are comparisons with noise bands.
+
+      **Identity.** A model artifact is traceable to a code commit, a data snapshot id, a config, a seed and a container image. If any is missing, the model cannot be reproduced or audited.
+
+      **On every pull request (minutes).** Lint and type check, unit tests, the tiny training smoke test, golden inference test, image build.
+
+      **On merge or nightly (hours).** Train (full or reduced), then evaluate on frozen sets and compare with the production baseline.
+
+      **Release gates.**
+
+      - Primary offline metric not worse than baseline beyond the noise floor. Measure the floor by re-running the baseline with different seeds.
+      - No regression on protected slices; calibration within bounds.
+      - p99 latency, memory and cost per request measured on the target hardware.
+      - Interface compatibility with serving: feature list, tokenizer hash, pre- and post-processing versions.
+      - For LLM systems: safety and regression suites. Prompts and configuration go through the same gates, because a prompt change is a model change.
+
+      **Delivery.** A registry with stages; shadow traffic, then a canary of a few percent, then an A/B test, then full rollout. Automatic rollback on SLO or guardrail breach, with the previous model kept deployable.
+
+      **Hard parts.**
+
+      - Flaky evaluations: a gate inside the noise blocks good changes and passes bad ones.
+      - Evaluation sets go stale and get overfitted by repeated use; refresh them and keep a held-back set.
+      - GPU cost of CI: tier the tests, and cache data and checkpoints.
+      - CI cannot see drift; that is monitoring's job.
+
+      **Review norms.** Reviewers of ML changes check split hygiene, leakage, metric code and whether the comparison is fair, not only style. Experiment configs are committed, so results can be re-run.
+    probes:
+      - How do you set the tolerance of a metric gate?
+      - Who owns the evaluation set, and how do you stop the team overfitting to it?
+
+  - id: swe-032
+    skill: debug-perf
+    type: concept
+    level: core
+    tracks: [mle, ai, re]
+    q: >-
+      A Python training or serving process is slow. Which profilers do you reach for, in what order, and
+      what does each one tell you?
+    a: |
+      Measure coarse to fine, and change one thing at a time.
+
+      1. **Stage timing and system view.** Wall-clock per stage (data, forward, backward, optimiser; or queue wait, preprocessing, model, post-processing). `nvidia-smi` for GPU utilisation and memory, `htop` for per-core CPU, `iostat` for disks. This usually identifies which stage to profile.
+      2. **py-spy.** A sampling profiler that attaches to a running process with no code change: `py-spy dump --pid` prints every thread's stack (the tool for a hung job), `py-spy top` is a live view, `py-spy record -o out.svg --pid` writes a flame graph. `--native` includes C-extension frames and `--subprocesses` follows workers. Overhead is low enough for production.
+      3. **cProfile.** Deterministic tracing with call counts and cumulative time per function. Its overhead is large and uneven (it inflates code that makes many small calls), so use it offline. `line_profiler` gives line-level detail in one hot function.
+      4. **torch.profiler.** Per-operator CPU and CUDA time, memory and input shapes, with a trace export. Sort by CUDA time to find the expensive operators, and look for unexpected CPU-GPU copies.
+      5. **System level.** `perf` for native code, `strace -c` for system calls, `tracemalloc` or `memray` for Python memory, `torch.cuda.memory_summary()` for GPU memory.
+
+      **Reading a flame graph.** Width is the share of samples, not time order; height is stack depth. Look for wide plateaus. An on-CPU profile hides waiting (I/O, locks, a starved GPU); use a wall-clock mode when the process is slow but not busy.
+
+      **GPU timing.** CUDA calls are asynchronous, so a timer around a GPU operation measures only the launch. Call `torch.cuda.synchronize()` before reading the clock, and discard warm-up iterations (lazy initialisation, cuDNN algorithm search, compilation).
+
+      **Expectation.** Amdahl's law bounds the gain: speeding a fraction $p$ of the run time by a factor $s$ gives $1 / ((1 - p) + p/s)$ overall.
+    probes:
+      - py-spy shows most samples in a `queue.get` call. What does that mean?
+      - Why can cProfile point you at the wrong function?
+
+  - id: swe-033
+    skill: debug-perf
+    also: [pytorch, dataloading]
+    type: debug
+    level: senior
+    tracks: [mle, re]
+    q: >-
+      GPU utilisation during training sits at 30 to 40% and fluctuates. How do you confirm that the input
+      pipeline is the bottleneck, and how do you fix it?
+    a: |
+      **Confirm with two experiments.**
+
+      - Train on one cached batch in a loop, with no loader. If throughput jumps and utilisation goes to nearly 100%, the GPU was starved.
+      - Iterate the loader alone, with no model, and measure samples per second. Compare with the model's maximum from the first experiment. The lower number is the bottleneck.
+
+      Also split each step into data-wait time and compute time (synchronise before reading the clock). A large data-wait share means starvation.
+
+      **Rule out other causes of low utilisation.** A `.item()`, `.cpu()` or print every step forcing a sync; logging or checkpointing in the loop; metrics computed on the CPU; a model or batch so small that Python and kernel-launch overhead dominate; in distributed training, ranks waiting for the slowest one.
+
+      **Locate the cause inside the loader.**
+
+      - All worker cores at 100%: CPU-bound (decode, augmentation, tokenisation). `py-spy dump` on a worker shows where.
+      - Cores idle with high I/O wait: storage- or network-bound.
+      - The main process busy while workers are idle: collation or inter-process transfer.
+
+      **Fix by cause.**
+
+      - CPU-bound: more `num_workers` up to the physical cores (watch RAM), `persistent_workers=True`, a larger `prefetch_factor`; move work offline (pre-tokenise, pre-resize, store decoded arrays); decode or augment on the GPU in batches.
+      - I/O-bound: pack millions of small files into shards (tar/WebDataset, Parquet, LMDB) for sequential reads; cache on local NVMe; read in parallel.
+      - Transfer: `pin_memory=True` with `.to(device, non_blocking=True)`; return tensors or arrays from workers, not Python objects.
+      - Variable-length data: bucket by length so batches are not padded to the longest sample.
+
+      **Sizing.** The loader must match the model's throughput. If the GPUs consume 2,000 images per second and one core decodes and augments on the order of 100 to 200 per second (measure it), the job needs 10 to 20 cores for data alone.
+
+      Re-profile after each fix; the bottleneck moves.
+    probes:
+      - Utilisation is 100% but throughput is still low. What now?
+      - Why can increasing num_workers make things slower?
+
+  - id: swe-034
+    skill: debug-perf
+    also: [model-serving, latency]
+    type: debug
+    level: senior
+    tracks: [mle, ai]
+    q: >-
+      After a deploy, the p99 latency of a Python inference service doubled while p50 is unchanged. How do
+      you investigate?
+    a: |
+      If the SLO is breached, roll back first and investigate on a canary or in staging. Then: p50 unchanged with a worse p99 means the slowdown is intermittent, or tied to load or to a subset of requests, not a uniformly slower code path.
+
+      **Narrow it down with data.**
+
+      - Which replicas, endpoints, tenants, request sizes? One bad node looks very different from a fleet-wide shift.
+      - Diff the deploy: code, dependencies, model, config, base image, resource limits, replica count.
+      - Break latency into stages with tracing: queue wait, preprocessing, model, post-processing, downstream calls. Find which stage owns the tail.
+
+      **Usual suspects, by signature.**
+
+      - **Tail tracks input length.** A new model or a batching change (padding to the longest sequence in the batch).
+      - **Tail in queue wait.** Fewer replicas, a lower concurrency limit, a changed batching window, or throughput per replica dropped slightly and pushed utilisation toward saturation.
+      - **Spikes at a round number** (exactly 1 s, 5 s). A downstream timeout followed by a retry.
+      - **Unrelated requests slow at the same moment.** Something blocks the event loop (a synchronous call in an async handler) or a thread pool is saturated.
+      - **Periodic spikes.** Garbage collection, a background job, cache expiry, a metrics flush.
+      - **CPU throttling.** The container's CPU quota is lower than the threads it runs; check the cgroup `nr_throttled` counter.
+      - **Only new replicas.** Cold start: lazy model load, first-call compilation, cold caches.
+      - **Shape-dependent recompilation** or algorithm search on input shapes not seen during warm-up.
+
+      **Tools.** Per-stage latency histograms, a latency heat map over time, per-replica comparison, `py-spy dump` during a slow period, an event-loop-lag metric.
+
+      **Verify.** Reproduce with a load test at a constant arrival rate (open loop). A closed-loop generator that waits for each response slows down with the server and under-reports the tail (coordinated omission).
+    probes:
+      - Throughput per replica dropped 5%. How can that double p99?
+      - How do you detect that the event loop is being blocked in production?
+
+  - id: swe-035
+    skill: linux
+    also: [pytorch]
+    type: debug
+    level: core
+    tracks: [mle, ai, re]
+    q: >-
+      One training job in a container dies with exit code 137, and another reports "Bus error" from its
+      DataLoader workers. What is happening at the operating-system level?
+    a: |
+      **Exit code 137** is 128 + 9: the process received SIGKILL. In a container that is nearly always the kernel OOM killer enforcing the cgroup memory limit. Confirm with `dmesg`, or the `OOMKilled` reason in the pod status. Common causes in training:
+
+      - Every DataLoader worker gradually copies the dataset's Python objects (reference-count writes defeat copy-on-write).
+      - A list that accumulates tensors still attached to the graph (append `loss.item()`, not `loss`).
+      - Unbounded prefetch queues, or loading the whole dataset into RAM.
+
+      (139 is 128 + 11, a segmentation fault, usually in native code.)
+
+      **Bus error (SIGBUS) in workers** means shared memory is exhausted. PyTorch passes tensors between processes through `/dev/shm`, and Docker's default size for it is 64 MB. Raise `--shm-size`, or mount a memory-backed volume in Kubernetes.
+
+      **"Too many open files"** is the file-descriptor limit (`ulimit -n`). With many workers, shared tensors can each hold a descriptor; raise the limit or switch PyTorch's sharing strategy to `file_system`.
+
+      **Other basics that come up.**
+
+      - `fork` copies the address space lazily; `spawn` starts a fresh interpreter, is slower, needs picklable arguments, and is required when workers use CUDA.
+      - Kubernetes sends SIGTERM, waits a grace period, then sends SIGKILL. Handle SIGTERM to write a checkpoint when a job is pre-empted.
+      - A crashed parent can leave worker processes holding GPU memory; find them with `nvidia-smi` and kill the PIDs.
+      - The page cache explains why a second epoch reads faster; "available" memory, not "free", is the number to read.
+      - `os.cpu_count()` reports host cores, not the container's CPU quota, so thread pools and worker counts oversubscribe unless set explicitly (`OMP_NUM_THREADS`).
+
+      **Tools.** `ps`, `htop`, `free -h`, `df -h`, `lsof`, `strace -p`, `dmesg`, `/proc/<pid>/status`, `iostat`, `ss -tlnp`.
+    probes:
+      - Why does memory grow in DataLoader workers when the dataset is a Python list of dicts?
+      - How would you make a training job survive spot-instance pre-emption?
+
+  - id: swe-036
+    skill: linux
+    also: [backend]
+    type: concept
+    level: senior
+    tracks: [mle, ai]
+    q: >-
+      Walk through what happens on the network when a client calls a streaming inference endpoint over
+      HTTPS. Where do latency and failures come from?
+    a: |
+      **Connection setup.** DNS lookup (cached for its TTL), TCP three-way handshake (one round trip), TLS 1.3 handshake (one more; two with TLS 1.2), then the request. A new connection therefore costs two or more round trips before the server sees the request, which is 200 ms or more across continents. Connection pooling and keep-alive remove that cost; a client that opens a connection per request pays it every time.
+
+      **HTTP versions.**
+
+      - HTTP/1.1: one request at a time per connection.
+      - HTTP/2: many streams multiplexed over one TCP connection; gRPC runs on it. A lost packet stalls every stream on that connection (TCP head-of-line blocking).
+      - HTTP/3: QUIC over UDP, per-stream loss recovery.
+
+      **Load balancing.** L4 balances connections, L7 balances requests. Long-lived HTTP/2 and gRPC connections pin a client to one backend behind an L4 balancer: load is uneven, and newly added replicas receive nothing until connections recycle. Use an L7 proxy or client-side balancing.
+
+      **Streaming specifics.**
+
+      - Proxies that buffer responses must be configured to pass chunks through.
+      - Idle timeouts (often around 60 s by default) cut a stream that pauses, for example during a long tool call; send heartbeats.
+      - TCP flow control is the backpressure: a slow reader fills its receive window and the server's writes block.
+      - The server learns of a disconnect only when a write fails or a keep-alive probe times out; cancel generation then.
+
+      **Latency and failure sources.**
+
+      - Nagle's algorithm interacting with delayed ACKs adds tens of milliseconds to small writes; set `TCP_NODELAY`.
+      - Retransmission after loss: Linux's minimum retransmission timeout is 200 ms, so a little loss creates a visible tail.
+      - Missing timeouts. Connect, read and total deadlines are separate, and a missing read timeout hangs forever on a half-open connection.
+      - Port or connection-table exhaustion under high connection churn.
+
+      **Tools.** `curl -v` with its `-w` timing variables for DNS, connect, TLS and first byte; `dig`; `ss`; `tcpdump`; `mtr`.
+    probes:
+      - Why does gRPC behind a plain TCP load balancer distribute load unevenly?
+      - A stream dies after exactly 60 seconds of a long tool call. What is the cause and the fix?
+
+  - id: swe-037
+    skill: ai-coding-tools
+    type: concept
+    level: core
+    tracks: [mle, ai, re]
+    q: >-
+      How do you use AI coding agents in your daily work, and how do you make sure the code they produce is
+      correct?
+    a: |
+      The interviewer is testing judgement: you remain accountable for every line that is merged.
+
+      **1. Choose what to delegate.** Tasks with a clear acceptance check: boilerplate, migrations, tests for existing code, refactors under a test suite, scripts, exploring an unfamiliar codebase, first drafts. Keep the problem framing, interface and architecture decisions, and anything whose result you could not judge.
+
+      **2. Brief it like a new teammate.** The goal and why, the constraints, the relevant files and entry points, what has been ruled out, and the definition of done as a command that must pass. For non-trivial work, ask for a plan first and correct the plan; that is the cheapest point to intervene.
+
+      **3. Give it a feedback loop.** Tests, type checker, linter, a way to run the code. An agent that can execute and observe converges; one that cannot is guessing.
+
+      **4. Keep steps small.** One reviewable diff per task, with commits as checkpoints so a wrong turn is cheap to revert.
+
+      **5. Verify independently.**
+
+      - Read the whole diff, not the summary.
+      - Run the tests yourself, and check that no test was weakened or deleted.
+      - Try the edge cases it did not mention.
+      - For ML code: assert shapes, check split hygiene, and run a known-answer case (synthetic data where the right metric is known).
+      - Re-measure any performance claim.
+
+      **6. Keep context small.** A fresh session per task, a short checked-in instructions file with conventions and commands, pointers to specific files instead of the whole repository, and a restart with a summary when a session starts to drift.
+
+      Mistakes in the interview: describing code you cannot explain; treating "the tests pass" as proof when the agent wrote both the code and the tests; either refusing to use the tools or handing them the thinking.
+    probes:
+      - Give an example of a task you would not delegate, and why.
+      - In an AI-assisted coding round, how do you show your own reasoning?
+
+  - id: swe-038
+    skill: ai-coding-tools
+    also: [swe-practice]
+    type: debug
+    level: senior
+    tracks: [mle, ai, re]
+    q: >-
+      Where do coding agents fail, and what does that change about how you review an AI-generated pull
+      request?
+    a: |
+      **Failure patterns.**
+
+      - **Plausible but wrong.** Invented functions, flags or config keys, and usage from an outdated library version. Code that looks idiomatic is not evidence that it runs.
+      - **Satisfying the check instead of the intent.** Editing or deleting a failing test, special-casing the test input, swallowing exceptions, adding a silent fallback, mocking the thing under test.
+      - **Local fix, global damage.** Patching the symptom at the call site, duplicating a helper that already exists, breaking a convention or invariant that was not in its context, ignoring concurrency and failure paths.
+      - **Scope creep.** Unrequested refactors, new dependencies, extra abstraction layers.
+      - **Long-task drift.** Early constraints are forgotten as the context fills; the final summary claims more than the diff contains or than was actually run.
+      - **Silent ML bugs.** Wrong axis, unintended broadcasting, leakage between splits, an off-by-one in shifted labels, a wrong mask. Nothing crashes and the loss still decreases.
+      - **Security.** Secrets written into code, injection-prone patterns, and instructions hidden in untrusted content (issues, web pages, dependency files) that the agent then follows.
+
+      **What changes in review.**
+
+      - Review the diff, not the description. Read the tests first: do they assert behaviour, and could they fail?
+      - Ask three questions: is this the root cause, does something already do this, what happens on empty, null, failure and concurrent input?
+      - Require evidence: command output, a before-and-after measurement.
+      - For ML changes, require a known-answer test.
+      - Keep diffs small enough to read properly; split large ones.
+      - Look for what was removed: deleted assertions, loosened types, broadened exception handlers.
+
+      The bar is the same as for human code, and the human author is accountable. Because generation is cheap, review becomes the bottleneck; the scalable response is stronger automated checks (types, tests, CI, sandboxing), not faster skimming.
+    probes:
+      - How would you detect that an agent made a test pass by weakening it?
+      - Which of these failures are also common in human code, and which are distinctive?
+
+  - id: swe-039
+    skill: ai-coding-tools
+    also: [tech-leadership]
+    type: design
+    level: staff
+    tracks: [mle, ai]
+    q: >-
+      You are asked to make a 30-person ML engineering organisation effective with coding agents. What do
+      you put in place, and how do you know it worked?
+    a: |
+      **Make the repository legible to agents** (this helps humans equally).
+
+      - One command each to build, test and lint, and a fast test tier. An agent iterates on feedback; a 40-minute suite removes the loop.
+      - Short, maintained instruction files: conventions, commands, an architecture map, things not to do. Review them like code and prune them, since stale instructions mislead.
+      - Typed interfaces, small modules, documentation next to the code.
+
+      **Guardrails.**
+
+      - Sandboxed execution, least-privilege credentials, no production write access, command and network allowlists.
+      - Human review and CI on every change, whoever wrote it.
+      - A policy on which code and data may be sent to which model provider.
+
+      **Workflows by task class.**
+
+      - Background agents for well-specified tickets with tests (dependency upgrades, flaky tests, mechanical migrations).
+      - Interactive use for design-heavy work.
+      - An agent review pass before human review.
+      - Isolated branches or worktrees for parallel agents.
+
+      **Context engineering.** Reusable runbooks for recurring tasks (launch a training run, add an evaluation), sub-agents for search-heavy steps so the main context stays small, and tools that fetch logs and experiment results instead of pasting them.
+
+      **ML-specific controls.** Evaluation sets and metric code have protected ownership, so a result cannot be improved by changing the evaluation. Agent-run experiments go through the same tracking as human ones. GPU spend has budgets.
+
+      **Measurement.** Not lines of code or percentage generated. Use lead time from ticket to merge, review turnaround, first-push CI pass rate, and the share of a task class finished without human edits. Counter-metrics: reverts and incidents, review load per engineer, duplicated code.
+
+      **Risks to manage.** Review fatigue turning into rubber-stamping, juniors not building debugging skill, correlated errors across many changes, cost, and dependence on one vendor.
+
+      **Rollout.** Start with two or three task classes on one team, write up what worked with numbers, then expand.
+    probes:
+      - Lead time fell 30% and reverts doubled. What do you conclude and change?
+      - How do you onboard a junior engineer in a team where agents write most first drafts?

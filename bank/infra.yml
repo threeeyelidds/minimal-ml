@@ -1,0 +1,1896 @@
+domain: infra
+title: Training infrastructure and data systems
+summary: >-
+  The systems that feed and run training: data pipelines and lake storage, feature stores,
+  dataset engineering and loaders, GPUs and their memory, cluster scheduling, distributed
+  training, high-performance networking and storage, experiment tracking, framework internals,
+  and the simulators and sandboxes that RL and agent work depend on. 78% of postings name
+  something here. Data pipelines lead (39%), followed by GPUs (28%) and cluster orchestration
+  (26%); distributed training is named in 36% of research engineer postings. It is tested in ML
+  system design, in platform and infrastructure deep dives, in debugging scenarios (a job that
+  is slow, runs out of memory or does not scale) and in data-oriented coding.
+senior_bar:
+  - Accounts for GPU memory and step time with arithmetic (bytes per parameter, activations, bandwidth) and uses it to choose between sharding, accumulation, checkpointing and a bigger machine.
+  - Knows what each form of parallel training splits and what it communicates, and predicts where scaling stops.
+  - Designs data pipelines to be idempotent, replayable and correct with respect to time, so that backfills and late data do not corrupt training sets.
+  - Chooses storage formats and layouts from the read pattern of training, and can explain why small files and random reads are the enemy.
+  - Treats long runs as failure-prone by default, with checkpointing, preemption handling and resumable data order.
+  - Makes experiments comparable and reproducible through tracking and lineage, and spends a tuning budget deliberately.
+rounds:
+  - ML system design
+  - Platform or infrastructure deep dive
+  - Debugging and performance scenarios
+  - Coding (data processing, loaders, a training loop)
+  - Project deep dive
+notes: []
+checklist:
+  - skill: data-pipelines
+    items:
+      - Choose between batch and streaming from a freshness requirement and say what streaming costs
+      - Explain a Spark job's stages, shuffles and the effect of key skew
+      - Describe how a stream processor gets exactly-once results with checkpoints and idempotent or transactional sinks
+      - Explain event time, watermarks and late data
+      - Design orchestrated tasks that are idempotent and can be backfilled by partition
+  - skill: gpu
+    items:
+      - Estimate training memory from parameters, gradients, optimizer state and activations
+      - Distinguish allocated from reserved memory and diagnose an out-of-memory error that appears late in a run
+      - Say which hardware properties matter for a given training or inference workload
+  - skill: cluster
+    items:
+      - Compare Kubernetes, Slurm and Ray for training workloads
+      - Explain quotas, priorities, preemption, gang scheduling and fragmentation on a shared GPU cluster
+      - Design checkpoint and restart so a preempted job loses minutes, not hours
+  - skill: dist-training
+    items:
+      - Say what data parallelism, tensor and pipeline parallelism and parameter sharding each split and communicate
+      - Write a DDP training loop and list what changes relative to one GPU
+      - Compare synchronous all-reduce training with asynchronous parameter-server training
+      - Pick techniques to fit a model that exceeds one GPU's memory
+      - Derive a checkpoint interval from checkpoint cost and failure rate
+  - skill: hpc
+    items:
+      - Explain why multi-node training needs a low-latency, high-bandwidth interconnect
+      - Compare object storage, a parallel file system and local NVMe for training data and checkpoints
+  - skill: data-lake
+    items:
+      - Explain how a columnar format enables column pruning and predicate pushdown
+      - Say what a table format adds on top of files in object storage
+      - Choose a partitioning scheme and avoid the small-files problem
+  - skill: feature-store
+    items:
+      - Describe the offline and online stores and how one definition feeds both
+      - Explain point-in-time correctness and write a point-in-time join
+  - skill: exp-tracking
+    items:
+      - List what a run must record to be comparable and reproducible
+      - Choose a hyperparameter search method for a given budget and explain early stopping of trials
+      - Design tracking and lineage for a team, from run to deployed model
+  - skill: dataloading
+    items:
+      - Explain why training data is packed into shards and how shuffling works on sequential data
+      - Split shards across distributed ranks and loader workers without duplication
+      - Design a preprocessing pipeline for a very large dataset, including what is done offline
+  - skill: ml-frameworks
+    items:
+      - Explain reverse-mode automatic differentiation and what the framework stores for the backward pass
+      - Implement a minimal scalar autograd engine
+      - Explain what a graph compiler such as torch.compile or XLA does and what causes recompilation
+  - skill: rl-envs
+    items:
+      - Describe the environment interface, including termination versus truncation and vectorisation
+      - Design an isolated, resettable sandbox for agents that execute code
+      - Trade simulator fidelity against speed and explain domain randomisation
+cards:
+  - id: infra-001
+    skill: data-pipelines
+    type: tradeoff
+    level: core
+    tracks: [mle, ai]
+    q: >-
+      When do you build a streaming pipeline instead of a batch one for ML features or training
+      data? What does streaming cost?
+    a: |
+      Build streaming only when the value of freshness is demonstrated; batch is the default.
+
+      **Batch.** Process bounded data on a schedule (hourly, daily). Simple to reason about,
+      easy to rerun and backfill, cheap, and complete: each run sees all the data for its
+      window. Latency is the schedule period plus the run time.
+
+      **Streaming.** Process events as they arrive, with results available in seconds. Needed
+      when a feature loses value quickly: fraud signals from the last minutes, session
+      context for recommendations, counters that gate abuse.
+
+      What streaming costs:
+
+      - *Time semantics.* Events arrive late and out of order, so you must define event-time
+        windows, watermarks and what happens to late data.
+      - *State.* Windowed aggregates and joins hold state that must be checkpointed, restored
+        and bounded.
+      - *Operations.* A long-running job with upgrades, rescaling and backpressure, on call
+        around the clock.
+      - *Two code paths.* Training data is usually built in batch from history, while serving
+        features come from the stream. If the logic exists twice, the two drift apart.
+
+      How to decide:
+
+      1. Measure the benefit: evaluate the model with features delayed by an hour or a day. If
+         the metric does not move, do not stream.
+      2. Consider the middle ground: micro-batches every few minutes, or computing the
+         freshest features at request time from recent raw events.
+      3. If you stream, keep one definition of each feature that runs in both modes, or log
+         the served feature values and train on those.
+
+      Architecturally, the "lambda" pattern runs batch and stream in parallel and merges
+      them; the "kappa" pattern uses one streaming engine and replays the log for backfills.
+      One code path is worth a great deal.
+    probes:
+      - How would you quantify what a fresher feature is worth before building anything?
+      - What breaks when a backfill is run through a streaming job?
+  - id: infra-002
+    skill: data-pipelines
+    also: [debug-perf]
+    type: debug
+    level: senior
+    tracks: [mle, ai]
+    q: >-
+      A Spark job that builds a training set used to take 40 minutes and now takes 6 hours. How
+      do you find out why?
+    a: |
+      Recall how Spark executes: transformations are lazy and build a plan; an action runs it
+      as stages separated by **shuffles**; each stage is a set of tasks, one per partition.
+      Slowness is almost always in a shuffle or in a few oversized tasks.
+
+      **Look at the UI before the code.**
+
+      1. Which stage takes the time? Compare with a previous run.
+      2. In that stage, compare task durations and shuffle read sizes. A median of seconds
+         with a maximum of hours is **skew**; uniformly slow tasks point to volume, resources
+         or the plan.
+      3. Check spill to disk, garbage-collection time, failed and retried tasks.
+
+      **Common causes.**
+
+      - *Key skew.* One key (a null, a bot account, a default id) holds a large share of the
+        rows, so one task does most of a join or aggregation. Fixes: filter or handle the hot
+        key separately, salt the key, enable adaptive skew handling.
+      - *A join that changed strategy.* A table grew past the broadcast threshold, so a cheap
+        broadcast join became a shuffle join; or a missing join condition created a partial
+        cross product. Read the physical plan.
+      - *Input growth or layout.* Many more small files, or partition pruning that stopped
+        working because of a changed filter or a cast on the partition column, so the job
+        scans everything.
+      - *Too few or too many partitions.* Huge partitions spill and fail; tens of thousands of
+        tiny ones drown in overhead.
+      - *Python UDFs* row by row, where built-in functions or vectorised UDFs would do.
+      - *Recomputation.* A DataFrame used several times without caching is recomputed from
+        the source each time.
+      - *Cluster.* Fewer executors, preempted nodes, a slow storage backend.
+
+      **Then prevent it.** Track input sizes and stage times per run, alert on duration, and
+      add a data-quality check on the join keys, since skew usually signals a data problem
+      upstream.
+    probes:
+      - How does salting a key fix a skewed join, and what does it cost?
+      - What do you look for in the physical plan?
+  - id: infra-003
+    skill: data-pipelines
+    also: [distsys]
+    type: concept
+    level: senior
+    tracks: [mle, ai]
+    q: >-
+      How does a stream processor such as Flink reading from Kafka produce exactly-once results?
+      Explain event time and watermarks while you are at it.
+    a: |
+      **Exactly-once.** Messages may be delivered more than once; what can be guaranteed is
+      that each event affects the result exactly once. Three parts make that true.
+
+      1. *Replayable source.* Kafka keeps an ordered log per partition, and a consumer's
+         position is an offset. After a failure the job can re-read from a known offset.
+      2. *Consistent checkpoints.* The engine periodically snapshots the state of all
+         operators together with the source offsets that state corresponds to. On failure it
+         restores the snapshot and replays from those offsets. Internal state is then as if
+         each event had been processed once.
+      3. *Sinks that do not duplicate.* Replayed events are emitted again, so the sink must be
+         either idempotent (an upsert by key, so a repeat overwrites with the same value) or
+         transactional (output is committed atomically with the checkpoint, a two-phase
+         commit).
+
+      Without the third part you have exactly-once state and at-least-once output.
+
+      **Event time and watermarks.** Events carry the time they happened, which differs from
+      when they are processed: mobile clients buffer, partitions lag. Windows defined on
+      processing time give results that change on replay. Event-time windows are
+      deterministic, but the engine must decide when a window is complete. A **watermark** is
+      the engine's assertion that no events older than time $t$ are still expected, typically
+      the maximum event time seen minus an allowed lateness. When the watermark passes a
+      window's end, the window fires.
+
+      The trade-off: a generous watermark waits longer and loses less; a tight one is fast and
+      drops or mishandles more late events. Late events can be discarded, sent to a side
+      output, or used to update an already-emitted result, which downstream consumers must
+      then tolerate.
+
+      For ML, late data means features computed in the stream can differ from what a batch
+      job would compute later over complete data. That is a source of training-serving skew
+      unless training uses the logged served values.
+    probes:
+      - Why is an idempotent sink easier to operate than a transactional one?
+      - What happens to a windowed feature when a mobile client uploads events a day late?
+  - id: infra-004
+    skill: data-pipelines
+    also: [data-quality]
+    type: concept
+    level: core
+    tracks: [mle, ai]
+    q: >-
+      What makes a scheduled data pipeline safe to rerun and to backfill? Describe how you would
+      structure tasks in an orchestrator such as Airflow.
+    a: |
+      The property to aim for is **idempotence**: running a task again for the same logical
+      period produces the same output and no duplicates. With it, retries, reruns after a bug
+      fix and backfills are routine; without it, each is a risk.
+
+      **How to get it.**
+
+      - *Parameterise by data interval.* A task processes the interval the scheduler hands it,
+        never "now" or "yesterday" computed from the wall clock. Then running it for a date
+        last month does the right thing.
+      - *Write by partition, atomically.* Output goes to a partition keyed by the interval and
+        is overwritten as a whole: write to a temporary location, then swap. Never append to
+        a shared table from a task that can be retried.
+      - *Deterministic inputs.* Read input partitions for the same interval, or a pinned
+        snapshot, not whatever the source contains at run time.
+      - *No hidden state.* Everything a task needs comes from its inputs and parameters.
+
+      **Structure.**
+
+      - A DAG of small tasks with explicit data dependencies, each with one output.
+      - Sensors or dataset triggers that wait for upstream partitions instead of fixed sleep
+        times.
+      - Validation tasks between stages that fail the run on bad data, so bad partitions are
+        not consumed.
+      - Retries with backoff for transient failures, timeouts, and alerts with an owner.
+      - Heavy computation in the engine (Spark, the warehouse), with the orchestrator only
+        coordinating.
+
+      **Backfills.** Rerun a range of intervals after a logic change. Things to plan: the
+      order and parallelism, downstream tasks that must rerun too, load on shared systems, and
+      versioning of the output so that models trained on the old data can still be traced.
+      Late-arriving data needs the same mechanism: reprocess the last few days routinely.
+
+      A useful test: can you delete any output partition and regenerate it with one command?
+    probes:
+      - A task appends rows and was retried after a timeout. What is in the table now?
+      - How do you backfill a year of data without overloading the source system?
+  - id: infra-005
+    skill: data-pipelines
+    also: [sql, python]
+    type: coding
+    level: core
+    tracks: [mle, ai]
+    q: >-
+      In PySpark, keep only the latest record per user from an event table, then compute daily
+      distinct users and revenue per country. What should the interviewer hear about
+      performance and correctness?
+    a: |
+      ```python
+      from pyspark.sql import functions as F, Window
+
+      # 1. Latest record per user, with a deterministic tie-break.
+      w = Window.partitionBy("user_id").orderBy(
+          F.col("updated_at").desc(), F.col("ingest_id").desc())
+      latest = (events
+                .withColumn("rn", F.row_number().over(w))
+                .filter(F.col("rn") == 1)
+                .drop("rn"))
+
+      # 2. Daily aggregates.
+      daily = (events
+               .withColumn("day", F.to_date("event_ts"))
+               .groupBy("day", "country")
+               .agg(F.countDistinct("user_id").alias("users"),
+                    F.sum("amount").alias("revenue")))
+
+      (daily.write.mode("overwrite")
+            .partitionBy("day")
+            .parquet("s3://bucket/daily_country/"))
+      ```
+
+      Correctness points:
+
+      - `dropDuplicates(["user_id"])` keeps an arbitrary row per key; use a window with an
+        explicit order when "latest" matters, and add a tie-breaker so reruns give the same
+        answer.
+      - Decide what happens to null keys and null amounts; `sum` ignores nulls, and all null
+        user ids land in one group.
+      - Time zones: `to_date` uses the session time zone. State which day boundary the
+        business means.
+      - Duplicated events inflate revenue. Deduplicate on an event id before aggregating.
+
+      Performance points:
+
+      - Both steps shuffle by key. A hot key, such as a null or a bot user, creates one huge
+        task.
+      - Exact distinct counts are expensive; `approx_count_distinct` is much cheaper when a
+        small error is acceptable.
+      - Filter to the needed date range first so that partition pruning applies, and select
+        only the columns used.
+      - Overwriting only the partitions being written needs dynamic partition overwrite mode;
+        the default static mode replaces the whole table. This is what makes the job safe to
+        rerun for one day.
+    probes:
+      - Write the first step in SQL.
+      - How would you make the daily job incremental instead of recomputing all history?
+  - id: infra-006
+    skill: gpu
+    also: [training-dynamics]
+    type: derivation
+    level: core
+    tracks: [mle, re]
+    q: >-
+      Estimate the GPU memory needed to train a model with one billion parameters. What are the
+      components and which one usually dominates?
+    a: |
+      Four components.
+
+      **1. Parameters.** $10^9$ parameters at 4 bytes in 32-bit floats: 4 GB.
+
+      **2. Gradients.** One per parameter, same size: 4 GB.
+
+      **3. Optimizer state.** Adam and AdamW keep two moment estimates per parameter: 8 GB.
+      SGD with momentum keeps one: 4 GB.
+
+      So the static cost with AdamW is 16 bytes per parameter, 16 GB here, before any data has
+      passed through the model. Mixed precision does not reduce this part: under automatic
+      mixed precision the stored weights and the optimizer state stay in 32-bit floats.
+
+      **4. Activations.** Every intermediate tensor needed by the backward pass is kept until
+      it has been used. This scales with batch size, sequence length or resolution, width and
+      depth. For a transformer, each layer keeps several tensors of shape
+      $[B, T, d]$ and, unless a fused attention kernel is used, attention maps of shape
+      $[B, h, T, T]$. For large batches or long sequences this component dominates, and it is
+      the part mixed precision halves.
+
+      Also allow for the framework's allocator cache and fragmentation, library workspaces,
+      and a temporary peak during the optimizer step.
+
+      **Levers by component.**
+
+      - Activations: smaller batch with gradient accumulation; mixed precision; activation
+        (gradient) checkpointing, which recomputes activations in the backward pass at the
+        price of roughly one extra forward pass; shorter sequences; memory-efficient
+        attention.
+      - Optimizer state and gradients: sharding across GPUs (ZeRO or FSDP); an 8-bit or
+        factored optimizer; training fewer parameters (adapters).
+      - Parameters: sharding; lower-precision frozen weights when fine-tuning adapters.
+
+      Inference needs only the parameters and one layer's activations at a time, which is why
+      a model that trains on 40 GB can serve on a fraction of that.
+    probes:
+      - Why does automatic mixed precision not halve the parameter and optimizer memory?
+      - Doubling the sequence length quadruples memory in one case and doubles it in another. Which is which?
+  - id: infra-007
+    skill: gpu
+    also: [debug-perf, pytorch]
+    type: debug
+    level: senior
+    tracks: [mle, re]
+    q: >-
+      A training job dies with a CUDA out-of-memory error several hours in, although the first
+      thousands of steps ran fine. How do you debug it?
+    a: |
+      An error that appears late is rarely "the model is too big". Something grows, or a rare
+      input is large.
+
+      **1. Read the message and the counters.** It reports allocated and reserved memory.
+      *Allocated* is memory held by live tensors; *reserved* is what the framework's caching
+      allocator has taken from the device. Log both, and the peak, every N steps.
+
+      - Allocated memory climbing steadily means a **leak of references**.
+      - Flat allocated memory with a sudden failure means a **large batch**.
+      - Reserved far above allocated means **fragmentation**.
+
+      **2. Leaks of references.**
+
+      - Accumulating a tensor that still carries its graph, such as `total_loss += loss`
+        instead of `loss.item()`. The whole graph of every step stays alive.
+      - Appending outputs or activations to a Python list for logging.
+      - Evaluation without `torch.no_grad()`, so graphs are built for nothing.
+      - A caught exception whose traceback keeps tensors alive.
+
+      **3. Input-dependent peaks.** With variable-length sequences or image sizes, memory is
+      set by the largest batch, which may first appear hours in. Log the batch shape at
+      failure. Fix with a token budget per batch instead of a fixed batch size, bucketing by
+      length, a hard cap on length, and a test at startup that runs the worst-case batch.
+
+      **4. Fragmentation.** Many allocations of varying size leave free memory in pieces too
+      small to use. Mitigate by making shapes more regular (bucketing, padding to a few
+      sizes) and by the allocator's configuration options; consult the current PyTorch
+      memory-management notes for the exact settings.
+
+      **5. Other processes.** A second job or a zombie process on the same device, or an
+      evaluation run that starts while training memory is still held.
+
+      **6. Periodic events.** Evaluation, checkpointing or logging hooks every N steps that
+      allocate extra memory.
+
+      Calling the cache-emptying function in a loop rarely fixes anything: it returns cached
+      blocks to the device but does not free live tensors.
+    probes:
+      - What is the difference between allocated and reserved memory?
+      - How would you catch the worst-case batch before the run starts?
+  - id: infra-008
+    skill: gpu
+    also: [hpc, cloud]
+    type: tradeoff
+    level: senior
+    tracks: [mle, re]
+    q: >-
+      You have a fixed budget for training hardware. Which properties of a GPU and of the
+      machine around it matter, and how do you choose between fewer large GPUs and more small
+      ones?
+    a: |
+      Match the hardware to what limits the workload.
+
+      **Properties of the GPU.**
+
+      - *Memory capacity.* A hard constraint: it sets the largest model, batch and sequence
+        length without sharding or accumulation, and is the first thing to check.
+      - *Compute throughput* at the precision you train in, including support for the
+        half-precision formats you plan to use.
+      - *Memory bandwidth*, which bounds many operations more than raw arithmetic does.
+      - *Links between GPUs* inside a node, which determine how well multi-GPU training
+        scales.
+
+      **Properties of the machine.**
+
+      - CPU cores and RAM per GPU for data loading and preprocessing. Starving the GPU with too
+        few cores is a common waste.
+      - Local NVMe for dataset caches and checkpoints.
+      - Network interconnect between nodes, if a job spans nodes.
+      - Power and cooling, for on-premises hardware.
+
+      **Fewer large or more small?**
+
+      - If one model does not fit in a small GPU's memory, large GPUs avoid the engineering and
+        communication cost of sharding. Memory is the deciding factor more often than speed.
+      - If the workload is many independent jobs (hyperparameter sweeps, evaluation, small
+        fine-tunes), more small GPUs give more parallel experiments per unit of money and
+        less waste from one job occupying a large device.
+      - For one large job, scaling across many GPUs is sublinear, so eight devices do not give
+        eight times the throughput; within a single node it is usually close, across nodes it
+        depends on the interconnect.
+      - Availability and price per useful hour (including queue time and preemption) often
+        matter more than list performance.
+
+      **Method.** Benchmark your own training step on the candidates and compute cost per
+      unit of work, such as dollars per million training tokens or per epoch, not price per
+      hour. Include utilisation: an expensive GPU that sits idle half the day costs twice its
+      rate.
+    probes:
+      - Which workload would you put on older, cheaper GPUs?
+      - How do you compare hardware when the available benchmarks are for a different model?
+  - id: infra-009
+    skill: cluster
+    type: tradeoff
+    level: core
+    tracks: [mle, ai, re]
+    q: >-
+      Compare Kubernetes, Slurm and Ray for running ML training. When would you choose each?
+    a: |
+      They sit at different layers and are often combined.
+
+      **Slurm.** A batch scheduler from high-performance computing. You submit a job
+      requesting nodes, GPUs and time; it queues, then runs on bare metal. Strengths:
+      designed for multi-node tightly coupled jobs, with gang scheduling, fair-share
+      priorities, partitions, preemption and job arrays; low overhead; researchers know it.
+      Weaknesses: little support for long-running services, containers are an add-on, and
+      weaker isolation and ecosystem integration.
+
+      **Kubernetes.** A container orchestrator built for services. Strengths: one platform for
+      training, serving and data jobs; containers and isolation by default; autoscaling of
+      nodes; a large ecosystem. Weaknesses: the default scheduler places pods one at a time
+      and knows nothing of queues, quotas across teams or all-or-nothing placement for a
+      multi-worker job, so training needs a batch scheduling layer and job operators on top
+      (such as Kueue, Volcano, Kubeflow's training operators). More layers to operate.
+
+      **Ray.** A distributed computing framework for Python, not a cluster manager. It
+      provides tasks, actors and a shared object store, with libraries for data processing,
+      training, tuning and serving. Strengths: one programming model from a laptop to a
+      cluster, good for heterogeneous pipelines, hyperparameter search and RL workloads with
+      many actors. It runs on top of Kubernetes, Slurm or virtual machines, which still do
+      the resource allocation.
+
+      Choosing:
+
+      - A research cluster with large multi-node training jobs and users who want to submit
+        scripts: Slurm.
+      - A company that already runs services on Kubernetes and wants one platform, elastic
+        cloud capacity and tight integration with serving: Kubernetes plus a batch layer.
+      - Python-centric workloads that mix data processing, training and tuning in one
+        application: Ray on whichever of the two you have.
+
+      What matters more than the choice: queues and quotas per team, preemption with
+      checkpointing, visibility into why a job is waiting, and accounting of GPU hours.
+    probes:
+      - What is gang scheduling and why does a default Kubernetes scheduler get it wrong?
+      - How do Ray actors differ from tasks, and where would you use each?
+  - id: infra-010
+    skill: cluster
+    type: concept
+    level: senior
+    tracks: [mle, re]
+    q: >-
+      On a shared GPU cluster, how do quotas, priorities and preemption work, and why can GPUs
+      sit idle while jobs are waiting?
+    a: |
+      **The policy tools.**
+
+      - *Quota.* Each team has a guaranteed share of GPUs. Guarantees prevent starvation.
+      - *Borrowing.* Idle quota is lent to other teams so that capacity is not wasted. Borrowed
+        capacity is reclaimable.
+      - *Priority.* Classes such as production, interactive, standard and best-effort order the
+        queue and decide who may preempt whom.
+      - *Preemption.* When a team wants its guaranteed GPUs back, or a higher-priority job
+        arrives, borrowed or lower-priority jobs are stopped. This is acceptable only if jobs
+        checkpoint and resume automatically.
+      - *Fair share.* Priority decays with recent usage, so a heavy user does not hold the
+        queue indefinitely.
+
+      **Why GPUs idle while jobs wait.**
+
+      - *Fragmentation.* Free GPUs are scattered: 16 free in total, but no node has 8, so an
+        8-GPU job cannot start. Bin-packing placement (fill nodes before opening new ones) and
+        occasional defragmentation by migrating small jobs reduce this.
+      - *Gang scheduling.* A distributed job needs all its workers at once. A scheduler that
+        starts workers one by one lets two large jobs each hold half of what they need and
+        deadlock. All-or-nothing admission prevents it.
+      - *Head-of-line blocking.* A large job at the front waits for resources while small jobs
+        behind it could run. Backfilling runs small jobs in the gaps if they will finish
+        before the large job's reservation starts, which requires time limits on jobs.
+      - *Constraints.* Jobs pinned to a GPU type, zone or node pool.
+      - *Reserved but unused.* Interactive sessions and notebooks holding GPUs at zero
+        utilisation. Idle detection and time limits recover them.
+      - *Other resources.* Not enough CPU or memory on the node next to the free GPU.
+
+      **Measure** allocation rate and utilisation separately. Allocated-but-idle GPUs are a
+      user-behaviour problem; unallocated GPUs with a queue are a scheduler problem. Show
+      users why their job is pending.
+    probes:
+      - How does backfilling work, and why does it need job time limits?
+      - A team complains its jobs are preempted too often. What do you look at?
+  - id: infra-011
+    skill: cluster
+    also: [dist-training, reliability]
+    type: design
+    level: senior
+    tracks: [mle, re]
+    q: >-
+      Design checkpointing and restart for long training jobs on preemptible capacity, so that a
+      preemption costs minutes and needs no human.
+    a: |
+      **What a checkpoint must contain to resume exactly.**
+
+      - Model parameters.
+      - Optimizer state (moments), learning-rate scheduler state and the global step.
+      - Gradient scaler state under mixed precision; EMA weights if used.
+      - Random number generator states.
+      - Data position: epoch, shard and offset, or the sampler's state, so that the resumed
+        run neither repeats nor skips data.
+      - The configuration and code version, to refuse resuming with a mismatched setup.
+
+      Forgetting the optimizer or scheduler state is the classic bug: the loss jumps after
+      resume and the learning rate restarts its warm-up.
+
+      **Writing it safely.**
+
+      - Write to a temporary name, then rename atomically, so a preemption during a write
+        never leaves a corrupt latest checkpoint. Keep the last few and verify on load.
+      - Write to local disk first and upload asynchronously if the remote store is slow, so
+        the training loop does not stall.
+      - For sharded training, each rank writes its shard in parallel.
+      - Choose the interval from the cost of a checkpoint and the preemption rate: frequent
+        enough that expected lost work is small, rare enough that writing is a few percent of
+        run time. Time-based intervals are more robust than step-based ones.
+
+      **Reacting to preemption.**
+
+      - Handle the termination signal: the platform usually gives a notice of tens of seconds
+        to a couple of minutes. Finish the current step, write a checkpoint, exit with a code
+        that means "retry".
+      - If the notice is too short for a full checkpoint, rely on the periodic one.
+
+      **Restarting without a human.**
+
+      - The job is submitted with a retry policy; on start it looks for the latest valid
+        checkpoint under its run id and resumes, otherwise it starts fresh. The same code
+        path handles first start and restart.
+      - Metrics and logs continue under the same run id, with resumes marked.
+      - Evaluation and export jobs watch for new checkpoints instead of living in the
+        training process.
+
+      **Test it.** Kill the job at random points in CI and compare the resumed loss curve
+      with an uninterrupted run.
+    probes:
+      - The loss spikes after every resume. What did the checkpoint miss?
+      - How do you make the data order resumable with a shuffled, sharded dataset?
+  - id: infra-012
+    skill: dist-training
+    type: concept
+    level: core
+    tracks: [mle, re]
+    q: >-
+      What are the ways to parallelise training across GPUs? Say what each one splits and what
+      it has to communicate.
+    a: |
+      | Method | Splits | Communicates | Use when |
+      |-|-|-|-|
+      | Data parallelism (DDP) | The batch. Every GPU holds a full model replica and processes a different slice | Gradients, once per step (all-reduce) | The model fits on one GPU and you want throughput |
+      | Sharded data parallelism (ZeRO, FSDP) | Also the parameters, gradients and optimizer state, each GPU owning a shard | Parameters gathered layer by layer for the forward and backward pass; gradients reduced back to their owners | The model plus optimizer state does not fit on one GPU |
+      | Tensor parallelism | Individual weight matrices within a layer, across GPUs | Activations inside every layer | Layers too large for one GPU; needs very fast links, so usually within a node |
+      | Pipeline parallelism | The layers, as consecutive stages on different GPUs | Activations at stage boundaries, and their gradients | Very deep models; uses micro-batches to keep all stages busy |
+
+      Details worth knowing:
+
+      - **Data parallelism** averages gradients, so the effective batch is the per-GPU batch
+        times the number of GPUs. The learning rate and warm-up usually need retuning for the
+        larger batch.
+      - **ZeRO** comes in stages: shard the optimizer state, then also the gradients, then
+        also the parameters. Each stage saves more memory and adds communication. FSDP
+        corresponds to the last stage: a layer's full parameters exist on a GPU only while
+        that layer is computing.
+      - **Pipeline parallelism** leaves stages idle at the start and end of each batch (the
+        "bubble"); more micro-batches shrink it.
+      - **Tensor parallelism** communicates inside every layer, so its cost is dominated by
+        link speed.
+
+      Large runs combine them: tensor parallelism inside a node, pipeline across a few nodes,
+      data parallelism across the rest.
+
+      Scaling stops when communication or the input pipeline, not computation, sets the step
+      time, or when the larger effective batch stops improving optimisation per sample.
+    probes:
+      - Why does FSDP save memory compared with DDP, and what does it pay?
+      - Which of these would you combine for a model ten times too large for one GPU?
+  - id: infra-013
+    skill: dist-training
+    also: [pytorch]
+    type: coding
+    level: core
+    tracks: [mle, re]
+    q: >-
+      Write a minimal multi-GPU training loop with PyTorch DistributedDataParallel. What changes
+      compared with single-GPU training?
+    a: |
+      ```python
+      import os, torch, torch.distributed as dist
+      from torch.nn.parallel import DistributedDataParallel as DDP
+      from torch.utils.data import DataLoader, DistributedSampler
+
+      def main():
+          dist.init_process_group("nccl")            # one process per GPU, via torchrun
+          rank = dist.get_rank()
+          local_rank = int(os.environ["LOCAL_RANK"])
+          torch.cuda.set_device(local_rank)
+
+          model = DDP(build_model().cuda(), device_ids=[local_rank])
+          opt = torch.optim.AdamW(model.parameters(), lr=lr)
+
+          sampler = DistributedSampler(train_set, shuffle=True, drop_last=True)
+          loader = DataLoader(train_set, batch_size=per_gpu_batch, sampler=sampler,
+                              num_workers=8, pin_memory=True)
+
+          for epoch in range(epochs):
+              sampler.set_epoch(epoch)               # new shuffle each epoch
+              for x, y in loader:
+                  x, y = x.cuda(non_blocking=True), y.cuda(non_blocking=True)
+                  loss = loss_fn(model(x), y)
+                  opt.zero_grad(set_to_none=True)
+                  loss.backward()                    # gradients are averaged across ranks
+                  opt.step()
+              if rank == 0:
+                  torch.save(model.module.state_dict(), "ckpt.pt")
+          dist.destroy_process_group()
+      ```
+
+      What changes:
+
+      - **One process per GPU**, each with its own data loader. The sampler gives each rank a
+        disjoint slice; forgetting `set_epoch` repeats the same order every epoch.
+      - **Effective batch size** is `per_gpu_batch` times the number of processes, so the
+        learning rate and warm-up need adjusting.
+      - **Gradient synchronisation** happens inside `backward()`. Every rank must execute the
+        same parameters each step; a parameter used on only some ranks raises an error or
+        hangs.
+      - **Side effects on rank 0 only**: logging, checkpointing, evaluation reports. Save
+        `model.module`, not the wrapper.
+      - **Batch normalisation** statistics are per process unless converted to synchronised
+        batch norm.
+      - **Evaluation**: a distributed sampler pads the dataset so every rank gets the same
+        count, which duplicates a few examples; gather predictions from all ranks and
+        de-duplicate, or evaluate on one rank.
+      - **Seeds**: the same seed on all ranks gives identical augmentation and dropout
+        streams; offset by rank where independence matters, but initialise the model
+        identically.
+      - **Failure**: if one rank dies, the others hang in the next collective call unless the
+        launcher kills the group.
+    probes:
+      - Validation accuracy differs slightly between a 1-GPU and an 8-GPU evaluation of the same checkpoint. Why?
+      - How would you add gradient accumulation, and what is the effective batch then?
+  - id: infra-014
+    skill: dist-training
+    also: [distsys]
+    type: concept
+    level: senior
+    tracks: [mle, re]
+    q: >-
+      Compare synchronous all-reduce training with asynchronous parameter-server training. Why
+      did deep learning mostly settle on the first, and where does the second survive?
+    a: |
+      **Synchronous all-reduce.** Every worker computes a gradient on its share of the batch;
+      a collective operation sums them across workers; all workers apply the identical
+      update. Mathematically it is single-machine SGD with a larger batch, which makes it
+      reproducible and easy to reason about. An all-reduce over a ring or tree moves about
+      twice the gradient size per worker regardless of the number of workers, so it scales
+      well on fast links.
+
+      Its weakness is that each step waits for the slowest worker. A straggler (a throttled
+      node, a slow disk) slows everyone, and one failed worker stops the job. This is fine on
+      homogeneous, reliable GPU clusters and is why it is the default there.
+
+      **Asynchronous parameter server.** Parameters live on server nodes. Workers pull the
+      current parameters, compute a gradient and push it; the server applies updates as they
+      arrive, without waiting. No worker waits for another, so stragglers and failures do not
+      block progress, and it suits heterogeneous or preemptible workers.
+
+      Its weakness is **stale gradients**: a gradient was computed on parameters that have
+      since changed. Staleness adds noise that grows with the number of workers, hurts
+      convergence and final quality, and makes runs irreproducible. The servers also become a
+      bandwidth bottleneck for dense models.
+
+      **Why all-reduce won for dense models.** GPUs made each worker fast and clusters
+      homogeneous; networks got fast enough; and optimisation quality at large scale turned
+      out to be sensitive to staleness.
+
+      **Where parameter servers survive.** Models dominated by huge sparse embedding tables,
+      as in recommendation and advertising. Each example touches a tiny fraction of the
+      parameters, so workers pull and push only the rows they need, the tables are too large
+      for any one machine, and conflicts between sparse updates are rare. Hybrids keep
+      embeddings on parameter servers and train the dense layers synchronously.
+
+      Middle grounds exist: synchronous training with backup workers that drops the slowest
+      few gradients each step, and local SGD, where workers take several local steps between
+      averaging to cut communication.
+    probes:
+      - Why does gradient staleness hurt more as you add workers?
+      - Your recommendation model has a 500 GB embedding table. How does training communicate it?
+  - id: infra-015
+    skill: dist-training
+    also: [gpu, finetuning]
+    type: tradeoff
+    level: senior
+    tracks: [mle, re]
+    q: >-
+      A model you need to train or fine-tune does not fit in the memory of the GPUs you have.
+      What are your options, cheapest first?
+    a: |
+      First find out which component overflows: activations (scales with batch and sequence)
+      or parameters plus optimizer state (fixed). The remedies differ.
+
+      **If activations overflow.**
+
+      1. *Smaller batch with gradient accumulation.* Run $k$ small batches, accumulate
+         gradients, step once. Same effective batch, $k$ times less activation memory, no
+         quality cost except with batch-statistics layers. Free.
+      2. *Mixed precision.* Halves activation memory and speeds up the step.
+      3. *Activation checkpointing.* Store only some activations and recompute the rest during
+         the backward pass. Large memory saving for roughly one extra forward pass of compute.
+      4. *Shorter sequences or lower resolution*, or a memory-efficient attention
+         implementation.
+
+      **If parameters and optimizer state overflow.**
+
+      5. *Train fewer parameters.* For fine-tuning, adapters such as LoRA leave the base model
+         frozen, so there are no gradients or optimizer state for it, and the frozen weights
+         can be loaded in lower precision.
+      6. *A lighter optimizer.* SGD or a memory-reduced Adam variant in place of full
+         two-moment state.
+      7. *Shard across GPUs* with FSDP or ZeRO, so each device holds a fraction of parameters,
+         gradients and optimizer state. Costs communication and needs several GPUs.
+      8. *Offload to CPU memory or disk.* Works, and is slow; a last resort for training,
+         acceptable for occasional inference.
+
+      **If a single layer's computation overflows** even alone, you need tensor parallelism or
+      a different architecture.
+
+      **Or change the hardware.** Renting a larger-memory GPU for the duration of the job is
+      often cheaper than the engineering time for options 7 and beyond.
+
+      State the trade for each: accumulation costs nothing but wall-clock per update;
+      checkpointing costs compute; adapters change what is learned; sharding costs
+      communication and complexity. Combine the free ones first, measure peak memory after
+      each step, and keep a worst-case batch test in the pipeline.
+    probes:
+      - Does gradient accumulation give exactly the same result as the large batch?
+      - When is LoRA not an acceptable substitute for full fine-tuning?
+  - id: infra-016
+    skill: dist-training
+    also: [reliability]
+    type: derivation
+    level: staff
+    tracks: [mle, re]
+    q: >-
+      A job runs on 500 nodes. How often should it checkpoint? Derive the interval from the
+      failure rate and the cost of a checkpoint.
+    a: |
+      **Failure rate of the job.** If each node fails independently with mean time between
+      failures $m$, a job on $N$ nodes that needs all of them fails with rate $N / m$, so its
+      mean time between failures is
+
+      $$M = m / N.$$
+
+      With $m$ = 5 years per node and $N = 500$: $M \approx 3.65$ days $\approx 88$ hours.
+      Large jobs fail routinely even on reliable hardware, and preemptions add to the rate.
+
+      **The trade-off.** Let $\delta$ be the time to write a checkpoint and $\tau$ the interval
+      between checkpoints.
+
+      - Overhead from writing: a fraction $\delta / \tau$ of the run.
+      - Expected rework after a failure: on average half an interval, $\tau / 2$, lost once
+        every $M$, a fraction $\tau / (2M)$.
+
+      Total waste as a fraction of run time:
+
+      $$w(\tau) \approx \frac{\delta}{\tau} + \frac{\tau}{2M}.$$
+
+      Setting the derivative to zero gives Young's approximation:
+
+      $$\tau^* = \sqrt{2\, \delta\, M}, \qquad w(\tau^*) = \sqrt{2\delta / M}.$$
+
+      **Numbers.** With $\delta = 2$ minutes and $M = 88$ hours $= 5280$ minutes:
+      $\tau^* = \sqrt{2 \cdot 2 \cdot 5280} \approx 145$ minutes, and the waste is about
+      $\sqrt{4 / 5280} \approx 2.8\%$. On preemptible capacity with $M = 2$ hours:
+      $\tau^* \approx 22$ minutes and waste about 18%, before restart time.
+
+      **What the formula teaches.**
+
+      - The interval grows with the square root of the checkpoint cost, so making checkpoints
+        cheaper (asynchronous upload, parallel per-rank writes, incremental state) pays twice:
+        lower overhead and shorter intervals.
+      - Add the restart time (rescheduling, loading, warm-up) to the cost of each failure;
+        when it is large, reducing it matters more than tuning $\tau$.
+      - The approximation assumes $\delta \ll \tau \ll M$. When failures are very frequent, the
+        job spends most of its time recovering, and the remedy is fewer nodes per job,
+        redundancy or more reliable capacity.
+      - If the platform gives notice before preemption, a checkpoint on notice removes most
+        rework and the periodic interval can be long.
+    probes:
+      - How does the answer change if a failed node can be replaced without restarting the whole job?
+      - What would you measure in production to set these parameters?
+  - id: infra-017
+    skill: hpc
+    also: [dist-training, linux]
+    type: concept
+    level: senior
+    tracks: [mle, re]
+    q: >-
+      Why does multi-node training need a special network? What do InfiniBand and RDMA give you
+      that ordinary Ethernet with TCP does not?
+    a: |
+      **The requirement.** Synchronous distributed training exchanges data every step:
+      gradients in data parallelism, parameters in sharded training, activations in tensor
+      parallelism. A model with $10^9$ parameters has 4 GB of 32-bit gradients, and an
+      all-reduce moves about twice that per worker per step. On a 10 Gb/s link (about 1.2 GB
+      per second) that alone takes several seconds, longer than the computation. The step time
+      is then set by the network, and adding nodes adds nothing.
+
+      **What a high-performance interconnect provides.**
+
+      - *Bandwidth*: 100 to 400 Gb/s per link and more, with several links per node.
+      - *Low, predictable latency*: microseconds, which matters because collective operations
+        consist of many small synchronised exchanges.
+      - *RDMA* (remote direct memory access): the network card reads and writes application
+        memory directly, bypassing the kernel's network stack and avoiding copies and context
+        switches. With GPU-aware variants, data moves between GPU memories on different nodes
+        without passing through host memory.
+      - *Lossless transport and a suitable topology*, such as a fat tree with full bisection
+        bandwidth, so that many simultaneous node pairs do not contend.
+
+      InfiniBand is a network technology designed around these properties. RoCE provides RDMA
+      over Ethernet hardware and needs careful configuration to be lossless.
+
+      **Inside a node** there is a similar hierarchy: direct GPU-to-GPU links are faster than
+      going through the PCIe bus, and which GPUs share a switch or a CPU socket affects
+      communication cost. Process placement should respect that topology, including NUMA
+      locality for host memory.
+
+      **When it matters less.** Small models, infrequent synchronisation, embarrassingly
+      parallel work such as sweeps and batch inference, and single-node jobs.
+
+      **Diagnosing a network-bound job.** Throughput per GPU drops as nodes are added while
+      GPU utilisation falls; a profiler shows time in collective communication; and the same
+      job scales well inside one node.
+    probes:
+      - Estimate the communication time per step for a model you have trained.
+      - Why can a job scale well to 8 GPUs in one node and badly to 16 across two?
+  - id: infra-018
+    skill: hpc
+    also: [dataloading, data-lake]
+    type: tradeoff
+    level: senior
+    tracks: [mle, re]
+    q: >-
+      Where should training data and checkpoints live: object storage, a parallel file system or
+      local NVMe? What are the failure modes of each?
+    a: |
+      | Storage | Strengths | Weaknesses |
+      |-|-|-|
+      | Object storage (S3, GCS) | Cheap, durable, effectively unlimited, accessible from anywhere, high aggregate throughput with many parallel readers | High latency per request (tens of milliseconds), no POSIX semantics, request costs and rate limits; terrible for many small random reads |
+      | Parallel or distributed file system (Lustre, GPFS and similar) | POSIX interface, high throughput shared by all nodes, good for large files | Metadata servers choke on millions of small files; shared by all jobs, so one job's bad pattern hurts everyone; costly to run |
+      | Local NVMe on the node | Fastest, lowest latency, no network | Ephemeral and limited in size; gone when the node is reclaimed; must be filled first |
+
+      **The pattern that works.**
+
+      - Source of truth in object storage, as large shards (hundreds of megabytes to a few
+        gigabytes each) read sequentially. Sequential reads of large objects turn the store's
+        weakness into a non-issue, and many shards read in parallel give high throughput.
+      - A cache on local NVMe for datasets that fit, filled at job start or lazily on first
+        read. For multi-epoch training the second epoch is then local.
+      - A parallel file system where a POSIX interface is required or where the organisation
+        already runs one, with data still packed into large files.
+
+      **Failure modes to recognise.**
+
+      - Millions of small files (one image or one JSON per example): metadata operations
+        dominate and listing a directory takes minutes.
+      - Random access into remote storage from a shuffling loader.
+      - Throttling by the object store under a burst of requests from hundreds of workers.
+      - Cross-region reads: slow and billed.
+      - Every job copying the same dataset to local disk separately, with no shared cache.
+
+      **Checkpoints.** Large sequential writes. Write to local disk and upload asynchronously,
+      or write in parallel per rank, so that the training loop does not stall on a slow
+      remote write. Keep retention rules, since checkpoints of large models fill storage
+      quickly. Measure the time to write and to restore, because both enter the fault
+      tolerance calculation.
+
+      **Diagnosis.** High I/O wait and idle GPUs point to storage; compare throughput with
+      the dataset on local disk to confirm.
+    probes:
+      - Why are large sequential shards so much better than individual files on every one of these systems?
+      - How would you share one dataset cache among many jobs on the same nodes?
+  - id: infra-019
+    skill: data-lake
+    type: concept
+    level: core
+    tracks: [mle, ai]
+    q: >-
+      Why are analytical and training tables stored in a columnar format such as Parquet? What
+      does the file layout buy you, and when is it the wrong format?
+    a: |
+      **Layout.** A Parquet file stores data column by column inside **row groups** (chunks of
+      rows, typically tens to hundreds of megabytes). Each column chunk is divided into pages,
+      encoded and compressed separately, and the file footer records the schema and
+      statistics such as minimum, maximum and null count per column chunk.
+
+      **What that buys.**
+
+      - *Column pruning.* A query that needs 5 of 300 columns reads only those 5. Analytical
+        and feature queries usually touch few columns of wide tables.
+      - *Predicate pushdown.* A reader skips a row group when the statistics show that no row
+        can match the filter, without decompressing it. It works well when the data is sorted
+        or clustered on the filter column.
+      - *Compression.* Values in one column are similar, so dictionary and run-length encoding
+        plus a general compressor shrink the data several times more than a row format would.
+      - *Vectorised reads.* Engines process a column as an array, which is CPU-efficient.
+      - *A self-describing, typed schema*, readable by every engine.
+
+      **When it is the wrong format.**
+
+      - *Point lookups and updates of single rows.* Files are immutable, and reading one row
+        means decoding a page of each needed column. Use a key-value or relational store.
+      - *Row-at-a-time streaming writes.* A row-oriented format such as Avro suits logs and
+        message payloads; convert to Parquet in batches.
+      - *Large binary objects per row*, such as images, audio or long token arrays for
+        training with random access. Sharded archives or formats designed for it serve
+        better; keep metadata in Parquet and the payload elsewhere.
+      - *Many tiny files.* The per-file overhead of footers and listing destroys the benefit.
+
+      **Practical knobs.** Row group size (larger compresses and scans better; smaller skips
+      better), sort order within files, compression codec (fast versus dense), and target
+      file size of a few hundred megabytes to a gigabyte.
+    probes:
+      - A filter on an unsorted high-cardinality column gets no benefit from pushdown. Why?
+      - How would you store a dataset of images with labels and metadata?
+  - id: infra-020
+    skill: data-lake
+    type: concept
+    level: senior
+    tracks: [mle, ai]
+    q: >-
+      What do table formats such as Iceberg, Delta Lake or Hudi add on top of Parquet files in
+      object storage? Why does that matter for ML?
+    a: |
+      A directory of Parquet files is not a table. Readers find files by listing, which is
+      slow and can observe a half-finished write; there are no transactions, no safe
+      concurrent writers and no way to change the schema or delete rows cleanly.
+
+      A table format adds a **metadata layer** that states exactly which data files make up
+      the table at each version.
+
+      - *Atomic commits.* A write produces new data files and then publishes a new metadata
+        version in one atomic step. Readers see the old snapshot or the new one, never a mix.
+        Concurrent writers are handled by optimistic concurrency: a writer commits only if
+        the table has not changed in a conflicting way, otherwise it retries.
+      - *Snapshots and time travel.* Every commit is a snapshot that can be queried by id or
+        timestamp until it is expired.
+      - *Schema evolution.* Add, rename or drop columns without rewriting data, because
+        columns are tracked by id.
+      - *Row-level changes.* Updates, deletes and merges, implemented by rewriting the
+        affected files (copy-on-write) or by writing delete and delta files merged at read
+        time (merge-on-read). This is what makes deletion requests and late corrections
+        feasible on a lake.
+      - *Planning without listing.* File lists and per-file column statistics live in
+        metadata, so the engine prunes files before touching storage. Partitioning can be
+        derived from columns and changed over time.
+      - *Maintenance.* Compaction of small files, expiry of old snapshots, removal of orphan
+        files. These jobs must actually be run.
+
+      **Why it matters for ML.**
+
+      - *Reproducibility*: a training set is a query against a snapshot id, which pins the
+        exact data.
+      - *Consistency*: a training job never reads a partially written partition.
+      - *Backfills and corrections* are atomic replacements of partitions.
+      - *Incremental processing*: read only what changed between two snapshots to update
+        features.
+      - *Lineage and audit*: who changed what, when.
+
+      The combination of open table formats on object storage with warehouse-style engines is
+      what people mean by a lakehouse.
+    probes:
+      - Copy-on-write or merge-on-read for a table with frequent small updates and heavy scans?
+      - How long should snapshots be retained if models must be reproducible for a year?
+  - id: infra-021
+    skill: data-lake
+    type: tradeoff
+    level: core
+    tracks: [mle, ai]
+    q: >-
+      How do you choose a partitioning scheme for a large table, and what is the small-files
+      problem?
+    a: |
+      **Purpose.** Partitioning splits a table into directories or file groups by the value of
+      one or more columns, so that a query filtering on those columns reads only the matching
+      parts. It also defines the unit of an idempotent write: overwrite one partition.
+
+      **Choosing the key.**
+
+      - Partition on the columns that almost every query filters on. For event data that is
+        the event date, sometimes with one more low-cardinality column such as region.
+      - Keep cardinality low enough that each partition holds at least hundreds of megabytes.
+        Partitioning by user id or by hour and country and device creates millions of tiny
+        partitions.
+      - Match the write pattern: daily jobs write daily partitions.
+      - For high-cardinality columns that queries filter on, do not partition. Sort or cluster
+        the data on that column within files, or bucket by its hash, so that file statistics
+        prune the read.
+
+      **The small-files problem.** Thousands or millions of files of a few kilobytes or
+      megabytes each. Causes: over-partitioning, streaming or micro-batch writers committing
+      often, and jobs with many output tasks each writing a file per partition.
+
+      Why it hurts:
+
+      - Listing and opening files dominates query time; object stores charge and throttle per
+        request.
+      - Each file carries its own footer and metadata, and compression works poorly on small
+        chunks.
+      - Query planning slows as metadata grows.
+      - For training, loaders spend their time opening files instead of reading data.
+
+      Fixes: compact small files into target-sized ones (a few hundred megabytes to a
+      gigabyte) with a scheduled job; repartition by the partition key before writing so each
+      partition is written by one task; coarsen the partitioning; batch streaming commits.
+
+      **Related choice.** A warehouse manages storage and layout for you and suits business
+      analytics; a lake of open files is cheaper and open to any engine and to training jobs;
+      a lakehouse puts table semantics on the lake to get both.
+    probes:
+      - A table partitioned by date is always queried by user id. What do you change?
+      - How do you compact files while other jobs are reading and writing the table?
+  - id: infra-022
+    skill: feature-store
+    also: [feature-eng]
+    type: concept
+    level: core
+    tracks: [mle]
+    q: >-
+      What problem does a feature store solve? Describe its parts and what point-in-time
+      correctness means.
+    a: |
+      A feature store exists to make the features a model sees in training identical to those
+      it sees in serving, and to let teams reuse features instead of rebuilding them.
+
+      **Parts.**
+
+      - *Feature definitions.* One declared transformation per feature, with an entity key
+        (user, item), a timestamp, an owner and a version. The same definition feeds both
+        stores.
+      - *Offline store.* The full history of feature values with timestamps, in a warehouse or
+        lake. Used to build training sets.
+      - *Online store.* The latest value per entity in a low-latency key-value store. Used at
+        inference with a budget of a few milliseconds.
+      - *Materialisation.* Batch and streaming jobs that compute features and write them to
+        both stores.
+      - *Serving API and registry.* Fetch a feature vector by entity keys; discover features,
+        lineage and consumers.
+      - *Monitoring.* Freshness, null rates and the distribution of online against offline
+        values.
+
+      **Point-in-time correctness.** A training example is an event at time $t$ with a label.
+      Its features must be the values that were available just before $t$, as serving would
+      have seen them. Joining the latest value of each feature instead leaks the future: a
+      "purchases in the last 30 days" feature computed today includes the very purchase you
+      are predicting. The offline join is therefore an as-of join: for each example, the most
+      recent feature row with a timestamp earlier than the event's.
+
+      The timestamp that matters is when the value became *available* to serving, not the
+      event time of the underlying data. A daily batch feature for day $d$ that lands at 6 am
+      on day $d + 1$ must not be used for events before that.
+
+      **When you do not need one.** A single team with a few batch features can keep one
+      shared transformation library and log served features for training. Logging the
+      feature vector at prediction time and training on those logs gives consistency by
+      construction; its cost is that a new feature has no history until it has been logged
+      for a while.
+    probes:
+      - Why is the availability time, not the event time, the right timestamp for the join?
+      - What are the trade-offs of training only on features logged at serving time?
+  - id: infra-023
+    skill: feature-store
+    also: [sql, data-analysis]
+    type: coding
+    level: senior
+    tracks: [mle]
+    q: >-
+      Write a point-in-time join: for each labelled event, attach the most recent feature value
+      known strictly before the event. Show it in pandas and in SQL.
+    a: |
+      ```python
+      import pandas as pd
+
+      def point_in_time_join(labels, features, key="user_id", ts="ts", max_age=None):
+          """labels:   [key, ts, label]
+          features: [key, ts, f1, ...], ts = time the value became available.
+          max_age:  optional pd.Timedelta; older feature values are treated as missing."""
+          labels = labels.sort_values(ts)
+          features = features.sort_values(ts)
+          return pd.merge_asof(
+              labels, features, on=ts, by=key,
+              direction="backward",          # latest feature row at or before the event
+              allow_exact_matches=False,     # strictly before: no same-instant leakage
+              tolerance=max_age)
+      ```
+
+      The same in SQL, portable across warehouses:
+
+      ```sql
+      SELECT *
+      FROM (
+        SELECT l.*, f.f1,
+               ROW_NUMBER() OVER (PARTITION BY l.label_id ORDER BY f.ts DESC) AS rn
+        FROM labels l
+        LEFT JOIN features f
+          ON f.user_id = l.user_id AND f.ts < l.ts
+      ) t
+      WHERE rn = 1;
+      ```
+
+      What to say:
+
+      - `merge_asof` requires both frames sorted by the time column; `by` restricts matches to
+        the same entity.
+      - **Strict inequality.** A feature row with the same timestamp as the event may already
+        contain the event's outcome.
+      - **Left join.** Events with no earlier feature row keep a null, which is what serving
+        would have seen for a new user. Dropping them biases the training set.
+      - **Staleness bound.** Serving may expire old values (a TTL in the online store). Apply
+        the same bound offline with `tolerance`, or training sees values serving would not
+        have.
+      - **Availability time.** If `ts` is the event time of the source data rather than when
+        the feature landed, add the pipeline delay before joining.
+      - **Cost.** The SQL form joins every label to all earlier feature rows for the entity
+        before filtering, which explodes for long histories. Engines with an as-of join, or
+        a range-bounded join on a window of days, avoid that.
+      - **Test.** Build a tiny fixture where the naive latest-value join gives a different
+        answer, and assert the difference.
+    probes:
+      - How would you verify on real data that a training set has no future leakage?
+      - How does the join change when features are updated by a stream rather than a daily batch?
+  - id: infra-024
+    skill: exp-tracking
+    also: [research-eng]
+    type: concept
+    level: core
+    tracks: [mle, re]
+    q: >-
+      What should be recorded for every training run, and what do tools such as MLflow or
+      Weights and Biases give you beyond a spreadsheet?
+    a: |
+      **What to record**, automatically and at the start of the run where possible:
+
+      - *Code*: commit hash, whether the working tree was dirty, and the diff if it was.
+      - *Configuration*: the fully resolved hyperparameters after defaults and overrides, not
+        only what was passed on the command line.
+      - *Data*: dataset name and version or snapshot id, the split definition, preprocessing
+        version.
+      - *Environment*: container image, key library versions, hardware, number of devices.
+      - *Randomness*: seeds.
+      - *Metrics over time*: training and validation loss, learning rate, gradient norm,
+        throughput, memory. Curves, not only final values.
+      - *Evaluation*: metrics on named, versioned evaluation sets and slices.
+      - *Artefacts*: checkpoints, the final model, sample predictions, plots.
+      - *Lineage and notes*: parent run for fine-tunes or resumes, the hypothesis the run was
+        testing, and the conclusion.
+
+      **What a tracking tool adds.**
+
+      - Capture with a few lines of code, so that recording does not depend on discipline.
+      - A queryable store: filter and sort hundreds of runs, group by a hyperparameter, plot
+        curves on top of each other.
+      - Artefact storage linked to runs, and a path from a run to a registered model.
+      - Live monitoring of running jobs, with alerts on divergence.
+      - Sharing: a link to a comparison instead of a screenshot, and reports that record why a
+        decision was taken.
+
+      **What tools do not give you.**
+
+      - *Comparability.* Two runs are comparable only if they used the same evaluation set and
+        code. Enforce versioned evaluation, and compare against the baseline rerun under the
+        same conditions.
+      - *Significance.* One run per configuration says little; record seed variance and
+        report differences against it.
+      - *Hygiene.* Naming, tagging, deleting failed runs and writing the conclusion remain
+        human work.
+
+      Choosing between tools is secondary (hosted or self-hosted, cost, integration with the
+      scheduler and registry). The practice that matters is that no result enters a decision
+      or a paper unless its run record can be opened.
+    probes:
+      - A colleague reports a 0.5 point gain from a single run. What do you ask for?
+      - How do you track experiments on prompts and LLM pipelines where there is no training run?
+  - id: infra-025
+    skill: exp-tracking
+    also: [training-dynamics]
+    type: tradeoff
+    level: senior
+    tracks: [mle, re]
+    q: >-
+      You have a budget of 200 GPU-days to tune a model's hyperparameters. How do you spend it?
+      Compare grid search, random search, Bayesian optimisation and early-stopping methods.
+    a: |
+      **Methods.**
+
+      - *Grid search.* Exhaustive over a lattice. Wastes trials: if only two of six
+        hyperparameters matter, most grid points repeat the same values of the ones that do.
+        Acceptable for one or two dimensions.
+      - *Random search.* Sample each hyperparameter independently. Every trial tests a new
+        value of every dimension, so it covers the important ones far better for the same
+        budget. Trivially parallel. The baseline to beat.
+      - *Bayesian optimisation.* Fit a model of the objective from past trials and choose the
+        next trial to balance exploring and exploiting. More sample-efficient when each trial
+        is expensive and the dimension is modest; inherently sequential, though batched
+        variants exist; less advantage when the objective is noisy.
+      - *Early stopping of trials* (successive halving, Hyperband, ASHA). Start many
+        configurations with a small budget, keep the best fraction, give them more, repeat.
+        Most compute goes to promising configurations. Usually the largest gain, and it
+        combines with random or Bayesian sampling.
+      - *Population-based training.* Mutate hyperparameters during training, which yields
+        schedules rather than fixed values.
+
+      **Spending the budget.**
+
+      1. Reduce the space first. Fix what is known from prior work; search the few that matter
+         most (learning rate, weight decay, warm-up, batch size, a regularisation strength),
+         on log scales where appropriate.
+      2. Use a cheap proxy where it predicts the full result: a smaller model, a data subset
+         or shorter training. Check the rank correlation on a few configurations first.
+      3. Run random sampling with early stopping across the bulk of the budget.
+      4. Reserve a share (perhaps a quarter) to rerun the top few configurations with several
+         seeds to full length. Search winners are selected partly by luck.
+      5. Report the final result on a test set not used for selection.
+
+      **Pitfalls.** Early stopping favours configurations that start fast, such as high
+      learning rates, over those that finish best. Noise between seeds can exceed the
+      differences being optimised. The best configuration at small scale may not transfer to
+      large scale, particularly the learning rate. And a tuned method compared with an
+      untuned baseline is not a fair comparison.
+    probes:
+      - Why does random search beat grid search when only some hyperparameters matter?
+      - How do you check that a short-training proxy ranks configurations the same way as full training?
+  - id: infra-026
+    skill: exp-tracking
+    also: [mlops, devex]
+    type: design
+    level: senior
+    tracks: [mle, re]
+    q: >-
+      Design experiment tracking and lineage for an organisation of fifty people training models,
+      so that any deployed model can be traced back to its data and code.
+    a: |
+      **Goal.** From any model in production, answer in minutes: which run produced it, with
+      what code, configuration and data, evaluated on what, approved by whom. And the
+      reverse: which models used this dataset.
+
+      **Entities and links.**
+
+      - *Dataset version*: immutable snapshot id, the query or pipeline run that built it, its
+        validation report.
+      - *Run*: code commit, resolved configuration, image digest, input dataset versions,
+        parent run if resumed or fine-tuned, metrics, artefacts.
+      - *Evaluation result*: model artefact, evaluation set version, evaluation code version,
+        metrics by slice.
+      - *Registered model version*: the artefact, its run, its evaluation results, its stage
+        and approval record.
+      - *Deployment*: registered version, serving configuration, time and environment.
+
+      Every link is written by tooling, not by people.
+
+      **How it is captured.**
+
+      - The job launcher injects the run id, commit and image; the training library logs
+        configuration and metrics; the data client records which dataset versions were read.
+        A run started from uncommitted code is flagged and cannot be promoted.
+      - Evaluation is a separate, versioned job that writes results against the artefact, so
+        that all candidates are measured the same way.
+      - Promotion to the registry requires the links to exist.
+
+      **Organisation.**
+
+      - Projects and tags by team and model family; a naming convention; retention rules that
+        keep registered models and their lineage indefinitely and expire the artefacts of
+        abandoned runs.
+      - Shared dashboards comparing candidates with the current production model.
+      - Access control for sensitive datasets carried through to their derived artefacts.
+      - Cost per run from the scheduler, attached to the run.
+
+      **Build or buy.** A hosted tracker or an open-source one covers runs and artefacts; the
+      lineage to datasets and deployments usually needs integration work with your own data
+      platform and deployment system. Start with enforced capture at launch, since retrofits
+      fail on the runs that matter most.
+
+      **Check.** Pick a random production model each quarter and reproduce it from its record.
+    probes:
+      - How do you handle exploratory work in notebooks without losing lineage?
+      - A dataset must be deleted for legal reasons. What does your system tell you?
+  - id: infra-027
+    skill: dataloading
+    type: concept
+    level: core
+    tracks: [mle, re]
+    q: >-
+      Why do large training datasets get packed into shards, and how do you shuffle data that can
+      only be read sequentially?
+    a: |
+      **Why shards.** Storing each example as its own file fails at scale: millions of small
+      files overload file-system metadata and object-store request limits, and random access
+      to remote storage is slow. Packing examples into shards, large files of perhaps a few
+      hundred megabytes to a few gigabytes that are read front to back, replaces millions of
+      random reads with a few thousand sequential ones. Sequential reads are what disks,
+      networks and object stores do best, and whole shards can be cached, prefetched and
+      assigned to workers. Common containers are tar-based shards, record files and columnar
+      files.
+
+      **Shuffling sequential data.** You cannot draw a uniformly random example from the whole
+      dataset without random access. The standard approximation has two levels:
+
+      1. *Shuffle the order of shards* each epoch.
+      2. *Shuffle within a buffer*: keep a buffer of $k$ examples; emit a random one and
+         replace it with the next example read.
+
+      Reading several shards in parallel and interleaving them mixes further.
+
+      **How good is it?** It depends on how the shards were written. If shards were filled
+      from already-shuffled data, each is a random sample and shard-level shuffling is nearly
+      as good as a global shuffle. If shards were written in source order (by date, by class,
+      by crawl domain), consecutive examples are correlated, and a buffer smaller than a shard
+      cannot fix it. The cure is a one-time global shuffle when the shards are created.
+
+      Poor shuffling shows up as a loss curve with periodic structure, or as degraded
+      results with batch-statistics layers.
+
+      **Related design points.**
+
+      - Shard count well above the number of workers times ranks, so the work divides evenly.
+      - Assign whole shards to distributed ranks and loader workers so no example is read
+        twice.
+      - "Epoch" becomes approximate; many pipelines define it as a number of steps over an
+        infinite, reshuffled stream.
+      - Record the shard and offset in checkpoints to resume without repeating data.
+      - Keep an index (example id to shard and offset) for debugging and for removing
+        examples.
+    probes:
+      - Your shards were written in chronological order. What goes wrong and how do you fix it without rewriting everything?
+      - How large should the shuffle buffer be?
+  - id: infra-028
+    skill: dataloading
+    also: [pytorch, dist-training]
+    type: coding
+    level: senior
+    tracks: [mle, re]
+    q: >-
+      Write a PyTorch IterableDataset over a list of shards that works with several data-loader
+      workers and several DDP processes without duplicating examples, and shuffles with a
+      buffer.
+    a: |
+      ```python
+      import random
+      from torch.utils.data import IterableDataset, get_worker_info
+
+      class ShardedDataset(IterableDataset):
+          def __init__(self, shards, read_shard, rank=0, world_size=1,
+                       buffer_size=10_000, seed=0):
+              self.shards, self.read_shard = list(shards), read_shard
+              self.rank, self.world_size = rank, world_size
+              self.buffer_size, self.seed, self.epoch = buffer_size, seed, 0
+
+          def set_epoch(self, epoch):
+              self.epoch = epoch
+
+          def __iter__(self):
+              # Same permutation on every rank and worker, new each epoch.
+              shards = self.shards[:]
+              random.Random(self.seed + self.epoch).shuffle(shards)
+              shards = shards[self.rank::self.world_size]        # split across processes
+              info = get_worker_info()
+              wid = 0
+              if info is not None:
+                  wid = info.id
+                  shards = shards[wid::info.num_workers]         # split across workers
+              rng = random.Random(hash((self.seed, self.epoch, self.rank, wid)))
+              buf = []
+              for shard in shards:
+                  for sample in self.read_shard(shard):
+                      if len(buf) < self.buffer_size:
+                          buf.append(sample)
+                          continue
+                      i = rng.randrange(self.buffer_size)
+                      yield buf[i]
+                      buf[i] = sample
+              rng.shuffle(buf)
+              yield from buf
+      ```
+
+      What an interviewer checks:
+
+      - **No duplication.** With an iterable dataset every worker gets a copy of the dataset
+        object; without the split by worker id, each worker yields everything and the model
+        sees each example `num_workers` times. The same applies across DDP ranks.
+      - **Consistent global order.** All ranks and workers must shuffle the shard list with
+        the same seed before slicing, or the slices overlap.
+      - **Different randomness per worker** for the buffer, or all workers emit in the same
+        pattern.
+      - **Uneven lengths.** Ranks receive different numbers of examples when shards differ in
+        size. DDP needs the same number of steps on every rank, so define an epoch as a fixed
+        number of steps and loop the stream, or drop the excess.
+      - **Epoch propagation.** With persistent workers, calling `set_epoch` in the main
+        process does not reach the worker copies; derive the epoch inside the worker or
+        recreate the loader.
+      - **Shard count** should be much larger than ranks times workers.
+
+      For resumability, also expose the current shard and offset so a checkpoint can record
+      them.
+    probes:
+      - What happens with 4 shards, 2 ranks and 8 workers per rank?
+      - How would you make every rank produce exactly the same number of batches?
+  - id: infra-029
+    skill: dataloading
+    also: [data-pipelines, labeling]
+    type: design
+    level: staff
+    tracks: [mle, re]
+    q: >-
+      Design the data preparation and loading system for training on a multimodal dataset of
+      billions of examples. What is computed offline, what online, and how is the dataset
+      versioned?
+    a: |
+      **Principles.** Do expensive, deterministic work once, offline. Keep the per-step path
+      to sequential reads plus cheap, random transformations. Make every stage rerunnable and
+      every dataset version addressable.
+
+      **Offline pipeline**, a distributed batch job per stage with outputs in object storage:
+
+      1. *Ingest and normalise.* Fetch raw items, validate, convert to a few canonical
+         encodings and sizes. Record source, licence and timestamps as metadata.
+      2. *Filter.* Corrupt files, too small or too long items, unsafe or disallowed content,
+         low-quality pairs by model-based scores. Keep the scores as columns so thresholds
+         can change without recomputation.
+      3. *Deduplicate.* Exact duplicates by content hash; near-duplicates by perceptual hash
+         or embedding similarity. Also remove overlap with evaluation sets.
+      4. *Precompute what is deterministic and expensive.* Tokenisation of text, resizing to a
+         bounded resolution, optional embeddings or latents from a frozen encoder.
+      5. *Global shuffle and shard.* Write shards of roughly equal size with examples in random
+         order, plus a metadata table with one row per example (id, shard, offset, lengths,
+         scores, source).
+
+      **Online, in the loader.**
+
+      - Sequential shard reads with parallel workers, prefetching and a local NVMe cache.
+      - Decoding and random augmentation, on CPU workers or on the GPU.
+      - Sampling policy: mixing sources at chosen ratios, and bucketing by length or aspect
+        ratio so batches pad little.
+      - Batching by a token or pixel budget instead of a fixed count.
+
+      **Versioning.** A dataset version is a manifest: the list of shards with checksums, the
+      filter thresholds and the code version of each stage. New versions are new manifests
+      that reuse unchanged shards. Removing examples (a takedown or a discovered bug) is done
+      with a deny-list applied at load time immediately, and by rewriting the affected
+      shards in the next version.
+
+      **Operations.**
+
+      - Throughput target derived from the training step: examples per second per GPU times
+        GPUs, with headroom, tested before the run.
+      - Per-stage statistics and samples for inspection; data bugs are found by looking.
+      - Resumable loading: checkpoints record position in the manifest.
+      - Cost: the offline stages are embarrassingly parallel and suit preemptible capacity.
+
+      The main risks are silent quality problems in filtering, duplicates leaking into
+      evaluation, and a loader that cannot keep the GPUs fed.
+    probes:
+      - Which precomputations would you avoid because they freeze a decision you may want to change?
+      - How do you remove one million examples from a dataset that a run is currently training on?
+  - id: infra-030
+    skill: ml-frameworks
+    also: [pytorch, math]
+    type: concept
+    level: core
+    tracks: [mle, re]
+    q: >-
+      How does reverse-mode automatic differentiation work in a framework like PyTorch? What is
+      stored during the forward pass, and why is reverse mode the right choice for training?
+    a: |
+      **The idea.** A program computing a loss is a composition of elementary operations whose
+      derivatives are known. Automatic differentiation applies the chain rule to that
+      composition exactly, neither symbolically nor by finite differences.
+
+      **Forward pass, recording.** As each operation runs, the framework creates a node that
+      remembers its inputs and whatever is needed to compute its local derivative (often the
+      input or output values). The result is a directed acyclic graph from parameters to the
+      loss. In PyTorch this graph is built dynamically, fresh on every forward pass, which is
+      why ordinary Python control flow works.
+
+      **Backward pass.** Starting from $\partial L / \partial L = 1$, walk the graph in reverse
+      topological order. Each node receives the gradient of the loss with respect to its
+      output and multiplies it by its local Jacobian to produce gradients for its inputs: a
+      **vector-Jacobian product**. The full Jacobian is never formed. Gradients arriving at a
+      tensor along several paths are summed.
+
+      **Why reverse mode.** For a function from $n$ inputs to $m$ outputs, forward mode costs
+      one pass per input and reverse mode one pass per output. Training has millions of
+      parameters and one scalar loss, so reverse mode yields all gradients for a small
+      constant multiple of the cost of the forward pass.
+
+      **The price is memory.** Every intermediate value needed by a backward function is kept
+      alive until the backward pass uses it. This is the activation memory of training, and
+      it is why inference under a no-gradient context needs so much less.
+
+      **Practical consequences.**
+
+      - The graph is freed after `backward()` by default; a second backward through it needs
+        it to be retained.
+      - In-place modification of a tensor that a backward function saved invalidates the
+        gradient; the framework detects it through version counters and raises an error.
+      - Detaching a tensor cuts the graph: no gradient flows past it.
+      - Gradients accumulate into `.grad` across calls, so they are zeroed each step.
+      - Non-differentiable points get a conventional subgradient; integer and indexing
+        operations pass no gradient to the indices.
+      - Higher-order derivatives come from differentiating the backward computation itself.
+    probes:
+      - When would forward-mode differentiation be the better choice?
+      - Why does an in-place operation sometimes break the backward pass and sometimes not?
+  - id: infra-031
+    skill: ml-frameworks
+    also: [python]
+    type: coding
+    level: senior
+    tracks: [mle, re]
+    q: >-
+      Implement a minimal scalar reverse-mode autodiff engine in Python that supports addition,
+      multiplication and tanh, with a backward method.
+    a: |
+      ```python
+      import math
+
+      class Value:
+          def __init__(self, data, parents=()):
+              self.data, self.grad = float(data), 0.0
+              self._parents = parents
+              self._backward = lambda: None
+
+          def __add__(self, other):
+              other = other if isinstance(other, Value) else Value(other)
+              out = Value(self.data + other.data, (self, other))
+              def backward():
+                  self.grad += out.grad
+                  other.grad += out.grad
+              out._backward = backward
+              return out
+
+          def __mul__(self, other):
+              other = other if isinstance(other, Value) else Value(other)
+              out = Value(self.data * other.data, (self, other))
+              def backward():
+                  self.grad += other.data * out.grad
+                  other.grad += self.data * out.grad
+              out._backward = backward
+              return out
+
+          __radd__, __rmul__ = __add__, __mul__
+
+          def tanh(self):
+              t = math.tanh(self.data)
+              out = Value(t, (self,))
+              def backward():
+                  self.grad += (1.0 - t * t) * out.grad
+              out._backward = backward
+              return out
+
+          def backward(self):
+              order, seen = [], set()
+              def visit(v):
+                  if v not in seen:
+                      seen.add(v)
+                      for p in v._parents:
+                          visit(p)
+                      order.append(v)
+              visit(self)
+              self.grad = 1.0
+              for v in reversed(order):
+                  v._backward()
+      ```
+
+      What the interviewer looks for:
+
+      - **Accumulate with `+=`.** A value used twice, as in `y = x * x`, receives gradient from
+        both uses; assignment would keep only one.
+      - **Topological order.** A node's gradient must be complete before it is propagated to
+        its parents, so process nodes in reverse topological order, not in a naive recursive
+        walk that could visit a shared node early.
+      - **Closures capture what the local derivative needs**: the other operand for
+        multiplication, the output for tanh. This is the stored state that costs memory in a
+        real framework.
+      - **Seeding** the output's gradient with 1.
+      - **A check**: compare with a finite difference,
+        $(f(x + \epsilon) - f(x - \epsilon)) / 2\epsilon$, on a small expression.
+
+      Limits to mention: gradients must be zeroed before a second backward call; the recursive
+      sort overflows the stack on very deep graphs, so use an iterative one; and a real
+      engine works on tensors, where each local derivative becomes a vector-Jacobian product
+      with broadcasting to undo.
+    probes:
+      - Add subtraction, division and a power operation using what is already there.
+      - What changes when values are tensors and addition broadcasts?
+  - id: infra-032
+    skill: ml-frameworks
+    also: [pytorch, jax]
+    type: concept
+    level: senior
+    tracks: [mle, re]
+    q: >-
+      What does a graph compiler such as torch.compile or JAX's jit do for a model, and what
+      commonly goes wrong when you turn it on?
+    a: |
+      **Why compile.** Eager execution runs one operation at a time from Python: every
+      operation pays interpreter and dispatch overhead and writes its own intermediate
+      tensor, and the framework never sees more than one operation ahead. A compiler captures
+      a region of the program as a graph and optimises it as a whole.
+
+      **What it does.**
+
+      1. *Capture.* `torch.compile` intercepts Python execution, records tensor operations into
+         a graph and inserts **guards**: conditions on input types, shapes and relevant Python
+         values under which the captured graph is valid. JAX's `jit` instead traces the
+         function once with abstract values standing for arrays of a given shape and type.
+      2. *Optimise.* Remove dead code, fold constants, fuse chains of elementwise operations
+         into single kernels, eliminate intermediate tensors, plan memory. With training, the
+         backward computation is captured and optimised too.
+      3. *Generate code* for the target device and cache it. Later calls that satisfy the
+         guards skip Python for that region.
+
+      Gains are largest for models with many small operations and Python overhead, and small
+      for models already dominated by a few large library kernels.
+
+      **What goes wrong.**
+
+      - *Recompilation.* A new input shape, type or guarded Python value fails the guards and
+        triggers a compile. Variable sequence lengths can cause a compile on many steps.
+        Remedies: pad or bucket to a few shapes, or mark dimensions as dynamic.
+      - *Compile time.* The first call takes seconds to minutes, which hurts short jobs, tests
+        and serving cold starts.
+      - *Graph breaks* (PyTorch). Unsupported Python constructs, data-dependent control flow,
+        calls into other libraries or printing a tensor split the region; each piece is
+        compiled separately and the benefit shrinks.
+      - *Tracing semantics* (JAX). Python control flow on array values cannot be traced; it
+        must be expressed with the library's structured control-flow functions. Side effects
+        run only at trace time. Functions must be pure, with randomness passed explicitly.
+      - *Numerical differences.* Fusion and reordering change floating-point results slightly.
+      - *Debugging.* Errors refer to generated code; start by disabling compilation to
+        localise the problem.
+
+      **Adopting it.** Measure steady-state step time and compile time separately, log
+      recompilation counts, and keep an eager mode switch. Check the current documentation;
+      this area changes quickly between releases.
+    probes:
+      - Your training loop recompiles every few steps. How do you find the cause?
+      - Why must a function be pure for JAX to compile it correctly?
+  - id: infra-033
+    skill: rl-envs
+    also: [rl]
+    type: concept
+    level: core
+    tracks: [mle, re]
+    q: >-
+      Describe the standard interface of an RL environment. Which details of it cause bugs in
+      training code?
+    a: |
+      The de facto interface (Gymnasium, formerly OpenAI Gym):
+
+      ```python
+      obs, info = env.reset(seed=seed)
+      while True:
+          action = policy(obs)
+          obs, reward, terminated, truncated, info = env.step(action)
+          if terminated or truncated:
+              obs, info = env.reset()
+      ```
+
+      plus declared **observation and action spaces** (shape, type, bounds; discrete or
+      continuous) that the agent's networks are built from.
+
+      Details that cause bugs:
+
+      - **Termination versus truncation.** `terminated` means the episode ended inside the
+        task (goal reached, failure). `truncated` means it was cut off from outside, usually
+        by a time limit. On termination the value of the next state is zero; on truncation it
+        is not, and the learner should bootstrap from the final observation. Treating a time
+        limit as termination teaches the agent that the world ends at step $T$.
+      - **Auto-reset in vectorised environments.** When one of $N$ parallel environments
+        finishes, the vector wrapper resets it immediately and returns the first observation
+        of the new episode; the final observation of the old one is delivered separately in
+        `info`. Bootstrapping from the wrong one is a silent error. The exact convention has
+        changed between library versions, so check the one in use.
+      - **Seeding and determinism.** The environment, the action-space sampler and the policy
+        each have their own random generator. Reproducible runs need all of them seeded, and
+        parallel environments need distinct seeds.
+      - **Spaces.** Actions outside the declared bounds are clipped or rejected depending on
+        the environment; observation scaling and types (bytes versus floats) are a frequent
+        source of a policy that cannot learn.
+      - **Wrappers.** Frame stacking, action repeat, reward clipping and normalisation change
+        the problem. Normalisation statistics are part of the policy and must be saved with
+        it and frozen for evaluation.
+      - **Reward and info.** Evaluation should report the unmodified task reward, not the
+        clipped or shaped one used for training.
+
+      **Vectorisation.** Running many environments in parallel, in processes or batched on a
+      GPU, is the main throughput lever; the policy then acts on a batch of observations in
+      one forward pass.
+
+      A unit test worth having: a random policy and a scripted policy run through the full
+      wrapper stack, with checks on shapes, ranges and episode boundaries.
+    probes:
+      - What is the effect on the learned value function of treating time limits as termination?
+      - How do you evaluate a policy that was trained with normalised observations?
+  - id: infra-034
+    skill: rl-envs
+    also: [agents, security-privacy]
+    type: design
+    level: senior
+    tracks: [mle, ai, re]
+    q: >-
+      Design the sandbox infrastructure for running agents that execute code, either to evaluate
+      them on tasks or to collect training episodes. What do isolation, reset and scale require?
+    a: |
+      Treat everything the agent runs as untrusted: it may be wrong, destructive or adversarial,
+      and it runs thousands of times in parallel.
+
+      **Isolation.**
+
+      - *Compute boundary.* Ordinary containers share the host kernel, which is a thin wall for
+        untrusted code. Use a stronger boundary for anything exposed to arbitrary commands: a
+        user-space kernel sandbox, a microVM, or a full virtual machine. Choose by threat
+        model and by start-up time.
+      - *Resources.* Limits on CPU, memory, disk, process count and wall-clock time per
+        command and per episode, so a runaway loop cannot starve neighbours.
+      - *Network.* Denied by default. Where a task needs packages or an API, allow specific
+        hosts through a proxy, or better, mirror them inside. Open egress enables data
+        exfiltration and makes results depend on the outside world.
+      - *Credentials.* None inside the sandbox. If a tool needs one, a broker outside performs
+        the call.
+
+      **Reproducibility and reset.**
+
+      - Each task is an immutable image or snapshot with dependencies pinned. Every episode
+        starts from the same state; nothing persists between episodes.
+      - Sources of nondeterminism (time, random seeds, network) are fixed or recorded.
+      - Snapshot and restore let search-style methods branch from an intermediate state.
+
+      **Scoring.**
+
+      - The check runs outside the agent's reach: tests and expected outputs are not present
+        in the sandbox during the episode, or are restored from a trusted copy before
+        scoring, so that the agent cannot pass by editing the tests.
+      - Validate each task: the reference solution passes, an empty solution fails, and the
+        outcome is stable across repeated runs.
+
+      **Scale and throughput.**
+
+      - A pool of pre-warmed sandboxes, since start-up time otherwise dominates short
+        episodes.
+      - A scheduler that packs sandboxes onto nodes separately from the GPU fleet running the
+        model; the two scale independently.
+      - Asynchronous episodes with timeouts and retries for infrastructure failures, which
+        must be distinguished from agent failures in the results.
+
+      **Observability.** Full trajectories: commands, outputs, file diffs, timings and resource
+      use. These are both the debugging record and the training data.
+
+      Risks to state: flaky tasks that add noise to every comparison, environment exploits that
+      inflate scores, and leakage of task solutions into training data.
+    probes:
+      - How do you tell an infrastructure failure from an agent failure in aggregate results?
+      - What stops an agent from passing a task by modifying the tests?
+  - id: infra-035
+    skill: rl-envs
+    also: [robotics, rl]
+    type: tradeoff
+    level: senior
+    tracks: [mle, re]
+    q: >-
+      How do you trade simulator fidelity against speed for training a policy, and how do you
+      get a policy trained in simulation to work in the real system?
+    a: |
+      **The trade.** RL needs very many samples, so simulator throughput bounds how much the
+      policy can learn; but whatever the simulator gets wrong, the policy will exploit or be
+      surprised by. Higher fidelity (finer physics steps, realistic rendering, accurate
+      contact and sensor models) costs speed.
+
+      Rules for spending fidelity:
+
+      - Put it where the policy's decisions are sensitive: contact and friction for
+        manipulation, actuator delay and dynamics for locomotion, sensor noise for
+        perception. Elsewhere, cheap approximations are fine.
+      - Prefer many fast, slightly wrong environments with variation over a few accurate ones.
+        Simulators that run thousands of environments in parallel on a GPU changed what is
+        practical.
+      - Test the choice empirically: does performance in the high-fidelity or real system
+        track performance in the fast simulator across checkpoints?
+
+      **Closing the gap between simulation and reality.**
+
+      - *Domain randomisation.* Randomise the parameters you are unsure of (masses, friction,
+        delays, lighting, textures, noise) during training, so that reality looks like one
+        more sample from the training distribution. Too little fails to cover reality; too
+        much makes the task needlessly hard and the policy overly conservative.
+      - *System identification.* Measure the real system and fit the simulator's parameters to
+        it, then randomise around those values.
+      - *Model what bites.* Latency, actuator limits and sensor noise matter more than visual
+        polish.
+      - *Adaptation.* Give the policy a history of observations so that it can infer the
+        dynamics it is in, or fine-tune on a small amount of real data.
+      - *Residual or hybrid control.* Learn a correction on top of a classical controller that
+        already works.
+
+      **Evaluation.** Real-world success on a fixed protocol is the metric; simulation metrics
+      are proxies. Evaluate across randomisation ranges to find where the policy breaks, and
+      keep a set of real failure cases that are reproduced in simulation and added to
+      training.
+
+      The same reasoning applies outside robotics: a simulated user or market is a model with
+      a fidelity gap, and a policy optimised against it must be validated online.
+    probes:
+      - How do you choose the ranges for domain randomisation?
+      - Your policy succeeds in simulation and fails on hardware. What is your first measurement?

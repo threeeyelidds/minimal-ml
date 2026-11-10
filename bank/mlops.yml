@@ -1,0 +1,1403 @@
+domain: mlops
+title: MLOps, cloud and production operations
+summary: >-
+  Everything between a trained model and a system that keeps working: the production lifecycle,
+  registries and reproducibility, monitoring and retraining, the cloud and container platform
+  underneath, the databases, caches and queues around the model, security and privacy, data
+  validation, and the internal tooling that lets other engineers ship. It is the most widely
+  named area in the sample: 87% of postings name something in it, and 61% ask for experience
+  shipping ML to production end to end. It is tested in system design rounds, in the project deep
+  dive ("how did you deploy it, how did you know it was still working") and in debugging
+  scenarios.
+senior_bar:
+  - Describes a model in production as a system with owners, SLOs, monitoring, a rollback path and a retraining policy, not as an artefact that was deployed once.
+  - Makes every model reproducible from versioned code, data snapshot, configuration and environment, and can say which of these a given past incident lacked.
+  - Monitors at four layers (service, data, prediction, outcome) and knows which signals are available before labels arrive.
+  - Chooses cloud services, storage engines and deployment strategies by workload and cost, with numbers, and knows where the bill comes from.
+  - Treats training data, model artefacts and credentials as attack surface and applies least privilege, isolation and auditability by default.
+  - Builds paved paths that other teams adopt voluntarily, and measures the platform by lead time and adoption instead of by features shipped.
+rounds:
+  - ML system design
+  - Project deep dive
+  - Debugging and incident scenarios
+  - Platform or infrastructure design round
+  - Behavioural (ownership, cross-team work)
+notes: []
+checklist:
+  - skill: production-ml
+    items:
+      - Walk through the lifecycle from problem framing to retirement and name the owner and artefact of each stage
+      - Compare shadow, canary, A/B and blue-green releases for a model and say what each can and cannot detect
+      - Decide between scheduled and triggered retraining and account for label delay and feedback loops
+      - Triage an online metric drop into data, model, serving and measurement causes
+      - Name the forms of hidden technical debt specific to ML systems
+  - skill: mlops
+    items:
+      - List what must be versioned to reproduce a model and how lineage links them
+      - Describe the stages of a model registry and the checks at each promotion
+      - Design monitoring that works before labels arrive, with alert thresholds that do not page on noise
+      - Compute a population stability index and explain its limits
+      - Design an automated retraining pipeline with gates and a safe promotion step
+  - skill: cloud
+    items:
+      - Map a training and serving system onto compute, storage, network, identity and managed services
+      - Apply least privilege with roles and service accounts and keep data on private networks
+      - Break a cloud bill into compute, storage, network egress and managed-service premiums and name the lever for each
+      - Decide between a managed ML platform and running your own on Kubernetes
+  - skill: containers
+    items:
+      - Write an image for a GPU service that is small, reproducible and runs as non-root
+      - Explain how the host driver, the container runtime and the CUDA libraries in the image must match
+      - Describe the Kubernetes objects an ML service or training job uses and what requests, limits and probes do
+      - Explain what infrastructure as code gives you, including state, plan and drift
+      - Diagnose a container that works locally and fails in the cluster
+  - skill: databases
+    items:
+      - Match relational, key-value, document, columnar, vector and object stores to the parts of an ML system
+      - Design a cache for model outputs with a key that includes everything the output depends on
+      - Explain delivery semantics for queues and why consumers must be idempotent
+  - skill: security-privacy
+    items:
+      - Give a threat model for an ML system covering data, model artefacts, the serving path and the supply chain
+      - Handle personal data across training sets, logs and derived artefacts, including deletion requests
+      - Explain differential privacy and federated learning at the level of what each guarantees and costs
+      - Design tenant isolation and audit logging for an ML product sold to enterprises
+  - skill: data-quality
+    items:
+      - Define a data contract and place validation at ingestion, before training and at serving
+      - Write checks for schema, nulls, ranges, categories, volume and freshness
+      - Trace a silent upstream change to the model's inputs and plan the backfill
+  - skill: devex
+    items:
+      - Design a golden path from a new repository to a deployed model and say what is optional and what is enforced
+      - Measure a platform by lead time, adoption and time to recover
+      - Migrate teams to a platform without mandating it on day one
+cards:
+  - id: mlops-001
+    skill: production-ml
+    type: concept
+    level: core
+    tracks: [mle, ai, re]
+    q: >-
+      Walk me through the lifecycle of an ML system in production. What is different from
+      shipping ordinary software?
+    a: |
+      The stages, each with an artefact that should exist when it is done:
+
+      1. **Framing**: the decision the model supports, the metric that defines success, a
+         baseline and the cost of each error type.
+      2. **Data**: sources, labels, a versioned dataset and its validation checks.
+      3. **Training and evaluation**: reproducible runs, offline metrics on a fixed test set
+         and on slices, a comparison with the current production model.
+      4. **Packaging**: the model plus its preprocessing, its input and output schema and its
+         environment, registered with lineage.
+      5. **Release**: shadow or canary, then an online experiment against the business metric.
+      6. **Operation**: monitoring of service health, inputs, predictions and outcomes;
+         on-call ownership; rollback.
+      7. **Maintenance**: retraining, re-evaluation as data shifts, cost control.
+      8. **Retirement**: migrating consumers and deleting data and artefacts.
+
+      What differs from ordinary software:
+
+      - Behaviour is determined by data as well as code, so both must be versioned and tested,
+        and a change in either is a release.
+      - Correctness is statistical. Tests pass while quality degrades, so monitoring of
+        outcomes replaces part of what unit tests do.
+      - The system decays without any deploy, because the world drifts away from the training
+        data.
+      - Offline metrics are only a proxy; the release decision needs an online measurement.
+      - There are two pipelines to keep consistent, training and serving, and skew between
+        them is a class of bug that ordinary services do not have.
+
+      In an interview, anchor the walk-through in one real system and say which stage was the
+      weakest and what you changed.
+    probes:
+      - Which stage is most often skipped, and what does that cost later?
+      - Who owns the model after launch?
+  - id: mlops-002
+    skill: production-ml
+    type: tradeoff
+    level: core
+    tracks: [mle, ai]
+    q: >-
+      Compare shadow deployment, canary release, A/B testing and blue-green deployment for a new
+      model version. What does each one tell you?
+    a: |
+      They answer different questions, and a careful release uses several in sequence.
+
+      | Strategy | How | Detects | Cannot tell you |
+      |-|-|-|-|
+      | Shadow | New model receives a copy of live traffic; its outputs are logged, not served | Crashes, latency, resource use, prediction differences against the current model | User impact, since users never see it; effects that depend on the model's own actions |
+      | Canary | A small share (1 to 5%) of real traffic is served by the new version, with automatic rollback on guardrails | Operational regressions and gross quality failures under real conditions, with small blast radius | Small effects on business metrics; it is sized for safety, not power |
+      | A/B test | Randomised split sized for statistical power, run for days or weeks | The causal effect on the business metric | Anything quickly |
+      | Blue-green | Two full environments; switch all traffic at once and keep the old one warm | Nothing by itself; it is a fast switch and a fast rollback | Quality differences |
+
+      A typical order: offline evaluation, shadow to validate serving behaviour and compare
+      predictions, canary with guardrail metrics, then an A/B test for the decision.
+
+      Model-specific points. Shadowing doubles inference cost and is impossible when the model's
+      output changes what happens next (an agent taking actions), unless side effects are
+      stubbed. Canary assignment should be sticky per user so that experiences are consistent
+      and so that state, such as caches and feature logging, is not mixed. Rollback must
+      restore the model, its preprocessing and its feature definitions together.
+    probes:
+      - What are your automatic rollback criteria for a canary?
+      - The shadow model disagrees with production on 8% of requests. Is that good or bad?
+  - id: mlops-003
+    skill: production-ml
+    also: [ml-observability, data-quality]
+    type: debug
+    level: senior
+    tracks: [mle, ai]
+    q: >-
+      Three days after a launch that looked good offline and in the first day of the experiment,
+      the online metric for the new model falls below control. How do you investigate?
+    a: |
+      Establish what changed before theorising about the model.
+
+      1. **Is the measurement right?** Check the experiment itself: sample-ratio mismatch,
+         logging loss in one arm, a metric pipeline change, a novelty effect that was always
+         going to fade. Compare day-by-day curves of both arms.
+      2. **Did the serving system change?** Deploys, configuration and feature-flag changes,
+         dependency timeouts that trigger fallbacks, cache behaviour, latency. A model that
+         times out more often silently serves defaults.
+      3. **Did the inputs change?** Per-feature null rates, ranges and distributions for the
+         treatment arm against training data and against day one. Typical causes are an
+         upstream job that failed or ran late so features went stale, a schema change, or a
+         new client version sending a field differently.
+      4. **Is it a slice?** Break the metric down by platform, country, new versus returning
+         users and traffic source. A drop confined to one slice points to data or a client
+         release; a uniform drop points to the model or the serving path.
+      5. **Is the model feeding on itself?** If the model influences its own future inputs
+         (recommendations, rankings), three days is about when feedback effects appear:
+         reduced diversity, exhausted inventory, or features computed from its own outputs.
+      6. **Was offline evaluation misleading?** Leakage or a train-test split that did not
+         respect time would produce a model that degrades as soon as it meets future data.
+
+      Mitigate first if the loss is material: roll back or reduce exposure, then diagnose on
+      logs. Close with the missing guardrail, such as a freshness alert or a slice monitor.
+    probes:
+      - How would you distinguish a novelty effect from a real regression?
+      - Which of these checks can be automated as a pre-launch gate?
+  - id: mlops-004
+    skill: production-ml
+    type: tradeoff
+    level: senior
+    tracks: [mle, ai]
+    q: >-
+      How often should a production model be retrained? Compare scheduled, triggered and
+      continuous training.
+    a: |
+      Retrain as often as the world changes relative to what the model learned, and no more,
+      because each retrain is a release with risk and cost.
+
+      - **Scheduled** (daily, weekly, monthly). Simple and predictable. Choose the period from
+        a backtest: train on data up to time $t$, evaluate on windows further and further
+        ahead, and read how fast the metric decays. If a month-old model loses nothing, weekly
+        retraining buys nothing.
+      - **Triggered.** Retrain when a monitor fires: input drift past a threshold, the outcome
+        metric dropping, or enough new labelled data. Efficient, but depends on monitors that
+        are neither noisy nor blind, and labels may arrive too late to trigger in time.
+      - **Continuous or online.** Incremental updates from a stream, used where freshness is
+        the product (ads, feeds, fraud). Highest operational burden: any bad data flows into
+        the model within minutes, so it needs strict input validation, automatic rollback and
+        periodic full retrains to reset accumulated error.
+
+      Things that complicate the choice:
+
+      - **Label delay.** If outcomes arrive after 30 days, the newest month has incomplete
+        labels. Train on matured data or model the delay explicitly.
+      - **Feedback loops.** The model's decisions shape its next training set; keep some
+        exploration or holdout traffic.
+      - **Stability.** Frequent retrains can churn predictions for the same input. Measure
+        prediction churn between versions and warm-start if it matters.
+      - **Gates.** Every automatic retrain needs the same evaluation gates as a manual
+        release, compared against the current production model on the same fresh data.
+
+      For LLM-based systems the equivalent questions are when to refresh the retrieval index,
+      the prompts and the evaluation set, and when to re-qualify on a new model version.
+    probes:
+      - How would you measure how quickly your model goes stale?
+      - What is the risk of retraining on data selected by the previous model?
+  - id: mlops-005
+    skill: production-ml
+    type: concept
+    level: senior
+    tracks: [mle, ai, re]
+    q: >-
+      What is hidden technical debt in ML systems? Give the forms you have seen and how you
+      contain them.
+    a: |
+      ML systems accumulate debt in places that ordinary code review does not see, because
+      behaviour depends on data and on other models. The main forms, following the well-known
+      Google paper on the topic:
+
+      - **Entanglement.** Changing anything changes everything: adding a feature or altering
+        one input distribution shifts the weights of all others. No change is isolated, so
+        every change needs a full evaluation.
+      - **Hidden feedback loops.** The model influences the data it is later trained on, or
+        two systems influence each other through the world.
+      - **Undeclared consumers.** Other teams read your model's scores or logs without telling
+        you; a recalibration then breaks their thresholds.
+      - **Unstable data dependencies.** Input signals owned by other teams change meaning over
+        time; unused or weakly useful features stay in the model and remain a liability.
+      - **Pipeline jungles and glue code.** Data preparation grows by accretion into scrapes,
+        joins and intermediate files that nobody can test end to end.
+      - **Configuration debt.** Thresholds, feature lists and learning settings spread across
+        files with no validation or history.
+      - **Dead experimental paths.** Flags for abandoned experiments left in the serving code.
+
+      Containment: version and validate input data with contracts; register consumers and
+      expose a calibrated, versioned output; delete features that do not pay for themselves;
+      keep preprocessing in one library shared by training and serving; treat configuration
+      as code with review; and schedule the removal of experiment branches at launch time.
+      The useful interview move is to name one of these that caused a real incident and what
+      the fix was.
+    probes:
+      - How do you find out who consumes your model's output?
+      - Which of these gets worse when models are replaced by calls to a language model?
+  - id: mlops-006
+    skill: mlops
+    type: concept
+    level: core
+    tracks: [mle, ai, re]
+    q: >-
+      What does a model registry do, and what exactly do you version so that a model can be
+      reproduced and rolled back?
+    a: |
+      A registry is the source of truth for which model artefacts exist, where each came from
+      and which one is serving. For every version it stores the artefact and its metadata,
+      and it controls promotion between stages (for example candidate, staging, production,
+      archived) with a record of who or what approved each move.
+
+      To reproduce a model you need all of:
+
+      - **Code**: the commit of the training code and of the shared preprocessing library.
+      - **Data**: an immutable snapshot or a query pinned to a table version, including the
+        label definition and the split.
+      - **Configuration**: hyperparameters, feature list, random seeds.
+      - **Environment**: container image digest, library versions, hardware type where it
+        affects numerics.
+      - **Outputs**: metrics on the fixed evaluation sets, the evaluation set versions and the
+        training logs.
+
+      Lineage links these: from a serving model you can reach the run, the data and the code,
+      and from a dataset you can list every model trained on it, which is what you need for
+      an incident or a deletion request.
+
+      What is deployed is more than weights: the preprocessing and postprocessing, the input
+      and output schema, thresholds and calibration, and for LLM systems the prompt, the tool
+      definitions and the pinned model identifier. Version them as one unit, because rolling
+      back the weights without the matching feature transformation is a common way to turn a
+      rollback into a second incident.
+    probes:
+      - Two runs from the same commit and data give different metrics. What are the causes?
+      - How would you support "delete every model trained on this user's data"?
+  - id: mlops-007
+    skill: mlops
+    type: debug
+    level: senior
+    tracks: [mle, re]
+    q: >-
+      You are asked to reproduce a model trained six months ago, and the retrained model scores
+      noticeably worse. Where do you look?
+    a: |
+      Assume nothing was pinned until shown otherwise, and compare the two runs layer by layer.
+
+      1. **Data.** Most often the cause. Was the training set a snapshot or a query against a
+         live table? Rows get backfilled, corrected, deleted for privacy or deduplicated
+         differently. Compare row counts, label rates and feature distributions with whatever
+         statistics the old run logged. Check that the split is the same: a random split with
+         an unpinned seed or a changed user-to-split hash changes the test set itself.
+      2. **Labels and features.** Did a label definition or a feature's computation change
+         upstream, so the same column name now means something else?
+      3. **Evaluation.** Is the metric computed by the same code on the same evaluation set?
+         A changed tokenizer, threshold or metric library version moves numbers without any
+         model change.
+      4. **Environment.** Library versions change defaults (initialisation, optimiser epsilon,
+         data-loader ordering, mixed-precision behaviour). Use the old container image if it
+         exists.
+      5. **Configuration.** Hyperparameters that lived in a notebook or an environment
+         variable and never reached the tracked config; the number of training steps; early
+         stopping on a different validation set.
+      6. **Nondeterminism.** Seeds, data order with multiple workers, nondeterministic GPU
+         operations and distributed reduction order give run-to-run variance. Measure it with
+         a few seeds: a gap inside that variance is not a reproduction failure.
+
+      Then fix the process: immutable dataset versions, image digests in the run record, and a
+      periodic "retrain from the registry record" job that proves reproduction still works.
+    probes:
+      - How large a metric difference between seeds would you accept as noise?
+      - Bitwise reproducibility or statistical reproducibility, and why?
+  - id: mlops-008
+    skill: mlops
+    also: [ml-observability]
+    type: design
+    level: senior
+    tracks: [mle, ai]
+    q: >-
+      Design the monitoring for a model whose labels arrive weeks after the prediction. What do
+      you alert on?
+    a: |
+      Monitor four layers, from the fastest and least specific signal to the slowest and most
+      meaningful.
+
+      1. **Service.** Latency percentiles, error and timeout rates, saturation, and the share
+         of requests answered by a fallback or default. Alert as for any service.
+      2. **Inputs.** Per-feature null rate, range, cardinality and distribution against a
+         training reference; freshness of every upstream table and feature; schema. These
+         catch most real incidents (a broken pipeline) within minutes.
+      3. **Predictions.** Score distribution, the rate of each predicted class, the share above
+         the decision threshold, and agreement with the previous model version on shadow
+         traffic. A shift here with stable inputs suggests a serving or version problem.
+      4. **Outcomes.** Once labels mature: the metric itself, calibration and performance by
+         slice. Until then use proxies that arrive sooner, such as user corrections, early
+         partial labels, or a small human-labelled sample each day.
+
+      Alert design:
+
+      - Page only on signals that are actionable and specific: staleness, null-rate jumps,
+        fallback rate, prediction-rate change beyond a band learned from history. Send drift
+        statistics on individual features to a dashboard, since with hundreds of features
+        some always look significant.
+      - Compare with the same hour last week to absorb seasonality.
+      - Monitor by slice; aggregate metrics hide a broken segment.
+      - Log inputs, model version and prediction for every request with a join key, so that
+        outcomes can be attached later and any incident can be replayed.
+
+      The delayed labels also mean the newest training data is incomplete, which the
+      retraining pipeline must handle.
+    probes:
+      - Which of these would have caught your last incident?
+      - How do you choose thresholds without paging on every holiday?
+  - id: mlops-009
+    skill: mlops
+    also: [data-quality]
+    type: coding
+    level: core
+    tracks: [mle, ai]
+    q: >-
+      Implement the population stability index for one numeric feature in NumPy. How do you read
+      it, and what are its limits?
+    a: |
+      PSI compares the binned distribution of a feature in production (actual, $a_i$) with a
+      reference such as the training set (expected, $e_i$):
+
+      $$\mathrm{PSI} = \sum_i (a_i - e_i) \ln \frac{a_i}{e_i}.$$
+
+      It is a symmetrised KL divergence over bins, so it is non-negative and zero only when the
+      binned distributions match.
+
+      ```python
+      import numpy as np
+
+      def psi(expected, actual, bins=10, eps=1e-6):
+          """PSI of `actual` against the reference sample `expected`."""
+          edges = np.quantile(expected, np.linspace(0, 1, bins + 1))
+          edges[0], edges[-1] = -np.inf, np.inf      # catch out-of-range values
+          edges = np.unique(edges)                   # ties collapse bins
+          e = np.histogram(expected, edges)[0] / len(expected)
+          a = np.histogram(actual, edges)[0] / len(actual)
+          e, a = np.clip(e, eps, None), np.clip(a, eps, None)
+          return float(np.sum((a - e) * np.log(a / e)))
+      ```
+
+      Reading it: the usual rule of thumb is below 0.1 stable, 0.1 to 0.25 worth a look, above
+      0.25 a significant shift. These thresholds are convention, not theory.
+
+      Limits to state:
+
+      - Bins come from the reference only; quantile bins give equal expected mass, which keeps
+        the estimate stable.
+      - It depends on the number of bins and on sample size. Small samples inflate it, so
+        compare windows of similar size or calibrate the threshold by bootstrapping the
+        reference against itself.
+      - Nulls need their own bin; dropping them hides the most common failure.
+      - It is univariate. It misses changes in the relationship between features and says
+        nothing about whether the shift hurts the model. Weight alerts by feature importance
+        and confirm with prediction and outcome metrics.
+    probes:
+      - How would you compute it for a categorical feature with new categories?
+      - Why might you prefer a Kolmogorov-Smirnov statistic, and when does that mislead?
+  - id: mlops-010
+    skill: mlops
+    also: [production-ml]
+    type: design
+    level: staff
+    tracks: [mle]
+    q: >-
+      Design an automated retraining pipeline that promotes models to production without a human
+      in the loop. What makes that safe?
+    a: |
+      Automation is safe only if every judgement a careful engineer would make at release time
+      is encoded as a gate, and a failure of any gate leaves the current model serving.
+
+      **Pipeline.**
+
+      1. *Data build*: materialise an immutable training snapshot. Gate on data validation:
+         schema, volume against expectation, null rates, label rate, freshness.
+      2. *Train*: pinned code, configuration and image. Gate on training health: loss within
+         a band of previous runs, no NaN, expected duration.
+      3. *Evaluate*: the candidate and the current production model on the same fresh held-out
+         window and on fixed regression sets and slices. Gate on no regression beyond noise
+         overall and on protected slices, calibration within tolerance, and bounded prediction
+         churn against production.
+      4. *Package and verify*: load the artefact in the serving image, replay recorded
+         requests, compare outputs with the training-side predictions (skew test), check
+         latency and memory.
+      5. *Release*: canary with automatic rollback on service and prediction guardrails, then
+         full rollout. Register lineage and the gate results.
+
+      **What makes it safe.**
+
+      - The gates compare with the live model, not with fixed thresholds that go stale.
+      - A bounded rate of change: at most one promotion per period and a freeze switch.
+      - Rollback is one action and restores model and preprocessing together.
+      - The pipeline alerts when it has *not* produced a model for longer than expected, since
+        silent failure means an ageing model.
+      - Periodic human review of gate statistics, and a holdout of traffic on an older model
+        to detect slow degradation that step-to-step comparisons cannot see.
+
+      State where you would keep a human: changes to features, labels, architecture or the
+      gates themselves.
+    probes:
+      - Each retrain is slightly worse than the last but passes the gate. How do you catch that?
+      - What is your prediction-churn metric and why does it matter to consumers?
+  - id: mlops-011
+    skill: cloud
+    type: concept
+    level: core
+    tracks: [mle, ai]
+    q: >-
+      Map a typical ML system, training plus online inference, onto cloud building blocks. What
+      do you need from each?
+    a: |
+      Five groups of services, the same on AWS, GCP and Azure under different names.
+
+      - **Compute.** Virtual machines and GPU instances for training; an orchestrator for
+        containers (managed Kubernetes, or a managed training and endpoint service) for jobs
+        and serving; serverless functions for glue. Decide per workload between on-demand,
+        reserved or committed capacity, and spot or preemptible capacity.
+      - **Storage.** Object storage (S3, GCS, Blob) for datasets, checkpoints and model
+        artefacts: cheap, durable, high throughput, no in-place edits. Block storage and local
+        NVMe for scratch and data caches. A warehouse or lakehouse for analytical tables. A
+        low-latency key-value store for online features.
+      - **Network.** A virtual private network with private subnets, load balancers in front
+        of serving, private endpoints to storage and managed services, and a gateway or CDN at
+        the edge. Data location matters because cross-zone and cross-region transfer and
+        egress are billed and slow.
+      - **Identity and secrets.** Roles for people and service accounts for workloads, scoped
+        to the buckets and services each needs; a secrets manager and a key-management
+        service; audit logs.
+      - **Managed ML and data services.** Training and endpoint platforms, model APIs, managed
+        streaming, workflow orchestration, monitoring.
+
+      A training job then reads as: an orchestrated container on GPU nodes, with a service
+      account allowed to read one dataset prefix and write one checkpoint prefix, in the same
+      region as the data. Online inference: an autoscaled deployment behind a load balancer,
+      reading features from the online store, pulling the artefact from the registry bucket
+      at start, exporting metrics and logs.
+    probes:
+      - Where does the first unexpected cost usually appear?
+      - What changes if the data may not leave one country?
+  - id: mlops-012
+    skill: cloud
+    also: [security-privacy]
+    type: concept
+    level: senior
+    tracks: [mle, ai]
+    q: >-
+      How do you set up identity, permissions and networking for ML workloads in the cloud so
+      that a compromised notebook or job does limited damage?
+    a: |
+      Start from least privilege and from the assumption that any single workload can be
+      compromised, for instance through a malicious package or a poisoned model file.
+
+      **Identity.**
+
+      - Every workload runs as its own service account or role with a narrow policy: this
+        training job may read this dataset prefix and write that checkpoint prefix. No shared
+        "ML team" role with access to everything.
+      - Short-lived credentials issued by the platform (workload identity, instance roles),
+        never long-lived keys in code, images or notebooks.
+      - People get access through groups, with elevated access granted temporarily and
+        logged.
+      - Separate accounts or projects for development, staging and production, so that an
+        experiment cannot touch production data or endpoints.
+
+      **Network.**
+
+      - Workloads in private subnets without public addresses; inbound traffic only through a
+        load balancer or gateway.
+      - Private endpoints to object storage and managed services, so data does not cross the
+        public internet.
+      - Egress control: training jobs and notebooks reach only an internal package mirror and
+        approved hosts. Open egress is how data is exfiltrated.
+
+      **Data.**
+
+      - Encryption at rest with managed keys and in transit with TLS.
+      - Sensitive datasets in separate buckets with their own policies and access logs.
+
+      **Detection.** Audit logs on data access and permission changes, with alerts on unusual
+      volume or new principals.
+
+      The trade-off is friction: researchers want broad access and open internet. The answer is
+      a paved path, such as a sandbox project with de-identified data and a package mirror,
+      rather than exceptions.
+    probes:
+      - A data scientist needs production data to debug a model. What do you offer?
+      - How do notebooks typically leak credentials?
+  - id: mlops-013
+    skill: cloud
+    also: [autoscaling]
+    type: tradeoff
+    level: senior
+    tracks: [mle, ai]
+    q: >-
+      Your team's cloud bill for ML has doubled. Where do you look, and which levers do you pull
+      first?
+    a: |
+      First attribute the bill: by service, by team or project tag, and by workload type
+      (training, inference, storage, data transfer). Untagged spend is usually the first
+      finding.
+
+      **Compute, usually the largest part.**
+
+      - *Idle and oversized resources*: notebooks and development GPUs left running, endpoints
+        with a minimum replica count sized for peak, GPU instances at 20% utilisation. Measure
+        utilisation per instance; shut down on idle; right-size.
+      - *Pricing model*: steady baseline load on committed or reserved capacity; fault-tolerant
+        training and batch inference on spot or preemptible instances, which are much cheaper
+        but can be reclaimed, so they need checkpointing and retries; on-demand only for the
+        remainder.
+      - *Efficiency*: batching, a smaller or quantised model, mixed precision, caching of
+        repeated requests, moving offline work from online endpoints to batch jobs.
+
+      **Storage.** Checkpoints and intermediate datasets kept forever, many copies of the same
+      dataset, everything in the hot tier. Add lifecycle rules, retention for checkpoints
+      (keep the best and the last few) and colder tiers for archives.
+
+      **Network.** Egress and cross-region or cross-zone transfer: training in one region on
+      data in another, or chatty services across zones. Co-locate compute and data.
+
+      **Managed-service premiums.** Convenience pricing on managed endpoints, logging and
+      monitoring ingestion, and per-token model APIs. Check log volume and sampling.
+
+      Then make it stay fixed: budgets and alerts per team, cost per unit of work on a
+      dashboard (per training run, per thousand predictions), and quotas. Report the result as
+      unit cost, since total spend should grow with usage.
+    probes:
+      - When is spot capacity a bad idea for training?
+      - How do you compute the cost per thousand predictions for a GPU endpoint?
+  - id: mlops-014
+    skill: cloud
+    also: [exp-tracking]
+    type: tradeoff
+    level: senior
+    tracks: [mle, ai]
+    q: >-
+      Managed ML platform (SageMaker, Vertex AI, Azure ML) or your own stack on Kubernetes?
+      How do you decide?
+    a: |
+      Decide by team size, workload shape and how far your needs are from the platform's
+      defaults.
+
+      **Managed platform.** Training jobs, endpoints, pipelines, a registry and monitoring
+      without running the control plane. Strengths: fast start, security and compliance
+      features built in, autoscaling endpoints, little operations staff needed. Costs: a price
+      premium on compute, quotas and limited instance choice, opinions that are hard to bend
+      (custom schedulers, unusual serving patterns, multi-node training topologies), and
+      coupling of code to one provider's SDK.
+
+      **Own stack on Kubernetes** with open components for scheduling, serving, workflows and
+      tracking. Strengths: full control over scheduling and bin-packing of GPUs, any serving
+      runtime, portability across clouds and on-premises, lower unit cost at scale. Costs: a
+      platform team to build, upgrade and be on call for it; you own security patches, GPU
+      drivers and cluster upgrades.
+
+      Rules of thumb:
+
+      - A few engineers and standard workloads: managed, and spend the time on the product.
+      - Large or unusual GPU workloads, strict cost targets, multi-cloud or on-premises
+        requirements, or dozens of teams needing shared quota and fair scheduling: own
+        platform, when there are people to run it.
+      - Hybrids are common: managed Kubernetes and managed data services underneath, with your
+        own job and serving layer on top; or model APIs for inference and your own stack for
+        evaluation and data.
+
+      Keep the exit cheap either way: containers as the unit of work, artefacts in open
+      formats in your own bucket, and a thin internal interface in front of provider SDKs.
+    probes:
+      - At what scale did, or would, the calculation flip for your team?
+      - What is the hardest thing to migrate off a managed platform?
+  - id: mlops-015
+    skill: containers
+    type: coding
+    level: core
+    tracks: [mle, ai]
+    q: >-
+      Write a Dockerfile for a GPU inference service in Python. What makes an ML image small,
+      reproducible and safe, and how do CUDA versions fit in?
+    a: |
+      ```dockerfile
+      # The tag is an example; pin the base by digest in practice.
+      ARG BASE=nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04
+
+      FROM ${BASE} AS build
+      RUN apt-get update && apt-get install -y --no-install-recommends python3 python3-venv \
+          && rm -rf /var/lib/apt/lists/*
+      RUN python3 -m venv /opt/venv
+      ENV PATH=/opt/venv/bin:$PATH
+      COPY requirements.lock .
+      RUN pip install --no-cache-dir -r requirements.lock
+
+      FROM ${BASE}
+      RUN apt-get update && apt-get install -y --no-install-recommends python3 \
+          && rm -rf /var/lib/apt/lists/* && useradd --create-home app
+      COPY --from=build /opt/venv /opt/venv
+      ENV PATH=/opt/venv/bin:$PATH PYTHONUNBUFFERED=1
+      WORKDIR /app
+      COPY src/ ./src/
+      USER app
+      EXPOSE 8000
+      CMD ["python", "-m", "src.server"]
+      ```
+
+      What to explain:
+
+      - **Layer order.** Dependencies before source code, so a code change rebuilds only the
+        last layer.
+      - **Size.** A `runtime` base, not `devel`; no build tools or pip cache in the final
+        stage. Framework wheels with bundled CUDA libraries are several gigabytes, and image
+        size is pull time, which is cold-start time.
+      - **Reproducibility.** A lock file with hashes, a pinned base digest, no `latest`.
+      - **Safety.** Non-root user, no secrets in layers or build arguments, a `.dockerignore`.
+      - **Weights.** Usually not baked in: pull them at start from the registry, or mount a
+        volume, so that image and model version independently. Bake them in only when
+        cold-start time dominates.
+      - **CUDA.** The kernel driver lives on the host and is exposed by the NVIDIA container
+        runtime; the image carries the user-space CUDA libraries. The host driver must be at
+        least as new as the image's CUDA version requires. PyTorch wheels ship their own CUDA
+        libraries, so the image's system CUDA matters mainly for other runtimes.
+    probes:
+      - The image is 12 GB and pods take four minutes to start. What do you change?
+      - How do you pass a private package index credential at build time without leaking it?
+  - id: mlops-016
+    skill: containers
+    also: [cluster]
+    type: concept
+    level: core
+    tracks: [mle, ai]
+    q: >-
+      Which Kubernetes objects does an ML inference service use, and what do resource requests,
+      limits and probes do for a GPU workload?
+    a: |
+      The objects:
+
+      - **Pod**: one or more containers scheduled together on a node; the unit that gets a GPU.
+      - **Deployment**: keeps N replicas of a pod template running and performs rolling
+        updates. A **Job** runs a pod to completion (training, batch inference); a
+        **StatefulSet** gives stable identities and volumes.
+      - **Service**: a stable virtual address that load-balances across ready pods.
+        **Ingress** or a gateway exposes it outside the cluster.
+      - **ConfigMap** and **Secret**: configuration and credentials injected at run time.
+      - **HorizontalPodAutoscaler**: changes the replica count from a metric.
+      - **Node pools** with labels and taints: GPU nodes are tainted so that only pods that
+        tolerate the taint and request a GPU land on them.
+
+      **Requests and limits.** The scheduler places a pod by its requests. CPU above the limit
+      is throttled; memory above the limit gets the container killed (OOMKilled). GPUs are an
+      extended resource such as `nvidia.com/gpu: 1`, exposed by a device plugin. They are
+      integers and by default not shared: one pod gets the whole device unless time-slicing or
+      partitioning is configured. Set CPU and memory for the data-loading and tokenisation
+      work too, since a throttled CPU starves the GPU.
+
+      **Probes.**
+
+      - *Startup*: gives slow model loading time before other probes begin.
+      - *Readiness*: the pod receives traffic only when the model is loaded and warmed up.
+        Without it, a rolling update sends requests to pods that are still loading weights.
+      - *Liveness*: restarts a hung process. Keep it cheap and separate from readiness, or a
+        busy GPU causes restarts under load.
+
+      Also set a termination grace period and drain in-flight requests on SIGTERM.
+    probes:
+      - What happens during a rolling update if readiness is missing and the model takes 90 seconds to load?
+      - How would you let two small models share one GPU?
+  - id: mlops-017
+    skill: containers
+    also: [cloud]
+    type: concept
+    level: senior
+    tracks: [mle, ai]
+    q: >-
+      What does infrastructure as code give an ML team, and what are the failure modes of a tool
+      like Terraform?
+    a: |
+      Infrastructure as code declares the desired resources (networks, clusters, node pools,
+      buckets, roles, endpoints) in version-controlled files, and a tool makes reality match.
+
+      What it gives:
+
+      - **Reproducibility.** A new environment or region is a parameter change, and staging can
+        really mirror production.
+      - **Review and history.** Changes to permissions or cluster shape go through pull
+        requests; you can see who changed what and revert it.
+      - **Disaster recovery and audit.** The definition of the infrastructure exists outside
+        the cloud console.
+
+      How Terraform works, in one breath: providers map resource types to cloud APIs; a
+      **state** file records what the tool believes exists; `plan` diffs configuration against
+      state and reality; `apply` executes the diff; modules package reusable pieces.
+
+      Failure modes to know:
+
+      - **State.** It must live in a shared, locked, encrypted backend. Two concurrent applies
+        or a lost state file are serious. State can contain secrets.
+      - **Drift.** Manual console changes diverge from the code; the next apply reverts them or
+        fails. Detect drift with scheduled plans and remove console write access.
+      - **Destructive plans.** Renaming a resource or changing an immutable field becomes
+        destroy-and-recreate, which for a database or bucket is data loss. Read the plan;
+        protect stateful resources against deletion.
+      - **Blast radius.** One giant configuration means every change risks everything. Split by
+        environment and by layer (network, cluster, applications).
+      - **Boundary with the cluster.** Terraform suits long-lived infrastructure; workloads
+        inside Kubernetes are better managed by manifests or a GitOps controller.
+
+      For ML specifically: put GPU node pools, quotas and service accounts in code, since
+      these are what an incident or a new region needs first.
+    probes:
+      - Someone resized a node pool in the console during an incident. What happens next?
+      - How do you keep secrets out of state and out of the repository?
+  - id: mlops-018
+    skill: containers
+    also: [debug-perf]
+    type: debug
+    level: senior
+    tracks: [mle, ai]
+    q: >-
+      A training container runs fine on your workstation but in the cluster it is killed, hangs
+      or runs several times slower. What are the usual causes?
+    a: |
+      Work through what differs between the two environments: resources, devices, storage and
+      network.
+
+      **Killed.**
+
+      - *OOMKilled*: the memory limit is lower than the workstation's RAM. Data-loader workers
+        multiply memory, and page cache for memory-mapped data counts toward the limit on some
+        configurations. Check the pod's last state and raise the limit or reduce workers.
+      - *Shared memory*: PyTorch workers pass tensors through `/dev/shm`, which defaults to
+        64 MB in containers. The symptom is a bus error or a hang. Mount a memory-backed
+        volume at `/dev/shm`.
+      - *Preemption or eviction*: spot nodes reclaimed, or ephemeral storage exhausted by
+        checkpoints written to the container filesystem.
+
+      **Fails at start.**
+
+      - *CUDA mismatch*: host driver older than the image's CUDA libraries need, or no GPU
+        requested so none is visible.
+      - *Permissions*: running as non-root with a read-only filesystem, or a service account
+        without access to the bucket.
+
+      **Slow.**
+
+      - *CPU throttling*: a CPU limit of 2 with 16 data-loader workers. Libraries read the
+        node's core count, not the container's limit, and oversubscribe threads. Set the
+        worker and thread counts from the limit.
+      - *Storage*: reading many small files from network or object storage instead of local
+        NVMe. Look at I/O wait; use sharded archives and a local cache.
+      - *Different hardware*: another GPU model, or a neighbour sharing the device or the
+        node's memory bandwidth.
+      - *Network*: downloading the dataset or the model at every start.
+
+      Method: compare GPU utilisation, CPU throttling counters, I/O wait and memory between
+      the environments before changing the code.
+    probes:
+      - How do you see whether a container is being CPU-throttled?
+      - Why does the process see 96 cores when its limit is 4, and what breaks because of it?
+  - id: mlops-019
+    skill: databases
+    type: tradeoff
+    level: core
+    tracks: [mle, ai]
+    q: >-
+      Which kind of data store would you use for each part of an ML product: application state,
+      online features, event logs, analytics, embeddings and model artefacts?
+    a: |
+      Choose by access pattern (point lookup, range scan, aggregate, similarity), latency, write
+      rate and consistency needs.
+
+      | Need | Store | Why |
+      |-|-|-|
+      | Application state: users, sessions, conversations, permissions | Relational (Postgres, MySQL) | Transactions, constraints, joins, flexible queries. The default until proven insufficient |
+      | Online features and session state at millisecond latency | Key-value (Redis, DynamoDB, Bigtable) | Point reads by key at very high rates, TTLs, simple scaling |
+      | Semi-structured records whose shape varies | Document store, or a JSON column in a relational database | Schema flexibility; weaker joins and constraints |
+      | Event streams: impressions, requests, tool calls | Log or stream (Kafka, Kinesis), landed in object storage | Append-only, ordered, replayable, decouples producers from consumers |
+      | Analytics and training sets | Columnar warehouse or lakehouse (BigQuery, Snowflake, Parquet tables) | Scans and aggregates over billions of rows; poor at point updates |
+      | Embeddings | A vector index: an extension of the relational store up to millions of vectors, a dedicated engine beyond that | Approximate nearest-neighbour search with filters |
+      | Model artefacts, datasets, checkpoints | Object storage | Cheap, durable, large blobs; metadata in a relational registry |
+      | Metrics | Time-series database | Compression and rollups over time |
+
+      Principles a senior answer adds:
+
+      - Start with one relational database plus object storage; add a specialised store when a
+        measured access pattern demands it. Every extra store is another consistency boundary
+        and another thing to operate.
+      - Keep one source of truth per fact and derive the rest (caches, indexes, feature
+        tables) so that they can be rebuilt.
+      - Online and offline copies of the same data will diverge unless one pipeline writes
+        both.
+    probes:
+      - When does a vector extension in your relational database stop being enough?
+      - Where would you store conversation history for a chat product, and why?
+  - id: mlops-020
+    skill: databases
+    also: [latency, llm-cost]
+    type: design
+    level: senior
+    tracks: [mle, ai]
+    q: >-
+      Design a cache for model predictions or LLM responses. What goes in the key, how do you
+      invalidate, and when is caching the wrong answer?
+    a: |
+      **Key.** Everything the output depends on, and nothing else: a hash of the normalised
+      input, the model and preprocessing version, the prompt or feature-set version, decoding
+      parameters, and any per-user or per-tenant context that changes the answer. Omitting the
+      version serves old outputs after a deploy; omitting the tenant leaks one customer's
+      answer to another.
+
+      **Value and policy.** Store the output with its creation time and version. Set a TTL from
+      how fast the underlying facts change. Bound the size with LRU or LFU eviction.
+
+      **Invalidation.**
+
+      - Version in the key makes a model or prompt change an automatic miss, with no purge.
+      - Event-driven deletes when a source document or feature changes.
+      - TTL as the backstop.
+
+      **Operational hazards.**
+
+      - *Stampede*: a popular key expires and many requests recompute it at once. Use
+        single-flight (one computation per key, others wait), stale-while-revalidate, and
+        jittered TTLs.
+      - *Cold start after deploy*: a version bump empties the cache exactly when the new
+        version is under most scrutiny. Pre-warm the top keys.
+      - *Negative caching*: cache failures briefly, or an outage is amplified by retries.
+
+      **Variants.** Exact-match caching works when inputs repeat (popular queries, item
+      embeddings, classification of repeated content). Semantic caching returns a stored answer
+      for a similar query by embedding distance; it raises the hit rate and can return a wrong
+      answer for a query that differs in one important word, so it needs a strict threshold
+      and an evaluation. Precomputation is a cache filled ahead of time by a batch job.
+
+      **When not to cache.** Personalised or fast-changing outputs, sampled generations where
+      variety is intended, low repetition (measure the hit rate first), and sensitive outputs
+      that should not be stored.
+    probes:
+      - How would you estimate the hit rate before building it?
+      - What is the failure mode of a semantic cache and how would you measure it?
+  - id: mlops-021
+    skill: databases
+    also: [data-pipelines, backend]
+    type: concept
+    level: senior
+    tracks: [mle, ai]
+    q: >-
+      You run long inference jobs through a queue. Explain at-most-once, at-least-once and
+      exactly-once delivery, and what your workers must do as a result.
+    a: |
+      A queue decouples producers from workers and absorbs bursts. Its delivery guarantee
+      decides what the worker code must tolerate.
+
+      - **At-most-once.** The message is acknowledged before processing. A crash loses the
+        job. Acceptable only for work that can be dropped.
+      - **At-least-once.** The message is acknowledged after processing; if the worker dies or
+        the visibility timeout expires first, it is redelivered. Nothing is lost, but a job
+        can run twice, including when the first run actually finished and only the
+        acknowledgement was lost. This is what almost every system provides.
+      - **Exactly-once.** Not achievable as pure delivery over an unreliable network. What
+        systems offer is exactly-once *effect*: at-least-once delivery plus idempotent or
+        transactional processing.
+
+      So workers must be **idempotent**:
+
+      - Give every job an idempotency key. Before doing work, or atomically with writing the
+        result, check whether that key is already complete.
+      - Write results with an upsert keyed by the job id, never an append.
+      - For side effects outside your store (sending a message, charging a customer), pass the
+        idempotency key downstream or record intent and completion transactionally.
+
+      Other things to design:
+
+      - *Visibility timeout* longer than the worst-case processing time, or a heartbeat that
+        extends it. A GPU job that outlives its timeout is run twice concurrently.
+      - *Retries with backoff* and a **dead-letter queue** after N attempts, so that a poison
+        message does not block the queue forever.
+      - *Ordering* only where needed, per key, since global ordering costs throughput.
+      - *Backlog age* as the main metric for autoscaling and alerting.
+
+      A log such as Kafka differs from a task queue: consumers track an offset in an ordered,
+      replayable partition, which suits event pipelines; per-message acknowledgement and
+      retries suit job processing.
+    probes:
+      - Where exactly does the duplicate come from when a worker finishes just as its timeout expires?
+      - How do you make "send the user an email with the result" idempotent?
+  - id: mlops-022
+    skill: security-privacy
+    type: concept
+    level: senior
+    tracks: [mle, ai, re]
+    q: >-
+      Give me a threat model for an ML system. What can an attacker do that they could not do to
+      an ordinary web service?
+    a: |
+      Everything that applies to a web service applies here (authentication, injection,
+      secrets, dependencies). The ML-specific surface is the data, the model artefact and the
+      model's behaviour.
+
+      **Training time.**
+
+      - *Data poisoning*: an attacker who can influence training data, such as user-submitted
+        content, scraped pages or a feedback signal, inserts examples that degrade the model
+        or plant a backdoor triggered by a specific pattern.
+      - *Supply chain*: pretrained weights, datasets and packages from public hubs. Pickle-based
+        model files execute arbitrary code when loaded. Prefer weight-only formats such as
+        safetensors, verify hashes, scan and pin dependencies, and load untrusted artefacts in
+        a sandbox.
+
+      **Inference time.**
+
+      - *Evasion*: inputs crafted to be misclassified, which matters most for fraud, abuse and
+        malware detection where the adversary adapts.
+      - *Extraction*: repeated queries to copy the model's behaviour or recover its decision
+        boundary. Rate limits and monitoring raise the cost.
+      - *Privacy attacks*: membership inference (was this record in the training set?) and
+        training-data extraction, to which models that memorise are vulnerable.
+      - *Prompt injection and unsafe tool use* for LLM systems.
+      - *Resource abuse*: expensive inputs as denial of service, or stolen API keys used for
+        free inference.
+
+      **Infrastructure.** Over-broad access to training data, credentials in notebooks,
+      unauthenticated internal endpoints, and prompt or request logs that contain sensitive
+      data.
+
+      Mitigation follows from asking, for each asset (data, weights, predictions), who can
+      read or influence it and what the worst outcome is. Then apply least privilege,
+      provenance and validation for data and artefacts, rate limiting and abuse monitoring at
+      the endpoint, and a response plan that includes retraining from clean data.
+    probes:
+      - How would you detect that a feedback signal is being manipulated?
+      - Why is loading a pickle file from a model hub dangerous, concretely?
+  - id: mlops-023
+    skill: security-privacy
+    also: [labeling]
+    type: design
+    level: senior
+    tracks: [mle, ai]
+    q: >-
+      Your training data and request logs contain personal data. How do you handle it, and what
+      happens when a user asks for their data to be deleted?
+    a: |
+      **Minimise first.** Collect and keep only the fields the model needs. Drop or coarsen the
+      rest at ingestion (precise location to region, birth date to age band). Data that was
+      never stored needs no protection.
+
+      **Separate identity from content.** Replace direct identifiers with pseudonymous keys
+      and keep the mapping in a separate, tightly controlled store. Pseudonymised data is
+      still personal data, since it can often be re-identified by joining, but the separation
+      limits who can do so.
+
+      **Scrub free text.** Logs, prompts and transcripts contain names, emails and account
+      numbers. Run detection and redaction before the text reaches analytics or training
+      stores, and measure the detector's recall on a labelled sample, because it is not
+      perfect.
+
+      **Control and record access.** Role-based access to raw data, de-identified views for
+      most work, access logs, and encryption. Set retention periods per dataset and enforce
+      them with lifecycle rules, not by convention.
+
+      **Deletion requests.** Deleting the source row is the easy part. You need lineage to
+      find the derived copies: feature tables, training snapshots, caches, embeddings in a
+      vector index, evaluation sets, backups. Practical design: key everything by the
+      pseudonymous id, run a periodic deletion job across all registered stores, and rebuild
+      derived datasets from sources on a schedule so that deletions propagate.
+
+      **Models.** A trained model may have memorised the record. The dependable remedy is
+      retraining without it at the next scheduled cycle; machine unlearning methods exist but
+      are not yet something to rely on for guarantees. How regulators treat already-trained
+      models is not settled everywhere, so this is a decision to take with legal counsel, and
+      the engineering job is to make retraining and lineage cheap.
+
+      Purpose limitation also applies: data collected to provide a service is not automatically
+      usable for training. Record the permitted purposes with the dataset.
+    probes:
+      - How do you find every place a user's data has been copied to?
+      - What would you log from an LLM product's requests, and for how long?
+  - id: mlops-024
+    skill: security-privacy
+    type: concept
+    level: senior
+    tracks: [mle, re]
+    q: >-
+      Explain differential privacy and federated learning. What does each guarantee, and what
+      does it cost?
+    a: |
+      **Differential privacy** is a property of an algorithm. A randomised mechanism $M$ is
+      $(\varepsilon, \delta)$-differentially private if for any two datasets $D, D'$ differing
+      in one record and any set of outputs $S$:
+
+      $$\Pr[M(D) \in S] \le e^{\varepsilon} \Pr[M(D') \in S] + \delta.$$
+
+      The output barely depends on any one individual, whatever the attacker already knows.
+      Smaller $\varepsilon$ is stronger. Guarantees compose: every release from the same data
+      spends budget.
+
+      For model training the standard method is **DP-SGD**: compute per-example gradients, clip
+      each to norm $C$, sum, add Gaussian noise with standard deviation $\sigma C$, and step. A
+      privacy accountant converts the noise level, sampling rate and number of steps into
+      $(\varepsilon, \delta)$. Costs: lower accuracy, most painful for small datasets and rare
+      subgroups; per-example gradients are slower and use more memory; large batches are
+      needed; and the reported $\varepsilon$ is only meaningful if the unit of privacy (record
+      or user) is chosen correctly.
+
+      **Federated learning** is a system architecture. Data stays on devices or in silos; each
+      client computes an update on local data, and a server aggregates the updates (FedAvg
+      averages client weights after several local steps). It reduces central collection of
+      raw data. It is not a privacy guarantee by itself: updates can leak training examples.
+      It is combined with **secure aggregation**, so the server sees only the sum, and with
+      differential privacy on the aggregate.
+
+      Costs of federation: clients have different data distributions, which slows or biases
+      convergence; devices are unreliable and heterogeneous; debugging without seeing the data
+      is hard; and communication is the bottleneck.
+
+      One sentence to remember: differential privacy limits what the *output* reveals;
+      federated learning limits where the *input* travels.
+    probes:
+      - Why is clipping per example, and not per batch, necessary for the guarantee?
+      - What does an epsilon of 8 mean in practice, and how would you explain it to a product manager?
+  - id: mlops-025
+    skill: security-privacy
+    also: [backend, guardrails]
+    type: design
+    level: senior
+    tracks: [ai, mle]
+    q: >-
+      You sell an LLM-based product to enterprises. Design tenant isolation and the controls a
+      security review will ask for.
+    a: |
+      A security questionnaire asks, in effect: can another customer see our data, can your
+      staff, where does it go, and can you prove it.
+
+      **Tenant isolation.**
+
+      - Every request carries a tenant identity established at authentication, and every data
+        access is filtered by it in the data layer, not in the prompt. Row-level security or
+        separate schemas, indexes or databases per tenant, chosen by the isolation a customer
+        tier requires.
+      - Retrieval indexes are per tenant, or filtered by tenant and document permissions at
+        query time, before the model sees anything.
+      - Caches, conversation memory and logs are keyed by tenant. A shared response cache
+        without the tenant in the key is a classic leak.
+      - No training or fine-tuning of shared models on a tenant's data unless the contract
+        allows it; per-tenant adapters stay per tenant.
+
+      **Data flow.** Document which sub-processors receive data (model providers, vector
+      stores, monitoring), with data-processing agreements and retention settings. Offer
+      regional processing when data residency is required.
+
+      **Access by your own staff.** Production data is inaccessible by default; break-glass
+      access is time-limited, approved and logged. Debugging uses redacted traces.
+
+      **Standard controls.** Single sign-on and role-based access for customer users,
+      encryption at rest and in transit, customer-visible audit logs of who asked what and
+      which documents were retrieved, configurable retention and deletion, secrets management,
+      dependency and vulnerability scanning, and an incident response process. Certifications
+      such as SOC 2 or ISO 27001 are evidence that these operate.
+
+      **Model-specific.** Treat retrieved documents and tool outputs as untrusted input, limit
+      what tools can do on a user's behalf to that user's own permissions, and test for
+      cross-tenant leakage as part of the evaluation suite.
+    probes:
+      - How would you test that tenant A can never retrieve tenant B's documents?
+      - A customer asks that their prompts never be stored. What breaks, and what do you offer?
+  - id: mlops-026
+    skill: data-quality
+    type: concept
+    level: core
+    tracks: [mle, ai]
+    q: >-
+      What is a data contract, and where do you put data validation in an ML pipeline?
+    a: |
+      A data contract is an explicit agreement between the producer of a dataset and its
+      consumers: the schema (names, types, nullability), the semantics and units of each
+      field, allowed values and ranges, freshness and completeness expectations, the owner,
+      and how changes are announced and versioned. Its purpose is to turn a silent upstream
+      change into a failed check on the producer's side.
+
+      Validation belongs at three points, each catching a different failure:
+
+      1. **At ingestion**, on each batch or stream window. Schema and types, primary-key
+         uniqueness, null rates, value ranges and categories, row counts against expectation,
+         and freshness. Bad data is quarantined before it spreads to derived tables.
+      2. **Before training**, on the assembled training set. Label rate and label
+         distribution, feature distributions against the previous snapshot, duplicates, and
+         leakage between splits. Fail the pipeline; do not train.
+      3. **At serving**, on each request. Type and range checks, missing features, and
+         unknown categories, with a defined fallback and a counter. Then compare serving
+         distributions with training.
+
+      Kinds of check, from cheap to subtle: schema; volume and freshness; per-column
+      statistics (nulls, min, max, distinct count, quantiles); cross-column rules (end after
+      start); referential integrity; distribution comparison with a reference.
+
+      Practical points: thresholds learned from history with tolerance bands work better than
+      hand-set constants; classify checks into blocking and warning, or people learn to ignore
+      them; every check needs an owner who is paged; and the expectations should be stored
+      with the dataset version so that training and serving validate against the same
+      definition.
+    probes:
+      - Which checks block the pipeline and which only warn, and how do you decide?
+      - How do you validate a free-text or image column?
+  - id: mlops-027
+    skill: data-quality
+    type: coding
+    level: core
+    tracks: [mle, ai]
+    q: >-
+      Write a small validation function for a pandas DataFrame that a training pipeline can run
+      as a gate. What would you add for production?
+    a: |
+      ```python
+      import pandas as pd
+
+      def validate(df: pd.DataFrame, spec: dict, min_rows: int = 1) -> list[str]:
+          """spec: {col: {"dtype": str, "max_null": float, "min": x, "max": x,
+          "values": set, "unique": bool}}. Returns a list of problems; empty means pass."""
+          errs = []
+          if len(df) < min_rows:
+              errs.append(f"only {len(df)} rows, expected at least {min_rows}")
+          for col, rule in spec.items():
+              if col not in df.columns:
+                  errs.append(f"{col}: missing column")
+                  continue
+              s = df[col]
+              if "dtype" in rule and str(s.dtype) != rule["dtype"]:
+                  errs.append(f"{col}: dtype {s.dtype}, expected {rule['dtype']}")
+              null_rate = s.isna().mean()
+              if null_rate > rule.get("max_null", 0.0):
+                  errs.append(f"{col}: null rate {null_rate:.3f}")
+              v = s.dropna()
+              if "min" in rule and (v < rule["min"]).any():
+                  errs.append(f"{col}: values below {rule['min']}")
+              if "max" in rule and (v > rule["max"]).any():
+                  errs.append(f"{col}: values above {rule['max']}")
+              if "values" in rule:
+                  extra = set(v.unique()) - rule["values"]
+                  if extra:
+                      errs.append(f"{col}: unexpected values {sorted(extra)[:5]}")
+              if rule.get("unique") and v.duplicated().any():
+                  errs.append(f"{col}: duplicate values")
+          return errs
+      ```
+
+      The pipeline calls it and fails when the list is non-empty, logging every problem, not
+      only the first.
+
+      What production adds:
+
+      - **Distribution checks** against the previous snapshot (quantiles, category shares,
+        label rate), with tolerance bands learned from history.
+      - **Freshness and volume** relative to the same weekday, not a constant.
+      - **Cross-column and cross-table rules**: timestamps in order, foreign keys present,
+        no overlap between train and test keys.
+      - **Severity levels** and quarantine of bad partitions instead of all-or-nothing.
+      - **Scale**: the same rules compiled to SQL or Spark for data that does not fit in
+        memory. Libraries such as Great Expectations, pandera or TFDV provide this; the logic
+        is what an interviewer wants to see.
+      - The spec versioned next to the dataset, and reused for serving-time checks.
+    probes:
+      - How would you check that no user appears in both the training and the test split?
+      - Where do the thresholds come from, and who updates them?
+  - id: mlops-028
+    skill: data-quality
+    also: [data-pipelines]
+    type: debug
+    level: senior
+    tracks: [mle, ai]
+    q: >-
+      A model has been slowly getting worse for two weeks. You find that an upstream team changed
+      how a field is populated, so one feature is now null for a third of rows. What do you do
+      now and what do you change afterwards?
+    a: |
+      **Contain.** Decide quickly between rolling the upstream change back, patching the
+      feature computation to read the new source, or serving without the feature. If the model
+      degrades gracefully with the feature missing, a temporary imputation matching what
+      training saw may be enough; if the null is being mapped to a default such as zero that
+      means something else to the model, fix that first, since a wrong value is worse than a
+      missing one.
+
+      **Assess the damage.** Three places are affected:
+
+      1. *Serving* for two weeks: quantify the metric loss and who was affected.
+      2. *Logged features*: any training data built from this period contains the broken
+         feature. Mark the range.
+      3. *Models retrained during the period*: they learned from corrupted data and may now
+         depend on the null pattern. Check whether an automatic retrain was promoted.
+
+      **Repair the data.** Backfill the feature for the affected dates from the corrected
+      source if it can be recomputed as of each event's time; otherwise exclude the range or
+      keep it with an explicit missing indicator. Rebuild downstream tables and retrain from
+      clean data. Backfills must be idempotent and must not overwrite point-in-time
+      correctness.
+
+      **Prevent.**
+
+      - A null-rate and distribution check on this feature at ingestion and at serving, with
+        an alert that pages its owner. Two weeks of unnoticed decay means input monitoring was
+        missing or ignored.
+      - A data contract with the upstream team, with schema and semantics tests in their
+        deployment pipeline and a registered list of consumers.
+      - A data-validation gate before every retrain.
+      - A feature-importance-weighted view of input health, so that the features that matter
+        get the strict thresholds.
+
+      In the retrospective, the question is not who changed the field but why the system
+      allowed a silent change to reach a model.
+    probes:
+      - How would you have detected this on day one?
+      - The backfilled values differ slightly from what was served. Which do you train on?
+  - id: mlops-029
+    skill: devex
+    also: [exp-tracking, sysdesign]
+    type: design
+    level: staff
+    tracks: [mle, ai]
+    q: >-
+      Design the golden path of an internal ML platform, from a new idea to a model in
+      production. What do you standardise and what do you leave open?
+    a: |
+      A golden path is the supported, pre-wired way to do the common thing. The aim is that the
+      easiest route is also the correct one, while unusual work remains possible.
+
+      **The path.**
+
+      1. *Start*: a project template creates a repository with the training entry point,
+         configuration, tests, a container build, CI and a pipeline definition. First run in
+         under an hour.
+      2. *Develop*: the same container locally and remotely; one command submits a job to the
+         shared cluster; data access through a client that records which dataset version was
+         read.
+      3. *Track*: runs are logged automatically with code version, data version, configuration
+         and metrics. No extra code.
+      4. *Evaluate*: a standard report against the current production model and required
+         slices.
+      5. *Register and deploy*: one command or a merge promotes a registered model to a
+         serving template with autoscaling, logging, monitoring and a canary already wired.
+      6. *Operate*: dashboards and alerts exist by default; ownership and on-call are assigned
+         at registration.
+
+      **Standardise** the interfaces and the things that are expensive to get wrong: artefact
+      and metadata formats, lineage, the deployment and rollback mechanism, security defaults,
+      monitoring, cost attribution.
+
+      **Leave open** the modelling: frameworks, architectures, training loops. Provide escape
+      hatches at each layer (bring your own container, your own serving code behind the
+      standard contract), so that the 10% of unusual projects do not have to leave the
+      platform entirely.
+
+      **Product discipline.** Treat teams as customers: interview them, build for the most
+      common painful workflow first, write documentation as part of the feature, keep
+      backwards compatibility, and publish what is and is not supported. A platform that is
+      mandated but worse than the home-grown scripts will be routed around.
+    probes:
+      - Which part would you build first and why?
+      - A research team says the platform slows them down. How do you respond?
+  - id: mlops-030
+    skill: devex
+    type: concept
+    level: senior
+    tracks: [mle, ai]
+    q: >-
+      How do you measure whether internal ML tooling or a platform is working?
+    a: |
+      Measure outcomes for the teams that use it, not the platform's own output.
+
+      **Flow metrics**, adapted from the DORA set to ML:
+
+      - *Lead time*: from a merged change, or a new training run, to a model serving
+        production traffic. Also time from project start to first deployed model.
+      - *Deployment frequency*: model and pipeline releases per team per month.
+      - *Change failure rate*: share of model releases that are rolled back or cause an
+        incident.
+      - *Time to restore*: how long a bad model or broken pipeline takes to detect and roll
+        back.
+
+      **Adoption.** Share of production models on the platform; active users; and voluntary
+      adoption, which is the honest signal. Track the escape rate: projects that started on
+      the golden path and left it, with the reason.
+
+      **Friction.** Time to first successful run for a new engineer; queue wait time for
+      compute; CI and build duration; number of manual steps and handoffs in a release;
+      support tickets per user and their categories.
+
+      **Efficiency.** Cluster utilisation, cost per training run or per thousand predictions,
+      and idle resources.
+
+      **Qualitative.** A short regular survey and interviews. Ask what people did the last
+      time they shipped a model and where they waited.
+
+      Cautions: counts such as the number of pipelines or experiments are activity, not value,
+      and are easily inflated. Speed metrics must be read together with failure metrics, or
+      teams ship faster by skipping gates. And attribute carefully: compare the same team
+      before and after, or teams on and off the platform, while acknowledging that early
+      adopters differ.
+
+      The summary for leadership is one sentence per quarter: how long it takes a team to go
+      from idea to a monitored production model, and how that changed.
+    probes:
+      - Which single metric would you report if you could pick only one?
+      - How would the metrics differ for a platform serving LLM application teams?
+  - id: mlops-031
+    skill: devex
+    also: [xfn, tech-leadership]
+    type: behavioral
+    level: senior
+    tracks: [mle, ai]
+    q: >-
+      Tell me about a time you had to get other teams to adopt a tool, platform or standard you
+      built. What did you do when they resisted?
+    a: |
+      **What the interviewer is testing.** Whether you can create leverage beyond your own
+      code: understanding other teams' incentives, earning adoption instead of demanding it,
+      and staying with the work through migration, which is the unglamorous part.
+
+      **Structure of a strong answer.**
+
+      1. *The problem in their terms*: what the teams were losing without the standard
+         (incidents, weeks per launch, duplicated work), with a number.
+      2. *Discovery*: whom you talked to and what you learned about why the existing way
+         persisted. Resistance usually has a real reason: migration cost, a missing feature,
+         a deadline, or loss of control.
+      3. *Design for adoption*: a first version aimed at one team's concrete pain, a migration
+         path that is incremental, compatibility with what they already run, documentation
+         and a working example.
+      4. *The first adopters*: how you picked a team that would benefit and be vocal, did part
+         of the migration work for them and published their result.
+      5. *Handling resistance*: what you changed in response to valid objections, what you
+         declined, and when you escalated or accepted that a team would not migrate.
+      6. *Outcome*: adoption, the metric that moved, and what you would do differently.
+
+      **Mistakes that sink the answer.**
+
+      - Presenting a mandate from leadership as the adoption strategy.
+      - Describing the teams as wrong or slow, with no account of their reasons.
+      - No measured outcome, or an outcome measured in features shipped.
+      - Stopping the story at launch, with the old system still running in parallel.
+
+      Use a real example and be specific about one objection you had not anticipated.
+    probes:
+      - What did you do for the team that had a legitimate reason not to migrate?
+      - How did you decide when to deprecate the old way?

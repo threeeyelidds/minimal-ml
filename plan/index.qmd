@@ -1,0 +1,85 @@
+---
+title: "Preparation plan"
+subtitle: "What to study for each track, in what order, and how to use this site to do it"
+toc: true
+toc-depth: 2
+---
+
+The plan follows two facts from the [report](../report/index.qmd): the three tracks ask for different skills, and
+interview loops test a narrower set than postings list. Pick the track you are applying to, work the areas in
+its order, and let the [review app](../review/index.qmd) decide what to revisit.
+
+## The daily loop
+
+1. **Review, 30 to 40 minutes.** Open [Review](../review/index.qmd), set your track, and clear what is due plus
+   the day's new cards. Answer out loud before revealing. Grade honestly: "Good" only if you would have said it
+   in an interview.
+2. **One design case every second day.** Take a case from [Design cases](../skills/cases.qmd), give yourself 35
+   minutes on paper, then compare with the answer and its follow-ups.
+3. **Coding, 45 minutes.** Two problems in the patterns listed in [Software engineering](../skills/swe.qmd), or
+   one ML-coding problem from [Deep learning](../skills/dl.qmd) written from a blank file.
+4. **One story a day in the last two weeks.** Write one behavioural story against the prompts in
+   [Senior scope](../skills/senior.qmd) and say it in under three minutes.
+
+The **Progress** tab of the review app shows a readiness figure per track: the share of cards you know, weighted
+by how often that track's postings name each skill. It also lists the highest-demand skills you have not yet
+covered, with a button to drill each one. Use that list, not this page, once you have started.
+
+## Order of areas by track
+
+Areas are ordered by what the track's postings name most and by what its loop tests. "Core" areas need every
+card; "working" areas need the core and senior cards; "awareness" areas need the checklist.
+
+| Area | MLE | AI engineer | Research engineer |
+|:--|:--|:--|:--|
+| [Software engineering](../skills/swe.qmd) (coding round) | core | core | core |
+| [Senior scope](../skills/senior.qmd) (behavioural, deep dive) | core | core | core |
+| [Evaluation](../skills/eval.qmd) | core | core | core |
+| [Design cases](../skills/cases.qmd) | core | core | working |
+| [ML fundamentals](../skills/mlfund.qmd) | core | awareness | working |
+| [Deep learning](../skills/dl.qmd) | core | awareness | core |
+| [LLM training](../skills/llm.qmd) | working | working | core |
+| [LLM applications](../skills/llmapp.qmd) | working | core | working |
+| [Search and recsys](../skills/recsys.qmd) | core for product ML roles | working (retrieval) | awareness |
+| [Inference](../skills/serving.qmd) | working | working | working |
+| [MLOps](../skills/mlops.qmd) | working | core | awareness |
+| [Training infrastructure](../skills/infra.qmd) | working | awareness | core |
+| [Reinforcement learning](../skills/rl.qmd) | awareness | awareness | core |
+| [Research](../skills/research.qmd) | awareness | awareness | core |
+| [Domains](../skills/domain.qmd) | the domains of your target companies | same | same |
+
+## Six weeks
+
+A schedule for about ten hours a week. Compress it by dropping the awareness areas.
+
+| Week | MLE | AI engineer | Research engineer |
+|:--|:--|:--|:--|
+| 1 | ML fundamentals; coding patterns | LLM applications: agents, tools, context; coding patterns | Deep learning; ML coding from a blank file |
+| 2 | Deep learning; ML coding | LLM applications: RAG, guardrails, cost; backend and API design | LLM training; reinforcement learning |
+| 3 | Search and recsys, or the domain of your target companies | Evaluation; MLOps and cloud | Training infrastructure; evaluation and experiment design |
+| 4 | Evaluation; inference; MLOps | Inference; system design; design cases 6 to 10 | Research skills; paper discussion; inference |
+| 5 | Design cases 2 to 5 and 11 to 16; LLM training and applications at working depth | Design cases; LLM training at working depth; a small agent built end to end | Design cases 9 to 11 and 15; LLM applications at working depth |
+| 6 | Senior scope: project deep dive and stories; mock loops | Senior scope; customer scenarios; mock loops | Senior scope; research deep dive; mock loops |
+
+In the last week use **Mock interview** in the review app: one full loop on two separate days, and the round
+types you scored worst on in between.
+
+## Choosing where to apply
+
+[Open roles](../jobs/index.qmd) lists the postings behind the report. Filter by role type first: the eight role
+types in the report ask for different things under the same title, and a posting's skill tags show at a glance
+which kind it is. Once you have review progress, sort by fit to see which postings you already cover.
+
+## What this site covers and what it does not yet
+
+Every skill has a checklist and question cards. Long-form notes exist for some areas only:
+
+{{< include ../report/_gen/coverage.md >}}
+
+High-demand skills in areas that have question cards but no long-form note yet. These are the next deep dives
+to write:
+
+{{< include ../report/_gen/backlog.md >}}
+
+Each deep-dive note should still answer the four questions this site started with: what is the core idea, can I
+derive it, can I implement it, and what follow-up questions expose whether I really understand it.

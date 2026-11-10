@@ -1,0 +1,495 @@
+{
+ "fetched": {
+  "jobs_ats.json": "2026-11-10T02:17:46+00:00",
+  "jobs_bigtech.json": "2026-11-10T03:33:01+00:00"
+ },
+ "raw_postings": 3211,
+ "unique_postings": 2617,
+ "analysed": 2253,
+ "dropped": {
+  "not an ML role by content": 202,
+  "below senior": 126,
+  "hardware, test or support role": 36
+ },
+ "companies": 218,
+ "dims": {
+  "track": {
+   "ai-engineer": 1101,
+   "mle": 890,
+   "research-engineer": 262
+  },
+  "archetype": {
+   "applied-ai-agents": 578,
+   "ml-infra": 412,
+   "product-mle": 392,
+   "research-engineer": 262,
+   "recsys-search-ads": 182,
+   "inference-perf": 177,
+   "autonomy-robotics": 131,
+   "forward-deployed": 119
+  },
+  "group": {
+   "big-tech": 1098,
+   "enterprise": 415,
+   "lab": 211,
+   "ai-startup": 183,
+   "robotics": 171,
+   "ai-infra": 155,
+   "quant": 20
+  },
+  "level": {
+   "unlevelled": 723,
+   "senior": 720,
+   "staff": 539,
+   "principal": 271
+  }
+ },
+ "names": {
+  "track": {
+   "mle": "Machine learning engineer",
+   "ai-engineer": "AI engineer",
+   "research-engineer": "Research engineer"
+  },
+  "archetype": {
+   "forward-deployed": "Forward-deployed / customer-facing AI engineer",
+   "research-engineer": "Research engineer (training, post-training, evals, safety)",
+   "inference-perf": "Inference and performance engineer",
+   "ml-infra": "ML platform / infrastructure engineer",
+   "autonomy-robotics": "Autonomy / robotics / perception MLE",
+   "recsys-search-ads": "Search / recommendation / ads / ranking MLE",
+   "applied-ai-agents": "Applied AI / agent / LLM product engineer",
+   "product-mle": "Product / applied MLE (risk, fraud, pricing, forecasting, core ML)"
+  },
+  "group": {
+   "lab": "Frontier labs and model companies",
+   "ai-startup": "AI-native product startups",
+   "ai-infra": "AI infrastructure and compute",
+   "big-tech": "Large and consumer technology companies",
+   "robotics": "Robotics and autonomy",
+   "quant": "Quant and trading",
+   "enterprise": "Enterprises outside tech (finance, health, industry, retail)"
+  },
+  "level": {
+   "senior": "Senior",
+   "staff": "Staff / lead",
+   "principal": "Principal / senior staff",
+   "unlevelled": "No level in title"
+  }
+ },
+ "us_share": 73.6,
+ "phd_share": 28.3,
+ "phd_by_track": {
+  "mle": 38.5,
+  "research-engineer": 39.7,
+  "ai-engineer": 17.3
+ },
+ "yoe": {
+  "stated": 1617,
+  "share_stated": 71.8,
+  "median": 5,
+  "hist": {
+   "1": 3,
+   "2": 41,
+   "3": 190,
+   "4": 149,
+   "5": 480,
+   "6": 106,
+   "7": 119,
+   "8": 259,
+   "9": 10,
+   "10": 160,
+   "11": 1,
+   "12": 99
+  },
+  "by_level": {
+   "staff": 7.0,
+   "unlevelled": 5.0,
+   "principal": 10.0,
+   "senior": 5
+  }
+ },
+ "pay": {
+  "note": "Posted US base-pay ranges as written in the posting; equity and bonus excluded.",
+  "all": {
+   "n": 904,
+   "low_median": 192000,
+   "high_median": 295227,
+   "high_p90": 445000
+  },
+  "by_level": {
+   "staff": {
+    "n": 214,
+    "low_median": 203000,
+    "high_median": 300000,
+    "high_p90": 389753
+   },
+   "unlevelled": {
+    "n": 303,
+    "low_median": 197000,
+    "high_median": 300000,
+    "high_p90": 500000
+   },
+   "principal": {
+    "n": 155,
+    "low_median": 212000,
+    "high_median": 334600,
+    "high_p90": 416900
+   },
+   "senior": {
+    "n": 232,
+    "low_median": 173000,
+    "high_median": 252600,
+    "high_p90": 315360
+   }
+  },
+  "by_group": {
+   "lab": {
+    "n": 112,
+    "low_median": 295000,
+    "high_median": 471500,
+    "high_p90": 850000
+   },
+   "ai-startup": {
+    "n": 130,
+    "low_median": 192700,
+    "high_median": 300000,
+    "high_p90": 400000
+   },
+   "ai-infra": {
+    "n": 89,
+    "low_median": 192000,
+    "high_median": 262200,
+    "high_p90": 330000
+   },
+   "big-tech": {
+    "n": 346,
+    "low_median": 185932,
+    "high_median": 299300,
+    "high_p90": 399420
+   },
+   "robotics": {
+    "n": 100,
+    "low_median": 213000,
+    "high_median": 292000,
+    "high_p90": 389400
+   },
+   "quant": {
+    "n": 9,
+    "low_median": 200000,
+    "high_median": 300000,
+    "high_p90": 350000
+   },
+   "enterprise": {
+    "n": 118,
+    "low_median": 140000,
+    "high_median": 253000,
+    "high_p90": 305926
+   }
+  },
+  "by_track": {
+   "mle": {
+    "n": 338,
+    "low_median": 200000,
+    "high_median": 300000,
+    "high_p90": 409500
+   },
+   "research-engineer": {
+    "n": 116,
+    "low_median": 230000,
+    "high_median": 400000,
+    "high_p90": 850000
+   },
+   "ai-engineer": {
+    "n": 450,
+    "low_median": 180000,
+    "high_median": 277000,
+    "high_p90": 392000
+   }
+  }
+ },
+ "top_companies": [
+  [
+   "Google",
+   125
+  ],
+  [
+   "JPMorgan Chase",
+   114
+  ],
+  [
+   "Apple",
+   113
+  ],
+  [
+   "TikTok",
+   109
+  ],
+  [
+   "Nvidia",
+   107
+  ],
+  [
+   "Amazon",
+   65
+  ],
+  [
+   "ServiceNow",
+   56
+  ],
+  [
+   "OpenAI",
+   55
+  ],
+  [
+   "Waymo",
+   42
+  ],
+  [
+   "Anthropic",
+   37
+  ],
+  [
+   "Microsoft",
+   34
+  ],
+  [
+   "GM",
+   34
+  ],
+  [
+   "Thomson Reuters",
+   34
+  ],
+  [
+   "Databricks",
+   32
+  ],
+  [
+   "Bosch",
+   30
+  ],
+  [
+   "Hewlett Packard Enterprise",
+   26
+  ],
+  [
+   "Wayve",
+   25
+  ],
+  [
+   "Workday",
+   25
+  ],
+  [
+   "Cohere",
+   24
+  ],
+  [
+   "Reddit",
+   23
+  ],
+  [
+   "Zoox",
+   23
+  ],
+  [
+   "Google DeepMind",
+   23
+  ],
+  [
+   "Mistral AI",
+   22
+  ],
+  [
+   "Scale AI",
+   20
+  ],
+  [
+   "Capital One",
+   20
+  ],
+  [
+   "Cisco",
+   20
+  ],
+  [
+   "Visa",
+   18
+  ],
+  [
+   "Anduril",
+   17
+  ],
+  [
+   "Intel",
+   17
+  ],
+  [
+   "Mastercard",
+   17
+  ],
+  [
+   "Bank of America",
+   16
+  ],
+  [
+   "Atlassian",
+   16
+  ],
+  [
+   "CoreWeave",
+   15
+  ],
+  [
+   "Snowflake",
+   15
+  ],
+  [
+   "DoorDash",
+   15
+  ],
+  [
+   "Netflix",
+   15
+  ],
+  [
+   "Target",
+   15
+  ],
+  [
+   "Lila Sciences",
+   14
+  ],
+  [
+   "Cerebras",
+   14
+  ],
+  [
+   "Pinterest",
+   14
+  ],
+  [
+   "Nebius",
+   14
+  ],
+  [
+   "Analog Devices",
+   14
+  ],
+  [
+   "Decagon",
+   13
+  ],
+  [
+   "Oracle",
+   13
+  ],
+  [
+   "Together AI",
+   12
+  ],
+  [
+   "Airbnb",
+   12
+  ],
+  [
+   "Roblox",
+   12
+  ],
+  [
+   "Salesforce",
+   12
+  ],
+  [
+   "Adobe",
+   12
+  ],
+  [
+   "Snap",
+   12
+  ],
+  [
+   "RELX (LexisNexis / Elsevier)",
+   12
+  ],
+  [
+   "Sierra",
+   11
+  ],
+  [
+   "Cloudflare",
+   11
+  ],
+  [
+   "Nuro",
+   11
+  ],
+  [
+   "Amgen",
+   11
+  ],
+  [
+   "Mercor",
+   10
+  ],
+  [
+   "Coinbase",
+   10
+  ],
+  [
+   "Riot Games",
+   10
+  ],
+  [
+   "Waabi",
+   10
+  ],
+  [
+   "Rippling",
+   10
+  ]
+ ],
+ "posted_month": {
+  "2022-06": 1,
+  "2022-11": 1,
+  "2023-06": 1,
+  "2023-08": 1,
+  "2023-10": 1,
+  "2024-01": 2,
+  "2024-02": 2,
+  "2024-03": 3,
+  "2024-04": 1,
+  "2024-05": 3,
+  "2024-06": 4,
+  "2024-07": 4,
+  "2024-09": 3,
+  "2024-11": 5,
+  "2024-12": 4,
+  "2025-01": 9,
+  "2025-02": 6,
+  "2025-03": 6,
+  "2025-04": 7,
+  "2025-05": 10,
+  "2025-06": 9,
+  "2025-07": 5,
+  "2025-08": 9,
+  "2025-09": 6,
+  "2025-10": 20,
+  "2025-11": 15,
+  "2025-12": 24,
+  "2026-01": 15,
+  "2026-02": 31,
+  "2026-03": 41,
+  "2026-04": 32,
+  "2026-05": 44,
+  "2026-06": 91,
+  "2026-07": 127,
+  "2026-08": 186,
+  "2026-09": 356,
+  "2026-10": 689,
+  "2026-11": 354,
+  "unknown": 125
+ },
+ "skills_per_posting": 27,
+ "boards": 256
+}

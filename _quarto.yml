@@ -1,5 +1,14 @@
 project:
   type: website
+  # Only .qmd files are pages; scratch folders and the build inputs are not part of the site.
+  render:
+    - "*.qmd"
+    - "!artifacts/"
+    - "!bank/"
+    - "!data/"
+    - "!tools/"
+  # Regenerates skills/, review/, jobs/postings.js and report/_gen from bank/ and data/.
+  pre-render: tools/build_site.py
 
 website:
   title: "Minimal ML"
@@ -9,10 +18,52 @@ website:
     left:
       - href: index.qmd
         text: Home
+      - href: report/index.qmd
+        text: Report
+      - href: skills/index.qmd
+        text: Skills
+      - href: review/index.qmd
+        text: Review
+      - href: plan/index.qmd
+        text: Plan
+      - href: jobs/index.qmd
+        text: Open roles
       - href: notes/index.qmd
         text: Notes
       - href: essays/index.qmd
         text: Essays
+  sidebar:
+    - id: skills
+      title: "Skills"
+      style: docked
+      collapse-level: 2
+      contents:
+        - text: "Skill map"
+          href: skills/index.qmd
+        - text: "Design cases"
+          href: skills/cases.qmd
+        - section: "The loop"
+          contents:
+            - skills/swe.qmd
+            - skills/mlfund.qmd
+            - skills/dl.qmd
+            - skills/eval.qmd
+            - skills/senior.qmd
+        - section: "LLMs and agents"
+          contents:
+            - skills/llm.qmd
+            - skills/llmapp.qmd
+            - skills/rl.qmd
+            - skills/research.qmd
+        - section: "Product ML"
+          contents:
+            - skills/recsys.qmd
+            - skills/domain.qmd
+        - section: "Systems"
+          contents:
+            - skills/infra.qmd
+            - skills/serving.qmd
+            - skills/mlops.qmd
   search: true
 
 format:
@@ -23,10 +74,13 @@ format:
     include-in-header:
       text: |
         <meta name="google-site-verification" content="Ztjr25pGaioeZP-mkoIn_MkNmmsFXWcU6I6W2tEPli0">
+    include-after-body:
+      - file: _prep.html
     theme: darkly
     css:
       - styles.css
       - colors.css
+      - prep.css
 
 execute:
   freeze: auto

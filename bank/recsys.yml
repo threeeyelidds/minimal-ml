@@ -1,0 +1,1455 @@
+domain: recsys
+title: Search, recommendation, ads and ranking
+summary: >-
+  The product-MLE loop at consumer and marketplace companies: retrieve a few thousand candidates
+  from a corpus of millions to billions, rank them with learned models under a latency budget, and
+  turn predictions into a page, a feed or an auction outcome. Postings ask for it by naming
+  retrieval, ranking, recommendation, search relevance, ads and personalization, and the same
+  material is the default topic of the ML system design round almost everywhere. Newer postings
+  add LLM-based search: generative retrieval, LLM rerankers and answer engines.
+senior_bar:
+  - Frames the problem before the model. States the objective (what is predicted, what is optimised, which guardrails), the unit of serving and the latency budget, then derives the funnel from the corpus size and the cost per scored item.
+  - Treats logged data as biased by the previous system. Names selection, position and popularity bias, says which correction applies (logQ, IPS, randomised traffic, entire-space modelling) and what each one assumes.
+  - Separates ordering quality from probability quality. Knows when only the order matters (organic ranking) and when calibrated probabilities are required (auctions, value models, thresholds), and can correct for downsampling and delayed labels.
+  - Explains why offline and online results disagree and has a debugging order for it - label and feature leakage, training-serving skew, distribution of the evaluated candidates, metric mismatch, interaction with other stages.
+  - Designs for the whole system rather than one model. Retrieval recall bounds ranking, the ranker's training data comes from the retrieval it sits behind, and re-ranking, diversity, exploration and long-term value change what the model should predict.
+  - Gives concrete magnitudes - candidates per stage, embedding dimensions, ANN recall, latency per stage, label delays - and says which numbers are assumptions.
+rounds:
+  - ML system design
+  - ML domain deep dive (search, recommendation, ads)
+  - ML coding
+  - Project deep dive
+notes:
+  - notes/foundations/calibration.qmd
+  - notes/foundations/representation_learning.qmd
+  - notes/foundations/prediction_decision_losses.qmd
+  - notes/applied_ml/agentic_search.qmd
+checklist:
+  - skill: recsys
+    items:
+      - Draw the retrieval, pre-ranking, ranking and re-ranking funnel with candidate counts and a latency budget per stage, and say why each stage exists
+      - Explain matrix factorisation for implicit feedback (ALS, confidence weights) and item-to-item collaborative filtering, and where they still beat deep models
+      - Walk through a home-feed design from objective and labels to serving, experiments and monitoring
+      - List the causes of training-serving skew in a ranker and how feature logging removes most of them
+      - Give a debugging order for "offline metric up, online metric down"
+  - skill: ranking
+    items:
+      - Compare pointwise, pairwise and listwise losses and say what each one optimises
+      - Explain the LambdaRank gradient and why LambdaMART is still a strong baseline on tabular ranking features
+      - Compute DCG and NDCG@k by hand and in code, including the ideal ranking and the no-relevant-document case
+      - Explain position bias under the examination hypothesis and three ways to handle it (position feature, IPS, randomisation)
+      - Compare offline replay, counterfactual estimators (IPS, SNIPS, doubly robust) and interleaving, with the assumptions of each
+      - Describe MMR and DPP re-ranking and when whole-page optimisation is needed
+  - skill: search-ir
+    items:
+      - Explain an inverted index and write BM25 from memory, with the role of k1 and b
+      - Describe the query-understanding stack - normalisation, spelling, intent classification, entity recognition, rewriting and expansion - and the risk each step adds
+      - Say when lexical retrieval beats dense retrieval and how to fuse the two (score normalisation, reciprocal rank fusion)
+      - Design relevance judging - graded guidelines, side-by-side comparisons, rater agreement, LLM judges checked against humans
+      - Explain how freshness enters indexing and ranking, and how to detect queries that deserve fresh results
+  - skill: retrieval
+    items:
+      - Write the two-tower in-batch softmax loss and derive the logQ correction for sampling bias
+      - Explain why hard negatives help, how to mine them, and how false negatives break training
+      - "Compare HNSW and IVF-PQ: memory, recall, build cost, updates, filtering"
+      - Explain how several retrieval sources are merged and why quota and deduplication choices matter
+      - Diagnose a system where retrieval recall is high but final quality is low
+  - skill: ads
+    items:
+      - "Write the eCPM formula for CPC and CPA bidding, and compute a generalised second-price payment"
+      - Explain why VCG is truthful and GSP is not, at the level of a two-slot example
+      - Correct a predicted probability for negative downsampling and explain the logit shift
+      - Explain delayed conversion feedback and the trade-off between label maturity and freshness
+      - Explain ESMM entire-space modelling and what bias it does not remove
+      - Describe budget pacing and auto-bidding as a constrained optimisation with a dual variable
+  - skill: personalization
+    items:
+      - Describe user representations - ID embeddings, pooled history, target attention (DIN), sequence transformers - and the cost of each at serving time
+      - Explain long-sequence modelling (retrieve then attend) and why real-time behaviour features matter
+      - Give separate cold-start plans for new users and new items
+      - Explain feedback loops and popularity bias, and how to measure long-term value rather than short-term engagement
+      - Design notification ranking as an incremental-value problem with a volume budget
+  - skill: nlp
+    items:
+      - Design a content-understanding pipeline that turns text, images and video into topic, quality and safety signals for a ranker
+      - Explain entity linking as candidate generation plus disambiguation, and how it is evaluated
+      - Explain how multilingual encoders transfer across languages and where they fail
+      - Choose between a fine-tuned small encoder and an LLM for a classification task at a given volume and latency
+  - skill: multi-objective
+    items:
+      - Explain shared-bottom, MMoE and PLE and the negative-transfer problem each one addresses
+      - Write a multi-objective value model and describe how its weights are tuned online
+      - Explain epsilon-greedy, UCB and Thompson sampling, and how exploration is applied in a deep recommender
+      - Say how the value of exploration is measured when the benefit accrues to the whole system
+  - skill: genrec
+    items:
+      - Explain semantic IDs (residual quantisation of content embeddings) and autoregressive generative retrieval, with the failure modes
+      - Compare pointwise, pairwise and listwise LLM rerankers and how they are distilled into small rankers
+      - Describe LLM query rewriting and the guardrails it needs
+      - Lay out an answer engine (retrieve, rerank, generate with citations), its latency and cost budget, and how it is evaluated
+  - skill: trust-safety
+    items:
+      - Choose operating thresholds from policy precision targets and review capacity, with an auto-action band and a human-review band
+      - Estimate prevalence and recall when enforcement removes the labels
+      - Explain adversarial drift and the defences - retraining cadence, behavioural and graph signals, rules as a fast path
+      - Design a human review loop that produces training labels without amplifying the model's blind spots
+cards:
+  - id: recsys-001
+    skill: recsys
+    also: [retrieval, ranking, latency]
+    type: concept
+    level: core
+    tracks: [mle, ai]
+    q: >-
+      Why do large recommendation and search systems use a multi-stage funnel instead of one
+      model that scores everything? Walk me through the stages.
+    a: |
+      Because cost per scored item times corpus size has to fit a latency budget of roughly 100-300 ms end to end. A model good enough to produce the final order costs on the order of 0.1-1 ms per item even batched on accelerators; a corpus has $10^6$ to $10^{10}$ items. So each stage trades model capacity for coverage.
+
+      | Stage | Input → output | Model | Optimises |
+      |---|---|---|---|
+      | Retrieval | corpus → $10^3$-$10^4$ | two-tower + ANN, inverted index, item-to-item, graph walks; several sources in parallel | recall of what later stages would rank high |
+      | Pre-ranking | $10^4$ → a few hundred | small two-tower or light MLP, often distilled from the ranker | agreement with the ranker at low cost |
+      | Ranking | hundreds → tens | large multi-task network with user-item cross features and sequence features | precise per-item predictions (click, watch time, conversion) |
+      | Re-ranking / blending | tens → the page | value model, diversity, business rules, ads and organic mixing | page-level utility and constraints |
+
+      Points an interviewer listens for:
+
+      - Retrieval scores user and item independently so that the item side can be indexed; ranking can afford cross features because it sees few items.
+      - Each stage is trained on data filtered by the stages before it, which creates selection bias; early stages should be evaluated against what the final ranker wants, not only against clicks.
+      - Stages must be consistent. A pre-ranker that disagrees with the ranker wastes the ranker's budget; the common remedy is to distil the ranker into the earlier stages.
+      - Final quality is bounded by retrieval recall, so "improve the ranker" has diminishing returns once good items are no longer reaching it.
+    probes:
+      - How would you decide how many candidates each stage should pass on?
+      - What breaks if you train the pre-ranker only on impressions?
+  - id: recsys-002
+    skill: retrieval
+    also: [representation, vector-db]
+    type: concept
+    level: core
+    tracks: [mle, ai]
+    q: >-
+      Explain the two-tower retrieval model. Why is it built that way, and what does the
+      architecture cost you?
+    a: |
+      A user (or query) tower $f(x)$ and an item tower $g(y)$ each output a $d$-dimensional vector (typically 64-512), and the score is their dot product or cosine, $s(x,y)=\langle f(x), g(y)\rangle/\tau$. Training treats each observed (user, engaged item) pair as a positive and uses other items as negatives in a softmax or contrastive loss.
+
+      Why this shape: the item tower does not depend on the user, so all item vectors are computed offline and put in an approximate nearest-neighbour index. Serving is one forward pass of the user tower plus a top-$k$ lookup, a few milliseconds for a corpus of $10^8$ or more.
+
+      What it costs:
+
+      - **No early interaction.** The score is a bilinear form, so the model cannot use cross features such as "this user's history with this creator" or term-level matching. That is why its output is a candidate set and a ranker follows.
+      - **One vector per user** struggles with multiple interests; multi-vector user representations (several interest embeddings, each queried separately) trade index lookups for coverage.
+      - **Training signal depends on negatives.** In-batch negatives are popularity-biased and mostly easy; see the logQ correction and hard-negative mining.
+      - **Index freshness.** New items need an embedding and an index insert before they can be retrieved; a model update requires re-embedding the corpus and keeping user and item towers on the same version.
+
+      Details worth saying: L2-normalise and learn or tune the temperature (0.02-0.1 is common with cosine), and evaluate with recall@k against held-out engagement, not AUC.
+    probes:
+      - Dot product or cosine, and why does the choice interact with popularity?
+      - How do you roll out a new tower version without a mismatch between user and item vectors?
+  - id: recsys-003
+    skill: retrieval
+    also: [representation, pytorch]
+    type: coding
+    level: senior
+    tracks: [mle, re]
+    q: >-
+      Write the in-batch softmax loss for a two-tower retriever, and explain and implement the
+      logQ correction. Why is it needed?
+    a: |
+      With in-batch negatives, item $j$ appears as a negative with probability proportional to how often it is a positive, $Q(j)$. The batch softmax is a sampled softmax with proposal $Q$, and the uncorrected optimum is $s(x,y)\approx\log\frac{P(y\mid x)}{Q(y)}+c(x)$: popular items are penalised simply for being sampled often. Importance-weighting each candidate fixes it. Since
+
+      $$\sum_{j} e^{s(x,y_j)} = \mathbb{E}_{j\sim Q}\!\left[\frac{e^{s(x,y_j)}}{Q(j)}\right],$$
+
+      replace each logit by $s^c(x,y_j)=s(x,y_j)-\log Q(j)$ during training, so the batch sum estimates the full partition function. Serve with the uncorrected $s$.
+
+      ```python
+      import torch
+      import torch.nn.functional as F
+
+      def in_batch_softmax_logq(u, v, item_ids, log_q, tau=0.05):
+          """u: [B, d] user/query vectors, v: [B, d] vectors of the positive items,
+          item_ids: [B] ids of those items, log_q: [B] log sampling probability of each."""
+          u = F.normalize(u, dim=-1)
+          v = F.normalize(v, dim=-1)
+          logits = u @ v.T / tau                      # [B, B], row i = user i vs all batch items
+          logits = logits - log_q[None, :]            # logQ correction, per candidate column
+          dup = item_ids[:, None] == item_ids[None, :]
+          dup.fill_diagonal_(False)                   # same item elsewhere in the batch
+          logits = logits.masked_fill(dup, float("-inf"))
+          labels = torch.arange(u.size(0), device=u.device)
+          return F.cross_entropy(logits, labels)
+      ```
+
+      Pitfalls an interviewer checks:
+
+      - The correction is applied after the temperature and only in training.
+      - $Q$ must be the probability of appearing in a batch under the actual sampler, estimated from stream frequencies (Yi et al., 2019, estimate it online); stale or smoothed-away estimates undo the fix.
+      - Mask accidental hits (the user's positive appearing as another row's item), otherwise the true item is pushed down.
+      - In-batch negatives never include items with no positives; mix in uniformly sampled corpus items with their own $\log Q$.
+      - With distributed training, gather item vectors across workers to enlarge the negative set.
+    probes:
+      - What does the model learn if you leave the correction out?
+      - How would you estimate Q for a stream where item popularity changes hourly?
+  - id: recsys-004
+    skill: retrieval
+    also: [representation]
+    type: tradeoff
+    level: senior
+    tracks: [mle, re]
+    q: >-
+      Your two-tower model trains on in-batch negatives and recall has plateaued. How do hard
+      negatives help, how do you mine them, and what goes wrong?
+    a: |
+      Random and in-batch negatives are mostly easy: after early training their logits are far below the positive's and they contribute almost no gradient. The model learns coarse topic separation but not the fine distinctions that decide the top of the list. Hard negatives are items the current model scores close to the positive but which are not relevant.
+
+      Sources, roughly in order of difficulty:
+
+      - **Impressed but not engaged** items: realistic, but biased toward what the old system showed and often not truly negative.
+      - **ANN-mined**: retrieve the top few hundred for each training query with the current model and sample from ranks below the very top (for example ranks 30-200), refreshing the index periodically as in ANCE.
+      - **Lexical negatives** for search: high BM25 score, not relevant.
+      - **Ranker-rejected**: retrieved candidates that the ranking model scores low.
+
+      What goes wrong:
+
+      - **False negatives.** The hardest "negatives" are often unlabelled positives. Training on them teaches the wrong geometry and recall drops. Mitigations: skip the top ranks, filter with a cross-encoder or ranker score threshold, or use the teacher's soft score instead of a 0/1 label.
+      - **Collapse of the easy region.** A model trained only on hard negatives forgets to separate obviously irrelevant items, because retrieval faces the whole corpus. Keep a mix; a ratio of many easy to a few hard per positive is a typical starting point.
+      - **Staleness.** Negatives mined with an old checkpoint stop being hard.
+
+      Measure on recall@k against the full corpus, not on the sampled-negative loss, which rises by construction when negatives get harder.
+    probes:
+      - Why do hard negatives matter more for retrieval than for the ranking stage?
+      - How would you detect that false negatives are the problem?
+  - id: recsys-005
+    skill: retrieval
+    also: [vector-db, latency]
+    type: tradeoff
+    level: senior
+    tracks: [mle, ai]
+    q: >-
+      Compare HNSW and IVF-PQ for serving embedding retrieval over a few hundred million
+      vectors. What decides the choice?
+    a: |
+      Memory is the first constraint. A 256-d float32 vector is 1 KB, so $3\times10^8$ vectors are about 300 GB before any index overhead.
+
+      **HNSW** is a multi-layer proximity graph searched greedily from the top layer. It gives the best recall-latency curve in memory (recall above 0.95 at around a millisecond is routine), and supports incremental inserts. Costs: it stores full vectors plus `M` links per node, build time is high, deletes are tombstones that degrade the graph until a rebuild, and filtered search is awkward because filtering breaks graph connectivity. Knobs: `M`, `efConstruction`, `efSearch`.
+
+      **IVF-PQ** clusters vectors into `nlist` cells with k-means and searches only the `nprobe` nearest cells; product quantisation splits each vector into `m` sub-vectors and stores a one-byte code for each, so 1 KB becomes for example 32-64 bytes. Distances are computed from lookup tables. It fits in a fraction of the memory and builds fast, but recall is lower, so the usual pattern is to over-retrieve and re-score the top few hundred with exact vectors. It degrades when the data distribution drifts from the trained centroids.
+
+      Deciding factors:
+
+      - Memory budget and corpus size: compressed IVF or a disk-based graph (DiskANN style) beyond what RAM holds.
+      - Update rate and deletes: frequent churn favours segment-based designs with periodic merges.
+      - Filters (language, region, availability): low-selectivity filters need pre-filtering or per-partition indexes, otherwise post-filtering returns too few results.
+      - Metric: inner product is not a metric, so check the index supports MIPS or normalise.
+
+      Always report recall@k against exact search on the production query distribution, at the target p99 latency.
+    probes:
+      - Recall@100 of the index is 0.9. How do you tell whether that costs anything end to end?
+      - How do you handle a filter that keeps only 0.1% of the corpus?
+  - id: recsys-006
+    skill: retrieval
+    also: [recsys]
+    type: tradeoff
+    level: senior
+    tracks: [mle]
+    q: >-
+      Production systems run many retrieval sources in parallel. Why, and how do you merge
+      their outputs before ranking?
+    a: |
+      One retriever has one notion of similarity and one set of blind spots. Typical sources: a personalised two-tower, item-to-item from recent engagements, followed or subscribed sources, trending and fresh content, lexical matching for search, graph walks, and an exploration source. They differ in what they recover (long-term taste, session intent, freshness, cold items), and their failures are weakly correlated.
+
+      Merging options:
+
+      - **Quotas per source** with deduplication. Simple and stable, but quotas are hand-tuned and a weak source keeps its slots.
+      - **Score fusion.** Raw scores are not comparable across sources. Use rank-based fusion such as reciprocal rank fusion, $\text{RRF}(d)=\sum_s \frac{1}{k+\text{rank}_s(d)}$ with $k\approx 60$, or calibrate each source's score to a common target.
+      - **A learned pre-ranker** that scores the union with cheap features, including which sources returned the item and at what rank. This is the usual end state, because it lets the system shift budget toward whichever source is useful for this request.
+
+      What to watch:
+
+      - **Attribution.** Log the source of every candidate through to impressions, and measure each source's unique contribution (items only it retrieved that were shown and engaged), not its raw volume.
+      - **Ranker bias against new sources.** The ranker was trained on candidates from existing sources and may score a new source's items poorly at first. Evaluate a new source with an online test and consider forced exposure during ramp-up.
+      - **Redundancy.** Adding a source that overlaps 90% with an existing one adds latency and cost without recall.
+      - **Latency.** Sources run in parallel with a deadline; the merge must tolerate a missing source.
+    probes:
+      - How would you decide to retire a retrieval source?
+      - A new embedding retriever has better offline recall but no online gain. What do you check?
+  - id: recsys-007
+    skill: recsys
+    also: [classical-ml, representation]
+    type: concept
+    level: core
+    tracks: [mle]
+    q: >-
+      Explain collaborative filtering with matrix factorisation for implicit feedback, and
+      item-to-item collaborative filtering. When are these still the right tool?
+    a: |
+      Collaborative filtering predicts a user's preference from the behaviour of similar users, using only the interaction matrix $R\in\mathbb{R}^{U\times I}$.
+
+      **Matrix factorisation** learns $p_u, q_i\in\mathbb{R}^d$ with $\hat r_{ui}=p_u^\top q_i$. For implicit feedback (clicks, plays) there are no explicit negatives, so weighted MF (Hu, Koren and Volinsky) treats every cell as a binary preference $x_{ui}$ with confidence $c_{ui}=1+\alpha r_{ui}$:
+
+      $$\min_{P,Q}\sum_{u,i} c_{ui}\,(x_{ui}-p_u^\top q_i)^2+\lambda\big(\lVert P\rVert_F^2+\lVert Q\rVert_F^2\big).$$
+
+      Alternating least squares solves for all users with items fixed, then the reverse; each step is a closed-form ridge regression, and a standard trick makes the cost scale with the number of observed interactions rather than $U\times I$. BPR instead optimises a pairwise loss on (observed, unobserved) pairs with SGD.
+
+      **Item-to-item CF** precomputes, for each item, its nearest items by co-engagement (cosine over user vectors, or a normalised co-occurrence count with a popularity discount). At serving time, the user's recent items are looked up and the neighbours merged. It reacts to a click immediately without retraining, explains itself ("because you watched X"), and is cheap.
+
+      When they are right: as retrieval sources and strong baselines, on medium-sized catalogues, and when features are scarce. A two-tower model with only ID features is essentially MF trained with a different loss. Their limits are cold start (no interactions, no vector), no use of context or content, and popularity bias in co-occurrence counts.
+    probes:
+      - Why does treating all unobserved cells as zeros not ruin the model?
+      - How would you make item-to-item similarities robust to very popular items?
+  - id: recsys-008
+    skill: retrieval
+    also: [error-analysis, ranking]
+    type: debug
+    level: senior
+    tracks: [mle]
+    q: >-
+      Offline recall@1000 of your retrieval stage is high, but users and raters say the final
+      results are poor. How do you investigate?
+    a: |
+      First question what "recall" was measured against. Recall against logged clicks only says that retrieval reproduces what the old system already showed and users clicked. It says nothing about items the old system never surfaced, and clicked is not the same as good.
+
+      Then localise the loss stage by stage:
+
+      1. **Trace the funnel for bad sessions.** For queries with poor final results, take the items a rater or an oracle (the full ranker run on a much larger set, or human-labelled ideal results) considers best. At which stage do they disappear: never retrieved, cut by the pre-ranker, ranked low, or removed by re-ranking and filters?
+      2. **Pre-ranker truncation.** High recall@1000 is irrelevant if only 200 survive pre-ranking. Measure recall of the ranker's top-$k$ within the pre-ranker's output.
+      3. **Ranker on unfamiliar candidates.** If retrieval changed recently, the ranker scores candidates outside its training distribution; its calibration on them may be poor.
+      4. **Precision of the candidate set.** Recall can be high while the set is full of near-duplicates or marginally relevant items that the ranker cannot tell apart with its features.
+      5. **Objective mismatch.** The ranker may optimise click-through while quality complaints are about relevance, satisfaction or diversity. Check rater relevance of the top results against predicted engagement.
+      6. **Post-ranking logic.** Diversity rules, business boosts and deduplication can reorder the page substantially.
+
+      Fixes follow the diagnosis: train early stages on the ranker's preferences (distillation), build the evaluation set from judged relevance or an oracle ranking instead of clicks, and add a per-stage recall dashboard so the loss is visible next time.
+    probes:
+      - How do you build an "oracle" target for retrieval without human labels?
+      - What metric would you add for the pre-ranking stage?
+  - id: recsys-009
+    skill: ranking
+    also: [dl-fundamentals, feature-eng]
+    type: concept
+    level: core
+    tracks: [mle]
+    q: >-
+      Walk me through the main ranking architectures: Wide & Deep, DeepFM, DCN. Why do
+      ranking models need explicit feature crosses when an MLP is a universal approximator?
+    a: |
+      Ranking inputs are mostly sparse categorical features (user id, item id, category, context) embedded and concatenated with dense features. The signal is largely in interactions, such as user-language × item-language or user-segment × creator. An MLP on concatenated embeddings can represent a product of two inputs only approximately and needs many units and samples to do it, so architectures add multiplicative structure explicitly.
+
+      - **Wide & Deep**: a linear model over hand-written cross-product features (memorisation of specific co-occurrences) trained jointly with an MLP over embeddings (generalisation). Works, but the crosses are manual.
+      - **DeepFM**: replaces the wide part with a factorisation machine, so every pair of fields interacts through the dot product of their embeddings, with no feature engineering.
+      - **DCN / DCN-V2**: cross layers $x_{l+1}=x_0\odot(W_l x_l+b_l)+x_l$. Each layer raises the polynomial degree of interactions with the input by one, so $L$ layers give bounded-degree crosses up to $L+1$, in parallel or stacked with an MLP. DCN-V2 uses a full (or low-rank, mixture-of-experts) matrix $W_l$.
+      - Later variants learn interactions with attention over field embeddings (AutoInt) or use transformer blocks over feature tokens.
+
+      Practical points:
+
+      - Most parameters are in the embedding tables (often tens to hundreds of GB), so hashing, shared tables and dimension choices matter more than the tower depth.
+      - Gains between these architectures are usually small compared with gains from new features, better labels, sequence features and fresher training.
+      - User-item cross features computed from logs (counts and rates for this user with this creator or category) are the highest-value inputs and the main source of training-serving skew.
+    probes:
+      - Why is a dot product hard for an MLP to learn?
+      - Where would you put a new high-cardinality feature, and how do you handle its tail?
+  - id: recsys-010
+    skill: personalization
+    also: [sequence-models, transformers]
+    type: concept
+    level: senior
+    tracks: [mle, re]
+    q: >-
+      How do ranking models use a user's behaviour history? Explain DIN-style target attention
+      and what you do when the history has thousands of events.
+    a: |
+      The simplest user representation mean-pools the embeddings of recent items. It is one fixed vector regardless of the candidate, so a user with several interests is blurred into their average.
+
+      **Target attention (DIN)** makes the user representation depend on the candidate. For history items $e_1..e_L$ and candidate $v$, an attention unit (an MLP over $e_j$, $v$ and their interaction) gives weights $a_j=a(e_j,v)$ and the user vector is $\sum_j a_j e_j$. Behaviours related to the candidate dominate: a candidate handbag attends to past bag purchases, not to phone browsing. The original DIN does not softmax-normalise the weights, so the strength of interest is preserved. DIEN adds a recurrent layer to model how interests evolve; transformer variants apply self-attention over the sequence, with event type, time gap and position embeddings, and then attend from the candidate.
+
+      **Cost.** Target attention runs per candidate, $O(N\cdot L)$ for $N$ candidates, so it lives in the ranking stage with $L$ in the tens to low hundreds. For lifelong histories ($L$ in the thousands or more):
+
+      - **Retrieve, then attend** (SIM): first select the top few dozen behaviours relevant to the candidate, by matching category (hard search) or by embedding similarity (soft search), then run exact attention on those.
+      - Hash-based approximations (ETA) pick the subset with locality-sensitive hashing.
+      - Precompute a user embedding offline from the long history and combine it with a real-time short sequence.
+
+      Serving details matter as much as the architecture: the short-term sequence must be fresh (events from seconds ago), and training must see the sequence as it was at request time, otherwise future events leak in.
+    probes:
+      - Self-attention over the history or target attention from the candidate - when does each win?
+      - How do you keep the sequence feature consistent between training and serving?
+  - id: recsys-011
+    skill: multi-objective
+    also: [dl-fundamentals]
+    type: concept
+    level: senior
+    tracks: [mle, re]
+    q: >-
+      Your ranker predicts click, like, share and watch time. Compare shared-bottom, MMoE and
+      PLE, and tell me how you detect and handle negative transfer.
+    a: |
+      **Shared-bottom**: one shared trunk, one small tower per task. Cheap and regularising, but when tasks conflict the shared layers are pulled in different directions and some task gets worse than its single-task model (negative transfer).
+
+      **MMoE**: $K$ expert networks shared by all tasks, and a gate per task that mixes them:
+
+      $$h^t(x)=\sum_{k=1}^{K} g^t_k(x)\,e_k(x),\qquad g^t(x)=\operatorname{softmax}(W^t x).$$
+
+      Tasks can use different mixtures, so loosely related tasks interfere less. In practice gates can collapse onto the same experts.
+
+      **PLE**: separates experts into shared and task-specific groups, with gates that combine a task's own experts with the shared ones, stacked over several levels. It was proposed to address the "seesaw" pattern, where improving one task degrades another, which MMoE still shows.
+
+      Detecting negative transfer: compare each head against a single-task baseline with the same data and capacity, per task and per slice; watch for one task's loss improving while another's rises after a change in loss weights.
+
+      Handling it:
+
+      - **Loss balancing.** Tasks differ in label density and loss scale (a sparse share label versus a dense click label, a regression versus a classification). Options are manual weights, uncertainty weighting, or gradient-norm balancing; gradient-surgery methods project out conflicting gradient components.
+      - **Structure.** Give sparse tasks their own experts; model sequential dependence explicitly (click then convert) as ESMM does.
+      - **Stop-gradient** from auxiliary heads into shared embeddings when an auxiliary task hurts the main one.
+
+      Sparse tasks usually benefit most from sharing; dense tasks have the least to gain and the most to lose.
+    probes:
+      - How do you choose loss weights when one head is a regression on watch time?
+      - What would you look at to see whether the gates learned anything?
+  - id: recsys-012
+    skill: multi-objective
+    also: [ab-testing, metrics]
+    type: tradeoff
+    level: staff
+    tracks: [mle]
+    q: >-
+      The ranker outputs a dozen predictions. How do you combine them into one ranking score,
+      and how are the weights chosen?
+    a: |
+      The usual form is a value model, a weighted combination of calibrated predictions:
+
+      $$\text{score}=\sum_k w_k\,\hat p_k\quad\text{or}\quad \prod_k \hat p_k^{\,\alpha_k},$$
+
+      for example $w_\text{click}\,p_\text{click}+w_\text{like}\,p_\text{like}+w_\text{share}\,p_\text{share}+w_\text{time}\,\mathbb{E}[\text{watch time}]-w_\text{neg}\,p_\text{hide or report}$. The additive form reads as expected value in a common currency; the multiplicative form requires an item to be acceptable on every factor.
+
+      How weights are set:
+
+      1. **State the north-star metric** the weights serve (long-term retention, sessions per user, satisfied sessions) and guardrails (reports, creator-side health, revenue).
+      2. **Online tuning.** Run weight variants as A/B arms and choose by the north star. Grid search does not scale past a few weights, so teams use Bayesian optimisation or evolutionary search over online arms, sometimes with offline replay to prune the space first.
+      3. **Anchor to long-term outcomes.** Fit how each short-term action predicts a long-term outcome (for example survey satisfaction or retention), ideally validated by long holdouts, and use that as a starting point.
+
+      Failure modes to name:
+
+      - **Calibration drift changes the weights implicitly.** If a head is retrained and its scale shifts, the effective trade-off moves without anyone changing a weight. Keep heads calibrated and monitor the distribution of each term.
+      - **Short-term proxy.** Weights tuned on a two-week test favour actions with immediate payoff, such as clickbait; long-running holdouts are the check.
+      - **Constraint handling.** Some goals are constraints, not terms (minimum exposure for new creators, a cap on negative feedback). A Lagrangian formulation gives each a multiplier that is adjusted to meet its target.
+      - **Organisational coupling.** Every team wants its prediction in the formula; a shared process for evaluating new terms matters as much as the optimiser.
+    probes:
+      - Why must the heads be calibrated for the weights to be meaningful?
+      - How would you personalise the weights, and what is the risk?
+  - id: recsys-013
+    skill: ranking
+    also: [training-dynamics]
+    type: concept
+    level: core
+    tracks: [mle, re]
+    q: >-
+      Compare pointwise, pairwise and listwise learning to rank. Which would you use for a feed
+      ranker and which for web-search relevance?
+    a: |
+      They differ in what a training example is and therefore in what the loss can see.
+
+      - **Pointwise**: each (query, item) is an independent example with a classification or regression loss, for example binary cross-entropy on click. The output is an absolute prediction, which can be calibrated and combined with other predictions. It ignores that only relative order within a list matters and spends capacity on separating queries from each other.
+      - **Pairwise**: examples are pairs from the same query, with a loss on the score difference, such as RankNet $\log(1+e^{-(s_i-s_j)})$ for $i$ preferred to $j$, BPR, or hinge. It optimises order directly and cancels per-query offsets (some bias terms drop out), but treats all pairs alike, so an error at rank 50 costs as much as one at rank 1, and scores are not probabilities.
+      - **Listwise**: the loss is defined on the whole list: softmax cross-entropy over the list (ListNet top-one), or metric-driven methods such as LambdaRank/LambdaMART and approximate-NDCG. Matches top-heavy metrics best; needs the lists to be grouped and is sensitive to list length and label noise.
+
+      Choice:
+
+      - **Feed and ads ranking**: pointwise multi-task heads, because the system needs calibrated probabilities for a value model or an auction, and labels are per-impression engagement events. Pairwise or listwise terms are sometimes added as auxiliary losses to improve order.
+      - **Search relevance with graded judgments**: listwise or LambdaMART-style objectives on NDCG, because labels are graded per query and only the order within a query matters.
+      - **Retrieval**: sampled softmax, which is listwise over the positive and sampled negatives.
+
+      A common hybrid trains a calibrated pointwise loss plus a pairwise or listwise loss, to get both a usable probability and a better order.
+    probes:
+      - Why are pairwise scores not calibrated, and can you fix that after the fact?
+      - What does the per-query grouping do to how you split train and test data?
+  - id: recsys-014
+    skill: ranking
+    also: [classical-ml]
+    type: derivation
+    level: senior
+    tracks: [mle, re]
+    q: >-
+      NDCG is not differentiable. Explain how LambdaRank gets around that and what LambdaMART
+      adds.
+    a: |
+      NDCG depends on scores only through the sort order, so it is piecewise constant in the scores: the gradient is zero almost everywhere and undefined at ties.
+
+      **RankNet** starts from a pairwise logistic loss. For documents $i,j$ in the same query with $i$ more relevant, $C_{ij}=\log\big(1+e^{-\sigma(s_i-s_j)}\big)$, and
+
+      $$\lambda_{ij}\equiv\frac{\partial C_{ij}}{\partial s_i}=-\frac{\sigma}{1+e^{\sigma(s_i-s_j)}}=-\frac{\partial C_{ij}}{\partial s_j}.$$
+
+      **LambdaRank** observes that training only needs gradients, not a loss. It scales each pair's gradient by how much the metric would change if the two documents swapped positions in the current ranking:
+
+      $$\lambda_{ij}=-\frac{\sigma}{1+e^{\sigma(s_i-s_j)}}\;\big|\Delta\text{NDCG}_{ij}\big|,\qquad \lambda_i=\sum_{j:(i,j)}\lambda_{ij}-\sum_{j:(j,i)}\lambda_{ji}.$$
+
+      Each document receives a net force: up if it is more relevant than documents it is confused with, down otherwise, with pairs near the top of the list weighted more because swapping them changes NDCG more. Empirically this optimises NDCG well, and later work showed the lambdas correspond to the gradient of a bound on the metric.
+
+      **LambdaMART** plugs these lambdas into gradient-boosted regression trees: each tree is fit to the per-document lambdas, and leaf values use a Newton step with the second derivatives. It is the `lambdarank` objective in LightGBM and `rank:ndcg` in XGBoost.
+
+      Why it is still a strong baseline: it handles heterogeneous, unnormalised dense features (BM25 scores, counts, quality signals) with little tuning and trains on modest amounts of judged data. Its limits are sparse high-cardinality ids and raw text, which need embeddings, and incremental training.
+    probes:
+      - Why weight by the NDCG change of a swap rather than by the positions directly?
+      - What happens to the lambdas for a query whose documents all have the same label?
+  - id: recsys-015
+    skill: ranking
+    also: [metrics, python]
+    type: coding
+    level: core
+    tracks: [mle, ai, re]
+    q: >-
+      Implement NDCG@k for one query, then tell me the choices and edge cases that change the
+      number.
+    a: |
+      $$\text{DCG@}k=\sum_{i=1}^{k}\frac{2^{rel_i}-1}{\log_2(i+1)},\qquad \text{NDCG@}k=\frac{\text{DCG@}k}{\text{IDCG@}k},$$
+
+      where $rel_i$ is the graded label of the item at rank $i$ and IDCG is the DCG of the ideal ordering.
+
+      ```python
+      import numpy as np
+
+      def dcg_at_k(rels, k, exp_gain=True):
+          rels = np.asarray(rels, dtype=float)[:k]
+          gains = 2.0 ** rels - 1.0 if exp_gain else rels
+          discounts = 1.0 / np.log2(np.arange(2, rels.size + 2))   # ranks 1..k -> log2(2..k+1)
+          return float((gains * discounts).sum())
+
+      def ndcg_at_k(scores, labels, k, exp_gain=True):
+          scores, labels = np.asarray(scores), np.asarray(labels)
+          order = np.argsort(-scores, kind="stable")
+          ideal = dcg_at_k(np.sort(labels)[::-1], k, exp_gain)     # ideal over ALL labelled items
+          if ideal == 0.0:
+              return None                                          # no relevant item: undefined
+          return dcg_at_k(labels[order], k, exp_gain) / ideal
+
+      def mean_ndcg(queries, k):
+          vals = [ndcg_at_k(s, l, k) for s, l in queries]
+          vals = [v for v in vals if v is not None]
+          return float(np.mean(vals)) if vals else float("nan")
+      ```
+
+      What an interviewer checks:
+
+      - **Ideal ranking** is computed from all judged items for the query, not from the top $k$ of the model's ranking; the latter inflates the score.
+      - **Queries with no relevant item**: skip them or count them as 0 or 1. Each convention gives a different mean, so state which one you use and keep it fixed across systems.
+      - **Gain function**: exponential gain $2^{rel}-1$ emphasises the top grade; linear gain is also common. The two are identical for binary labels.
+      - **Ties in scores** make the result depend on sort order; use a stable sort and a fixed tie-break, or average over tie permutations.
+      - **Unjudged items** are usually treated as non-relevant, which penalises systems that retrieve new items the judging pool never saw.
+      - **Average per query**, not over pooled documents, and report confidence intervals over queries.
+    probes:
+      - How does NDCG differ from MRR and MAP in what it rewards?
+      - Your new retriever surfaces many unjudged documents and NDCG drops. What do you do?
+  - id: recsys-016
+    skill: ranking
+    also: [causal]
+    type: concept
+    level: core
+    tracks: [mle, re]
+    q: >-
+      What is position bias in click data, and what are the standard ways to keep it out of a
+      ranking model?
+    a: |
+      Users click more on higher positions regardless of relevance, so a model trained on raw clicks learns "was shown at the top" as evidence of quality and reinforces the existing order. The usual formalisation is the examination hypothesis:
+
+      $$P(\text{click}\mid q,d,k)=\underbrace{P(\text{examined}\mid k)}_{\theta_k}\cdot P(\text{relevant}\mid q,d).$$
+
+      Three standard treatments:
+
+      - **Position as a feature.** Feed the position (and device, surface) during training and set it to a fixed value at serving, so the model attributes the positional effect to that input. A variant uses a separate shallow "bias tower" whose logit is added to the main logit in training and dropped at serving, with dropout on the position input so the main tower does not ignore relevance. It is simple and widely used, but the separation is only as good as the additive (or multiplicative) assumption.
+      - **Inverse propensity weighting.** Weight each clicked example by $1/\theta_k$. Under the examination model this gives an unbiased estimate of the relevance-based loss. Variance grows for low positions, so propensities are clipped.
+      - **Randomisation.** Estimate $\theta_k$, or collect unbiased data directly, by randomising order on a small slice of traffic: full shuffles of the top $n$ are costly to users, so pair swaps of adjacent positions are preferred. Propensities can also be estimated without intervention by jointly fitting examination and relevance (EM-style or dual-learning methods), or by harvesting cases where different rankers placed the same item at different positions.
+
+      Position bias is one of several biases in the same logs: selection bias (only shown items have labels), trust bias (users click top results even when they look irrelevant), and context effects from neighbouring items.
+    probes:
+      - What value do you set the position feature to at serving time, and does it matter?
+      - Why does IPS fail when the logging policy is deterministic?
+  - id: recsys-017
+    skill: ranking
+    also: [ab-testing, causal, evals]
+    type: tradeoff
+    level: staff
+    tracks: [mle, re]
+    q: >-
+      You want to evaluate a new ranking policy before a full A/B test. Compare offline replay,
+      counterfactual estimators and interleaving. What does each one assume?
+    a: |
+      **Standard offline metrics** (AUC, NDCG on logged impressions) evaluate the new model only on items the old policy chose to show. They cannot credit it for surfacing items that were never shown.
+
+      **Offline replay.** If a slice of traffic was served uniformly at random, replay the log and keep only events where the new policy would have chosen the logged action; the average reward on those is an unbiased estimate of the new policy's value. It needs random logging and discards most data when the action space is large.
+
+      **Counterfactual (off-policy) estimators** reweight logs from a stochastic logging policy $\pi_0$:
+
+      $$\hat V_\text{IPS}=\frac1n\sum_i\frac{\pi(a_i\mid x_i)}{\pi_0(a_i\mid x_i)}\,r_i.$$
+
+      Unbiased if $\pi_0$ has support wherever $\pi$ does and propensities are logged correctly. Variance explodes when the policies differ, so practice uses clipping, self-normalisation (SNIPS: divide by the sum of weights) and doubly robust estimators, which add a reward model and stay consistent if either the model or the propensities are right. For slates the action space is combinatorial, so estimators assume structure, such as reward that decomposes over positions.
+
+      **Interleaving.** Merge the two rankers' lists for the same request (team-draft: the rankers alternately pick their best remaining item) and credit clicks to the ranker that contributed the item. Each user is their own control, so it is reported to need one to two orders of magnitude less traffic than an A/B test to detect a preference. It measures relative click preference between two rankers for the same list position, not absolute metrics, retention or revenue, and does not apply cleanly to whole-page or multi-objective changes.
+
+      A sensible sequence: offline metrics to reject bad candidates, counterfactual estimates or interleaving to rank the survivors, then an A/B test for the decision metrics and guardrails.
+    probes:
+      - How would you check that your logged propensities are correct?
+      - Interleaving says B wins but the A/B test is flat. What could explain it?
+  - id: recsys-018
+    skill: ads
+    also: [bayesian, classical-ml]
+    type: concept
+    level: core
+    tracks: [mle]
+    q: >-
+      You train a CTR model on data where negatives were downsampled to 10%. What does the
+      model output, how do you correct it, and how do you check calibration afterwards?
+    a: |
+      It outputs the click probability in the sampled population, which is too high. If positives are all kept and negatives kept with probability $s$, Bayes' rule gives the true probability from the sampled one $p_s$:
+
+      $$p=\frac{s\,p_s}{1-p_s+s\,p_s},\qquad \operatorname{logit}(p)=\operatorname{logit}(p_s)+\log s.$$
+
+      So the correction is a constant shift of the logit by $\log s$; equivalently, add $\log s$ to the bias at serving, or train with negatives weighted by $1/s$. With $s=0.1$ and $p_s=0.2$ the corrected value is about $0.0244$, not $0.02$: multiplying by $s$ is only the small-probability approximation. Apply exactly one correction; weighting the loss and also shifting the logit double-corrects.
+
+      Downsampling is used because clicks are rare (often well under 5%) and most negatives are redundant; it cuts training cost with little loss of ranking quality. It does not change the order of scores, only their scale.
+
+      Checking calibration:
+
+      - **Aggregate bias**: sum of predictions over sum of observed clicks, on a later time window with the production (unsampled) distribution. Target is close to 1.
+      - **Reliability by score bucket** and **by slice** (placement, country, advertiser, new versus old items). A model can be right on average and wrong in opposite directions across slices.
+      - **Log loss or normalised cross-entropy** relative to predicting the base rate, alongside AUC. AUC is blind to calibration.
+
+      If residual miscalibration remains, fit a post-hoc calibrator (Platt scaling or isotonic regression) on recent held-out data, and refit it whenever the model or the traffic mix changes.
+    probes:
+      - What changes if the sampling rate depends on features, for example by placement?
+      - Why does AUC not move when you apply the correction?
+  - id: recsys-019
+    skill: ads
+    also: [production-ml]
+    type: tradeoff
+    level: senior
+    tracks: [mle]
+    q: >-
+      Conversions can arrive days after the click. How do you train a CVR model that is both
+      fresh and correctly labelled?
+    a: |
+      The conflict: a click without a conversion so far is not a negative, it is censored. Training on recent data labels slow converters as negatives and biases predicted CVR downward, most strongly for new campaigns; waiting for the full attribution window (for example 7 days after the click) gives correct labels but a model that is a week stale, which hurts on new ads and shifting traffic.
+
+      Options:
+
+      1. **Wait for maturity.** Train only on clicks older than the window. Correct, simple, stale. Reasonable when most conversions arrive quickly and campaigns are long-lived.
+      2. **Short window plus correction.** Use a waiting window that captures most conversions (say the first hour or day) and correct for the rest with an estimate of the fraction that arrives later, per advertiser or conversion type.
+      3. **Model the delay.** The delayed feedback model (Chapelle, 2014) jointly fits the conversion probability and a delay distribution, so an unconverted click of age $t$ contributes the likelihood of "either will not convert, or will convert after $t$".
+      4. **Label correction in streaming training.** Ingest every click immediately as a negative and insert a positive when the conversion arrives, with importance weights that make the loss unbiased in expectation (the fake-negative weighted family of methods).
+      5. **Auxiliary fast signals.** Add heads for early events (add-to-cart, page dwell) that arrive quickly and correlate with conversion.
+
+      What to check: calibration by click age and by campaign age, since delay bias shows up as under-prediction on recent traffic; the calibration layer must also be fitted on matured labels. Attribution rules (last click, view-through, window length) define the label, so a change in them is a label shift.
+    probes:
+      - How would you measure the conversion delay distribution without bias from censoring?
+      - What happens to auto-bidding campaigns if CVR is under-predicted for new ads?
+  - id: recsys-020
+    skill: ads
+    also: [multi-objective, causal]
+    type: concept
+    level: senior
+    tracks: [mle, re]
+    q: >-
+      What problem does ESMM solve in conversion-rate modelling, and how? Is its CVR estimate
+      unbiased?
+    a: |
+      A conventional CVR model is trained on clicked impressions, because conversion labels only exist after a click, but at serving it scores all candidate impressions. That is **sample selection bias**: the clicked population is not a random sample of impressions. It also suffers **data sparsity**, since clicks are a few percent of impressions and conversions a few percent of clicks.
+
+      ESMM (entire-space multi-task model) uses the identity
+
+      $$\underbrace{P(\text{click},\text{conv}\mid x)}_{\text{pCTCVR}}=\underbrace{P(\text{click}\mid x)}_{\text{pCTR}}\cdot\underbrace{P(\text{conv}\mid \text{click},x)}_{\text{pCVR}}.$$
+
+      Two towers over shared embeddings output pCTR and pCVR. The losses are binary cross-entropy on click and on click-and-convert, both defined on **all impressions**. There is no loss on pCVR directly; it is learned as the factor that makes the product fit. The CVR tower therefore trains on the same input space it serves on, and the embeddings are learned from abundant click data.
+
+      Caveats a senior answer includes:
+
+      - It is not guaranteed unbiased. pCVR is identified only through the product, so errors in pCTR are absorbed by pCVR, and where pCTR is tiny the CVR tower gets almost no gradient. Later work (the ESCM² line) argues the estimate remains biased and adds inverse-propensity or doubly robust terms on the click space.
+      - The product of two individually reasonable scores need not be calibrated; check pCTCVR on impressions and pCVR on clicks separately.
+      - It models conversion given the logged serving policy, not a causal effect of showing the ad.
+      - The same idea extends to longer funnels (click, add-to-cart, purchase), and delayed conversions still need separate treatment.
+    probes:
+      - Why not just train the CVR tower on clicked samples with inverse-propensity weights?
+      - Which metric would reveal that pCVR is absorbing pCTR errors?
+  - id: recsys-021
+    skill: ads
+    type: concept
+    level: core
+    tracks: [mle]
+    q: >-
+      How does an ads auction rank and price ads? Give me eCPM for different bid types, the
+      generalised second-price payment, and how VCG differs.
+    a: |
+      **Ranking.** Advertisers bid on different events, so bids are converted to expected value per thousand impressions:
+
+      - CPM bid: $\text{eCPM}=\text{bid}$.
+      - CPC bid: $\text{eCPM}=1000\cdot\text{bid}_\text{click}\cdot p\text{CTR}$.
+      - CPA / optimised bidding: $\text{eCPM}=1000\cdot\text{bid}_\text{conv}\cdot p\text{CTR}\cdot p\text{CVR}$.
+
+      Many platforms rank by a total value that adds a quality or user-experience term, so a relevant ad can beat a higher bid.
+
+      **Generalised second price (GSP).** Each winner pays the minimum needed to keep its slot. For CPC ads ranked by $\text{bid}\times p\text{CTR}$:
+
+      $$\text{CPC}_i=\frac{\text{bid}_{i+1}\cdot p\text{CTR}_{i+1}}{p\text{CTR}_i}.$$
+
+      Example: A bids 4.00 with pCTR 0.05 (rank score 0.20), B bids 5.00 with pCTR 0.03 (0.15), C bids 2.00 with pCTR 0.04 (0.08). A wins and pays $0.15/0.05=3.00$ per click; B pays $0.08/0.03\approx2.67$.
+
+      **VCG.** Each winner pays the externality it imposes: the total value the other advertisers would have gained had it been absent, minus what they get with it present. With one slot, GSP and VCG are both the plain second-price auction. With several slots GSP is not truthful. Classic example: values per click 10, 4, 2 and slots with 200 and 199 clicks. Bidding truthfully, the first advertiser takes slot 1 at 4 per click and earns $(10-4)\cdot200=1200$; shading its bid below 4 gives slot 2 at 2 per click and $(10-2)\cdot199=1592$. Under VCG it pays $1\cdot4+199\cdot2=402$ for slot 1, about 2.01 per click, and truthful bidding is a dominant strategy. At the same bids VCG revenue is no higher than GSP, which is one reason GSP persisted.
+
+      **First price** (pay your bid) is now standard in programmatic display; bidders respond by shading bids. **Reserve prices** set a floor in any format.
+    probes:
+      - Why does the payment formula make pCTR calibration a revenue issue?
+      - Why would a platform choose VCG despite lower short-term revenue?
+  - id: recsys-022
+    skill: ads
+    also: [optimization-or]
+    type: concept
+    level: senior
+    tracks: [mle]
+    q: >-
+      An advertiser sets a daily budget and a target cost per conversion. How do pacing and
+      auto-bidding work?
+    a: |
+      **Pacing** spreads a budget over the day so it is not exhausted in the first hours on whatever traffic arrives first. Two mechanisms:
+
+      - **Probabilistic throttling**: the campaign enters each auction with probability $\rho$. Simple, but it skips auctions at random instead of the least valuable ones.
+      - **Bid pacing**: multiply the bid by a factor $\alpha\in(0,1]$. The campaign still competes everywhere and wins the cheapest opportunities relative to their value, which is closer to optimal.
+
+      The controller compares actual spend against a target curve (usually shaped to forecast traffic rather than flat) and adjusts $\rho$ or $\alpha$ every few minutes, commonly with a PID-style feedback loop.
+
+      **Auto-bidding** makes the platform choose a bid per auction to maximise the advertiser's goal under constraints. For "maximise conversions subject to budget $B$":
+
+      $$\max_{x}\sum_i x_i v_i\quad\text{s.t.}\quad\sum_i x_i c_i\le B,$$
+
+      with $v_i=p\text{CTR}_i\,p\text{CVR}_i$ the value and $c_i$ the price of auction $i$. The Lagrangian shows it is optimal to win whenever $v_i/c_i\ge\lambda$, so in a second-price auction the bid is $v_i/\lambda$: one multiplier on predicted value. A target-CPA or target-ROAS constraint adds a second multiplier. The multipliers are the dual variables, updated online from spend and delivery feedback; pacing is the same control problem.
+
+      What makes it hard:
+
+      - Bids are only as good as the predictions; a miscalibrated pCVR makes the campaign overpay or under-deliver.
+      - Feedback is delayed and noisy (conversions arrive late), so controllers oscillate if tuned aggressively.
+      - In first-price auctions the bid must also be shaded with a model of the winning-price distribution.
+      - Many auto-bidders interact, so the platform must consider equilibrium effects, and small budgets give too few conversions to learn from (the cold-start or "learning phase" problem).
+    probes:
+      - What does the pacing multiplier converge to for a campaign with an unlimited budget?
+      - How would you handle a campaign that gets two conversions a day?
+  - id: recsys-023
+    skill: ads
+    also: [bayesian, metrics]
+    type: tradeoff
+    level: senior
+    tracks: [mle]
+    q: >-
+      People say "for organic ranking only the order matters, but for ads you need
+      calibration". Explain why, and where the statement is too simple.
+    a: |
+      In a single-objective organic ranker, the page is the top-$k$ by score. Any strictly increasing transform of the score gives the same page, so AUC or NDCG is what matters and the absolute value is irrelevant.
+
+      In ads the predicted probability is used as a number:
+
+      - **Ranking across advertisers.** $\text{eCPM}=\text{bid}\times p\text{CTR}\times p\text{CVR}$. If the model over-predicts for one advertiser or ad format by 20%, that ad wins auctions it should lose. Calibration must hold per slice, not only on average.
+      - **Pricing.** Second-price payments contain a ratio of predicted CTRs, so errors change what advertisers pay.
+      - **Auto-bidding and pacing.** The bid is a multiple of predicted conversion value. Over-prediction makes advertisers overpay per real conversion and miss their CPA target; under-prediction under-delivers budget.
+      - **Ads versus organic blending** compares expected revenue against predicted engagement value.
+
+      Where the statement is too simple:
+
+      - Organic ranking is rarely single-objective. A value model $\sum_k w_k\hat p_k$ adds probabilities from different heads, so each head's scale matters; a miscalibrated head silently changes the trade-off.
+      - Thresholded decisions (filtering low-quality items, sending a notification, integrity actions) need calibrated scores.
+      - Calibration is not sufficient either. A model that predicts the base rate for everyone is perfectly calibrated and useless; discrimination and calibration are both needed. Log loss rewards both, AUC only the former.
+      - Auctions create a selection effect: the winner is disproportionately an ad whose score was over-estimated, so calibration measured on winners looks worse than on all candidates.
+
+      Practical consequence: ads models are evaluated on normalised log loss and calibration by slice, with a calibration layer refitted frequently; organic models are evaluated on ranking metrics first, with calibration checked per head.
+    probes:
+      - How would you measure calibration for ads that rarely win an auction?
+      - Can a post-hoc calibrator change the auction outcome?
+  - id: recsys-024
+    skill: ads
+    also: [ml-observability, error-analysis]
+    type: debug
+    level: senior
+    tracks: [mle]
+    q: >-
+      After a traffic shift, your CTR model's predicted-over-observed ratio went from 1.00 to
+      1.25. How do you investigate and what do you do meanwhile?
+    a: |
+      Mitigate first if money is involved: over-prediction inflates eCPM for affected ads and makes conversion-optimised advertisers overpay. A quick, reversible step is to refit the calibration layer on the most recent hours, per affected slice, while the cause is found.
+
+      Investigation, cheapest checks first:
+
+      1. **Is the label right?** A drop in observed clicks can come from click or impression logging changes (impression counted at fetch rather than when viewable, a client release that drops click events, deduplication changes) or delayed joins. Compare raw event counts across pipelines.
+      2. **Where is it?** Slice predicted/observed by placement, traffic source, device, app version, country, ad format, new versus established ads, and hour. A uniform shift suggests a label, sampling or calibration issue; a concentrated one points at a population the model has not seen.
+      3. **New population.** A new placement, partner or user segment with a lower base CTR than anything in training; the model extrapolates from similar-looking traffic. Bot or low-intent traffic produces the same pattern. Check whether the model has a feature that identifies the source.
+      4. **Features.** Feature distributions at serving versus training: missing values falling back to defaults, a broken real-time counter, an upstream schema change. Compare logged serving features with the offline ones.
+      5. **Training pipeline.** A change in the negative downsampling rate without updating the correction, stale model or stale calibrator, a retrain that excluded recent data.
+      6. **Layout and position mix.** If ads moved to lower-attention positions and position is handled as a fixed serving-time value, predictions will be too high.
+
+      Durable fixes: add the missing context feature, retrain with recent data, calibrate per slice with shrinkage for small slices, and alert on slice-level predicted/observed ratios with matured labels so the next shift is caught in hours.
+    probes:
+      - How do you distinguish a real drop in user interest from a logging bug?
+      - Which advertisers are hurt most by over-prediction, and how would you make them whole?
+  - id: recsys-025
+    skill: search-ir
+    also: [python, dsa]
+    type: coding
+    level: core
+    tracks: [mle, ai]
+    q: >-
+      Implement BM25 scoring over an inverted index, and explain what each part of the formula
+      does.
+    a: |
+      $$\text{BM25}(q,d)=\sum_{t\in q}\underbrace{\ln\!\Big(1+\frac{N-n_t+0.5}{n_t+0.5}\Big)}_{\text{IDF}(t)}\cdot\frac{f_{t,d}\,(k_1+1)}{f_{t,d}+k_1\big(1-b+b\,\frac{|d|}{\text{avgdl}}\big)}$$
+
+      $N$ is the number of documents, $n_t$ the number containing term $t$, $f_{t,d}$ the term frequency, $|d|$ the document length.
+
+      - **IDF**: rare terms carry more evidence than common ones.
+      - **Saturation ($k_1$, typically 1.2-2)**: the term-frequency factor rises toward $k_1+1$ but with diminishing returns, so the tenth occurrence adds little. This is the main difference from raw TF-IDF.
+      - **Length normalisation ($b$, typically 0.75)**: a term in a long document counts for less, since long documents match more terms by chance. $b=0$ disables it, $b=1$ normalises fully.
+
+      ```python
+      import math
+      from collections import Counter, defaultdict
+
+      class BM25Index:
+          def __init__(self, docs, k1=1.2, b=0.75):       # docs: list of token lists
+              self.k1, self.b, self.N = k1, b, len(docs)
+              self.doc_len = [len(d) for d in docs]
+              self.avgdl = sum(self.doc_len) / max(self.N, 1)
+              self.postings = defaultdict(list)             # term -> [(doc_id, tf)]
+              for doc_id, doc in enumerate(docs):
+                  for term, tf in Counter(doc).items():
+                      self.postings[term].append((doc_id, tf))
+
+          def idf(self, term):
+              n = len(self.postings.get(term, ()))
+              return math.log(1 + (self.N - n + 0.5) / (n + 0.5))
+
+          def search(self, query, k=10):
+              scores = defaultdict(float)
+              for term in set(query):                       # ignores query term frequency
+                  idf = self.idf(term)
+                  for doc_id, tf in self.postings.get(term, ()):
+                      norm = self.k1 * (1 - self.b + self.b * self.doc_len[doc_id] / self.avgdl)
+                      scores[doc_id] += idf * tf * (self.k1 + 1) / (tf + norm)
+              return sorted(scores.items(), key=lambda x: -x[1])[:k]
+      ```
+
+      Pitfalls: the same tokenisation and normalisation must be applied to documents and queries; the $+1$ inside the log keeps IDF non-negative for terms in more than half the documents; only documents sharing a term with the query are touched, which is why the inverted index is fast. Production engines keep postings sorted by document id with skip lists and use dynamic pruning (WAND, block-max WAND) to avoid scoring every match; multi-field documents use BM25F with per-field weights.
+    probes:
+      - What does BM25 do badly that a dense retriever does well, and the reverse?
+      - How would you tune k1 and b for very short documents such as titles?
+  - id: recsys-026
+    skill: search-ir
+    also: [nlp, genrec]
+    type: concept
+    level: senior
+    tracks: [mle, ai]
+    q: >-
+      What happens to a query before retrieval? Walk me through query understanding and where
+      each step can hurt.
+    a: |
+      Query understanding turns a short, noisy string into a structured request. Typical steps:
+
+      1. **Normalisation and tokenisation**: case, Unicode, punctuation, language and script detection, word segmentation for languages without spaces.
+      2. **Spelling correction**: candidate generation by edit distance or a seq2seq model, scored with a noisy-channel model, $P(\text{intended}\mid\text{typed})\propto P(\text{typed}\mid\text{intended})\,P(\text{intended})$, where the prior comes from query logs. Risk: "correcting" rare but valid terms such as names and product codes. Hence confidence tiers: auto-correct, "showing results for", or "did you mean".
+      3. **Intent and category classification**: navigational, informational or transactional; vertical or product category; freshness-seeking; local. Drives which indexes are queried, which features apply and how the page is laid out.
+      4. **Entity recognition and attribute parsing**: "red nike running shoes size 10" becomes brand, colour, category and size filters. Risk: hard filters on a wrong parse return nothing, so parsed attributes are often used as boosts rather than filters.
+      5. **Rewriting and expansion**: synonyms, stemming, abbreviation expansion, and learned rewrites mined from reformulation sessions (a query followed by a successful re-query) or generated by a sequence model or LLM. Expansion raises recall and can drift the intent; precision falls when the rewrite is more general than the query.
+      6. **Query embedding** for semantic retrieval.
+
+      Engineering constraints: the whole stack has a budget of a few to tens of milliseconds, so head queries are served from a cache of precomputed understanding and expensive models run only on the tail or offline.
+
+      Evaluation: each component has its own labelled set, but the test that matters is end-to-end: relevance of results with and without the step, measured separately on head, torso and tail, plus the rate of harmful rewrites. A rewrite system should be able to abstain; "no rewrite" is the right output for most well-formed queries.
+    probes:
+      - How would you mine training data for a query rewriter from logs?
+      - When should a rewrite replace the original query and when should it be added as an extra retrieval branch?
+  - id: recsys-027
+    skill: search-ir
+    also: [retrieval, vector-db, rag]
+    type: tradeoff
+    level: core
+    tracks: [mle, ai]
+    q: >-
+      When does lexical retrieval beat dense retrieval, and how do you combine them in a
+      hybrid system?
+    a: |
+      They fail on different queries, which is why hybrid retrieval is the default.
+
+      **Lexical (BM25 over an inverted index)** wins on exact and rare tokens: product codes, error messages, names, numbers, new terms that the embedding model never saw. It needs no training, is cheap, updates instantly, supports filters natively and is explainable. It fails on vocabulary mismatch ("laptop won't turn on" versus "notebook power failure") and has no notion of meaning.
+
+      **Dense (bi-encoder plus ANN)** wins on paraphrase, long natural-language questions and cross-lingual matching. It fails on exact-match needs, on out-of-domain corpora (dense retrievers trained on one domain often lose to BM25 on another without fine-tuning), and it compresses a long document into one vector, losing detail. Index updates and filters are harder.
+
+      Combining them:
+
+      - **Parallel retrieval and fusion.** Scores are on different scales, so fuse by rank. Reciprocal rank fusion: $\text{RRF}(d)=\sum_{r\in\text{retrievers}}\frac{1}{k+\text{rank}_r(d)}$, $k\approx60$. It needs no tuning and is hard to beat as a first version. A weighted sum of normalised scores, $\alpha\,s_\text{dense}+(1-\alpha)\,s_\text{lex}$, can do better when $\alpha$ is tuned, ideally per query type.
+      - **Rerank the union** with a cross-encoder or a learned ranker that takes both scores as features. This is where most of the quality comes from; fusion only needs to get good candidates into the top few hundred.
+      - **Learned sparse retrieval** (SPLADE-style term expansion) keeps the inverted index while adding semantic expansion; multi-vector late interaction (ColBERT-style) keeps token-level matching at higher index cost.
+
+      Evaluate recall@k of each branch and of the union on a judged set split by query type, so you can see which branch each class of query depends on.
+    probes:
+      - How would you choose the fusion weight per query?
+      - Your dense retriever was trained on web data and the corpus is internal documents. What do you expect?
+  - id: recsys-028
+    skill: search-ir
+    also: [human-eval, metrics, labeling]
+    type: concept
+    level: senior
+    tracks: [mle, ai]
+    q: >-
+      How do you measure search quality? Cover relevance judgments, the metrics built on them,
+      online signals, and how freshness fits in.
+    a: |
+      **Human judgments.** Sample queries stratified by frequency (head, torso, tail) and by type; have trained raters grade query-result pairs on a scale defined by written guidelines (for example perfect / excellent / good / fair / bad), or compare two result pages side by side. Side-by-side is more sensitive for small changes. Controls: measure inter-rater agreement, seed gold questions, resolve disagreements, and re-judge when a new system retrieves unjudged documents. Raters judge topical relevance well and personal or local intent poorly.
+
+      **LLM judges** now do much of this labelling at low cost. Treat the judge as a model to be validated: measure agreement with human labels on a held-out set, re-check when the judge model or prompt changes, and keep humans for guidelines and disputed cases.
+
+      **Offline metrics on judgments.** NDCG@k for graded labels, MRR for single-answer queries, precision@k, recall@k for retrieval. Report by query segment with confidence intervals over queries.
+
+      **Online signals.** Click-through rate alone is misleading (a good answer on the page yields no click). Better signals: clicks with long dwell, abandonment split into good and bad, query reformulation rate, time to first satisfied click, and session success. Interleaving detects ranking preference with little traffic; A/B tests measure the product metrics.
+
+      **Freshness.** It has two parts. Index freshness is the delay from content creation to being searchable, addressed by incremental or real-time indexing tiers. Ranking freshness is deciding when recency should matter: a classifier for fresh-seeking queries using spikes in query volume and in new content about the topic, and a recency feature whose weight depends on that classification. Too much recency demotes authoritative evergreen results; too little serves stale results for breaking topics. Evaluate with judgments collected at query time, since relevance for such queries decays.
+    probes:
+      - Raters prefer system B but online metrics prefer A. How do you reconcile them?
+      - How do you validate an LLM relevance judge?
+  - id: recsys-029
+    skill: personalization
+    also: [multi-objective]
+    type: concept
+    level: core
+    tracks: [mle, ai]
+    q: >-
+      How do you handle cold start for a new user and for a new item? They are different
+      problems; treat them separately.
+    a: |
+      **New user**: no history, so personalised models fall back to priors.
+
+      - Use what is known at request time: country, language, device, time, acquisition channel, the referring content or search query, and any onboarding choices.
+      - Serve a popularity-and-quality prior for that context, diversified across topics so the first sessions reveal preferences quickly.
+      - Make the system react within the session: real-time sequence features and item-to-item retrieval from the first few interactions matter more than any offline model.
+      - Train for it. Models trained mostly on heavy users under-serve new ones; add features that indicate history length, and evaluate on a new-user slice.
+
+      **New item**: no engagement, so collaborative signals and ID embeddings are missing, and the ranker scores it with high uncertainty or a poor default.
+
+      - **Content-based representations**: text, image, audio or video embeddings and creator or category features give a usable vector on day zero. Two-tower item towers built on content features, or semantic IDs, generalise to unseen items; a pure ID embedding does not. A common trick initialises the new ID embedding from a model that maps content features to the embedding space.
+      - **Guaranteed exploration**: give each new item a small impression budget (a dedicated retrieval source or a score boost with a cap), then let measured engagement take over. Bandit methods formalise this: an upper-confidence or Thompson-sampling score explores items whose estimate is uncertain.
+      - **Fast feedback**: real-time counters so early engagement reaches the ranker within minutes.
+
+      Trade-offs: exploration spends impressions on unproven items, a short-term cost for users; too little starves new creators and the catalogue stagnates. Early engagement estimates are noisy, so use a prior, for example a smoothed rate $\frac{\text{clicks}+\alpha}{\text{impressions}+\alpha+\beta}$, rather than raw ratios.
+    probes:
+      - How would you measure whether the new-item exploration budget is the right size?
+      - What about a new market where both users and items are new?
+  - id: recsys-030
+    skill: multi-objective
+    also: [rl, bayesian]
+    type: concept
+    level: senior
+    tracks: [mle, re]
+    q: >-
+      Explain the exploration-exploitation problem in recommendation. Compare epsilon-greedy,
+      UCB and Thompson sampling, and tell me how exploration is actually done with a deep
+      ranker.
+    a: |
+      A recommender learns only from what it shows. Always showing the current best estimate (pure exploitation) means items and interests with uncertain estimates never get data, so errors persist. Exploration spends some impressions to reduce uncertainty.
+
+      - **Epsilon-greedy**: with probability $\varepsilon$ show a random candidate. Simple and gives clean randomised data, but explores uniformly, including clearly bad items, and never stops.
+      - **UCB**: choose the arm with the highest optimistic estimate, $\hat\mu_a+c\sqrt{\ln t/n_a}$; in the contextual linear case (LinUCB), $x^\top\hat\theta+\alpha\sqrt{x^\top A^{-1}x}$. Deterministic given the data, explores what is plausibly best, needs a confidence width.
+      - **Thompson sampling**: sample parameters from the posterior and act greedily on the sample. For Bernoulli rewards with a $\text{Beta}(\alpha,\beta)$ prior, sample $\theta_a\sim\text{Beta}(\alpha+\text{clicks}_a,\ \beta+\text{impressions}_a-\text{clicks}_a)$. Randomised, tolerant of delayed and batched feedback, and usually the practical choice.
+
+      With a deep ranker, an exact posterior is unavailable, so systems approximate:
+
+      - Uncertainty from the last layer only (a Bayesian linear model on the network's final representation), ensembles, or dropout sampling.
+      - Exploration applied to a small part of the system: a dedicated retrieval source and impression budget for fresh items, a bounded score bonus for under-exposed items, or a few exploration slots per page.
+      - A small uniformly randomised traffic slice kept permanently for unbiased training and evaluation data.
+
+      Measuring value is the hard part. In a standard user-level A/B test, the data gathered by exploration benefits control users too, since the model is shared, so the test understates the benefit and shows only the short-term cost. Measuring it properly needs experiments that also partition the items or the training data.
+    probes:
+      - Why is Thompson sampling more robust than UCB to delayed feedback?
+      - How would you explore over users' interests rather than over items?
+  - id: recsys-031
+    skill: personalization
+    also: [causal, product-sense, fairness]
+    type: tradeoff
+    level: staff
+    tracks: [mle, re]
+    q: >-
+      Your feed model is trained on engagement it generated itself. What feedback loops does
+      that create, and how do you optimise for long-term value instead of short-term
+      engagement?
+    a: |
+      **The loops.**
+
+      - **Popularity and exposure bias.** Items shown more get more engagement data and more confident, higher scores, and are shown more. Unshown items have no labels, so their scores stay at an uninformed prior.
+      - **Interest narrowing.** The model infers interest from what the user engaged with among what it chose to show, then shows more of that. Measured diversity of consumption falls even if the user's underlying interests are broad.
+      - **Proxy drift.** Optimising clicks or watch time rewards content that triggers them cheaply, such as clickbait or outrage, and producers adapt to the objective.
+
+      **Breaking the loops.**
+
+      - Keep an exploration budget and a randomised slice; correct training for exposure with propensity weights or logQ-style corrections.
+      - Diversity and novelty at re-ranking, treated as an objective with a measured long-term payoff, not a cosmetic rule.
+      - Train on signals closer to satisfaction: explicit feedback, surveys ("was this worth your time") modelled as a prediction head, negative feedback, returns after the session.
+
+      **Optimising for the long term.**
+
+      - Pick a long-term metric (retention, active days, satisfaction) and run long holdouts, since effects such as fatigue appear after weeks. Short tests systematically favour engagement bait.
+      - Because long-term metrics are slow and noisy, use validated surrogates: short-term actions that causally predict the long-term outcome, with the relationship re-checked periodically.
+      - Model return directly (probability the user comes back tomorrow) or use reinforcement-learning-style value estimates over sessions; both are sensitive to off-policy bias and are used as additional heads rather than the sole objective.
+      - Guardrails for creators and for sensitive content, since the user-side metric does not see ecosystem effects.
+
+      A staff-level answer acknowledges the limit: there is no clean causal estimate of "filter bubble" effects from logs alone, so the claim must rest on holdouts and experiments.
+    probes:
+      - How would you show that more diversity today increases retention later?
+      - What makes a short-term metric a valid surrogate?
+  - id: recsys-032
+    skill: ranking
+    also: [recsys, multi-objective]
+    type: tradeoff
+    level: senior
+    tracks: [mle]
+    q: >-
+      The ranker scores items independently. What does the re-ranking stage add? Explain MMR
+      and DPP for diversity, and when you need whole-page optimisation.
+    a: |
+      Pointwise scores ignore interactions between items on the page: ten near-duplicates each have a high score, yet the page is worse than a varied one. Re-ranking chooses a set and an order.
+
+      **MMR (maximal marginal relevance).** Greedily add the item that maximises
+
+      $$\lambda\,\text{rel}(i)-(1-\lambda)\max_{j\in S}\text{sim}(i,j),$$
+
+      where $S$ is the set already chosen. Cheap, one tunable $\lambda$, easy to reason about; it only penalises the single most similar selected item.
+
+      **DPP (determinantal point process).** Define a kernel $L_{ij}=q_i\,\text{sim}(i,j)\,q_j$ with quality $q_i$; the probability of a set is proportional to $\det(L_S)$, the squared volume spanned by the quality-scaled item vectors. Similar items span little volume, so the set is penalised jointly, not pairwise. Exact MAP inference is NP-hard; the greedy algorithm with incremental Cholesky updates selects $k$ of $N$ items in $O(k^2N)$, fast enough for serving.
+
+      **Business and policy rules**: caps per creator or category, spacing between ads, freshness slots, deduplication, eligibility filters. These are simple, but each one costs utility, so they should be measured and, where possible, expressed as constraints with a known price.
+
+      **Whole-page optimisation** is needed when the value of an item depends on its neighbours and on layout: mixed content types (videos, products, ads, carousels) with different sizes and attention patterns; ads load that affects organic engagement; search pages with answer boxes. Approaches: a listwise re-ranker that scores each candidate given the others (a transformer over the candidate list), generator-evaluator schemes that propose several page layouts and score each whole page, or slate optimisation with a constraint solver.
+
+      Evaluation needs online tests: per-item offline metrics cannot see diversity effects, and their benefit often appears in session length and return rate, not immediate clicks.
+    probes:
+      - How would you choose the similarity function for diversity?
+      - Diversity lowered CTR in the test but you believe it helps. How do you make the case?
+  - id: recsys-033
+    skill: nlp
+    also: [multimodal, llm-general]
+    type: concept
+    level: core
+    tracks: [mle, ai]
+    q: >-
+      What is "content understanding" in a recommendation or search product, and how do its
+      outputs reach the ranker? How would you build a topic classifier for a new taxonomy?
+    a: |
+      Content understanding turns raw items (text, images, audio, video) into signals that do not depend on engagement, so they exist for new items and are stable under popularity effects:
+
+      - **Categorical signals**: topic or category, language, entities mentioned, content type, quality tiers, safety and sensitivity labels.
+      - **Embeddings**: text or multimodal vectors used for retrieval, deduplication, clustering, and as input features.
+      - **Structured extraction**: product attributes, key phrases, transcripts from speech, text from images.
+
+      They reach the system as retrieval keys and filters (eligibility, language), as ranker features, as inputs to diversity and policy rules, and as the basis for cold-start item representations.
+
+      Building a classifier for a new taxonomy:
+
+      1. **Define the taxonomy with examples** and decide single-label or multi-label, and what "other" means. Most later disagreement is taxonomy ambiguity, not model error.
+      2. **Get labels cheaply.** Label a few thousand items with an LLM using the guideline as the prompt, audit a sample by hand, and measure agreement against human labels per class.
+      3. **Choose the serving model by volume.** At millions of items per day and tight cost, distil into a fine-tuned encoder (text or multimodal) with a classification head; an LLM per item is reasonable for low volume or as the teacher and for periodic re-labelling.
+      4. **Evaluate per class**: precision and recall at the operating threshold, on a sample drawn from production traffic rather than from the training pool, with special attention to rare classes and to languages with little data.
+      5. **Operate it**: version the labels, since downstream models train on them; backfill the corpus when the model changes; monitor class distribution drift.
+
+      A common mistake is judging the classifier only by its own accuracy; the test is whether the downstream ranker, retrieval or policy system improves.
+    probes:
+      - How do you handle a taxonomy change when rankers already consume the old labels?
+      - Video has title, transcript and frames. How do you fuse them?
+  - id: recsys-034
+    skill: nlp
+    also: [gnn, representation]
+    type: concept
+    level: senior
+    tracks: [mle, ai]
+    q: >-
+      Explain entity linking end to end, and then tell me what changes when the product has
+      to work in thirty languages.
+    a: |
+      **Entity linking** maps a text span to an entry in a knowledge base ("Jaguar" to the car maker, the animal or the team). The standard pipeline:
+
+      1. **Mention detection**: a sequence tagger (NER) or dictionary matching finds candidate spans.
+      2. **Candidate generation**: an alias table built from anchor texts, redirects and query logs gives candidates with a prior $P(\text{entity}\mid\text{mention})$; a bi-encoder that embeds the mention in context and each entity description adds recall for unseen aliases.
+      3. **Disambiguation**: a cross-encoder or feature model scores each candidate using the context, the prior, entity popularity and coherence with other entities in the same text.
+      4. **NIL decision**: abstain when no candidate is good enough; new entities appear constantly.
+
+      The prior alone is a strong baseline because most mentions refer to the most common sense; the model earns its keep on the ambiguous tail. Evaluate mention-level precision, recall and F1, with a separate breakdown for tail entities and for NIL cases, and on the product's own text (queries and posts are shorter and noisier than news).
+
+      **Multilingual.**
+
+      - Multilingual encoders share subword vocabularies and are trained on many languages, so a classifier fine-tuned on labelled English transfers zero-shot. Transfer is best for related languages with a shared script and plentiful pretraining text, and weakest for low-resource and typologically distant languages.
+      - Preprocessing is language-specific: segmentation for Chinese, Japanese and Thai, normalisation of diacritics and scripts, transliteration, and code-switched text.
+      - Baselines worth running: translate the training data into the target language, or translate inputs to English at test time; a few hundred labelled examples in the target language often close much of the gap.
+      - Entities have cross-lingual aliases, so the alias table and knowledge base need language links.
+      - Evaluate per language. An aggregate dominated by English hides failures, and label guidelines themselves may not transfer across cultures.
+    probes:
+      - Where does entity linking for search queries differ from linking in documents?
+      - How would you decide which languages need their own labelled data?
+  - id: recsys-035
+    skill: genrec
+    also: [generative, transformers, representation]
+    type: concept
+    level: senior
+    tracks: [mle, re]
+    q: >-
+      What are semantic IDs and generative retrieval? Why would you replace embedding
+      retrieval with them, and what goes wrong in practice?
+    a: |
+      **Semantic IDs.** Instead of an arbitrary item id with its own embedding row, each item gets a short sequence of discrete codes derived from its content. A residual-quantised autoencoder (RQ-VAE) takes the item's content embedding and quantises it in levels: the first codebook captures the coarse cluster, each later one quantises the residual. An item becomes a tuple such as $(c_1,c_2,c_3)$ with a few hundred codes per level, so similar items share prefixes.
+
+      **Generative retrieval.** A sequence model reads the user's history as a sequence of semantic IDs (or a query, in the document-retrieval version) and generates the next item's code tuple autoregressively; beam search yields a candidate list. The index lives in the model's parameters and the code vocabulary, not in an ANN structure.
+
+      Why it is attractive:
+
+      - **Generalisation and cold start**: a new item gets codes from its content and shares statistics with similar items.
+      - **Parameter efficiency**: a few thousand code embeddings replace a table with a row per item; the same codes are also useful as ranker features in place of hashed ids.
+      - **A richer scoring function** than a single dot product, trained end to end with the sequence model, and a natural fit with LLM-style architectures.
+
+      What goes wrong:
+
+      - **Invalid or colliding IDs**: generated tuples may not correspond to an item, or several items share one tuple. Fixes: constrained decoding over a prefix trie, an extra disambiguating token.
+      - **Corpus churn**: new items need code assignment, and retraining the quantiser changes every ID, so the vocabulary must be kept stable or versioned.
+      - **Latency and cost**: autoregressive decoding with a wide beam is slower than one ANN lookup.
+      - **Memorisation of collaborative signal**: content-derived codes can lose item-specific popularity and quality signals that ID embeddings capture, so hybrids are common.
+      - **Evaluation**: published gains are mostly on small academic datasets; reported industrial deployments exist, but results are system-specific.
+    probes:
+      - How would you combine semantic IDs with ordinary ID embeddings in a ranker?
+      - What decides the number of levels and the codebook size?
+  - id: recsys-036
+    skill: genrec
+    also: [distillation, llm-cost, ranking]
+    type: tradeoff
+    level: senior
+    tracks: [mle, ai]
+    q: >-
+      Where do LLMs pay off in a search or recommendation stack today: query rewriting,
+      reranking, labelling? How do you get the benefit within a latency and cost budget?
+    a: |
+      An LLM call costs tens to thousands of milliseconds and orders of magnitude more per request than a ranker forward pass, so the question is where its judgment is worth that and how to move it offline.
+
+      **Reranking.** Three formulations: pointwise (score each query-document pair, for example from the logit of a yes/no token), pairwise (compare two candidates), and listwise (give the model a window of candidates and ask for a permutation, sliding the window over the list). Listwise usually ranks best per token spent but is sensitive to input order and limited by context; pointwise parallelises and gives a reusable score. Online use is limited to the top 10-50 candidates and to products with a latency budget of seconds.
+
+      **Distillation** is the main route to production. Use the LLM as a teacher to label large numbers of query-document pairs with graded relevance, then train a cross-encoder or the existing ranker on those labels, with soft targets (score regression, margin MSE, or a listwise KL loss). The student runs in milliseconds. The teacher must first be validated against human judgments; the student inherits its biases.
+
+      **Query rewriting and expansion.** An LLM handles tail queries that log-mined rewrites do not cover: underspecified, conversational, misspelled or cross-lingual queries. Controls: generate offline for the head and torso and cache; run a small fine-tuned model for the tail; allow "no rewrite"; verify that the rewrite retrieves better results before using it; add the rewrite as an extra retrieval branch rather than replacing the query.
+
+      **Offline uses with no latency constraint**: relevance labelling, item enrichment (attributes, summaries, topic tags), synthetic queries for training retrievers, and explanations.
+
+      Where it does not pay: scoring thousands of candidates per request, and tasks where behavioural signals already dominate (personal taste from engagement history).
+    probes:
+      - How would you check that a distilled ranker is not just copying teacher errors?
+      - Pointwise LLM scores are poorly calibrated across queries. Does that matter?
+  - id: recsys-037
+    skill: genrec
+    also: [rag, llm-evals, llm-cost]
+    type: design
+    level: staff
+    tracks: [ai, mle]
+    q: >-
+      Design an answer engine: a search product that returns a generated answer with
+      citations instead of ten links. Cover the pipeline, the latency and cost budget, and
+      evaluation.
+    a: |
+      **Requirements.** Answer is correct, grounded in retrieved sources and cited; first tokens within about one to two seconds; cost per query bounded; abstains or falls back to links when evidence is weak.
+
+      **Pipeline.**
+
+      1. **Query understanding**: classify whether an answer is appropriate (navigational queries want a link), detect freshness needs, and rewrite or decompose into several search queries.
+      2. **Retrieval**: hybrid lexical plus dense over the index, per sub-query, with freshness and source-quality signals. Recall here bounds everything.
+      3. **Rerank and select passages**: a cross-encoder over a few hundred passages; pick a diverse set of 5-20 passages, deduplicated across sources, within a token budget.
+      4. **Generation**: the model answers only from the provided passages, attaching a citation to each claim; streaming output.
+      5. **Verification**: check that each cited passage supports its sentence (an entailment or judge model), drop or flag unsupported claims, apply safety policies.
+
+      **Latency and cost.** Retrieval and reranking should take a few hundred milliseconds; generation dominates. Levers: route by difficulty (small model for simple factual queries, larger model or a multi-step agent loop for complex ones), cache answers for frequent queries with freshness-aware invalidation, limit context tokens by better passage selection, and run sub-queries in parallel. Cost scales with input tokens times queries, so passage selection is both a quality and a cost control.
+
+      **Evaluation.**
+
+      - Retrieval: recall of supporting passages on a judged set.
+      - Answer: correctness against references; **citation precision** (cited source supports the claim) and **citation recall** (claims that need support have it); abstention quality on unanswerable queries.
+      - Graders are LLM judges validated against human labels, run on a fixed set stratified by query type, plus fresh queries to catch staleness.
+      - Online: follow-up and reformulation rate, source click-through, explicit feedback, latency percentiles.
+
+      **Risks.** Retrieved pages are untrusted input and may contain instructions (prompt injection); low-quality or conflicting sources; confident answers from thin evidence; reduced traffic to publishers. A generated answer that is fluent but unsupported is worse than ten links, so the fallback path matters.
+    probes:
+      - How do you decide per query whether to answer or to show links?
+      - How would you detect that answers are going stale for a topic?
+  - id: recsys-038
+    skill: trust-safety
+    also: [anomaly, human-eval, metrics]
+    type: concept
+    level: senior
+    tracks: [mle, ai]
+    q: >-
+      You own a classifier for policy-violating content. How do you choose operating
+      thresholds, and how do you measure precision and recall when you remove what you catch?
+    a: |
+      **Thresholds come from policy and capacity, not from F1.** A typical setup has three bands on the score:
+
+      - **Auto-action** above a high threshold, set so that precision meets a target fixed by policy for that harm type (wrongful removal has a cost to users and to appeal workload). The target is stricter for severe sanctions such as account bans than for reduced distribution.
+      - **Human review** in the middle band. Its lower bound is set by reviewer capacity: with $C$ reviews per day, review the top-$C$ items ordered by expected harm, roughly $p(\text{violation})\times\text{severity}\times\text{expected reach}$, not by score alone.
+      - **No action** below, possibly with softer interventions (no recommendation, friction).
+
+      Thresholds are set per policy and often per market, since base rates and model quality differ by language.
+
+      **Measurement.**
+
+      - **Precision**: sample actioned items for expert re-review; track appeal overturn rate as a continuous proxy.
+      - **Prevalence**: sample from all views (weighting by exposure, since harm scales with views), label by hand, and estimate the share of views that are violating. Low base rates need large samples or stratified sampling by score with reweighting.
+      - **Recall**: actioned violating volume divided by the total estimated from prevalence sampling. Recall measured only on reported or previously caught items is biased toward what the system already finds.
+      - **Timeliness**: views accumulated before action, since most harm happens early.
+
+      Because enforcement removes content, later labels are censored: the classifier's own decisions shape its training data. Keep a random review sample independent of the score, and label items below the threshold, otherwise the model never learns about what it currently misses.
+
+      Calibration matters here: thresholds are stated on probabilities, and expected-harm ordering multiplies them.
+    probes:
+      - Prevalence is 0.05% of views. How many labels do you need to detect a 20% relative change?
+      - How do you set thresholds for a new market with no labelled data?
+  - id: recsys-039
+    skill: trust-safety
+    also: [red-team, ml-observability]
+    type: debug
+    level: staff
+    tracks: [mle]
+    q: >-
+      Your spam or abuse model's precision is stable but reports from users are rising. You
+      suspect attackers have adapted. How do you confirm it, and how do you build a system
+      that degrades more slowly?
+    a: |
+      **Confirm.** Stable precision with rising reports means recall is falling: what the model flags is still bad, but more bad content gets through.
+
+      - Compare prevalence estimates (random-sample labelling) over time; a rise with flat actioned volume confirms missed violations.
+      - Cluster recent user-reported and reviewer-confirmed misses. Look for a new pattern: text obfuscation (homoglyphs, spacing, text in images), new templates, new link domains, aged or compromised accounts instead of fresh ones, lower per-account volume to stay under rate features.
+      - Check score distributions for the missed cluster: scores just under the threshold suggest probing against it; very low scores suggest a new tactic outside the training distribution.
+      - Rule out non-adversarial causes: a feature pipeline failure, a product change that opened a new surface, a labelling policy change.
+
+      **Respond fast.** Rules or signatures for the new pattern ship in hours and buy time; then label the cluster, retrain, and backfill enforcement.
+
+      **Build to degrade slowly.**
+
+      - **Prefer costly-to-fake signals.** Content features are cheap for the attacker to change. Behavioural, graph and infrastructure signals (account age and history, device and network clustering, timing, coordination among accounts, payment instruments) cost more to fake.
+      - **Layer defences**: account creation, posting, distribution and monetisation each get a check, so evading one is not enough.
+      - **Short retraining cycles** with recent data upweighted, and active learning on uncertain and novel items.
+      - **Limit feedback to the attacker**: delayed or silent enforcement and randomised thresholds make probing harder, at some cost in transparency to legitimate users.
+      - **Detect novelty**: monitor clusters of new, fast-growing, similar content or accounts irrespective of the classifier score.
+      - **Red-team** the system regularly and keep an evaluation set of historical attack types to prevent regressions.
+
+      Standing metrics should include time-to-detect and time-to-mitigate a new attack, not only static precision and recall.
+    probes:
+      - Why is a random time split essential when evaluating abuse models?
+      - What is the cost of silent enforcement, and when is it not acceptable?
+  - id: recsys-040
+    skill: recsys
+    also: [feature-store, data-quality, production-ml]
+    type: debug
+    level: senior
+    tracks: [mle]
+    q: >-
+      What is training-serving skew in a ranking system, where does it come from, and how do
+      you prevent and detect it? Include feature freshness.
+    a: |
+      Skew is any systematic difference between the inputs the model saw in training and the inputs it gets at serving for the same request. The model is then evaluated offline on a distribution that production never produces.
+
+      **Sources.**
+
+      - **Two code paths**: features computed in a batch job for training and in a service for inference, with different logic, defaults, rounding, vocabularies or tokenisation.
+      - **Time travel**: training joins a feature value as of label time or as of the nightly snapshot, not as of the request. Counters then include the outcome being predicted (a click count that already contains this click), which is label leakage and inflates offline metrics.
+      - **Freshness mismatch**: offline backfills compute real-time counters exactly; online they lag by seconds to minutes, or come from a cache. The model learns to rely on a precision that serving does not have. The reverse also occurs: training on daily snapshots while serving has fresher values.
+      - **Missing values and fallbacks**: timeouts in a feature service return defaults at serving that never appear in training.
+      - **Population**: training on impressions only, while the model scores all candidates.
+
+      **Prevention.**
+
+      - **Log the features at serving time and train on the logged values.** This removes code-path and freshness skew by construction; the cost is waiting to accumulate data for a new feature, unless a point-in-time-correct backfill is used and validated against logs.
+      - One feature definition compiled to both batch and online paths (a feature store), with point-in-time joins.
+      - Version preprocessing with the model.
+
+      **Detection.**
+
+      - Compare logged serving features with offline recomputation for a sample of requests, per feature: match rate and distribution distance.
+      - Monitor feature coverage, default rates and staleness at serving.
+      - Score logged requests offline with the production model and compare with the logged scores.
+      - A large offline gain from one new feature with no online gain is itself a symptom; check for leakage first.
+    probes:
+      - You add a new feature and want to launch this week, not after a month of logging. What do you do?
+      - How would you measure the value of making a feature fresher?
+  - id: recsys-041
+    skill: recsys
+    also: [ab-testing, error-analysis, metrics]
+    type: debug
+    level: senior
+    tracks: [mle, re]
+    q: >-
+      Your new ranking model improves offline AUC by a clear margin, but the A/B test shows
+      engagement flat or down. How do you debug it?
+    a: |
+      Work from the cheapest explanation to the most structural.
+
+      1. **Is the experiment valid?** Check sample-ratio mismatch, assignment and logging bugs, whether the metric has enough power, and novelty effects. Confirm the treatment actually served the new model.
+      2. **Is serving equal to offline?** Score logged requests offline with the deployed model and compare with served scores. Look for training-serving skew, missing features, wrong preprocessing version, and latency: a heavier model that times out more often falls back to defaults or ranks fewer candidates.
+      3. **Was the offline gain real?** Leakage through features that contain post-impression information; a random rather than temporal split; evaluation on data the model influenced.
+      4. **Is AUC the right metric?** Global AUC rewards separating users or contexts with different base rates, which does not change the order within any one request. Compute per-request or per-user AUC (GAUC) and NDCG; check the metric on the head of the list, where the page is decided.
+      5. **Distribution of evaluated items.** Offline data contains only items the old system showed. Online, the new model chooses different items, including ones the old policy rarely showed, where its predictions are untested. Inspect score calibration on candidates that only the treatment surfaces.
+      6. **Objective mismatch.** Better click prediction can lower engagement if the online metric is watch time or retention, or if a shift in one head's scale changes the value-model trade-off. Check calibration of every head.
+      7. **System interactions.** Downstream re-ranking and rules may undo the change; upstream retrieval may not supply the items the new model prefers; ads and organic blending may shift.
+      8. **Data feedback.** At small traffic, the treatment model trains mostly on data generated by the control policy.
+
+      Then decide: fix and rerun, or accept that the offline metric is not predictive and repair the offline evaluation by measuring its correlation with past online results.
+    probes:
+      - How would you quantify how well your offline metric predicts online results?
+      - Which of these would also explain "offline flat, online up"?
+  - id: recsys-042
+    skill: recsys
+    also: [sysdesign, ranking, retrieval]
+    type: design
+    level: core
+    tracks: [mle]
+    q: >-
+      Design the ranking system for a home feed of short videos or posts, for a product with
+      a hundred million daily users.
+    a: |
+      **1. Objective.** The business goal is long-term retention; it is too slow to train on, so predict short-term actions and combine them. Positive: watch time or completion, like, share, comment, follow. Negative: quick skip, hide, report. Guardrails: content safety, creator-side exposure, latency (p99 under roughly 200 ms for the ranking path).
+
+      **2. Data and labels.** Impression logs joined with actions in an attribution window; features logged at serving time. Labels per impression for each action; watch time as a regression or as bucketed classification, normalised for video length. Train on a temporal split and update continuously (hourly or streaming), since content turns over in days.
+
+      **3. Retrieval** (corpus $10^7$-$10^9$ to a few thousand): two-tower model with ANN, item-to-item from the last few interactions, followed creators, trending and fresh pools, an exploration source for new items. Merge with deduplication and eligibility filters (language, safety, already seen).
+
+      **4. Pre-ranking** to a few hundred with a light model distilled from the ranker.
+
+      **5. Ranking.** Multi-task network (MMoE or PLE) with: user features and embeddings, behaviour sequences with target attention, item content embeddings and statistics, user-item and user-creator cross counters, context. One head per action, each calibrated.
+
+      **6. Value model and re-ranking.** Score $=\sum_k w_k\hat p_k$ with weights tuned online against retention; then diversity (creator and topic spacing), new-creator boosts, policy rules.
+
+      **7. Serving.** Feature store with real-time counters and sequences, embedding tables in a parameter server or sharded memory, candidate scoring batched on accelerators, per-stage deadlines with fallbacks.
+
+      **8. Evaluation.** Offline: per-head AUC or GAUC, calibration, recall@k for retrieval. Online: A/B on retention, time spent, sessions, negative feedback, with long holdouts for weight changes.
+
+      **9. Risks to raise.** Cold start for users and items; position and exposure bias in the logs; feedback loops and interest narrowing; training-serving skew; clickbait from optimising short-term actions.
+
+      State your assumptions on scale and ask what the product optimises before drawing boxes; interviewers grade the framing and the trade-offs more than the architecture names.
+    probes:
+      - Which single component would you build first with a team of three?
+      - How do you handle watch time across videos of very different length?
+  - id: recsys-043
+    skill: search-ir
+    also: [sysdesign, ranking, retrieval]
+    type: design
+    level: senior
+    tracks: [mle, ai]
+    q: >-
+      Design search ranking for an e-commerce marketplace (or a video product). What is
+      different from a feed?
+    a: |
+      **What is different.** There is an explicit query, so relevance to it is a hard requirement and personalisation is secondary. Queries range from exact product lookups to vague exploration. Results must be available, and for commerce the objective mixes relevance, conversion and revenue.
+
+      **1. Query understanding.** Normalise, correct spelling, classify the category and intent, parse attributes (brand, colour, size), and produce rewrites. Use parsed attributes as boosts or soft filters unless confidence is high.
+
+      **2. Retrieval.** Lexical retrieval over title, attributes and description with field weights, combined with embedding retrieval trained on query-to-purchased-item pairs for vocabulary mismatch. Apply structured filters (in stock, ships to the user, category). Take the union to the ranker. Track zero-result and low-recall queries.
+
+      **3. Ranking.** Features: text match (BM25 per field, semantic similarity), item quality (rating, return rate, seller reliability), popularity and conversion rates for this query and category, price and delivery, freshness, and user features (past brands, price sensitivity). Model: a gradient-boosted LambdaMART ranker is a strong first system; later a neural multi-task model predicting click, add-to-cart and purchase.
+
+      **4. Labels.** Two sources that disagree in useful ways: behavioural labels (click, cart, purchase, weighted) are plentiful but position-biased and favour cheap or popular items; human or LLM relevance judgments are unbiased by position but costly. Use judgments for a relevance model or a relevance floor, and behaviour for the ordering among relevant items, with a position-bias correction.
+
+      **5. Objective.** Rank by expected value, for example $p(\text{purchase})\times\text{value}$, subject to relevance above a threshold. Without the floor, popular but irrelevant items rise.
+
+      **6. Re-ranking.** Diversity of sellers and brands, sponsored results blended with a relevance constraint, deduplication of near-identical listings.
+
+      **7. Evaluation.** Offline NDCG on judged queries by segment; online conversion per search, revenue per search, reformulation and abandonment rate, zero-result rate; interleaving for ranking changes.
+
+      **8. Problems to raise.** Cold-start listings with no behavioural data; sellers gaming titles with keywords; tail queries with sparse behaviour, where the text and semantic features carry the ranking; latency, since the page is expected in a few hundred milliseconds.
+
+      For video search the same structure holds with watch-based labels, transcripts and visual embeddings as content features, and freshness as a larger factor.
+    probes:
+      - How would you combine a relevance model and a conversion model into one score?
+      - A seller stuffs popular keywords into titles. How does your system respond?
+  - id: recsys-044
+    skill: ads
+    also: [sysdesign, bayesian, production-ml]
+    type: design
+    level: staff
+    tracks: [mle]
+    q: >-
+      Design the ads system for a feed product: CTR and CVR prediction plus the auction.
+      Start from what each party wants.
+    a: |
+      **1. Parties and objective.** Advertisers want outcomes at or below a target cost; users want relevant, unobtrusive ads; the platform wants long-term revenue. Rank by total value, $\text{bid}\times p(\text{action})+\text{user-value term}$, under an ad-load constraint.
+
+      **2. Funnel per request.** Targeting and eligibility (audience, budget remaining, frequency caps, policy) reduce millions of ads to thousands; retrieval by two-tower and targeting indexes; a light pre-ranker on approximate eCPM; the final ranker on a few hundred; then the auction and pricing.
+
+      **3. Prediction models.**
+
+      - pCTR and pCVR as multi-task heads over shared embeddings, with entire-space modelling for CVR (loss on click and on click-and-convert over all impressions).
+      - Features: user and context, ad, advertiser and creative ids and content embeddings, user-advertiser history, real-time counters.
+      - Negative downsampling with logit correction; a calibration layer refitted frequently, checked per advertiser, placement and new-versus-old ads.
+      - Delayed conversions: a waiting window plus delay correction, and fast proxy events.
+      - Continuous training, because ads and budgets turn over quickly.
+
+      **4. Auction.** Convert every bid type to eCPM; allocate slots by total value; price with a second-price rule (or VCG for multi-slot), with reserve prices. Explain the choice: second-price style rules keep bidding simple for advertisers.
+
+      **5. Bidding and pacing.** Auto-bidding computes per-auction bids from predicted value and a multiplier that enforces the budget and the cost target; a feedback controller updates multipliers from delivery.
+
+      **6. Blending with organic.** Insert an ad only if its total value exceeds the organic item it displaces plus a cost for ad load; cap density and spacing.
+
+      **7. Evaluation.** Offline: normalised log loss, calibration by slice, AUC. Online: revenue, advertiser value (conversions, cost per conversion against target), user engagement and ad hides, with holdouts to measure the effect of ad load on retention. Budget-constrained campaigns make user-level A/B tests leak between arms, so some tests need budget-split designs.
+
+      **8. Risks.** Miscalibration misprices ads; cold-start ads need exploration with too few conversions to learn from; selection bias from training only on auction winners; invalid traffic and click fraud; advertisers adapting bids to any mechanism change.
+    probes:
+      - Why does a user-level A/B test mis-measure a change to the auction?
+      - How do you explore new ads without wasting advertiser budget?
+  - id: recsys-045
+    skill: personalization
+    also: [causal, sysdesign, multi-objective]
+    type: design
+    level: senior
+    tracks: [mle]
+    q: >-
+      Design a system that decides which push notifications to send to each user, and when.
+    a: |
+      **Why it is not feed ranking.** A notification interrupts. The user did not ask for it, the cost of a bad one is high (the user disables notifications or uninstalls, which is hard to reverse), and the right comparison is against sending nothing.
+
+      **1. Objective.** Maximise incremental long-term engagement subject to a per-user volume budget and guardrails on opt-outs. "Incremental" matters: a user who would have opened the app anyway gives no credit to the notification, so open rate alone over-values notifications to already active users.
+
+      **2. Candidates.** Events from many producers: social activity, content recommendations, reminders, marketing, transactional. Transactional and safety messages bypass ranking.
+
+      **3. Models.**
+
+      - $p(\text{open}\mid\text{send})$ and downstream session value.
+      - $p(\text{disable or uninstall}\mid\text{send})$, weighted heavily.
+      - **Uplift**: the difference in the user's activity with and without the notification, learned from a randomised holdout that withholds notifications (two-model or meta-learner approaches). The holdout is also the ground truth for the whole system's value.
+      - Features: user activity level and recency, past response by notification type, time of day and timezone, fatigue features (sends and dismissals in the last hours and days), content quality.
+
+      **4. Decision.** Score each candidate by expected incremental value minus $\lambda\times$ expected cost. Send if it clears a threshold, which rises as the user's recent volume grows. A per-user daily budget, itself personalised, allocates across types; the multiplier $\lambda$ is tuned so opt-out rates meet their target.
+
+      **5. Timing.** Queue non-urgent notifications to the user's predicted active window; batch or digest low-value events; expire stale ones; deduplicate across channels (push, email, in-app).
+
+      **6. Evaluation.** Online: active days and retention against the no-notification holdout, opt-out and uninstall rates, per-type volume. Long tests, because fatigue accumulates. Offline: uplift metrics (Qini or uplift curves) on randomised data.
+
+      **7. Risks.** Every producing team wants more volume, so a shared budget and a common currency are organisational requirements; short-term opens rise with volume while long-term reach falls as users disable the channel; feedback is sparse for users who rarely respond.
+    probes:
+      - How large should the no-notification holdout be, and how long do you keep users in it?
+      - How do you set the volume budget for a brand-new user?
+  - id: recsys-046
+    skill: search-ir
+    also: [sysdesign, nlp, genrec]
+    type: design
+    level: senior
+    tracks: [mle, ai]
+    q: >-
+      Design a "people also search for" or related-query suggestion feature for a search
+      product.
+    a: |
+      **1. Goal.** Help the user reach a successful search faster: refine an ambiguous query, recover from a failed one, or explore adjacent topics. Success is not suggestion clicks alone but whether the session ends satisfied with fewer manual reformulations.
+
+      **2. Candidate generation.**
+
+      - **Session reformulations**: pairs $q\to q'$ from logs where $q'$ followed $q$ within a session and led to a satisfied click. Count with a time decay and normalise for the popularity of $q'$ (pointwise mutual information rather than raw counts), otherwise every query suggests the same trending terms.
+      - **Query-click graph**: queries that lead to clicks on the same results are related; random walks or co-click similarity find neighbours with different wording.
+      - **Embedding neighbours** of the query, for tail queries with sparse logs.
+      - **Generated suggestions** from a language model, conditioned on the query and optionally the top results, for unseen queries. Generated candidates must be checked for having good results.
+
+      **3. Filtering.** Remove near-duplicates and trivial variants (plural, word order), offensive or sensitive suggestions, suggestions about private individuals, and queries that return poor results. Safety filtering is strict here because the product is putting words on the page that the user did not type.
+
+      **4. Ranking.** Predict the probability that the suggestion is clicked and that the resulting search succeeds; features include co-occurrence statistics, semantic similarity (related but not identical), the suggestion's own result quality, freshness and trend signals, and user context. Diversify across intents so that an ambiguous query gets suggestions for each sense.
+
+      **5. Serving.** Precompute suggestions for head and torso queries into a key-value store, refreshed daily with a faster path for trending topics; compute tail queries online from embeddings or a small model within tens of milliseconds, or show nothing.
+
+      **6. Evaluation.** Offline: held-out next-query prediction, plus human or LLM judgments of relatedness and usefulness. Online: suggestion click-through, success rate of the following search, overall session success and reformulation rate, with attention to position bias among suggestions.
+
+      **7. Risks.** Popularity feedback (shown suggestions get searched more and reinforce themselves), manipulation by coordinated searching, stale suggestions for evolving topics, and personalisation that leaks one user's sensitive history into visible suggestions.
+    probes:
+      - How is this different from query autocomplete?
+      - How do you stop the feature's own clicks from polluting its training data?

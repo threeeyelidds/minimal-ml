@@ -391,7 +391,7 @@ But their roles differ:
 | SiLU gate can exceed one or become slightly negative | sigmoid gates remain between zero and one |
 | increases feature interactions | controls remembering, writing, and reading |
 
-See [Activation Functions](activations.qmd#gated-activations) for the SwiGLU
+See [Activation Functions](activations.qmd#sec-gated-activations) for the SwiGLU
 derivation.
 
 ## RNN, LSTM, and Transformer Comparison

@@ -8,3 +8,8 @@ _freeze/
 
 /.quarto/
 **/*.quarto_ipynb
+
+# Raw job descriptions (employers' text; refetch with tools/fetch_jobs.py)
+data/raw/
+# Local scratch output, not part of the site
+artifacts/

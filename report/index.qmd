@@ -1,0 +1,251 @@
+---
+title: "What senior ML jobs ask for"
+subtitle: "Skills named in currently open machine learning engineer, AI engineer and research engineer postings"
+toc: true
+toc-depth: 2
+toc-expand: 1
+---
+
+This report reads {{< var n_postings >}} open, senior-eligible postings from {{< var n_companies >}} employers,
+fetched on {{< var fetched >}}, and counts which of {{< var n_skills >}} skills each one names. The skills are
+grouped into {{< var n_areas >}} areas. Every skill listed here has review questions on the
+[skill pages](../skills/index.qmd) and in the [review app](../review/index.qmd).
+
+Percentages are the share of postings whose description names the skill. A posting names a skill when its
+text matches that skill's patterns in `tools/taxonomy.py`; the [method and limits](#method) section says what
+that does and does not measure.
+
+## Summary
+
+- **Three different jobs share these titles.** Machine learning engineer postings ask for PyTorch
+  ({{< var p_pytorch_mle >}}%), the path to production ({{< var p_production_ml_mle >}}%) and MLOps
+  ({{< var p_mlops_mle >}}%). AI engineer postings ask for agents ({{< var p_agents_ai >}}%), agent frameworks
+  and harnesses ({{< var p_orchestration_ai >}}%), backend services ({{< var p_backend_ai >}}%) and
+  TypeScript ({{< var p_typescript_ai >}}%), and only {{< var p_pytorch_ai >}}% name PyTorch. Research engineer
+  postings ask for experiment rigor ({{< var p_experimentation_re >}}%), fast and correct research code
+  ({{< var p_research_eng_re >}}%) and reinforcement learning ({{< var p_rl_re >}}%).
+- **LLMs are the default subject.** {{< var p_llm_general >}}% of all postings name LLMs or foundation models and
+  {{< var p_agents >}}% name agents. Classical ML is named far less often: classical models in
+  {{< var p_classical_ml >}}%, feature engineering in {{< var p_feature_eng >}}%, statistics in
+  {{< var p_statistics >}}%.
+- **Evaluation is the technical skill the three tracks share most evenly.** {{< var p_evals >}}% of postings
+  name model evaluation ({{< var p_evals_mle >}}%, {{< var p_evals_ai >}}% and {{< var p_evals_re >}}% by track),
+  and {{< var p_llm_evals >}}% name eval harnesses, judges or graders specifically.
+- **Production comes before modelling.** Shipping to production ({{< var p_production_ml >}}%), reliability
+  ({{< var p_reliability >}}%), latency and throughput ({{< var p_latency >}}%) and monitoring
+  ({{< var p_ml_observability >}}%) are each named more often than PyTorch ({{< var p_pytorch >}}%) or any
+  training method (fine-tuning: {{< var p_finetuning >}}%).
+- **Senior means scope.** Ownership is named in {{< var p_ownership >}}% of postings, cross-functional work in
+  {{< var p_xfn >}}%, communication in {{< var p_communication >}}%, ambiguity in {{< var p_ambiguity >}}%. Technical
+  leadership rises from {{< var lv_tech_leadership_senior >}}% of postings titled senior to
+  {{< var lv_tech_leadership_principal >}}% of those titled principal.
+- **Working with AI coding agents is now a named skill**: {{< var p_ai_coding_tools >}}% of postings overall and
+  {{< var p_ai_coding_tools_ai >}}% of AI engineer postings.
+- **Experience asked**: {{< var yoe_share >}}% of postings state a number of years; the median is
+  {{< var yoe_median >}}, and {{< var yoe_staff >}} for postings titled staff.
+- **What postings leave out**: only {{< var p_dsa >}}% mention data structures and algorithms, yet nearly every
+  loop has a coding round. Section [What interviews test beyond the posting](#loops) maps the rounds to the areas.
+
+## What was collected
+
+Postings come from the public job-board feeds of Greenhouse, Ashby and Lever for a list of AI labs, AI product
+startups, AI infrastructure companies, consumer and marketplace technology companies, robotics and autonomy
+companies and trading firms, plus the career sites of large employers that run their own
+(`tools/fetch_jobs.py`, `tools/fetch_jobs_bigtech.py`). A posting is kept when its title is a machine learning
+engineer, AI engineer or research engineer role (including "software engineer, ML" and "member of technical
+staff" with an ML subject), is not an internship, new-graduate, management, sales or hardware role, and its
+description names at least three ML skills.
+
+The feeds returned {{< var n_raw >}} matching postings, {{< var n_unique >}} after merging the same role posted
+in several locations. {{< var dropped_not_ml >}} were dropped because the description names fewer than three ML
+skills and {{< var dropped_junior >}} because the title or the experience asked is below senior, leaving
+{{< var n_postings >}}. {{< var us_share >}}% list a United States location. The largest employers are capped at
+150 postings each so that no one company dominates.
+
+::: {.panel-tabset}
+
+## By track
+
+{{< include _gen/sample_track.md >}}
+
+## By role type
+
+{{< include _gen/sample_archetype.md >}}
+
+## By employer type
+
+{{< include _gen/sample_group.md >}}
+
+## By level in title
+
+{{< include _gen/sample_level.md >}}
+
+:::
+
+Labs such as OpenAI and Anthropic do not put a level in the title, so "no level in title" postings stay in the
+sample unless they ask for two years or less. The employers with the most postings analysed:
+
+<details class="qa"><summary>Employers and posting counts</summary>
+
+{{< include _gen/companies.md >}}
+
+</details>
+
+## The fifty most-named skills
+
+{{< include _gen/top_skills.md >}}
+
+## The three tracks
+
+The same title words cover different work. The tables below show, for each track, the skills that separate it
+most from the other two, then its top 25 technical skills.
+
+### Machine learning engineer
+
+The MLE postings are about training models and running them in production: PyTorch, MLOps, model serving,
+distributed training, metrics. This track also holds the two specialised families, search / recommendation /
+ads and autonomy / robotics, each with its own vocabulary.
+
+{{< include _gen/distinct_mle.md >}}
+
+<details class="qa"><summary>Top 25 technical skills in MLE postings</summary>
+
+{{< include _gen/track_mle.md >}}
+
+</details>
+
+### AI engineer
+
+The AI engineer postings describe software engineers who build products on top of models: agents, tools,
+retrieval, evaluation, and the backend and frontend around them. Model training is rare here; reliability,
+cloud and developer tooling are common. {{< var n_arch_forward_deployed >}} postings in the sample are
+forward-deployed roles that sit with a customer.
+
+{{< include _gen/distinct_ai-engineer.md >}}
+
+<details class="qa"><summary>Top 25 technical skills in AI engineer postings</summary>
+
+{{< include _gen/track_ai-engineer.md >}}
+
+</details>
+
+### Research engineer
+
+The research engineer postings describe engineers inside research teams: they build training and evaluation
+systems, run experiments, and are expected to have research judgment. Reinforcement learning, post-training
+and large-scale training are named here far more than elsewhere. {{< var phd_research_engineer >}}% mention a
+PhD, against {{< var phd_ai_engineer >}}% of AI engineer postings.
+
+{{< include _gen/distinct_research-engineer.md >}}
+
+<details class="qa"><summary>Top 25 technical skills in research engineer postings</summary>
+
+{{< include _gen/track_research-engineer.md >}}
+
+</details>
+
+## Eight role types
+
+Titles alone hide the role. Grouping by title and team gives eight role types; for each, the skills it names
+much more often than the sample as a whole (role share vs overall share).
+
+{{< include _gen/archetypes.md >}}
+
+## By employer type
+
+{{< include _gen/groups.md >}}
+
+## Level, experience and pay
+
+Skills whose share grows most from senior-titled to staff- and principal-titled postings:
+
+{{< include _gen/levels.md >}}
+
+The step from senior to staff and principal is a step in scope. Technical leadership, mentoring and
+cross-functional work rise most, with trade-off judgment. The technical skills that rise with level are the
+architecture-level ones: system design and distributed systems.
+
+**Years of experience.** {{< var yoe_share >}}% of postings state a number. Median {{< var yoe_median >}} overall,
+{{< var yoe_senior >}} for senior titles, {{< var yoe_staff >}} for staff, {{< var yoe_principal >}} for principal.
+
+{{< include _gen/yoe.md >}}
+
+**Posted pay.** Many United States postings carry a base-pay range. The figures below are the ranges as posted:
+base salary only, without equity or bonus, which at labs and late-stage startups can exceed the base.
+
+::: {.panel-tabset}
+
+## By level
+
+{{< include _gen/pay_level.md >}}
+
+## By employer type
+
+{{< include _gen/pay_group.md >}}
+
+## By track
+
+{{< include _gen/pay_track.md >}}
+
+:::
+
+## Every skill, by area {#inventory}
+
+All {{< var n_skills >}} skills, with the share of postings naming each, the split by track, and the employers
+that name it most. The link on each skill opens its checklist and questions.
+
+{{< include _gen/areas.md >}}
+
+## What interviews test beyond the posting {#loops}
+
+A posting lists what the job needs; an interview loop tests a narrower, more standard set. The table below is
+the usual structure of senior loops for these roles. It comes from how these loops are commonly run, not from
+the posting text, so check each company's own interview guide.
+
+| Round | MLE | AI engineer | Research engineer | Areas to review |
+|:--|:--|:--|:--|:--|
+| Coding (data structures and algorithms) | 1 or 2 rounds | 1 or 2 rounds, often practical: build a small service or agent | 1 round | [Software engineering](../skills/swe.qmd) |
+| ML coding (implement a model, loss or training loop) | common | rare | very common | [Deep learning](../skills/dl.qmd), [ML fundamentals](../skills/mlfund.qmd) |
+| ML breadth and depth | 1 round | lighter | 1 round, deeper on training | [ML fundamentals](../skills/mlfund.qmd), [Deep learning](../skills/dl.qmd), [LLM training](../skills/llm.qmd) |
+| ML / AI system design | 1 round; ranking, retrieval or serving | 1 round; agent, RAG or eval system | sometimes; training or eval infrastructure | [Design cases](../skills/cases.qmd), [Search and recsys](../skills/recsys.qmd), [LLM applications](../skills/llmapp.qmd), [Inference](../skills/serving.qmd) |
+| General system design | sometimes | common | sometimes | [Software engineering](../skills/swe.qmd), [MLOps](../skills/mlops.qmd) |
+| Project deep dive | always | always | always, plus a paper or research discussion | [Senior scope](../skills/senior.qmd), [Research](../skills/research.qmd) |
+| Behavioural and hiring manager | always | always; customer scenarios for forward-deployed roles | always; mission and safety questions at labs | [Senior scope](../skills/senior.qmd) |
+| Take-home or work trial | sometimes | common at startups | sometimes | [Evaluation](../skills/eval.qmd), [LLM applications](../skills/llmapp.qmd) |
+
+Two consequences for preparation. First, coding and behavioural rounds carry more weight than their share of
+posting text suggests. Second, the design round is where the posting's skills are tested together, so the
+[design cases](../skills/cases.qmd) are the best single place to practise them.
+
+## Coverage of this site
+
+Every skill in the inventory has a checklist and at least one question card; `tools/validate_bank.py` checks
+that on every change. The table shows the cards and the long-form notes per area.
+
+{{< include _gen/coverage.md >}}
+
+The [plan](../plan/index.qmd) turns this into a schedule per track.
+
+## Method and limits {#method}
+
+**Counting.** Each skill has a set of text patterns (`tools/taxonomy.py`). Equal-opportunity, benefits and
+company-boilerplate lines are removed before matching. A skill counts once per posting. The patterns were
+checked against the phrases they match and tightened where a generic word inflated a count (for example
+"reliable" or "integrations").
+
+**What the share means.** It is how often employers write the skill down. It understates skills that are
+assumed (Python, coding ability, statistics) and overstates words that are fashionable in posting language.
+Treat differences of a few points as noise and read the ranking, the track differences and the large gaps.
+
+**Sample.** The sample is the employers in the fetch list, not the whole market. It leans to AI labs, AI
+startups and robotics, and to the United States. Employers that do not publish a machine-readable board are
+missing unless `tools/fetch_jobs_bigtech.py` reaches them; the run log in `data/summary.json` records which
+were fetched. Roles titled only "software engineer" or "research scientist" are outside the three tracks and
+are not included.
+
+**Level.** "Senior-eligible" means the title says senior, staff, lead or principal, or the title has no level
+and the description does not ask for two years or less.
+
+**Refreshing.** `python tools/fetch_jobs.py`, `python tools/fetch_jobs_bigtech.py`,
+`python tools/analyze_skills.py`, then render the site. Postings are a snapshot; every number on this page
+changes when the data is refreshed.

@@ -55,6 +55,48 @@ The teacher supplies the expectation, so missing a teacher-supported class is
 costly. The entropy of $q_\tau$ is constant with respect to the student;
 therefore this is equivalent to soft-label cross-entropy up to a constant.
 
+::: {.callout-note title="One-hot targets: CE = forward KL = NLL"}
+If the target is one-hot at the observed class $y$, then
+$q(i\mid x)=\mathbf{1}[i=y]$ and its entropy is zero: $H(q)=0$.
+Thus the losses are exactly equal:
+
+$$
+\operatorname{CE}(q,p_\theta)
+= \operatorname{KL}(q\|p_\theta) + H(q)
+= \operatorname{KL}(q\|p_\theta)
+= -\log p_\theta(y\mid x)
+= \operatorname{NLL}(y,p_\theta).
+$$
+
+This equality uses **forward KL**, from target to student, with the same
+predicted distribution and loss scaling. For soft targets, CE and forward KL
+differ by the target entropy, but still have the same student gradients when
+the target is fixed.
+
+To see why, expand the identity for a soft target:
+
+$$
+\underbrace{-\sum_i q_i\log p_{\theta,i}}_{\operatorname{CE}(q,p_\theta)}
+= \underbrace{\sum_i q_i\log\frac{q_i}{p_{\theta,i}}}_{\operatorname{KL}(q\|p_\theta)}
++ \underbrace{\left(-\sum_i q_i\log q_i\right)}_{H(q)}.
+$$
+
+When the teacher target $q$ is fixed, $H(q)$ does not depend on the student
+parameters $\theta$, so its gradient is zero:
+
+$$
+\nabla_\theta\operatorname{CE}(q,p_\theta)
+= \nabla_\theta\operatorname{KL}(q\|p_\theta).
+$$
+
+The loss values differ, but they produce the same student updates under the
+same scaling and optimizer. For example, if $q=(0.5,0.5)$, then
+$H(q)=\log 2\approx0.693$ (using natural logarithms). CE is always KL plus
+$0.693$, regardless of the student prediction. When $p_\theta=q$, KL is zero
+while CE is $0.693$. For a one-hot target, $H(q)=0$, so even the loss values
+are identical.
+:::
+
 Larger $\tau$ reveals relative preferences among non-maximum classes. Dividing
 logits by $\tau$ also shrinks their gradients, so the conventional $\tau^2$
 factor approximately preserves gradient scale when comparing temperatures.
@@ -269,6 +311,130 @@ bases. It connects distillation to
 Self-distillation methods such as BYOL- and DINO-style training use a momentum
 or stop-gradient teacher to create a stable target. Their main challenge is not
 compression but preventing representational collapse.
+
+## Learning from an Unreliable Teacher
+
+The strongest practical evidence here supports **checking teacher-generated
+supervision against external feedback**, rather than assuming that confidence
+or agreement makes a target correct. The following are documented practices
+and findings, not a universal recipe for arbitrary teacher noise.
+
+- **Filter generated solutions using correctness signals.** DeepSeek-R1
+  samples multiple reasoning responses, retains those judged correct, and
+  applies readability filters. Its smaller Qwen/Llama students receive SFT on
+  the resulting curated dataset. Some judgments use a model supplied with
+  ground truth, so the pipeline is not entirely rule-verified.
+  See [DeepSeek-R1 (2025), §§2.3.3–2.4](https://arxiv.org/html/2501.12948v1#S2.SS3.SSS3).
+- **For coding, execute the proposed solution and validate tool use.**
+  Qwen3-Coder-Next filters unsuccessful trajectories and malformed tool calls,
+  and verifies SFT responses using compiler, runtime, and environment feedback.
+  This is a concrete alternative to trusting the generator's self-assessment.
+  See [Qwen3-Coder-Next (2026), §§3.1.2 and 4.1](https://arxiv.org/html/2603.00729v1#S4.SS1).
+- **Do not equate confidence with correctness.** Guo et al. show that modern
+  networks can be miscalibrated and study temperature scaling on held-out
+  data. Calibration can improve probability estimates; a positive scalar
+  temperature preserves class ranking and cannot fix a wrong top prediction.
+  See [On Calibration of Modern Neural Networks (ICML 2017)](https://proceedings.mlr.press/v70/guo17a.html).
+  For fitting methods and calibration-oriented training, see
+  [Model Calibration: From CTR/CVR to Calibrated Decisions](calibration.qmd).
+- **Select by student task performance, not teacher imitation alone.**
+  Stanton et al. find that closer teacher matching does not always improve
+  generalization. This supports evaluating downstream quality separately from
+  distillation loss. See [Does Knowledge Distillation Really Work?
+  (NeurIPS 2021)](https://proceedings.nips.cc/paper_files/paper/2021/hash/376c6b9ff3bedbbea56751a84fffc10c-Abstract.html).
+
+A practical synthesis is to retain trusted supervision, filter teacher outputs
+where meaningful verification is available, and compare against a student
+trained without distillation on held-out tasks. Tune the teacher contribution
+on validation data; use a separate test set for the final comparison. These
+are evaluation recommendations drawn from the evidence above, not an
+established optimal weighting rule. Passing tests does not prove every
+reasoning step correct, and shared teacher errors can survive consensus.
+
+## Multi-Teacher Distillation and MoE
+
+Multiple teachers can provide complementary supervision: for example, one
+specializes in repository repair, another in web development, and another in
+single-turn code questions. There are distinct ways to combine them.
+
+### Combining distributions or selecting a teacher
+
+For teachers $q_1,\ldots,q_K$ over the same output space, a generic probability
+mixture is
+
+$$
+\bar q(\cdot\mid x)=\sum_{k=1}^K a_k(x)q_k(\cdot\mid x),
+\qquad a_k(x)\geq0,\quad\sum_k a_k(x)=1.
+$$
+
+At a fixed input and temperature, with fixed weights and teachers,
+
+$$
+\sum_k a_k\operatorname{KL}(q_k\|p_\theta)
+=\operatorname{KL}(\bar q\|p_\theta)
++\sum_k a_k\operatorname{KL}(q_k\|\bar q).
+$$
+
+The last term is independent of the student, so weighted **forward KL** to
+individual teachers has the same student gradient as forward KL to their
+probability mixture. This is an algebraic identity, not a claim about the
+implementation of the reports below. It does not extend unchanged to reverse
+KL or averaging raw logits.
+
+Alternatively, select a specialist $k=d(x)$ for each task, or collect and
+verify generated solutions from several teachers for sequence-level SFT.
+Direct token-distribution matching requires compatible token spaces or an
+explicit alignment; text-based distillation can cross tokenizer boundaries.
+
+### Recent coding and agentic model examples
+
+**Qwen3-Coder-Next (2026).** The report describes specialists for Web
+Development, User Experience, Single-turn RL, and Software Engineering,
+trained from a shared starting model and distilled back into the SFT model.
+The deployed model is an MoE with 80B total and 3B active parameters.
+Section 4.2.5 documents consolidation but does not specify the distillation
+loss, teacher weights, or whether rollouts are on-policy; those details should
+not be inferred. See the [technical report, §§1 and 4.2.5](https://arxiv.org/html/2603.00729v1#S4.SS2.SSS5).
+
+**MiMo-V2-Flash (2026).** This 309B-total/15B-active MoE uses Multi-Teacher
+On-Policy Distillation (MOPD). A teacher is selected by prompt domain; the
+student generates the trajectories. Its token-level signal is based on
+
+$$
+\log q_{d(x)}(y_t\mid h_t)-\log p_\theta(y_t\mid h_t),
+$$
+
+corresponding to reverse-KL distillation. The training surrogate combines
+this signal with outcome-reward advantages and corrects training/inference
+policy mismatch. Thus MOPD here means domain-specialist supervision on student
+rollouts, not averaging every teacher on every token. See the
+[technical report, §4.4](https://arxiv.org/html/2601.02780v2#S4.SS4).
+
+### How this combines with MoE
+
+| Concept | What is selected or transferred? | Where it operates |
+|---|---|---|
+| Multi-teacher supervision | A full teacher model or a mixture of teacher targets | Training supervision |
+| Sparse MoE routing | Internal expert subnetworks for each token | Forward passes during training and inference |
+| Distillation into one deployed model | Behaviors from teachers transferred into student parameters | Removes the need to serve the teacher ensemble |
+
+A domain teacher is a complete model; it is not necessarily one internal MoE
+expert. Distilling several teachers into an MoE student does not imply a
+one-to-one mapping between teachers and expert subnetworks. The student can
+retain internal MoE routing while deployment uses only that single model.
+
+MoE also introduces a concrete on-policy training concern: MiMo reports
+replaying the expert routes recorded during rollout to reduce routing mismatch
+between inference and training. See [MiMo-V2-Flash, §4.6.1](https://arxiv.org/html/2601.02780v2#S4.SS6.SSS1).
+Conversely, an MoE teacher can supervise a dense student: DeepSeek-R1 distills
+into dense Qwen and Llama models through curated outputs, without copying its
+internal routing. See [DeepSeek-R1, §2.4](https://arxiv.org/html/2501.12948v1#S2.SS4).
+
+For an experiment, compare each single teacher with the multi-teacher setup
+under a matched student-training budget, and report results by domain as well
+as in aggregate. This is a suggested evaluation design: the reports establish
+working systems, not that every additional teacher or MoE architecture improves
+distillation.
 
 ## Choosing the Distillation Objective
 

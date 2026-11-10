@@ -1,16 +1,76 @@
-## How I use this site
+---
+title: "Minimal ML"
+toc: false
+---
 
-Each topic should answer four questions:
+::: {.hero}
+# Senior ML interview preparation, built from what open roles ask for
+
+<p class="lead">Notes, question cards and a review app for machine learning engineer, AI engineer and research
+engineer interviews. The skill list comes from {{< var n_postings >}} currently open senior postings at
+{{< var n_companies >}} employers.</p>
+
+[Start reviewing](review/index.qmd){.btn} [Read the report](report/index.qmd){.btn .ghost} [Skill map](skills/index.qmd){.btn .ghost}
+:::
+
+::: {.grid3}
+::: {.tile}
+<div class="big">{{< var n_postings >}}</div>
+### Postings analysed
+Open roles fetched on {{< var fetched >}}, filtered to senior, staff and principal level.
+:::
+::: {.tile}
+<div class="big">{{< var n_skills >}}</div>
+### Skills in {{< var n_areas >}} areas
+Each with the share of postings that name it, split by track.
+:::
+::: {.tile}
+<div class="big">{{< var n_cards >}}</div>
+### Review cards
+Questions with senior-level answers, including {{< var n_cases >}} worked design cases.
+:::
+:::
+
+## Three tracks
+
+::: {.grid3}
+::: {.tile}
+### Machine learning engineer
+{{< var n_mle >}} postings. Trains models and runs them in production: PyTorch ({{< var p_pytorch_mle >}}%),
+production lifecycle ({{< var p_production_ml_mle >}}%), MLOps ({{< var p_mlops_mle >}}%), plus ranking or
+autonomy depending on the company.
+:::
+::: {.tile}
+### AI engineer
+{{< var n_ai_engineer >}} postings. Builds products on models: agents ({{< var p_agents_ai >}}%), frameworks and
+harnesses ({{< var p_orchestration_ai >}}%), backend ({{< var p_backend_ai >}}%), evaluation
+({{< var p_evals_ai >}}%).
+:::
+::: {.tile}
+### Research engineer
+{{< var n_research_engineer >}} postings. Engineers inside research teams: experiment rigor
+({{< var p_experimentation_re >}}%), research code ({{< var p_research_eng_re >}}%), reinforcement learning
+({{< var p_rl_re >}}%), large-scale training ({{< var p_dist_training_re >}}%).
+:::
+:::
+
+## What is here
+
+- **[Report](report/index.qmd)**: what the postings ask for, by track, role type, employer type and level, with
+  every skill counted.
+- **[Skills](skills/index.qmd)**: one page per area with the demand table, the senior bar, a checklist and the
+  questions with answers. **[Design cases](skills/cases.qmd)** are the worked system design rounds.
+- **[Review](review/index.qmd)**: the same cards with spaced repetition, mock interview rounds, and a readiness
+  figure per track that shows the highest-demand skills you have not covered.
+- **[Plan](plan/index.qmd)**: the order of areas per track, a six-week schedule and the daily loop.
+- **[Open roles](jobs/index.qmd)**: the postings themselves, filterable by track, role type and skill.
+- **[Notes](notes/index.qmd)**: long-form deep dives from first principles, linked from the skill pages.
+
+## How the notes are written
+
+Each deep-dive note answers four questions:
 
 1. What is the core idea?
 2. Can I derive it?
 3. Can I implement it in PyTorch?
 4. What deep dive questions expose whether I really understand it?
-
-## Current focus
-
-- ML fundamentals
-- Transformers
-- Post-training / RL
-- ML systems
-- Research reasoning

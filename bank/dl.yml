@@ -1,0 +1,1675 @@
+domain: dl
+title: Deep learning
+summary: >-
+  The depth round and the "implement it" coding round: how networks are built, trained and
+  debugged, with transformers at the centre, plus generative models, representation learning,
+  sequence and graph models, and fluency in the frameworks. About half of the postings name a
+  skill here. PyTorch alone appears in roughly a third of all postings and in over half of the
+  ML-engineer ones, and JAX in about a quarter of research-engineer postings. Interviewers
+  expect you to write attention, a transformer block and a training loop from memory, and to
+  explain each design choice by what it does to gradients, numerics or cost.
+senior_bar:
+  - Writes attention, a pre-norm block, a normalisation layer, an optimiser step and a training loop from memory, with correct shapes and masks, and tests them (causality check, initial loss near ln V).
+  - Explains architectural choices by their effect on signal and gradient propagation or on cost (why pre-norm, why 1/sqrt(d_k), why decoupled weight decay, why warmup), not by citing the paper.
+  - Debugs training by measurement. Overfits one batch, reads per-layer gradient and activation norms, finds the first non-finite value, and changes one thing at a time.
+  - Counts parameters, FLOPs and memory (activations, logits, KV cache) for a given configuration and knows which term dominates.
+  - Knows the numerical limits of fp16 and bf16 and where precision bugs come from.
+  - Understands the frameworks below the API. Knows what autograd records, what tracing and jit cache on, and where state lives in PyTorch modules versus JAX pytrees.
+  - Separates what is derived from what is empirical or contested, such as learning-rate scaling with batch size under Adam, or why self-distillation avoids collapse.
+rounds:
+  - Deep learning depth
+  - ML coding (implement a model component)
+  - Training debugging / research engineering
+  - ML system design (model architecture part)
+  - Paper discussion
+notes:
+  - notes/foundations/activations.qmd
+  - notes/foundations/optimizers.qmd
+  - notes/foundations/losses.qmd
+  - notes/foundations/prediction_decision_losses.qmd
+  - notes/foundations/generative_losses.qmd
+  - notes/foundations/representation_learning.qmd
+  - notes/foundations/rnn_lstm.qmd
+  - notes/transformers/attention.qmd
+  - notes/transformers/transformer.qmd
+  - notes/transformers/positional_encoding.qmd
+  - notes/advanced/advanced_attention.qmd
+  - notes/advanced/linear_attention.qmd
+checklist:
+  - skill: dl-fundamentals
+    items:
+      - Explain reverse-mode autodiff as vector-Jacobian products and why it costs activation memory
+      - Derive the gradients of a linear layer and of softmax cross-entropy, with shapes
+      - Derive Xavier and He initialisation and explain residual-branch scaling
+      - Compare BatchNorm, LayerNorm and RMSNorm (axes, inference behaviour, failure modes) and implement LayerNorm
+      - Explain how residual connections change gradient flow
+      - Compute conv output size, parameter count and receptive field, and contrast CNN and ViT inductive biases
+  - skill: training-dynamics
+    items:
+      - Write the SGD-with-momentum, Adam and AdamW updates and implement an AdamW step
+      - Explain why weight decay is decoupled and which parameters are excluded from it
+      - Justify warmup, cosine decay and global-norm clipping, and say how to set each
+      - Run a debugging sequence for a loss that does not decrease, starting with overfitting one batch
+      - Localise a NaN and name the fp16 and bf16 pitfalls
+      - Explain learning-rate scaling with batch size and the usual causes of divergence at scale
+  - skill: transformers
+    items:
+      - Implement scaled dot-product and multi-head attention with a causal mask, and test causality
+      - Derive the 1/sqrt(d_k) scaling
+      - Implement a pre-norm block and explain pre-norm versus post-norm
+      - Count parameters (about 12 d^2 per block) and state where compute and memory go
+      - Explain RoPE and why it yields relative-position dependence
+      - Derive KV-cache size and explain prefill versus decode
+      - Say what GQA, MQA and FlashAttention change and what they leave unchanged
+  - skill: sequence-models
+    items:
+      - Write the LSTM equations and explain how the cell path avoids vanishing gradients
+      - Explain backpropagation through time and why gradients vanish or explode in a vanilla RNN
+      - Compare RNNs, transformers and state-space models on parallelism, path length and inference state
+  - skill: generative
+    items:
+      - Derive the VAE ELBO and explain reparameterisation and posterior collapse
+      - State the GAN objective, the optimal discriminator and the main failure modes
+      - Write the diffusion forward process and noise-prediction loss, and explain DDIM and classifier-free guidance
+      - Write the flow-matching objective and relate it to diffusion
+      - Write the autoregressive likelihood and implement temperature, top-k and nucleus sampling
+  - skill: representation
+    items:
+      - Implement symmetric InfoNCE and state its value at chance
+      - Explain the role of temperature and the biases of in-batch negatives (popularity, false negatives)
+      - Mine hard negatives without flooding training with false negatives
+      - Define complete and dimensional collapse and say how each self-supervised family avoids them
+      - Evaluate embeddings by retrieval recall on the full corpus, linear probe and effective rank
+  - skill: gnn
+    items:
+      - Write the message-passing update and the GCN propagation rule
+      - Explain over-smoothing and over-squashing and why production GNNs are shallow
+      - Describe neighbour sampling for large graphs and the leakage risks in graph evaluation
+      - Name where GNNs pay off and the cheap baselines to try first
+  - skill: pytorch
+    items:
+      - Write a training loop with AMP, gradient clipping, a per-step scheduler and a correct evaluation function
+      - Distinguish model.eval() from torch.no_grad() and list the common autograd bugs
+      - Tune a DataLoader and diagnose an input-bound training job
+      - Explain what DDP does and the correctness details (sampler epochs, effective batch, metric aggregation)
+      - Say what torch.compile does, when it recompiles and when it helps
+  - skill: tensorflow
+    items:
+      - Explain tf.function tracing, retracing and the trace-time side-effect trap
+      - Use GradientTape and the Keras training flag correctly
+      - List the convention differences that break ports from PyTorch (layouts, epsilons, momentum, from_logits)
+      - Name the production components that keep TensorFlow stacks in use
+  - skill: jax
+    items:
+      - Use grad, jit and vmap and compose them, for example for per-example gradients
+      - Explain why JAX needs pure functions and how state is threaded explicitly
+      - Handle PRNG keys correctly (split, never reuse)
+      - Rewrite Python control flow for jit and avoid recompilation from changing shapes
+  - skill: hf
+    items:
+      - Load a model and tokenizer with the right dtype, device map and pinned revision
+      - Batch generation correctly for decoder-only models (pad token, left padding, attention mask)
+      - Prepare labels for causal-LM fine-tuning (-100 masking, no double shift) and use chat templates
+      - Explain what PEFT, accelerate, datasets and safetensors each provide
+cards:
+  - id: dl-001
+    skill: dl-fundamentals
+    also: [pytorch]
+    type: concept
+    level: core
+    tracks: [mle, re]
+    q: >-
+      What does reverse-mode automatic differentiation compute, why is it the right mode for
+      training neural networks, and what does a framework have to store to do it?
+    a: |
+      Backpropagation is reverse-mode autodiff applied to a scalar loss. The forward pass evaluates the computation graph and records each operation with its inputs. The backward pass visits operations in reverse topological order; each receives the gradient with respect to its output, $\bar y=\partial L/\partial y$, and returns $\bar x=J^\top\bar y$, a **vector-Jacobian product**. The Jacobian $J$ itself is never formed.
+
+      **Why reverse mode.** One backward pass yields the gradient with respect to every parameter for a small constant multiple of the forward cost. Forward mode (Jacobian-vector products) needs one pass per input direction, so it suits few inputs and many outputs. A network has millions of inputs (the parameters) and one output.
+
+      **What it costs.** Every intermediate value that a backward function needs must be kept until the backward pass runs, so memory grows with depth times activation size. That is why training needs far more memory than inference, and it motivates gradient checkpointing (recompute activations instead of storing them), reversible layers and `no_grad` at inference.
+
+      Details that matter in practice:
+
+      - A value used in several places receives the sum of the gradients from each use. In PyTorch `.grad` also accumulates across `backward()` calls, hence `zero_grad`.
+      - PyTorch builds the graph dynamically on each forward pass and frees it after `backward()` unless `retain_graph=True`.
+      - Overwriting in place a tensor that backward needs raises an error.
+      - `detach()` cuts the graph. Discrete operations (argmax, rounding, sampling) have no useful gradient; they need a straight-through or reparameterised estimator.
+      - Check custom backward functions against finite differences in float64 (`torch.autograd.gradcheck`).
+    probes:
+      - When would you use forward mode, and how do you get a Hessian-vector product?
+      - How does gradient checkpointing trade compute for memory?
+
+  - id: dl-002
+    skill: dl-fundamentals
+    also: [math]
+    type: derivation
+    level: core
+    tracks: [mle, re]
+    q: >-
+      Derive the backward pass of a linear layer Y = X W^T + b for a batch of inputs, given the
+      upstream gradient dL/dY. State all shapes.
+    a: |
+      Shapes: $X\in\mathbb{R}^{B\times d_{in}}$, $W\in\mathbb{R}^{d_{out}\times d_{in}}$, $b\in\mathbb{R}^{d_{out}}$, $Y\in\mathbb{R}^{B\times d_{out}}$, and the upstream gradient $G=\partial L/\partial Y\in\mathbb{R}^{B\times d_{out}}$.
+
+      Element-wise, $Y_{nj}=\sum_iX_{ni}W_{ji}+b_j$. Applying the chain rule to each argument:
+
+      $$
+      \frac{\partial L}{\partial W_{ji}}=\sum_nG_{nj}X_{ni}
+      \;\Rightarrow\;\nabla_WL=G^\top X,
+      \qquad
+      \frac{\partial L}{\partial b_j}=\sum_nG_{nj}
+      \;\Rightarrow\;\nabla_bL=G^\top\mathbf{1},
+      $$
+
+      $$
+      \frac{\partial L}{\partial X_{ni}}=\sum_jG_{nj}W_{ji}
+      \;\Rightarrow\;\nabla_XL=GW .
+      $$
+
+      Checks and consequences:
+
+      - Each gradient has the shape of its variable, and there is only one way to multiply $G$ and $X$ that gives $d_{out}\times d_{in}$.
+      - The weight gradient is a sum of per-example outer products $g_nx_n^\top$, so its rank is at most $B$. A per-example gradient norm is $\|g_n\|\,\|x_n\|$, available without materialising per-example gradients.
+      - The layer must keep $X$ for the backward pass. This is the activation memory of training.
+      - With an activation $A=\phi(Z)$ in front, $\partial L/\partial Z=\partial L/\partial A\odot\phi'(Z)$. Chaining layers gives $\delta_l=(\delta_{l+1}W_{l+1})\odot\phi'(z_l)$: a product of weight matrices and activation derivatives, which is where vanishing and exploding gradients come from.
+      - For inputs of shape $(B,T,d)$, the sums run over both batch and time.
+      - If the loss is a mean over the batch, the factor $1/B$ is already inside $G$.
+    probes:
+      - How would you compute per-example gradient norms for the whole network in one backward pass?
+      - What changes for a convolution?
+
+  - id: dl-003
+    skill: dl-fundamentals
+    also: [ml-fundamentals]
+    type: derivation
+    level: core
+    tracks: [mle, ai, re]
+    q: >-
+      Derive the gradient of softmax cross-entropy with respect to the logits. Why is it
+      implemented as a single fused operation?
+    a: |
+      With $p_i=e^{z_i}/\sum_je^{z_j}$ and a target distribution $y$ ($\sum_iy_i=1$), $L=-\sum_iy_i\log p_i$. Since $\log p_i=z_i-\log\sum_je^{z_j}$,
+
+      $$
+      L=-\sum_iy_iz_i+\log\sum_je^{z_j}
+      \quad\Rightarrow\quad
+      \frac{\partial L}{\partial z_k}=p_k-y_k,
+      \qquad\nabla_zL=p-y .
+      $$
+
+      The route through the softmax Jacobian $\partial p_i/\partial z_k=p_i(\delta_{ik}-p_k)$ gives the same result.
+
+      What it tells you:
+
+      - The gradient is the prediction error, bounded in $[-1,1]$, and it does not vanish when the model is confidently wrong, unlike MSE on softmax outputs.
+      - The Hessian is $\operatorname{diag}(p)-pp^\top\succeq0$: the loss is convex in the logits.
+      - Softmax is invariant to adding a constant to all logits, so the gradient sums to zero.
+      - With logits $z=Wh$, the gradient reaching the hidden state is $W^\top(p-y)$.
+      - Label smoothing replaces $y$ by $(1-\epsilon)y+\epsilon/K$, so the target logit gap stays finite. Temperature $z/T$ scales the gradient by $1/T$.
+
+      **Why fused.** Computing softmax and then log overflows ($e^{z}$ exceeds fp32 range near $z\approx89$) or returns $\log 0=-\infty$. The stable form is log-sum-exp with the maximum subtracted: $\log\sum_je^{z_j}=m+\log\sum_je^{z_j-m}$, $m=\max_jz_j$. So `F.cross_entropy` takes raw logits. Feeding it probabilities (a softmax applied twice) still trains, slowly, which makes it a common silent bug.
+
+      **Sanity check.** At initialisation the loss should be close to $\ln K$: about 10.8 for a 50k vocabulary.
+    probes:
+      - What is the binary special case?
+      - Why does label smoothing improve calibration in some settings and hurt distillation?
+
+  - id: dl-004
+    skill: dl-fundamentals
+    also: [training-dynamics]
+    type: concept
+    level: senior
+    tracks: [mle, re]
+    q: >-
+      Why does weight initialisation matter, how do Xavier and He initialisation arise, and
+      what do deep residual networks and transformers do on top of that?
+    a: |
+      The goal is to keep the scale of activations (forward) and of gradients (backward) roughly constant across depth at step 0. Otherwise both change exponentially with depth and the first updates are useless or overflow.
+
+      **Derivation.** For $y=Wx$ with i.i.d. zero-mean weights, $\operatorname{Var}(y_j)=\text{fan}_{in}\,\operatorname{Var}(w)\,\mathbb{E}[x^2]$. The forward scale is preserved when $\operatorname{Var}(w)=1/\text{fan}_{in}$; the backward scale when $\operatorname{Var}(w)=1/\text{fan}_{out}$. Xavier (Glorot) takes the compromise $2/(\text{fan}_{in}+\text{fan}_{out})$, which assumes a roughly linear activation such as tanh near zero. ReLU zeroes half of its inputs, halving $\mathbb{E}[x^2]$, so He (Kaiming) uses $\operatorname{Var}(w)=2/\text{fan}_{in}$.
+
+      **Symmetry.** Identical initial weights make the units of a layer identical for ever, so weights are random. Biases can start at zero.
+
+      **Residual networks.** Every block adds variance to the residual stream. Either zero-initialise the last layer of each branch, so the network starts as the identity, or scale the branch output projections by $1/\sqrt N$ for $N$ residual layers (GPT-2 does this on top of a base standard deviation of 0.02).
+
+      **Output layer.** Small output weights make the initial loss about $\ln K$. For imbalanced classification, set the final bias to the log-odds of the base rate, so the first steps are not spent learning the prior.
+
+      **Elsewhere.** Orthogonal initialisation for recurrent weights; LSTM forget-gate bias of +1.
+
+      **Symptoms of a bad initialisation.** Initial loss far above $\ln K$; per-layer activation standard deviations that grow or shrink with depth; many dead ReLUs; training that works only with a tiny learning rate. Normalisation layers hide a bad forward scale but not its effect on optimisation speed.
+    probes:
+      - With tied input and output embeddings and nn.Embedding's default N(0, 1) initialisation, the initial loss is far above ln V. Why?
+      - What does zero-initialising residual branches do to the effective depth early in training?
+
+  - id: dl-005
+    skill: dl-fundamentals
+    also: [transformers]
+    type: tradeoff
+    level: core
+    tracks: [mle, re]
+    q: >-
+      Compare BatchNorm, LayerNorm and RMSNorm: what each normalises over, how each behaves at
+      inference, and why transformers use LayerNorm or RMSNorm rather than BatchNorm.
+    a: |
+      All have the form $y=\gamma\,\dfrac{x-\mu}{\sqrt{\sigma^2+\epsilon}}+\beta$. They differ in the axes over which the statistics are taken.
+
+      | | Statistics over | Training vs inference | Typical use |
+      |---|---|---|---|
+      | BatchNorm | batch and spatial positions, per channel | batch statistics in training, running averages at inference | CNNs |
+      | LayerNorm | features, per token | identical | transformers, RNNs |
+      | RMSNorm | features, per token, no mean subtraction and no bias | identical | most recent LLMs |
+      | GroupNorm | groups of channels, per example | identical | small-batch vision, diffusion U-Nets |
+
+      **Why normalise.** It controls activation scale through depth and makes the output invariant to the scale of the preceding weights, which permits larger learning rates. The original "internal covariate shift" account is disputed; a smoother loss surface is the better-supported explanation.
+
+      **BatchNorm's problems.** It couples the examples in a batch. It degrades with small or non-i.i.d. batches, behaves differently in training and inference (a missing `eval()` call, stale running statistics after fine-tuning), needs synchronised statistics across GPUs, and leaks information between examples, which breaks contrastive and autoregressive training. In its favour, it adds regularising noise and folds into the preceding convolution at inference at zero cost.
+
+      **Why LayerNorm for sequences.** Statistics are per token, so they do not depend on batch size, sequence length or padding, are the same in training and inference, and work at batch size 1 and with cached decoding.
+
+      **RMSNorm.** $y=\gamma\,x/\sqrt{\frac1d\sum_ix_i^2+\epsilon}$. It drops centring and the bias: fewer operations at comparable quality.
+
+      Where the normalisation sits relative to the residual connection (pre-norm or post-norm) matters as much as which one is used.
+    probes:
+      - Weights that feed a normalisation layer are scale invariant. What does weight decay do to them?
+      - What goes wrong when you fine-tune a BatchNorm network with batch size 2?
+
+  - id: dl-006
+    skill: dl-fundamentals
+    type: concept
+    level: core
+    tracks: [mle, re]
+    q: >-
+      Compare sigmoid, tanh, ReLU, GELU and SiLU as hidden activations. What is the failure
+      mode of each, and why do transformers use GELU or a gated SwiGLU MLP?
+    a: |
+      Without a non-linearity a stack of linear layers collapses to one linear map. The choice mainly affects gradient flow.
+
+      - **Sigmoid.** Output in $(0,1)$, derivative at most 0.25, saturates on both sides, not zero centred. Deep stacks of it have vanishing gradients. Keep it for gates and probability outputs.
+      - **Tanh.** Zero centred, derivative at most 1, still saturates. Used inside RNN and LSTM state updates.
+      - **ReLU** $\max(0,z)$. Derivative 1 for positive inputs, cheap, sparse. Its failure is the dead unit: if the pre-activation is negative for every input, the gradient is zero and the unit never recovers. A large learning rate or a bad bias causes it. Leaky ReLU and ELU keep a non-zero slope for negative inputs.
+      - **GELU** $z\,\Phi(z)$ and **SiLU / Swish** $z\,\sigma(z)$. Smooth, with a small negative dip and a non-zero gradient for negative inputs, so no dead units. They optimise better than ReLU in transformers at slightly higher cost. GELU is used in BERT, GPT and ViT; SiLU in many vision and diffusion models.
+      - **SwiGLU.** A gated MLP: $\mathrm{FFN}(x)=W_3\big(\mathrm{SiLU}(W_1x)\odot W_2x\big)$. It has three matrices, so the hidden width is set to about $\frac23\cdot4d\approx2.67d$ to match the parameter count of a $4d$ MLP. It is the usual choice in Llama-style LLMs.
+
+      Practical points:
+
+      - The activation interacts with initialisation (He for ReLU-like functions).
+      - The output activation is a separate decision fixed by the likelihood: identity for Gaussian, sigmoid for Bernoulli, softmax for categorical.
+      - Among ReLU, GELU and SiLU the difference is usually small next to data, optimiser and normalisation choices.
+    probes:
+      - How would you detect dead ReLUs in a running training job?
+      - Where does the 2/3 factor in SwiGLU's hidden width come from?
+
+  - id: dl-007
+    skill: dl-fundamentals
+    also: [transformers]
+    type: concept
+    level: core
+    tracks: [mle, re]
+    q: >-
+      Why do residual connections make very deep networks trainable? Describe the effect on
+      gradients and on what each layer has to learn.
+    a: |
+      A residual block computes $x_{l+1}=x_l+F_l(x_l)$.
+
+      **Gradients.**
+
+      $$
+      \frac{\partial L}{\partial x_l}=\frac{\partial L}{\partial x_L}\prod_{i=l}^{L-1}\Big(I+\frac{\partial F_i}{\partial x_i}\Big)
+      $$
+
+      Expanding the product gives an identity term plus terms through every subset of blocks. The gradient reaches early layers directly through the skip path instead of being multiplied by every layer's Jacobian. In a plain stack it is a product of $L$ Jacobians and shrinks or grows exponentially.
+
+      **Function.** Each block learns a correction to the identity. An unneeded block only has to output zero, which is easy; representing the identity through a non-linear layer is not. This addressed the degradation problem: deeper plain networks had higher *training* error, so the issue was optimisation, not overfitting (He et al., 2015).
+
+      **Ensemble view.** A residual network contains $2^L$ paths of different lengths, and most of the gradient flows through the short ones. Removing one block from a trained ResNet costs little accuracy.
+
+      **In transformers.** The residual stream is a shared channel of width $d$. Attention and MLP blocks read from it through a normalisation and write back additively. That is what makes pre-norm possible and what makes zero-initialised branches a meaningful "start as the identity".
+
+      Caveats:
+
+      - Forward variance grows with depth because every block adds to the stream, so normalisation or branch scaling is still needed.
+      - Anything placed on the skip path itself (a normalisation or a gate) weakens the benefit. Post-norm does this.
+      - A change of dimension needs a projection on the skip path.
+      - The LSTM cell state and highway networks are the same idea with gates.
+    probes:
+      - Why did deeper plain networks show higher training error, not just higher test error?
+      - What changes if the normalisation is on the skip path?
+
+  - id: dl-008
+    skill: dl-fundamentals
+    also: [pytorch, transformers]
+    type: coding
+    level: core
+    tracks: [mle, re]
+    q: >-
+      Implement LayerNorm from scratch in PyTorch, then RMSNorm. What are the details an
+      implementation usually gets wrong?
+    a: |
+      ```python
+      import torch
+      import torch.nn as nn
+
+      class LayerNorm(nn.Module):
+          def __init__(self, d, eps=1e-5):
+              super().__init__()
+              self.gain = nn.Parameter(torch.ones(d))
+              self.bias = nn.Parameter(torch.zeros(d))
+              self.eps = eps
+
+          def forward(self, x):                                 # normalise over the last dim only
+              mu = x.mean(-1, keepdim=True)
+              var = x.var(-1, keepdim=True, unbiased=False)     # biased variance, like nn.LayerNorm
+              return self.gain * (x - mu) / torch.sqrt(var + self.eps) + self.bias
+
+      class RMSNorm(nn.Module):
+          def __init__(self, d, eps=1e-6):
+              super().__init__()
+              self.gain = nn.Parameter(torch.ones(d))
+              self.eps = eps
+
+          def forward(self, x):
+              return self.gain * x * torch.rsqrt(x.pow(2).mean(-1, keepdim=True) + self.eps)
+      ```
+
+      Both match `nn.LayerNorm(d)` and `nn.RMSNorm(d, eps=1e-6)` to floating-point tolerance, which is the test to write.
+
+      What an interviewer checks:
+
+      - **Axes.** Statistics over the feature dimension, per token. Averaging over batch or time is a different layer and leaks across examples and positions.
+      - **Variance.** Biased (divide by $d$), with $\epsilon$ inside the square root.
+      - **Parameters.** Gain initialised to one and bias to zero, shape `(d,)`, registered as `nn.Parameter`.
+      - **No state.** No running statistics, so the layer behaves the same in training and inference.
+      - **Precision.** In fp16, $x^2$ overflows once $|x|>255$. Compute the statistic in fp32 (`x.float()`) and cast back.
+      - **Invariance.** The output does not change when the input is rescaled, so the gradient with respect to the input is orthogonal to it.
+      - **Relation.** RMSNorm is LayerNorm without centring and bias; they coincide when the features have zero mean.
+    probes:
+      - Derive the backward pass of LayerNorm. Why is it orthogonal to the input?
+      - Which parameters of these layers do you exclude from weight decay, and why?
+
+  - id: dl-009
+    skill: dl-fundamentals
+    also: [cv]
+    type: concept
+    level: core
+    tracks: [mle, re]
+    q: >-
+      Give the essentials of convolutional networks: the output size and parameter count of a
+      conv layer, the receptive field, and the inductive biases that separate a CNN from a
+      vision transformer.
+    a: |
+      For a convolution with $C_{in}$ input channels, $C_{out}$ filters, kernel $k$, stride $s$ and padding $p$:
+
+      - Output size: $\lfloor(H+2p-k)/s\rfloor+1$.
+      - Parameters: $C_{out}(C_{in}k^2+1)$, independent of image size. A 3×3 layer from 64 to 128 channels has $128\times(64\times9+1)=73{,}856$.
+      - Cost: proportional to $H_{out}W_{out}C_{in}C_{out}k^2$.
+
+      **Receptive field.** Each layer adds $(k-1)$ times the product of the strides before it. Two stacked 3×3 layers see 5×5 with fewer parameters and one more non-linearity than a single 5×5. Stride, pooling and dilation grow it faster. The effective receptive field is smaller than the theoretical one.
+
+      **Inductive biases.** Locality (small kernels), translation equivariance (shared weights; pooling adds approximate invariance) and a spatial hierarchy (downsampling). They make CNNs data efficient.
+
+      **Vision transformer.** Cut the image into $P\times P$ patches (16×16 on a 224×224 image gives 196 tokens), embed them linearly, add positions and run a transformer encoder. It has a global receptive field from the first layer and weak spatial priors, so it needs more data, stronger augmentation or pretraining to match a CNN, and its attention cost is quadratic in the number of patches. Hierarchical variants (Swin) restrict attention to windows for dense prediction. Modernised CNNs (ConvNeXt) remain competitive.
+
+      **Building blocks worth knowing.** A 1×1 convolution is a per-pixel linear layer over channels. Depthwise-separable convolution cuts parameters from $k^2C_{in}C_{out}$ to $k^2C_{in}+C_{in}C_{out}$. Global average pooling replaces flattening. U-Net skip connections serve segmentation and diffusion backbones.
+
+      CNNs are still the first choice for small datasets, tight latency or memory budgets on edge devices, and high-resolution dense prediction.
+    probes:
+      - Three 3x3 convolutions, the second with stride 2. What is the receptive field?
+      - Why is a convolution translation equivariant rather than invariant?
+
+  - id: dl-010
+    skill: training-dynamics
+    type: tradeoff
+    level: core
+    tracks: [mle, re]
+    q: >-
+      Write the update rules for SGD with momentum and for Adam. When does each win, and why
+      are transformers trained with Adam-family optimisers?
+    a: |
+      **SGD with momentum** (PyTorch form): $v_t=\mu v_{t-1}+g_t$, $\theta_t=\theta_{t-1}-\eta v_t$. The velocity accumulates consistent gradient directions and cancels oscillation across steep ones. Under a constant gradient the step tends to $\eta/(1-\mu)$, ten times larger at $\mu=0.9$.
+
+      **Adam:**
+
+      $$
+      m_t=\beta_1m_{t-1}+(1-\beta_1)g_t,\qquad v_t=\beta_2v_{t-1}+(1-\beta_2)g_t^2,
+      $$
+
+      $$
+      \hat m_t=\frac{m_t}{1-\beta_1^t},\quad\hat v_t=\frac{v_t}{1-\beta_2^t},\qquad
+      \theta_t=\theta_{t-1}-\eta\,\frac{\hat m_t}{\sqrt{\hat v_t}+\epsilon}.
+      $$
+
+      Each coordinate moves by about $\eta$ times (mean gradient / RMS gradient). The step is invariant to the gradient's scale and at most about $\eta$ per parameter, which is why one learning rate works across layers. Bias correction compensates for the moving averages starting at zero; without it the first steps with $\beta_1=0.9,\beta_2=0.999$ are about three times too large.
+
+      **Adam wins** on transformers, on sparse or heterogeneous gradients (embeddings, attention), and whenever tuning time is limited. Typical settings are $\beta=(0.9,0.999)$, with $\beta_2$ lowered to about 0.95 in LLM pretraining, and $\epsilon=10^{-8}$.
+
+      **SGD with momentum** remains competitive for CNNs on vision, where well-tuned runs have often generalised slightly better, and it stores one buffer per parameter instead of two.
+
+      **Why transformers need it.** Gradient scales differ by orders of magnitude between embeddings, attention matrices and normalisation gains, and gradient noise is heavy tailed. A single SGD learning rate either diverges on some parameters or stalls on others. This is the common explanation, supported empirically rather than proven.
+
+      **Failure modes.** No warmup. A rare large gradient arriving after $v$ has decayed produces an oversized step and a loss spike. Optimiser state is twice the parameter count, which matters at LLM scale.
+    probes:
+      - What does beta2 control, and why lower it for LLM pretraining?
+      - Derive the factor of about three for the uncorrected first step.
+
+  - id: dl-011
+    skill: training-dynamics
+    also: [pytorch]
+    type: concept
+    level: senior
+    tracks: [mle, re]
+    q: >-
+      Why is weight decay "decoupled" in AdamW? Show what goes wrong when L2 regularisation is
+      put in the loss under Adam, and say which parameters you exclude from decay.
+    a: |
+      With plain SGD an L2 penalty $\frac\lambda2\|\theta\|^2$ adds $\lambda\theta$ to the gradient, and the update $\theta\leftarrow(1-\eta\lambda)\theta-\eta g$ is exactly weight decay. With Adam the term $\lambda\theta$ enters $g$ and is then divided by $\sqrt{\hat v}$:
+
+      - The decay each weight receives is scaled by the inverse RMS of its own gradient. Weights with large gradients are barely regularised; weights with small gradients are decayed hard.
+      - Regularisation strength becomes entangled with gradient statistics and with the learning rate, so $\lambda$ is hard to tune.
+
+      **AdamW** (Loshchilov and Hutter) applies the decay to the weights directly, outside the adaptive step:
+
+      $$
+      \theta_t=\theta_{t-1}-\eta_t\left(\frac{\hat m_t}{\sqrt{\hat v_t}+\epsilon}+\lambda\,\theta_{t-1}\right)
+      $$
+
+      Every decayed weight shrinks by the same factor $1-\eta_t\lambda$ per step.
+
+      Details:
+
+      - In PyTorch the decay is multiplied by the current learning rate, so it follows the schedule. Typical $\lambda$ is 0.01 to 0.1.
+      - `torch.optim.Adam(weight_decay=...)` is the coupled L2 form. Using it when you meant AdamW is a common silent mistake.
+      - Exclude biases and normalisation gains from decay, and often embeddings (conventions differ). The usual rule is to decay only tensors with at least two dimensions, through parameter groups.
+      - For weights followed by a normalisation layer the function is scale invariant, so decay does not limit capacity. It controls $\|w\|$ and therefore the effective learning rate, roughly $\eta/\|w\|^2$. In modern networks weight decay is as much an optimisation knob as a regulariser.
+      - The norm reaches equilibrium on a timescale of about $1/(\eta\lambda)$ steps.
+    probes:
+      - Why does weight decay still matter for a layer followed by LayerNorm?
+      - Under a cosine schedule, what happens to the amount of decay late in training?
+
+  - id: dl-012
+    skill: training-dynamics
+    also: [pytorch]
+    type: coding
+    level: senior
+    tracks: [mle, re]
+    q: >-
+      Implement a single AdamW update for one parameter tensor in PyTorch, without using
+      torch.optim. How would you verify it?
+    a: |
+      ```python
+      import torch
+
+      @torch.no_grad()
+      def adamw_step(p, g, m, v, t, lr=1e-3, b1=0.9, b2=0.999, eps=1e-8, wd=0.01):
+          """One in-place AdamW step for one tensor. m, v start at zero; t starts at 1."""
+          m.mul_(b1).add_(g, alpha=1 - b1)                 # EMA of gradients
+          v.mul_(b2).addcmul_(g, g, value=1 - b2)          # EMA of squared gradients
+          m_hat = m / (1 - b1 ** t)                        # bias correction: EMAs start at 0
+          v_hat = v / (1 - b2 ** t)
+          p.mul_(1 - lr * wd)                              # decoupled decay, not routed through v
+          p.addcdiv_(m_hat, v_hat.sqrt() + eps, value=-lr)
+      ```
+
+      **Verification.** Run it next to `torch.optim.AdamW` on the same parameter and gradients for a few dozen steps and compare with `torch.allclose`. They agree to floating-point tolerance.
+
+      What an interviewer checks:
+
+      - `t` starts at 1. With `t = 0` the bias correction divides by zero.
+      - Bias correction on both moments.
+      - $\epsilon$ is added outside the square root, as in PyTorch. TensorFlow's default $\epsilon$ is $10^{-7}$, so ported recipes can differ.
+      - Decoupled decay multiplies the weights directly. For Adam with L2, add `wd * p` to `g` before the moment updates instead; the two are different algorithms.
+      - The update runs under `no_grad` and in place, so it does not build a graph.
+      - State is per parameter: two buffers the size of the weights, kept in fp32 even under mixed precision. In fp16, $10^{-8}$ rounds to zero and $g^2$ underflows.
+      - A full optimiser also needs parameter groups (no decay on biases and gains), a step counter that survives checkpointing, and saved `m` and `v`. Resuming without them causes a visible bump in the loss.
+    probes:
+      - What does the very first update look like in terms of the gradient's sign and magnitude?
+      - Add global-norm gradient clipping. Where does it go?
+
+  - id: dl-013
+    skill: training-dynamics
+    type: concept
+    level: senior
+    tracks: [mle, re]
+    q: >-
+      Why do large models use learning-rate warmup, a cosine (or similar) decay, and gradient
+      clipping? Give the formulas and say how you would set each.
+    a: |
+      **Warmup.** Ramp the learning rate linearly from near zero to its peak over the first $N$ steps. Reasons:
+
+      - Adam's second-moment estimate is built from very few samples at the start, so early normalised steps are large and unreliable.
+      - At initialisation the loss surface is sharp. Large steps there cause divergence or lasting damage (dead units, saturated attention). Warmup lets curvature fall before the step grows.
+      - Post-norm transformers are especially sensitive.
+
+      Typical values are 1 to 5% of training, or a few hundred to a few thousand steps; use more for larger batches and higher peak rates.
+
+      **Decay.** Cosine, after warmup, over $T$ steps:
+
+      $$
+      \eta_t=\eta_{\min}+\tfrac12(\eta_{\max}-\eta_{\min})\Big(1+\cos\frac{\pi t}{T}\Big)
+      $$
+
+      A high rate early covers distance; a low rate late averages out gradient noise, whose scale is proportional to $\eta/B$. Linear decay to zero performs similarly; step decay is the classic for vision. The schedule is tied to the total step count, so changing the run length changes the whole curve, and a resumed run must restore the scheduler state.
+
+      **Clipping by global norm.** $g\leftarrow g\cdot\min(1,\,c/\|g\|_2)$, with the norm taken over all parameters. It keeps the direction and bounds the step, protecting against a rare huge gradient from a bad batch. Set $c$ from the logged gradient-norm distribution, a little above the typical value ($c=1$ is common for transformers), so that it fires rarely. If it fires every step you are running normalised gradient descent, which is acceptable only if intended. Under Adam, clipping matters less for the size of the current step and more for keeping one outlier out of $m$ and $v$.
+
+      **Log** the learning rate, the pre-clip gradient norm, the fraction of clipped steps, and the update-to-weight ratio (around $10^{-3}$ is a common healthy value).
+    probes:
+      - One outlier batch gets through. For how many steps does it affect Adam, and through which state?
+      - How would you choose the peak learning rate for a new architecture?
+
+  - id: dl-014
+    skill: training-dynamics
+    also: [pytorch, error-analysis]
+    type: debug
+    level: core
+    tracks: [mle, ai, re]
+    q: >-
+      You wrote a new model and training loop, and the loss does not go down. How do you debug
+      it?
+    a: |
+      Do not start with hyperparameters. First establish that the pipeline can learn at all, cheapest test first.
+
+      1. **Overfit one small batch.** With regularisation and augmentation off, 2 to 16 examples should reach near-zero loss in a few hundred steps. If they do not, there is a bug.
+      2. **Check the initial loss.** It should be about $\ln K$ for $K$ classes. Far above means an initialisation or scale problem. Stuck exactly at $\ln K$ means the output ignores the input or no gradient arrives.
+      3. **Look at the data as the model sees it**, after augmentation, tokenisation and collation. Usual finds: labels misaligned with inputs, wrong normalisation, an off-by-one in the language-model shift, padding counted in the loss, unshuffled data sorted by class.
+      4. **Gradient flow.** Print per-layer gradient norms. Zeros point to a `detach`, a `no_grad` block, parameters missing from the optimiser, an optimiser created before the model was changed, or a non-differentiable operation (argmax, rounding). Also check for a missing `zero_grad`.
+      5. **Loss and output mismatch.** Softmax applied before `cross_entropy`; probabilities passed to a logits loss; softmax over the wrong dimension; unnormalised regression targets.
+      6. **Learning rate.** Sweep it over several orders of magnitude. Too high diverges or sits at $\ln K$; too low looks flat. Check that the scheduler is not holding the rate at zero.
+      7. **Mode and regularisation.** `train()` versus `eval()`, BatchNorm with tiny batches, excessive dropout.
+      8. **Reduce.** Compare with a known-good implementation on the same data, or simplify the model until it learns and add pieces back.
+
+      Step 1 separates "bug" from "tuning" in minutes, which is why it comes first.
+    probes:
+      - The loss sits at exactly ln K. What are your top three suspects?
+      - The loss falls but accuracy does not move. What does that tell you?
+
+  - id: dl-015
+    skill: training-dynamics
+    also: [pytorch, gpu]
+    type: debug
+    level: senior
+    tracks: [mle, re]
+    q: >-
+      A run produces a NaN loss after a few thousand steps, and only with mixed precision
+      enabled. How do you find the cause, and what are the usual numerical pitfalls of fp16 and
+      bf16 training?
+    a: |
+      **Localise first.** Log the loss, the gradient norm and the maximum absolute activation per layer, and find the first non-finite value. Forward hooks that assert `torch.isfinite` name the layer; `torch.autograd.set_detect_anomaly(True)` names the backward operation, slowly. Save the checkpoint and batch from just before the failure so that it replays deterministically. Decide whether the NaN is born in the forward pass (overflow, $\log 0$, $0\times\infty$, division by zero), the backward pass (an infinite derivative such as $\sqrt{\cdot}$ at 0), or the update.
+
+      **fp16 facts.** Largest value 65,504; smallest normal about $6\times10^{-5}$; about three decimal digits.
+
+      1. **Overflow.** Anything above $6.5\times10^4$ becomes inf, and inf − inf or $0\times$ inf gives NaN. Squares are the usual source: $x^2$ overflows for $|x|>255$ in hand-written norms and variances. Large attention logits are another.
+      2. **Underflow.** `eps=1e-8` is exactly zero in fp16, so a hand-written normalisation divides by zero. Small gradients underflow to zero; `GradScaler` exists for that. It scales the loss up, unscales before the step, and skips the step and lowers the scale when it sees inf or NaN.
+      3. **Masking.** A fully masked attention row gives NaN from softmax in any precision. Constants like `-1e9` overflow in fp16; use `-inf` or `torch.finfo(dtype).min` deliberately.
+      4. **Losses.** Softmax, log and cross-entropy should run in fp32 from logits. Autocast does this for built-in losses, not for your own code.
+
+      **Fixes.** Run sensitive blocks in fp32 (`autocast(enabled=False)` plus `.float()`). Clip gradients after `scaler.unscale_`. Prefer bf16 where the hardware supports it: it has the exponent range of fp32, so no overflow and no scaler, but only about 8 bits of mantissa, so accumulations and small updates lose precision. Keep master weights and optimiser state in fp32.
+
+      If the NaN also appears in fp32, precision only exposed a real divergence: revisit learning rate, warmup, clipping and the data (NaN inputs, empty sequences).
+    probes:
+      - The GradScaler's scale keeps collapsing towards zero. What does that tell you?
+      - Why does bf16 not need a GradScaler?
+
+  - id: dl-016
+    skill: training-dynamics
+    also: [dist-training, pretraining]
+    type: debug
+    level: staff
+    tracks: [mle, re]
+    q: >-
+      A recipe that trains a 12-layer model stably produces loss spikes and then diverges when
+      you scale to a much deeper and wider model with a larger batch. What do you look at, and
+      how should the learning rate change with batch size?
+    a: |
+      **Read the evidence before changing anything.** Per-layer gradient and activation norms over time, update-to-weight ratios, the norm of the residual stream by depth, the largest attention logit, and the batch at each spike. A spike that follows a slow rise in some norm is an instability building up. A spike out of nowhere is usually a pathological batch.
+
+      Usual causes at scale:
+
+      1. **Learning rate too high for the new curvature.** Depth, width and batch size all change sharpness. Lower the peak and lengthen warmup. Wider models generally need a smaller rate under standard parameterisation.
+      2. **Residual-stream growth.** Variance accumulates with depth. Scale or zero-initialise the residual branches and keep pre-norm with a final norm.
+      3. **Attention-logit growth.** As query and key norms grow, softmax saturates to near one-hot and gradients become erratic. Normalising queries and keys with a learned scale (QK-norm), or bounding the logits, addresses it.
+      4. **Stale second moment.** After a quiet period $\hat v$ is small, and a large gradient then takes an oversized step. Lower $\beta_2$ (0.95), raise $\epsilon$, clip.
+      5. **Precision.** fp16 overflow as norms grow.
+      6. **Data.** Very long, repeated or corrupted sequences; they show up when you log the batches at spikes.
+
+      **Learning rate and batch size.** Gradient noise falls as $1/B$. For SGD the linear scaling rule multiplies the rate by $k$ when the batch grows by $k$, with warmup, which keeps the noise scale $\eta/B$ constant (Goyal et al., 2017). It stops working beyond some batch size because the stability limit $\eta<2/L$ binds: once noise is no longer the constraint, a bigger batch buys no further increase, and returns per sample diminish. For Adam the right scaling is weaker; square-root scaling is a common suggestion and in practice the rate is re-tuned. Treat every such rule as a starting point.
+
+      Gradient accumulation is equivalent to a larger batch (BatchNorm aside), and the effective batch under DDP is the per-GPU batch times the number of GPUs.
+
+      **Process.** Sweep peak rate and warmup at reduced width, add instrumentation before touching five knobs at once, and checkpoint often enough to bisect a spike.
+    probes:
+      - Why does a loss spike recover in some runs and become permanent in others?
+      - Why do very large batches stop helping, in terms of curvature?
+
+  - id: dl-017
+    skill: training-dynamics
+    also: [ml-fundamentals]
+    type: debug
+    level: senior
+    tracks: [mle, ai, re]
+    q: >-
+      In one run the training loss keeps falling while the validation loss bottoms out and
+      climbs. In another, both plateau at a high value. Diagnose each and list what you would
+      try, in order.
+    a: |
+      **Run 1: growing gap.** Probably overfitting, but rule out artefacts first.
+
+      - Validation data differs from training data: a time split, a different preprocessing path, or leakage on the training side.
+      - Validation *loss* rises while validation *accuracy* still improves. That is over-confidence, a calibration problem, not worse decisions. Select the checkpoint by the metric you care about.
+      - The two losses are not comparable: training loss is measured with dropout and augmentation on, validation without.
+
+      Then, by value for cost: more or more varied data and augmentation; early stopping; weight decay, dropout, label smoothing; for fine-tuning, a lower learning rate, fewer epochs or fewer trainable parameters (freezing, LoRA); a smaller model; ensembling.
+
+      **Run 2: both high.** Underfitting or an optimisation failure. The test that separates them is whether the model can overfit a small subset.
+
+      - It cannot: a bug or an optimisation problem (learning rate, initialisation, normalisation, gradient flow).
+      - It can: a capacity or information limit. Try a larger model, longer training, less regularisation, a lower learning rate after the plateau (a plateau is often a rate that is too high for the current basin), or better inputs. Check the noise ceiling: if humans agree with the labels 90% of the time, 90% is about the limit.
+
+      **Tools for both.** Learning curves against dataset size (does validation improve with more data?); the training subset evaluated through the same eval-mode path as validation; per-slice errors; several seeds to see the noise band.
+
+      With large pretrained models a training loss near zero is normal, so judge by the validation metric rather than by the gap.
+    probes:
+      - Validation loss is lower than training loss. Give three innocent explanations.
+      - How do you decide between collecting more data and using a bigger model?
+
+  - id: dl-018
+    skill: transformers
+    also: [math]
+    type: derivation
+    level: senior
+    tracks: [mle, re]
+    q: >-
+      Derive why dot-product attention divides the logits by sqrt(d_k). What goes wrong without
+      the scaling?
+    a: |
+      Assume the components of a query $q$ and key $k$ are independent with zero mean and unit variance. Then
+
+      $$
+      q^\top k=\sum_{i=1}^{d_k}q_ik_i,\qquad
+      \mathbb{E}[q_ik_i]=0,\quad\operatorname{Var}(q_ik_i)=\mathbb{E}[q_i^2]\,\mathbb{E}[k_i^2]=1
+      \;\Rightarrow\;\operatorname{Var}(q^\top k)=d_k .
+      $$
+
+      The logits have standard deviation $\sqrt{d_k}$: 8 for $d_k=64$, about 23 for $d_k=512$. Dividing by $\sqrt{d_k}$ gives unit-variance logits whatever the dimension.
+
+      **Without it.** Logits spread over a range of tens make the softmax nearly one-hot. The softmax Jacobian is $\operatorname{diag}(p)-pp^\top$, which tends to zero as $p$ approaches one-hot, so the gradient through the attention weights vanishes. The layer cannot learn where to attend, and its output is a hard selection of a single value vector.
+
+      **Reading.** It is a temperature, $\mathrm{softmax}(z/\tau)$ with $\tau=\sqrt{d_k}$, chosen so that attention starts in the well-conditioned regime. Dividing by $d_k$ instead would shrink the logits as dimension grows and push attention towards uniform.
+
+      Caveats:
+
+      - $d_k$ is the per-head dimension, $d_{model}/h$.
+      - The assumption holds only at initialisation. Training can still grow $\|q\|\,\|k\|$, which is one source of instability at scale; QK-norm (L2-normalised queries and keys with a learned scale) addresses that directly.
+      - Additive attention does not need the factor because its scores pass through a bounded non-linearity.
+    probes:
+      - What is the gradient of softmax when one logit dominates?
+      - Why not use cosine similarity with a learned temperature from the start?
+
+  - id: dl-019
+    skill: transformers
+    also: [pytorch]
+    type: coding
+    level: core
+    tracks: [mle, ai, re]
+    q: >-
+      Implement scaled dot-product attention and multi-head self-attention with a causal mask
+      in PyTorch. How do you test that it is correct?
+    a: |
+      ```python
+      import math
+      import torch
+      import torch.nn as nn
+      import torch.nn.functional as F
+
+      def sdpa(q, k, v, mask=None):
+          # q, k, v: (..., T, d_k); mask broadcastable to (..., T_q, T_k), True = may attend
+          att = q @ k.transpose(-2, -1) / math.sqrt(q.size(-1))
+          if mask is not None:
+              att = att.masked_fill(~mask, float("-inf"))
+          return F.softmax(att, dim=-1) @ v
+
+      class MHA(nn.Module):
+          def __init__(self, d_model, n_heads):
+              super().__init__()
+              assert d_model % n_heads == 0
+              self.h, self.dh = n_heads, d_model // n_heads
+              self.qkv = nn.Linear(d_model, 3 * d_model, bias=False)
+              self.out = nn.Linear(d_model, d_model, bias=False)
+
+          def forward(self, x, causal=True):                        # x: (B, T, D)
+              B, T, D = x.shape
+              q, k, v = self.qkv(x).view(B, T, 3, self.h, self.dh).permute(2, 0, 3, 1, 4)  # each (B, h, T, dh)
+              mask = torch.ones(T, T, dtype=torch.bool, device=x.device).tril() if causal else None
+              y = sdpa(q, k, v, mask)                               # (B, h, T, dh)
+              return self.out(y.transpose(1, 2).reshape(B, T, D))   # merge heads -> (B, T, D)
+      ```
+
+      **Tests.** (1) Causality: perturb the last token and assert that the outputs at earlier positions are unchanged. (2) Compare with `F.scaled_dot_product_attention(q, k, v, is_causal=True)`, or with `nn.MultiheadAttention` after copying the weights.
+
+      What an interviewer checks:
+
+      - Mask the logits with `-inf` *before* the softmax. Zeroing weights afterwards leaves the rows unnormalised.
+      - Scale by $\sqrt{d_{head}}$, not $\sqrt{d_{model}}$. Softmax runs over the key axis.
+      - Shapes: split to `(B, h, T, dh)`, and move the head axis back with `transpose(1, 2)` before merging. Reshaping without the transpose mixes heads with positions and still runs.
+      - Mask conventions differ. Here and in `F.scaled_dot_product_attention`, `True` means "may attend"; in `nn.MultiheadAttention`, `True` means "blocked".
+      - A padding mask is combined with the causal mask by logical AND. A fully masked row gives NaN.
+      - Cost: $O(B\,h\,T^2d_h)$ time and $O(B\,h\,T^2)$ memory for the weights. In production call `F.scaled_dot_product_attention`, which uses a fused implementation.
+    probes:
+      - Add a key-padding mask for variable-length batches.
+      - Change this to grouped-query attention. Which shapes change?
+
+  - id: dl-020
+    skill: transformers
+    also: [pytorch]
+    type: coding
+    level: senior
+    tracks: [mle, re]
+    q: >-
+      Implement a pre-norm decoder block in PyTorch and show how blocks are assembled into a
+      minimal language model. What must not be forgotten around the block?
+    a: |
+      ```python
+      import torch
+      import torch.nn as nn
+
+      class Block(nn.Module):
+          def __init__(self, d_model, n_heads, mlp_ratio=4, p_drop=0.0):
+              super().__init__()
+              self.norm1 = nn.LayerNorm(d_model)
+              self.attn = nn.MultiheadAttention(d_model, n_heads, dropout=p_drop, batch_first=True)
+              self.norm2 = nn.LayerNorm(d_model)
+              self.mlp = nn.Sequential(
+                  nn.Linear(d_model, mlp_ratio * d_model), nn.GELU(),
+                  nn.Linear(mlp_ratio * d_model, d_model), nn.Dropout(p_drop),
+              )
+
+          def forward(self, x):                                         # (B, T, D) -> (B, T, D)
+              T = x.size(1)
+              blocked = torch.ones(T, T, dtype=torch.bool, device=x.device).triu(1)   # True = may NOT attend
+              h = self.norm1(x)
+              x = x + self.attn(h, h, h, attn_mask=blocked, need_weights=False)[0]    # skip path stays un-normalised
+              x = x + self.mlp(self.norm2(x))
+              return x
+
+      class TinyGPT(nn.Module):
+          def __init__(self, vocab, d_model, n_heads, n_layers, max_len):
+              super().__init__()
+              self.tok = nn.Embedding(vocab, d_model)
+              self.pos = nn.Embedding(max_len, d_model)
+              self.blocks = nn.ModuleList(Block(d_model, n_heads) for _ in range(n_layers))
+              self.norm_f = nn.LayerNorm(d_model)                       # pre-norm needs a final norm
+              self.head = nn.Linear(d_model, vocab, bias=False)
+              self.head.weight = self.tok.weight                        # weight tying
+              nn.init.normal_(self.tok.weight, std=0.02)
+              nn.init.normal_(self.pos.weight, std=0.02)
+
+          def forward(self, idx):                                       # (B, T) -> logits (B, T, V)
+              x = self.tok(idx) + self.pos(torch.arange(idx.size(1), device=idx.device))
+              for blk in self.blocks:
+                  x = blk(x)
+              return self.head(self.norm_f(x))
+      ```
+
+      What an interviewer checks:
+
+      - **Pre-norm wiring.** The normalisation is applied to the branch input; the skip path adds the raw `x`. Writing `norm(x + f(x))` is post-norm.
+      - **Final norm.** The stream is never normalised inside pre-norm blocks, so one norm before the output head is required.
+      - **Mask.** `nn.MultiheadAttention` blocks where the mask is `True` (upper triangle, diagonal excluded).
+      - **Loss.** Predict token $t+1$ from position $t$: `F.cross_entropy(logits[:, :-1].reshape(-1, V), idx[:, 1:].reshape(-1))`.
+      - **Initial loss** should be close to $\ln V$. With `nn.Embedding`'s default $N(0,1)$ initialisation and tied weights it is several times larger, hence the 0.02 standard deviation.
+      - **Use `nn.ModuleList`**, not a Python list, or the blocks are not registered.
+      - Parameters per block are about $12d^2$: $4d^2$ in attention and $8d^2$ in the MLP.
+      - A modern LLM block swaps in RMSNorm, RoPE applied to queries and keys in place of the position table, a SwiGLU MLP, and usually no dropout.
+    probes:
+      - Convert this block to post-norm. What else in the training recipe has to change?
+      - Where would a KV cache plug into this code?
+
+  - id: dl-021
+    skill: transformers
+    also: [llm-inference]
+    type: concept
+    level: senior
+    tracks: [mle, re]
+    q: >-
+      For a decoder-only transformer with L layers, width d, h heads, MLP ratio 4, vocabulary V
+      and context length T: trace the tensor shapes, count the parameters, and say where
+      compute and memory go.
+    a: |
+      **Shapes.** Token ids `(B, T)` → embeddings `(B, T, d)` → in each block, queries, keys and values `(B, h, T, d/h)`, attention weights `(B, h, T, T)`, block output `(B, T, d)`, MLP hidden `(B, T, 4d)` → final norm → logits `(B, T, V)`.
+
+      **Parameters**, ignoring biases and norms. Attention has four $d\times d$ matrices ($W_Q,W_K,W_V,W_O$): $4d^2$. The MLP has $2\times4d^2=8d^2$. So about $12d^2$ per block, two thirds of it in the MLP, and
+
+      $$
+      N\approx12Ld^2+Vd
+      $$
+
+      with tied input and output embeddings. The number of heads does not change the count. GPT-2 small ($L=12$, $d=768$, $V=50257$): $12\cdot12\cdot768^2\approx85$M, plus 38.6M for the embedding and 0.8M for positions, about 124M. A SwiGLU MLP with hidden width $\frac83d$ has three matrices and the same $8d^2$.
+
+      **Compute** per layer and sequence, in multiply-adds. The weight matrices cost about $12Td^2$ (parameters times tokens). The attention scores and weighted sum cost about $2T^2d$. The quadratic part overtakes only when $T$ exceeds roughly $6d$, so for typical widths and contexts of a few thousand tokens most compute is in the matrices. A common approximation is $2N$ FLOPs per token for a forward pass and $6N$ for a training step.
+
+      **Memory.**
+
+      - Training: activations saved for the backward pass, several tensors of size $B\,T\,d$ per block, usually dominate.
+      - Attention weights are $B\,h\,T^2$ per layer if materialised; fused implementations avoid storing them.
+      - Logits are $B\,T\,V$: a batch of 32 sequences of 2,048 tokens with a 100k vocabulary is 26 GB in fp32. Compute the loss in chunks or in lower precision.
+      - Inference: weights plus the KV cache, $2\,L\,B\,T\,h_{kv}\,d_h$ elements.
+    probes:
+      - How does the parameter count change with grouped-query attention?
+      - Where does the 6N FLOPs-per-token training estimate come from?
+
+  - id: dl-022
+    skill: transformers
+    also: [training-dynamics]
+    type: tradeoff
+    level: senior
+    tracks: [mle, re]
+    q: >-
+      What is the difference between pre-norm and post-norm transformer blocks, and why did
+      pre-norm become the default for deep models?
+    a: |
+      **Post-norm** (the 2017 Transformer, BERT): $x_{l+1}=\mathrm{Norm}\big(x_l+F(x_l)\big)$.
+
+      **Pre-norm** (GPT-2 onwards, essentially all current LLMs): $x_{l+1}=x_l+F\big(\mathrm{Norm}(x_l)\big)$, with one more normalisation after the last block.
+
+      **Why pre-norm trains more easily.** The skip path is a clean identity from input to output. Gradients reach every layer without passing through $L$ normalisation Jacobians, and at initialisation each block is a small perturbation of the identity. Deep stacks train stably, tolerate higher learning rates and need little warmup.
+
+      **Why post-norm is harder.** The normalisation sits on the residual path, so every layer's gradient passes through all later normalisations. At initialisation the gradients near the output are large, which is why post-norm needs warmup (Xiong et al., 2020). Very deep post-norm stacks need careful initialisation schemes to train at all.
+
+      **What pre-norm costs.**
+
+      - The residual stream is never normalised, so its norm grows with depth. Each block writes an $O(1)$ update into a stream of growing size, so later blocks change the representation proportionally less.
+      - The final normalisation is mandatory. Without it the output head sees an unnormalised stream.
+      - When post-norm does train, it is sometimes reported to reach slightly better quality at equal depth. That finding is setup dependent and should not be stated as settled.
+
+      **Practice.** The standard LLM block is pre-norm with RMSNorm. Some designs add extra normalisation, for example on queries and keys, to control attention logits at scale.
+    probes:
+      - Why does pre-norm need a final normalisation layer?
+      - Why does post-norm need warmup while pre-norm often does not?
+
+  - id: dl-023
+    skill: transformers
+    type: concept
+    level: senior
+    tracks: [mle, re]
+    q: >-
+      Why does a transformer need positional information, and how do sinusoidal, learned
+      absolute, relative-bias and rotary (RoPE) encodings differ? Explain how RoPE makes
+      attention depend on relative position.
+    a: |
+      Self-attention is permutation equivariant: without position information, permuting the input permutes the output, and a sentence is a bag of tokens. A causal mask breaks the symmetry partly, which is why decoder-only models can learn some order with no explicit encoding, but the signal is weaker.
+
+      - **Sinusoidal absolute.** $PE_{(t,2i)}=\sin(t/10000^{2i/d})$, $PE_{(t,2i+1)}=\cos(t/10000^{2i/d})$, added to the embeddings. No parameters, and a fixed offset is a linear function of the encoding.
+      - **Learned absolute.** A $T\times d$ table (BERT, GPT-2). Simple, but it cannot represent positions beyond the trained length.
+      - **Relative bias.** A learned scalar $b_{i-j}$, usually bucketed, added to the attention logit (T5). Translation invariant, and better across lengths. ALiBi uses a fixed linear penalty in $|i-j|$.
+      - **RoPE.** Rotate each pair of dimensions $(x_{2i},x_{2i+1})$ of the query and of the key by the angle $t\,\theta_i$, with $\theta_i=10000^{-2i/d}$ and $t$ the position. Rotations are orthogonal, so
+
+      $$
+      (R_tq)^\top(R_sk)=q^\top R_{s-t}\,k,
+      $$
+
+      and the logit depends on positions only through the offset $s-t$.
+
+      Properties of RoPE: it is applied to queries and keys in every attention layer, not to values and not to the residual stream; it has no parameters; each position is rotated by its absolute index while the effect is relative; high-frequency pairs resolve nearby tokens and low-frequency pairs long range. It is the default in most open LLMs.
+
+      **Length extrapolation.** Beyond the trained length the low-frequency rotations reach angles never seen in training and quality degrades. The fixes rescale positions or frequencies (position interpolation, NTK-aware scaling, YaRN) and usually need some fine-tuning.
+    probes:
+      - Why is RoPE applied to queries and keys but not to values?
+      - With a KV cache, are keys stored before or after rotation, and why is that safe?
+
+  - id: dl-024
+    skill: transformers
+    also: [llm-inference, latency]
+    type: concept
+    level: senior
+    tracks: [mle, ai, re]
+    q: >-
+      What is the KV cache in autoregressive decoding? Derive its memory footprint and the
+      compute it saves, and explain what it changes about serving.
+    a: |
+      In a causal decoder the keys and values of earlier tokens, at every layer, do not depend on later tokens. So at each step only the new token is run through the network: compute its query, key and value in each layer, append the key and value to the cache, and attend from the single new query over all cached keys.
+
+      **Compute.** Without a cache, step $t$ re-runs $t$ tokens, so generating $n$ tokens costs $O(n^2)$ token-forwards. With the cache it costs $n$ token-forwards, and the attention over the prefix adds $O(t)$ per step.
+
+      **Memory.**
+
+      $$
+      \text{bytes}=2\cdot L\cdot B\cdot T\cdot h_{kv}\cdot d_h\cdot s
+      $$
+
+      (2 for keys and values, $s$ bytes per element). For $L=32$, $h_{kv}d_h=4096$, fp16 and $T=8192$ that is 4 GiB per sequence. With grouped-query attention at 8 KV heads instead of 32 it is 1 GiB. For long contexts the cache, not the weights, limits concurrency.
+
+      **Serving consequences.**
+
+      - Two phases. *Prefill* processes the prompt in parallel, is compute bound and sets time to first token. *Decode* produces one token per step, is bound by memory bandwidth (each step reads all weights and the cache) and sets tokens per second.
+      - Batching requests of different lengths needs paged cache allocation and continuous batching.
+      - Prompt (prefix) caching reuses the cache of a shared prefix across requests. It requires an exact token-prefix match, so a change early in the prompt invalidates everything after it.
+
+      **Implementation pitfalls.** Positions must continue from the cache length. Repeated `torch.cat` reallocates, so preallocate. Beam search must reorder the cache. Training does not use a cache: teacher forcing computes all positions in one pass.
+    probes:
+      - Why are keys and values cached but not queries?
+      - Why is prefill compute bound and decode memory-bandwidth bound?
+
+  - id: dl-025
+    skill: transformers
+    also: [llm-inference, gpu-programming]
+    type: concept
+    level: staff
+    tracks: [mle, re]
+    q: >-
+      What do multi-query attention, grouped-query attention and FlashAttention each change
+      relative to standard multi-head attention, and what does each leave unchanged?
+    a: |
+      **Baseline (MHA).** $h$ heads, each with its own query, key and value projections. The cache holds $2\,h\,d_h$ numbers per token and layer.
+
+      **Multi-query attention (MQA).** All heads share one key head and one value head; queries stay per head. The KV cache shrinks by a factor of $h$, and $W_K$ and $W_V$ shrink to $d\times d_h$. Quality drops noticeably in larger models.
+
+      **Grouped-query attention (GQA).** $h_{kv}$ key-value heads with $1<h_{kv}<h$, each shared by $h/h_{kv}$ query heads. With 32 query heads and 8 KV heads the cache is four times smaller. It keeps quality close to MHA with most of MQA's saving (Ainslie et al., 2023) and is used by many open LLMs.
+
+      - Changes: KV-cache memory, memory traffic per decode step, and slightly fewer parameters.
+      - Unchanged: attention is still exact and still $O(T^2)$.
+      - It is an architectural choice, so the model must be trained, or at least fine-tuned, with it.
+
+      **FlashAttention.** An implementation, not a model change. Outputs are the same up to floating point.
+
+      - The standard implementation writes the $T\times T$ score and probability matrices to GPU memory, so memory is $O(T^2)$ and speed is limited by memory bandwidth.
+      - FlashAttention processes blocks of queries and keys that fit in on-chip cache, computes the softmax incrementally (a running maximum and a running normaliser, rescaling earlier partial sums when the maximum changes), and writes only the output. Extra memory is $O(T)$.
+      - The backward pass recomputes the attention blocks from $Q$, $K$, $V$ and the saved normalisers instead of storing them.
+      - FLOPs are unchanged at $O(T^2d)$. It is faster because it moves far less data.
+      - In PyTorch it is reached through `F.scaled_dot_product_attention`. Asking for the attention weights, or using arbitrary dense additive masks, falls back to slower paths.
+
+      **Same level, different kind.** Sliding-window or local attention changes the model to $O(T\,w)$. Linear and sparse attention are approximations. Latent-compressed key-value caches reduce cache size by a different route.
+    probes:
+      - Write the KV-cache size under MHA, GQA and MQA for the same model.
+      - If FLOPs are unchanged, where exactly does FlashAttention's speed-up come from?
+      - Can you get attention maps out of a FlashAttention forward pass?
+
+  - id: dl-026
+    skill: generative
+    also: [transformers, llm-inference, pytorch]
+    type: coding
+    level: senior
+    tracks: [mle, ai, re]
+    q: >-
+      Implement next-token sampling with temperature, top-k and nucleus (top-p) filtering in
+      PyTorch. Explain what each control does and the order in which they are applied.
+    a: |
+      ```python
+      import torch
+
+      @torch.no_grad()
+      def sample_next(logits, temperature=1.0, top_k=None, top_p=None):
+          """logits: (B, V) at the last position. Returns (B,) token ids."""
+          if temperature == 0:
+              return logits.argmax(-1)
+          logits = logits / temperature
+          if top_k is not None:
+              kth = logits.topk(min(top_k, logits.size(-1)), dim=-1).values[:, -1:]
+              logits = logits.masked_fill(logits < kth, float("-inf"))
+          if top_p is not None:
+              sorted_logits, sorted_idx = logits.sort(dim=-1, descending=True)
+              probs = sorted_logits.softmax(-1)
+              mass_before = probs.cumsum(-1) - probs                # mass of strictly higher-ranked tokens
+              sorted_logits = sorted_logits.masked_fill(mass_before >= top_p, float("-inf"))
+              logits = torch.full_like(logits, float("-inf")).scatter(-1, sorted_idx, sorted_logits)
+          return torch.multinomial(logits.softmax(-1), num_samples=1).squeeze(-1)
+      ```
+
+      - **Temperature** divides the logits. $T<1$ sharpens, $T>1$ flattens, and $T\to0$ is greedy decoding.
+      - **Top-k** keeps the $k$ highest-scoring tokens. A fixed $k$ is too many when the distribution is peaked and too few when it is flat.
+      - **Top-p** keeps the smallest set whose cumulative probability reaches $p$, so the set size adapts to the distribution.
+
+      What an interviewer checks:
+
+      - Order: temperature first, then top-k, then top-p. Temperature changes which tokens fall inside the nucleus.
+      - The top token always survives. Here `mass_before` is 0 for it, so it is kept for any $p>0$.
+      - Filter in logit space with `-inf` and renormalise through the final softmax. Zeroing probabilities without renormalising is a bug.
+      - Results computed in sorted order must be scattered back to vocabulary order.
+      - Use only the last position's logits, shape `(B, V)`.
+      - `torch.multinomial` raises on NaN or all-zero rows, so a NaN in the logits surfaces here.
+      - The sort is $O(V\log V)$ per step, negligible next to the forward pass.
+      - For reproducibility pass a seeded `torch.Generator`. Repetition penalties and other logit processors are applied to the logits before this function.
+    probes:
+      - With temperature 0.7 and top_p 0.9, what changes if you apply top-p before the temperature?
+      - How does beam search differ in what it optimises, and why is it rarely used for open-ended generation?
+
+  - id: dl-027
+    skill: sequence-models
+    type: concept
+    level: core
+    tracks: [mle, re]
+    q: >-
+      Write the LSTM equations. Explain what each gate does and exactly how the design
+      addresses the vanishing gradients of a vanilla RNN.
+    a: |
+      **Vanilla RNN.** $h_t=\tanh(W_hh_{t-1}+W_xx_t+b)$. Backpropagation through time gives
+
+      $$
+      \frac{\partial h_t}{\partial h_k}=\prod_{i=k+1}^{t}\operatorname{diag}\big(\tanh'(\cdot)\big)\,W_h ,
+      $$
+
+      a product of $t-k$ Jacobians. Its norm shrinks or grows exponentially unless their singular values stay near 1, so long-range dependencies are not learned (vanishing) or training diverges (exploding, handled by clipping).
+
+      **LSTM.** With $u_t=[h_{t-1},x_t]$:
+
+      $$
+      f_t=\sigma(W_fu_t+b_f),\quad i_t=\sigma(W_iu_t+b_i),\quad o_t=\sigma(W_ou_t+b_o),\quad g_t=\tanh(W_gu_t+b_g)
+      $$
+
+      $$
+      c_t=f_t\odot c_{t-1}+i_t\odot g_t,\qquad h_t=o_t\odot\tanh(c_t)
+      $$
+
+      - The **forget gate** $f$ decides how much of the old cell state to keep.
+      - The **input gate** $i$ decides how much of the candidate $g$ to write.
+      - The **output gate** $o$ decides how much of the cell to expose as the hidden state.
+
+      **Why it helps.** Along the cell path $\partial c_t/\partial c_{t-1}=\operatorname{diag}(f_t)$, plus indirect terms through the gates. The update is additive, with no repeated multiplication by a weight matrix or squashing function. When $f\approx1$ the gradient passes unchanged across many steps. It is a gated residual connection through time. Initialising the forget bias to +1 keeps memory open at the start. Gradients still decay when $f<1$ over long spans, and can still explode.
+
+      **Size.** $4\,(d_h(d_h+d_x)+d_h)$ parameters; PyTorch keeps two bias vectors, which adds $4d_h$. A GRU merges the forget and input gates into one update gate and has no separate cell state: three blocks instead of four, similar quality.
+
+      **Limits.** Computation is sequential in time, so there is no parallelism over positions in training; all history must fit in a fixed-size state; and the path between distant tokens has length $O(T)$.
+    probes:
+      - Why sigmoids for the gates and tanh for the candidate?
+      - What is truncated backpropagation through time, and what does it cost?
+
+  - id: dl-028
+    skill: sequence-models
+    also: [transformers, model-arch-research]
+    type: tradeoff
+    level: staff
+    tracks: [mle, re]
+    q: >-
+      Why did transformers displace RNNs and LSTMs for sequence modelling, what did they give
+      up, and where do state-space models such as Mamba fit?
+    a: |
+      | | RNN / LSTM | Transformer | State-space model |
+      |---|---|---|---|
+      | Training parallel over positions | no | yes | yes |
+      | Path between distant positions | $O(T)$ steps | $O(1)$ | through the state |
+      | Cost in sequence length | $O(T)$ | $O(T^2)$ attention | $O(T)$ |
+      | Inference state | fixed size | KV cache growing with $T$ | fixed size |
+
+      **Why transformers won.**
+
+      1. Training is parallel over positions: with teacher forcing every position is computed at once, which is what allowed scaling data and model size on GPUs.
+      2. Any earlier token is directly accessible. There is no bottleneck through a fixed-size state, and gradients do not have to travel through $T$ steps.
+      3. Quality scaled predictably with depth, width and data.
+
+      **What they gave up.** Quadratic attention cost, inference memory that grows with context, a hard context limit, no built-in notion of order, and a less natural fit for streaming.
+
+      **State-space models.** A linear system $h'(t)=Ah(t)+Bx(t)$, $y(t)=Ch(t)$, discretised to $h_t=\bar Ah_{t-1}+\bar Bx_t$. S4 structures $A$ for long memory. Mamba makes the parameters depend on the input ("selective"), so the state can choose what to keep, and trains in parallel with a scan. The result is linear time in length and a constant-size state at inference.
+
+      **Where they stand.** Results are strong on very long sequences such as audio, genomics and long time series, and competitive on language at small to medium scale. Frontier LLMs remain transformer based, and hybrids that mix attention with recurrent or state-space layers are an active direction. The structural weakness is that history is compressed into a fixed state, so exact retrieval of an arbitrary earlier token (copying, in-context lookup) is hard, while attention does it trivially.
+
+      **Choosing.** Exact recall over the context: attention. Streaming with constant memory or extremely long inputs: recurrent, state-space or hybrid. Small tabular time series: often none of these.
+    probes:
+      - Why does a constant path length matter for learning long-range dependencies?
+      - Give a task that attention solves trivially and a fixed-size state cannot.
+
+  - id: dl-029
+    skill: generative
+    also: [bayesian, math]
+    type: derivation
+    level: senior
+    tracks: [mle, re]
+    q: >-
+      Derive the evidence lower bound for a VAE, interpret its two terms, and explain the
+      reparameterisation trick and posterior collapse.
+    a: |
+      The model is $p_\theta(x,z)=p(z)\,p_\theta(x\mid z)$, and $\log p_\theta(x)=\log\int p(z)\,p_\theta(x\mid z)\,dz$ is intractable. Introduce an encoder $q_\phi(z\mid x)$. For any $q$:
+
+      $$
+      \log p_\theta(x)=\underbrace{\mathbb{E}_{q}\big[\log p_\theta(x\mid z)\big]-\mathrm{KL}\big(q_\phi(z\mid x)\,\|\,p(z)\big)}_{\text{ELBO}}+\mathrm{KL}\big(q_\phi(z\mid x)\,\|\,p_\theta(z\mid x)\big)
+      $$
+
+      The last term is non-negative, so the ELBO is a lower bound, tight when the encoder equals the true posterior.
+
+      **The two terms.**
+
+      - Reconstruction: the expected log-likelihood of the data under the decoder. A Gaussian decoder with fixed variance gives a scaled MSE; a Bernoulli decoder gives BCE.
+      - Rate: the cost of the information carried in $z$. For $q=N(\mu,\operatorname{diag}\sigma^2)$ and $p=N(0,I)$ it is $\frac12\sum_j(\mu_j^2+\sigma_j^2-\log\sigma_j^2-1)$.
+
+      **Reparameterisation.** Sampling $z\sim q_\phi$ is not differentiable in $\phi$. Write $z=\mu+\sigma\odot\epsilon$ with $\epsilon\sim N(0,I)$: the randomness becomes an input and gradients flow through $\mu$ and $\sigma$, with much lower variance than a score-function estimator.
+
+      **Posterior collapse.** With a strong decoder, for example an autoregressive one, the optimum can ignore $z$: $q(z\mid x)=p(z)$ and the KL is zero. Mitigations are KL annealing, free bits, a weaker decoder and a KL weight below 1. A weight above 1 (β-VAE) trades reconstruction for a more compressed code.
+
+      **In practice.**
+
+      - Samples are blurry because a factorised Gaussian likelihood averages over modes. VAEs now serve mainly as compressors for latent diffusion (trained with perceptual and adversarial terms and a small KL weight) and, as VQ-VAE, as tokenisers for images and audio.
+      - The scale of the reconstruction term sets the effective KL weight. Summing versus averaging over pixels changes the trade-off, a classic implementation bug.
+    probes:
+      - Why is the bound loose with a diagonal-Gaussian encoder?
+      - Derive the closed-form KL between a diagonal Gaussian and the standard normal.
+
+  - id: dl-030
+    skill: generative
+    type: concept
+    level: senior
+    tracks: [mle, re]
+    q: >-
+      State the GAN objective and the optimal discriminator. Why are GANs hard to train, and
+      what are the standard fixes?
+    a: |
+      $$
+      \min_G\max_D\ \mathbb{E}_{x\sim p_{\text{data}}}[\log D(x)]+\mathbb{E}_{z\sim p_z}[\log(1-D(G(z)))]
+      $$
+
+      For a fixed generator the optimal discriminator is $D^*(x)=\dfrac{p_{\text{data}}(x)}{p_{\text{data}}(x)+p_g(x)}$. Substituting it gives $2\,\mathrm{JSD}(p_{\text{data}}\,\|\,p_g)-\log4$, minimised when $p_g=p_{\text{data}}$.
+
+      Why it is hard:
+
+      1. **Saturating generator loss.** Early on the discriminator rejects fakes confidently and $\log(1-D(G(z)))$ has almost no gradient. The non-saturating loss maximises $\log D(G(z))$ instead.
+      2. **Disjoint supports.** Real and generated data lie on low-dimensional manifolds that barely overlap. A perfect discriminator then exists and the JS divergence is constant, so the generator gets no useful signal. This motivates the Wasserstein GAN, whose critic must be 1-Lipschitz (gradient penalty, spectral normalisation).
+      3. **Mode collapse.** The generator maps many $z$ to a few outputs that fool the current discriminator; the discriminator adapts; the generator moves to another mode. Nothing in the objective with a finite discriminator forces coverage.
+      4. **It is a game, not a minimisation.** Simultaneous gradient steps can cycle, the loss curves do not indicate progress, and the balance between the two networks is delicate.
+      5. **No likelihood.** Evaluation relies on proxies such as FID, which is biased by sample size and depends on the feature extractor.
+
+      Standard fixes: non-saturating or hinge loss, spectral normalisation, gradient penalties (R1, WGAN-GP), different learning rates for the two networks, an EMA of generator weights, and differentiable augmentation when data is scarce.
+
+      **Today.** Diffusion and flow models have replaced GANs for general image synthesis because of coverage and training stability. Adversarial losses remain where sharpness or speed matters: autoencoder and codec decoders, super-resolution, vocoders, and distilling diffusion models into few-step generators. The GAN's advantage is sampling in a single forward pass.
+    probes:
+      - Derive the optimal discriminator.
+      - Why does mode collapse not show up in the discriminator's loss?
+
+  - id: dl-031
+    skill: generative
+    type: concept
+    level: senior
+    tracks: [mle, re]
+    q: >-
+      Explain how a diffusion model is trained and sampled. What does the network predict, why
+      is the simple MSE loss valid, and what do DDIM and classifier-free guidance change?
+    a: |
+      **Forward process (fixed).** Gaussian noise is added over steps $t=1..T$. In closed form
+
+      $$
+      x_t=\sqrt{\bar\alpha_t}\,x_0+\sqrt{1-\bar\alpha_t}\,\epsilon,\qquad\epsilon\sim N(0,I),\quad\bar\alpha_t=\prod_{s\le t}(1-\beta_s),
+      $$
+
+      with $\bar\alpha_T\approx0$, so $x_T$ is almost pure noise.
+
+      **Training.** Sample $x_0$, $t$ and $\epsilon$, form $x_t$, and regress the noise:
+
+      $$
+      L_{\text{simple}}=\mathbb{E}_{x_0,t,\epsilon}\,\big\|\epsilon-\epsilon_\theta(x_t,t)\big\|^2 .
+      $$
+
+      **Why it is valid.** The variational bound on $\log p(x_0)$ is a sum of KL terms between Gaussian posteriors $q(x_{t-1}\mid x_t,x_0)$ and the model's reverse steps. Each reduces to a weighted squared error between means, which reparameterises to a noise-prediction error. $L_{\text{simple}}$ drops the weights, which changes the emphasis across noise levels and was found to improve sample quality (Ho et al., 2020). Equivalently it is denoising score matching: $\epsilon_\theta\approx-\sqrt{1-\bar\alpha_t}\,\nabla_{x_t}\log p_t(x_t)$.
+
+      **Parameterisation.** The network can predict $\epsilon$, $x_0$ or $v=\sqrt{\bar\alpha_t}\,\epsilon-\sqrt{1-\bar\alpha_t}\,x_0$. These are linear reparameterisations of each other; they differ in the implied loss weighting and in conditioning at the extremes of the noise range.
+
+      **Sampling.** Start from $x_T\sim N(0,I)$ and denoise step by step. DDPM ancestral sampling is stochastic and uses on the order of a thousand steps. DDIM is a deterministic sampler for the *same trained network* that skips steps, typically 20 to 50; it corresponds to solving the probability-flow ODE, and higher-order solvers need fewer steps still. Distillation gets to 1 to 4 steps.
+
+      **Classifier-free guidance.** Train one network with the condition randomly dropped, then combine at sampling time:
+
+      $$
+      \hat\epsilon=\epsilon_\theta(x_t,\varnothing)+w\,\big(\epsilon_\theta(x_t,c)-\epsilon_\theta(x_t,\varnothing)\big)
+      $$
+
+      $w>1$ strengthens adherence to the condition at the cost of diversity and, when too high, over-saturated samples. It costs two forward passes per step.
+
+      **Practice.** Latent diffusion runs the process in a VAE's latent space; backbones moved from U-Nets to transformers. Sample from the EMA weights.
+    probes:
+      - Why can a network trained once be sampled with 1,000 steps or with 50?
+      - What does the guidance scale trade off, and why?
+
+  - id: dl-032
+    skill: generative
+    also: [llm-general, model-arch-research]
+    type: tradeoff
+    level: staff
+    tracks: [mle, re]
+    q: >-
+      Compare autoregressive, diffusion and flow-matching generative models: what each trains
+      on, how each samples, and when you would choose which. Write the flow-matching objective.
+    a: |
+      **Autoregressive.** The chain rule gives an exact likelihood,
+
+      $$
+      \log p(x)=\sum_t\log p_\theta(x_t\mid x_{<t}),
+      $$
+
+      trained with teacher forcing and cross-entropy; perplexity is the exponential of the mean negative log-likelihood per token. Training is parallel over positions. Sampling takes one network call per token, and errors compound because the model was trained on ground-truth prefixes but conditions on its own samples (exposure bias). It is the natural fit for discrete sequences; continuous data must first be tokenised.
+
+      **Diffusion.** A denoising regression across noise levels. Sampling refines the whole sample over tens of steps, each a full network call that is parallel across positions. Likelihood is available only through a bound or an ODE. It is strong on continuous, high-dimensional data (images, video, audio, molecular structures), and guidance provides a control knob.
+
+      **Flow matching** (rectified-flow form). Choose a path between noise $x_0\sim N(0,I)$ and data $x_1$, $x_t=(1-t)\,x_0+t\,x_1$, and regress a velocity field onto its time derivative:
+
+      $$
+      L_{\text{FM}}=\mathbb{E}_{t\sim U[0,1],\,x_0,\,x_1}\big\|v_\theta(x_t,t)-(x_1-x_0)\big\|^2
+      $$
+
+      The target differs for each pair, but the minimiser is the conditional expectation $\mathbb{E}[x_1-x_0\mid x_t]$, the marginal velocity field whose ODE $dx/dt=v_\theta(x,t)$ carries noise to data. Sample by integrating from $t=0$ to $1$ with an ODE solver, in a few to a few tens of steps.
+
+      **Relation.** Diffusion with a Gaussian path belongs to the same family: the methods differ in the path (the schedule of signal and noise), the prediction target and the loss weighting over time. Straight paths are simple to integrate and training needs no simulation. Several recent image and video generators are trained this way. How $t$ is sampled acts as a loss weighting and matters.
+
+      **Choosing.**
+
+      - Discrete symbolic data, a need for likelihoods, or streaming output: autoregressive.
+      - Continuous perceptual data with global coherence and a tunable quality-speed trade-off: diffusion or flow.
+      - Latency: autoregressive cost scales with output length, diffusion and flow with the number of steps, which distillation reduces.
+      - Hybrids are common, such as autoregression over latent tokens with a diffusion decoder.
+
+      Likelihood and sample quality are different things; a model can be good at one and poor at the other.
+    probes:
+      - Why is regressing onto x_1 - x_0 valid when that target is not a function of x_t?
+      - How would you reduce exposure bias in an autoregressive model?
+
+  - id: dl-033
+    skill: representation
+    also: [pytorch, retrieval]
+    type: coding
+    level: senior
+    tracks: [mle, ai, re]
+    q: >-
+      Implement the symmetric InfoNCE loss with in-batch negatives in PyTorch. What value does
+      it take at chance, and what are the pitfalls?
+    a: |
+      ```python
+      import torch
+      import torch.nn.functional as F
+
+      def info_nce(a, b, temperature=0.07):
+          """a[i] and b[i] are a positive pair; every other row in the batch is a negative. a, b: (N, d)."""
+          a = F.normalize(a, dim=-1)
+          b = F.normalize(b, dim=-1)
+          logits = a @ b.T / temperature                            # (N, N) cosine similarities / tau
+          labels = torch.arange(a.size(0), device=a.device)         # positives on the diagonal
+          return 0.5 * (F.cross_entropy(logits, labels) + F.cross_entropy(logits.T, labels))
+      ```
+
+      It is an $N$-way classification: for each anchor, pick its positive among the $N$ candidates in the batch. With uninformative embeddings the loss is about $\ln N$. It also gives the bound $I(a;b)\ge\ln N-L$, which is why the number of negatives caps what the loss can express.
+
+      What an interviewer checks:
+
+      - **Normalise.** Without L2 normalisation the loss can be reduced just by growing embedding norms.
+      - **Temperature.** With cosine similarity in $[-1,1]$ and $\tau=1$ the loss cannot get low. Typical values are 0.01 to 0.1. If learned, parameterise the log of the scale and clamp it.
+      - **Labels** are `arange(N)`; the two directions (a→b and b→a) are averaged.
+      - **False negatives.** Duplicates, or several positives for one anchor in a batch, are pushed apart. Mask them out or de-duplicate the batch.
+      - **Batch size is the number of negatives.** Under DDP each GPU sees only its local batch unless embeddings are gathered across GPUs; gathered tensors carry no gradient except the local slice.
+      - **Memory.** The logit matrix is $N\times N$. For very large batches, cache embeddings and chunk the gradient computation.
+      - **Hard negatives** are appended as extra columns of the logit matrix.
+      - **Precision.** Logits reach $1/\tau$; compute the loss in fp32.
+    probes:
+      - Add one mined hard negative per anchor. How does the logit matrix change?
+      - Why does in-batch accuracy overstate retrieval quality on the full corpus?
+
+  - id: dl-034
+    skill: representation
+    also: [retrieval, recsys, vector-db]
+    type: design
+    level: senior
+    tracks: [mle, ai]
+    q: >-
+      You are training a two-tower retrieval model with in-batch negatives. Explain the role of
+      the temperature, the biases in-batch negatives introduce, and how you would mine harder
+      negatives without breaking training.
+    a: |
+      **Setup.** A query tower and an item tower produce embeddings scored by dot product or cosine. Item embeddings are precomputed and served from an ANN index; only the query tower runs online. There are no query-item cross features, so it is cheaper and less expressive than a cross-encoder, hence retrieve with two towers and rerank with something stronger.
+
+      **Temperature.** Logits are similarity over $\tau$. The gradient weight on a negative is its softmax probability, so a small $\tau$ concentrates learning on the hardest negatives. That speeds up fine distinctions and also amplifies false negatives and label noise. A large $\tau$ spreads the gradient evenly and learns only coarse structure. Tune it, or learn it with a clamp.
+
+      **Biases of in-batch negatives.**
+
+      1. *Popularity.* An item appears as a negative in proportion to its frequency in the training stream, so popular items are over-penalised. The logQ correction subtracts $\log q_j$, the item's estimated sampling probability, from its logit (Yi et al., 2019).
+      2. *False negatives.* Another row's item may be relevant to this query. Mask identical ids and de-duplicate.
+      3. *Easy negatives.* Random items are trivially separable and the model plateaus. Quality then depends on batch size; a cross-batch memory queue or gradient caching decouples the number of negatives from GPU memory.
+
+      **Hard negatives.**
+
+      - Mine from the top results of BM25 or of the current model's index, refreshed periodically, excluding known positives.
+      - The top-ranked "negatives" are often unlabelled positives. Skip the very top ranks, filter with a cross-encoder, or distil the cross-encoder's scores instead of using hard 0/1 labels.
+      - Keep in-batch random negatives in the mix. Training on hard negatives only is unstable and distorts the score distribution.
+
+      **Evaluation and serving.**
+
+      - Measure recall@k against the full corpus, split by head and tail queries. In-batch accuracy is not a retrieval metric.
+      - Separate model recall (exact search) from ANN recall.
+      - Query and item towers are versioned together: changing the item tower means re-embedding and re-indexing every item.
+    probes:
+      - Derive the logQ correction from the sampled-softmax view.
+      - What happens to the embedding space if the temperature is far too low?
+
+  - id: dl-035
+    skill: representation
+    also: [pretraining]
+    type: concept
+    level: staff
+    tracks: [mle, re]
+    q: >-
+      Survey the main self-supervised objectives: contrastive, non-contrastive
+      (self-distillation), redundancy reduction, masked prediction and autoregressive. What is
+      representational collapse, and how does each family avoid it?
+    a: |
+      **Collapse** is the trivial solution to "make two views agree". In complete collapse the encoder outputs a constant. In dimensional collapse the embeddings occupy a low-dimensional subspace. Either satisfies an invariance objective while carrying little information.
+
+      - **Contrastive** (SimCLR, MoCo, CLIP). Pull positives together and push negatives apart with InfoNCE. The negatives prevent complete collapse. It needs many negatives, is sensitive to the choice of augmentations and to false negatives, and can still suffer dimensional collapse.
+      - **Self-distillation without negatives** (BYOL, SimSiam, DINO). An online network predicts a target network's embedding of another view. Collapse is avoided by asymmetry: a stop-gradient on the target, a predictor head, an EMA teacher, and in DINO centring and sharpening of the teacher output. Why this suffices is understood only in part; say so instead of inventing a proof.
+      - **Redundancy reduction** (Barlow Twins, VICReg). Explicit terms keep each dimension's variance above a floor and decorrelate dimensions, next to an invariance term.
+      - **Masked prediction.** BERT masks about 15% of tokens; MAE masks about 75% of image patches and reconstructs pixels. Reconstruction in input space cannot collapse, since a constant output has high loss, but it spends capacity on low-level detail, and the features usually need fine-tuning rather than a linear probe. Latent-prediction variants (data2vec, I-JEPA) predict embeddings of masked regions and need the self-distillation safeguards again.
+      - **Autoregressive.** Next-token prediction has no collapse problem. The representation is a by-product; good text-embedding models add contrastive fine-tuning and pooling on top of an LLM backbone.
+
+      **What each encodes.** Invariance methods discard what the augmentations declare irrelevant, which hurts when that information matters downstream (colour, for example). Masked and generative objectives keep more information but in a less linearly accessible form. Cross-modal contrastive training aligns to language and enables zero-shot use.
+
+      **Detecting collapse.** Per-dimension standard deviation across a batch near zero; a singular-value spectrum of the embedding covariance with low effective rank; pairwise cosine similarities all near 1; a loss that hits its trivial minimum quickly; poor kNN or linear-probe accuracy.
+    probes:
+      - How would you measure dimensional collapse in a trained encoder?
+      - Why can strong augmentations hurt a downstream task?
+
+  - id: dl-036
+    skill: gnn
+    also: [anomaly, recsys]
+    type: concept
+    level: senior
+    tracks: [mle, re]
+    q: >-
+      Explain message passing in graph neural networks and the over-smoothing problem. Where
+      are GNNs used in industry, and when is a GNN not worth it?
+    a: |
+      **Message passing.** For a node $v$ with neighbours $N(v)$:
+
+      $$
+      h_v^{(l+1)}=\phi\Big(h_v^{(l)},\ \bigoplus_{u\in N(v)}\psi\big(h_u^{(l)},h_v^{(l)},e_{uv}\big)\Big)
+      $$
+
+      where $\bigoplus$ is permutation invariant (sum, mean, max, or attention weighted). After $L$ layers a node has seen its $L$-hop neighbourhood.
+
+      - GCN: $H^{(l+1)}=\sigma\big(\tilde D^{-1/2}\tilde A\tilde D^{-1/2}H^{(l)}W^{(l)}\big)$ with $\tilde A=A+I$.
+      - GraphSAGE samples neighbours and aggregates them, and is inductive, so it handles unseen nodes.
+      - GAT learns attention weights over neighbours.
+      - GIN (sum aggregation followed by an MLP) is as expressive as the 1-WL isomorphism test, which is the ceiling for standard message passing.
+
+      **Over-smoothing.** Each layer is a neighbourhood average, a low-pass filter. Stacked many times, the representations of nodes in a connected component converge and become indistinguishable, so accuracy falls after a few layers. Production GNNs usually have two or three. Mitigations are residual or jumping-knowledge connections, normalisation, edge dropout, and decoupling propagation from transformation.
+
+      **Over-squashing** is different: information from exponentially many distant nodes is compressed into one fixed-size vector across bottleneck edges, so long-range signals are lost. Remedies are graph rewiring, virtual nodes, and graph transformers with structural encodings.
+
+      **Scaling.** The neighbourhood grows as degree to the power $L$. Use neighbour sampling, subgraph sampling, or precomputed random-walk neighbourhoods. Fetching neighbour features usually dominates the cost.
+
+      **Where they are used.** Fraud and abuse detection on account-device-payment graphs, where collusion is a graph pattern; recommendation on user-item graphs; molecules and materials; knowledge-graph completion; road-network ETA.
+
+      **When not.** Try an MLP on node features, and a GBDT with hand-aggregated neighbour features. They often capture most of the gain at a fraction of the serving cost. Also skip it when edges are noisy or unstable, or when latency rules out neighbourhood fetches.
+
+      **Evaluation leakage.** Random node or edge splits leak through neighbours' labels and through edges that exist only in the future. Split by time.
+    probes:
+      - Why are most production GNNs only two or three layers deep?
+      - How would you serve a GNN with a 50 ms latency budget?
+
+  - id: dl-037
+    skill: pytorch
+    also: [training-dynamics]
+    type: coding
+    level: core
+    tracks: [mle, ai, re]
+    q: >-
+      Write a minimal PyTorch training loop with automatic mixed precision, gradient clipping
+      and a learning-rate schedule, plus an evaluation function. Point out the lines people get
+      wrong.
+    a: |
+      ```python
+      import torch
+      import torch.nn.functional as F
+
+      def train(model, loader, opt, sched, device, epochs=1, max_norm=1.0, use_amp=True):
+          scaler = torch.amp.GradScaler(device.type, enabled=use_amp)       # only needed for fp16
+          model.to(device).train()
+          for _ in range(epochs):
+              for x, y in loader:
+                  x, y = x.to(device, non_blocking=True), y.to(device, non_blocking=True)
+                  opt.zero_grad(set_to_none=True)
+                  with torch.autocast(device.type, dtype=torch.float16, enabled=use_amp):
+                      loss = F.cross_entropy(model(x), y)                   # logits, not probabilities
+                  scaler.scale(loss).backward()
+                  scaler.unscale_(opt)                                      # clip true, unscaled gradients
+                  grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm)
+                  scaler.step(opt)                                          # skipped if gradients are inf / NaN
+                  scaler.update()
+                  sched.step()                                              # per step, not per epoch
+
+      @torch.no_grad()
+      def evaluate(model, loader, device):
+          model.eval()                                                      # dropout off, BatchNorm uses running stats
+          total, correct = 0, 0
+          for x, y in loader:
+              x, y = x.to(device), y.to(device)
+              correct += (model(x).argmax(-1) == y).sum().item()
+              total += y.numel()
+          return correct / total
+      ```
+
+      Lines people get wrong:
+
+      - **Order.** `zero_grad` → forward under `autocast` → `scaler.scale(loss).backward()` → `unscale_` → clip → `scaler.step` → `scaler.update` → `sched.step`. Clipping before `unscale_` clips the scaled gradients, which is meaningless.
+      - **Scope of autocast.** It wraps the forward pass and the loss only, not `backward()` or the optimiser step.
+      - **bf16.** With `dtype=torch.bfloat16` no `GradScaler` is needed.
+      - **Mode.** `evaluate` switches to `eval()`, so call `model.train()` again before the next epoch.
+      - **Logging.** `loss.item()` forces a GPU synchronisation, so log every N steps. Accumulating `loss` tensors instead of floats keeps every graph alive and leaks memory.
+      - **Sequence models.** Flatten to `(B*T, V)` and pass `ignore_index` for padding.
+      - **Gradient accumulation.** Divide the loss by $k$ and step every $k$ batches.
+      - **Checkpoints.** Save model, optimiser, scheduler, scaler, step count and RNG state. Restoring only the weights resets Adam's moments and the schedule.
+    probes:
+      - Add gradient accumulation over k steps. Which calls move inside the `if`?
+      - What does the returned gradient norm tell you, and what would you alert on?
+
+  - id: dl-038
+    skill: pytorch
+    type: concept
+    level: core
+    tracks: [mle, ai, re]
+    q: >-
+      What is the difference between model.eval() and torch.no_grad()? Then list the autograd
+      behaviours that most often cause bugs.
+    a: |
+      They are independent switches.
+
+      - `model.eval()` sets `training=False` on every module: dropout becomes the identity, and BatchNorm uses and stops updating its running statistics. Gradients are still tracked.
+      - `torch.no_grad()` stops recording the graph: no gradients, less memory, faster. Layer behaviour is unchanged, so dropout still drops if the model is in training mode. `torch.inference_mode()` is a stricter and slightly faster variant.
+
+      Evaluation needs both. `eval()` alone wastes memory on graphs. `no_grad()` alone gives noisy metrics, and BatchNorm still updates its running statistics from validation data. Forgetting to call `train()` afterwards silently trains without dropout.
+
+      Autograd behaviours that bite:
+
+      1. `.grad` **accumulates** across `backward()` calls. Call `zero_grad()` each step, unless accumulation is intended.
+      2. `.detach()`, `.item()`, `.numpy()` and re-wrapping with `torch.tensor(x)` cut the graph. A loss computed from such values has no path to the parameters.
+      3. **In-place operations** on a tensor that backward needs raise "modified by an inplace operation".
+      4. The graph is **freed after `backward()`**. Needing `retain_graph=True` usually points to a bug, such as an RNN hidden state carried across batches without `detach()`.
+      5. Keeping references to loss tensors (`total += loss`) keeps their graphs alive, so memory grows. Use `loss.item()`.
+      6. **Registration.** A tensor that is not an `nn.Parameter`, or modules kept in a Python list instead of `nn.ModuleList`, are missing from `parameters()`, are not moved by `.to()`, are not saved, and are not trained.
+      7. **Frozen parameters.** With `requires_grad_(False)` the gradient is `None` and the optimiser skips the parameter. If the gradient is a zero tensor instead, AdamW still applies weight decay to it.
+      8. **Non-differentiable operations** (argmax, rounding, sampling) pass no gradient. `torch.where` evaluates both branches, so a NaN or infinite derivative in the unused branch still poisons the gradient.
+    probes:
+      - BatchNorm in training mode inside a no_grad block. What happens to its running statistics?
+      - Why does carrying an RNN hidden state across batches require a detach?
+
+  - id: dl-039
+    skill: pytorch
+    also: [dataloading, dist-training, debug-perf]
+    type: debug
+    level: senior
+    tracks: [mle, re]
+    q: >-
+      GPU utilisation sits at 30% when training on one GPU. After moving to 8 GPUs with DDP,
+      throughput is 5x rather than 8x and the validation numbers changed. What do you check,
+      and where does torch.compile fit?
+    a: |
+      **One GPU at 30%: the GPU is being starved.**
+
+      - Measure first. Time the data loading against forward and backward, or train on one cached batch in a loop to find the ceiling.
+      - DataLoader settings: `num_workers > 0`, `pin_memory=True` with `non_blocking=True`, `persistent_workers=True`, and a suitable `prefetch_factor`.
+      - Move heavy per-sample Python work out of the hot path: pre-tokenise or pre-decode, batch augmentations on the GPU, and read sharded sequential files instead of millions of small files on network storage.
+      - Remove hidden synchronisation: `.item()`, `print(loss)` or `.cpu()` on every step.
+      - Worker pitfalls: NumPy's RNG state is copied into every worker, so augmentations repeat unless you seed in `worker_init_fn`; an `IterableDataset` yields duplicates unless it is sharded with `get_worker_info()`; large Python lists in the dataset are slowly copied into each worker.
+
+      **DDP at 5x.** DDP runs one process per GPU, each with a model replica, and averages gradients with an all-reduce during `backward()`.
+
+      - The input pipeline must now deliver eight times the data. This is the usual cause.
+      - Every step waits for the slowest rank, so uneven batch lengths hurt. Communication matters for small models or slow interconnects.
+
+      **Validation numbers changed.**
+
+      - The effective batch is now eight times larger, so the learning rate and warmup need re-tuning.
+      - `DistributedSampler` needs `sampler.set_epoch(epoch)` every epoch; without it the shuffle is identical each epoch.
+      - BatchNorm statistics are per replica unless converted to `SyncBatchNorm`.
+      - The distributed sampler pads the dataset so that all ranks get equal shares, duplicating a few samples, and an average of per-rank metrics is not the global metric. Gather predictions or counts across ranks, or evaluate on rank 0.
+      - Save and log from rank 0 only, and save `model.module.state_dict()`.
+
+      **torch.compile.** It captures the model's Python as graphs and compiles them into fused kernels. It helps when the job is GPU bound with framework overhead; it does nothing for a starved input pipeline. Costs: compile time on the first calls, recompilation when guards fail (new shapes or data-dependent Python control flow), and silent fallback to eager at graph breaks. Benchmark after warm-up, and keep input shapes to a few buckets.
+    probes:
+      - How do you show in two minutes that the DataLoader is the bottleneck?
+      - Under DDP with in-batch negatives, how many negatives does each example see?
+
+  - id: dl-040
+    skill: tensorflow
+    also: [ml-frameworks, production-ml]
+    type: concept
+    level: senior
+    tracks: [mle, re]
+    q: >-
+      You join a team with a TensorFlow / Keras production stack after years of PyTorch. Which
+      conceptual differences matter, and which bugs do PyTorch users typically hit?
+    a: |
+      **Execution model.** TF2 runs eagerly by default, but performance and export come from `tf.function`, which *traces* Python into a graph the first time it sees a new input signature.
+
+      - Python side effects (prints, appending to lists, Python or NumPy randomness) run only at trace time.
+      - Calling with Python scalars or with changing shapes triggers retracing, which is slow. Pass tensors and set an `input_signature`.
+      - Variables must be created once, not on every call.
+
+      **Gradients.** `tf.GradientTape` records operations inside its context, and `tape.gradient(loss, variables)` returns the gradients. There is no `.backward()` and no `.grad` attribute. Tensors are immutable; state lives in `tf.Variable`.
+
+      **Keras.** `Model.fit` covers the standard loop; custom loops use the tape. Training behaviour is selected by the `training=` argument at call time, not by a module-level mode. A custom step that omits `training=True`, or an inference path that omits `training=False`, is the equivalent of the `eval()` bug. Keras 3 is multi-backend (TensorFlow, JAX, PyTorch), so "Keras" no longer implies TensorFlow.
+
+      **Input pipelines.** `tf.data` with `map`, `shuffle`, `batch` and `prefetch`. Order matters: shuffle before batching, and a shuffle buffer much smaller than the dataset shuffles poorly.
+
+      **Conventions that break ports.**
+
+      - Images are channels-last (NHWC); PyTorch is NCHW.
+      - A Dense kernel is `(in, out)` where `nn.Linear.weight` is `(out, in)`. Conv kernels are `(H, W, in, out)` where PyTorch uses `(out, in, H, W)`.
+      - BatchNorm `momentum` has the opposite meaning: Keras 0.99 corresponds to PyTorch 0.01. Default epsilons differ too (Keras BatchNorm and LayerNorm use $10^{-3}$, PyTorch $10^{-5}$; Adam $10^{-7}$ against $10^{-8}$).
+      - Keras losses default to `from_logits=False`. Passing logits without changing it trains badly without an error.
+      - `"same"` padding with stride 2 pads asymmetrically.
+
+      **Why these stacks persist.** SavedModel with TF Serving, on-device runtimes (TFLite, now LiteRT), TFX pipelines with shared preprocessing between training and serving, and mature infrastructure for large sparse recommendation models.
+    probes:
+      - What triggers retracing, and how would you detect it?
+      - You port PyTorch weights into a Keras model and the outputs differ slightly. Where do you look?
+
+  - id: dl-041
+    skill: jax
+    also: [ml-frameworks]
+    type: concept
+    level: senior
+    tracks: [mle, re]
+    q: >-
+      What are JAX's core function transformations, and why does JAX require pure functions
+      and explicit PRNG keys? Contrast the programming model with PyTorch.
+    a: |
+      JAX is a NumPy-like API plus composable transformations of pure functions, compiled with XLA.
+
+      - `grad(f)` returns a function that computes the gradient of a scalar-valued `f` with respect to its first argument, which can be any pytree (nested dicts, lists and tuples of arrays). `value_and_grad`, `jvp`, `vjp`, `jacfwd`, `jacrev` and `hessian` build on the same machinery.
+      - `jit(f)` traces `f` once with abstract values (shape and dtype only), compiles the trace, and caches it per input shape and dtype.
+      - `vmap(f)` turns per-example code into batched code. Per-example gradients are `vmap(grad(loss), in_axes=(None, 0, 0))`; mapping over a stack of parameters gives an ensemble.
+      - They compose: `jit(vmap(grad(f)))`.
+
+      **Why purity.** The transformations act on the traced function, so its output must depend only on its inputs. During tracing the Python body runs once: a `print`, a global mutation or a call to Python's RNG happens at trace time and is then baked in or lost. So everything that changes is an explicit input and output: `params, opt_state = step(params, opt_state, batch)`. Arrays are immutable; updates are written `x = x.at[i].set(v)`.
+
+      **Why explicit keys.** A hidden global RNG is state, and it cannot be made reproducible under `jit`, `vmap` and parallel execution. A random function takes a key, and the same key always gives the same numbers. Derive new keys with `key, sub = jax.random.split(key)`. Reusing a key gives identical "random" draws, such as the same dropout mask at every step. That is the classic JAX bug.
+
+      **Constraints of jit.** Shapes are static, and a new shape recompiles, so pad or bucket. Python control flow on traced values fails; use `jnp.where`, `lax.cond`, `lax.scan` or `lax.while_loop`. The first call is slow. Execution is asynchronous, so benchmark with `.block_until_ready()`. Out-of-bounds indexing is clamped instead of raising. float64 is disabled by default.
+
+      **Against PyTorch.** PyTorch modules own mutable state, `loss.backward()` fills `.grad`, control flow is ordinary Python, and there is a global RNG. JAX is functional and stricter, and in exchange per-example gradients, higher-order derivatives, ensembling and whole-step compilation fall out naturally. The usual companions are Flax or Equinox for modules and Optax for optimisers. `torch.func` offers similar transformations in PyTorch.
+    probes:
+      - What exactly does jit cache on, and what causes a silent recompilation every step?
+      - Why does `if x > 0:` fail under jit, and what are two ways to rewrite it?
+
+  - id: dl-042
+    skill: jax
+    also: [ml-frameworks]
+    type: coding
+    level: senior
+    tracks: [mle, re]
+    q: >-
+      Write a jit-compiled training step in JAX for a small MLP with dropout, with explicit
+      parameters and PRNG handling. Where would a PyTorch habit break it?
+    a: |
+      ```python
+      import jax
+      import jax.numpy as jnp
+
+      def init(key, sizes):                                    # params are a pytree: a list of dicts
+          keys = jax.random.split(key, len(sizes) - 1)
+          return [{"w": jax.random.normal(k, (m, n)) * jnp.sqrt(2.0 / m), "b": jnp.zeros(n)}
+                  for k, m, n in zip(keys, sizes[:-1], sizes[1:])]
+
+      def forward(params, x, key, p_drop=0.1):
+          for layer in params[:-1]:
+              x = jax.nn.relu(x @ layer["w"] + layer["b"])
+              key, sub = jax.random.split(key)                 # a new key for every random draw
+              keep = jax.random.bernoulli(sub, 1 - p_drop, x.shape)
+              x = jnp.where(keep, x / (1 - p_drop), 0.0)       # dropout
+          return x @ params[-1]["w"] + params[-1]["b"]
+
+      def loss_fn(params, x, y, key):
+          logp = jax.nn.log_softmax(forward(params, x, key))
+          return -jnp.mean(jnp.take_along_axis(logp, y[:, None], axis=1))
+
+      @jax.jit                                                 # traced once per input shape and dtype
+      def step(params, x, y, key, lr=0.1):
+          loss, grads = jax.value_and_grad(loss_fn)(params, x, y, key)     # grads mirrors the params pytree
+          params = jax.tree_util.tree_map(lambda p, g: p - lr * g, params, grads)
+          return params, loss                                  # new params returned, nothing mutated
+
+      key = jax.random.PRNGKey(0)
+      key, k_init = jax.random.split(key)
+      params = init(k_init, [20, 64, 3])
+      for x, y in batches:                                     # batches of fixed shape
+          key, k_step = jax.random.split(key)                  # fresh key every step
+          params, loss = step(params, x, y, k_step)
+      ```
+
+      Where PyTorch habits break it:
+
+      - **Mutation.** `params["w"] -= lr * g` or `x[i] = v` fails or has no effect. Return new values; use `x.at[i].set(v)`.
+      - **Randomness.** Reusing one key gives the same dropout mask in every layer and every step. Split it.
+      - **State.** There is no `.grad`, no `zero_grad` and no module-owned state. Optimiser state, BatchNorm statistics and the key are threaded through `step` explicitly. With Optax: `updates, opt_state = opt.update(grads, opt_state, params)` and then `params = optax.apply_updates(params, updates)`.
+      - **Side effects.** A `print(loss)` inside `step` runs once, at trace time, and prints a tracer.
+      - **Control flow.** A Python `if` on a traced value raises a tracer error. The loop over layers is fine because its length is static.
+      - **Shapes.** A smaller last batch triggers a recompilation. Drop it or pad it.
+      - **Train and eval** are two functions, or a static Python flag. There is no `model.eval()`.
+      - **Timing.** Calls return before the computation finishes; use `loss.block_until_ready()` when benchmarking.
+    probes:
+      - Use vmap to get per-example gradients from loss_fn. What are the in_axes?
+      - How would you run this step over 1,000 batches without returning to Python between steps?
+
+  - id: dl-043
+    skill: hf
+    also: [finetuning, llm-inference]
+    type: concept
+    level: core
+    tracks: [mle, ai, re]
+    q: >-
+      Which parts of the Hugging Face ecosystem do you rely on to fine-tune and run an open
+      model, and what are the common pitfalls with from_pretrained, tokenizers and generate?
+    a: |
+      **The pieces.**
+
+      - `transformers`: `AutoTokenizer` and `AutoModelForCausalLM.from_pretrained(...)`, `Trainer`, `generate`, chat templates.
+      - `tokenizers`: fast Rust tokenizers with offsets and batch encoding.
+      - `datasets`: Arrow-backed and memory-mapped; `map` with caching; `streaming=True` for corpora larger than disk.
+      - `accelerate`: device placement (`device_map="auto"`), multi-GPU and mixed-precision launching.
+      - `peft`: LoRA and related adapters. Train a small fraction of the parameters, save only the adapter, merge it for serving.
+      - `safetensors`: a weight format with no pickle, so loading executes no code, and it memory-maps.
+      - The Hub: versioned model and dataset repositories.
+
+      **Pitfalls.**
+
+      1. **dtype and device.** State the dtype explicitly (`torch_dtype`, named `dtype` in recent versions); loading in fp32 by accident doubles memory. `device_map="auto"` can silently place layers on CPU or disk.
+      2. **Padding.** Many causal LMs ship without a pad token; set one. For batched generation with a decoder-only model pad on the **left**, otherwise the model continues from padding. Always pass the `attention_mask`.
+      3. **Labels.** Positions excluded from the loss (padding, or the prompt when training on completions only) are set to `-100`. Causal-LM heads shift the labels internally; do not shift them again.
+      4. **Chat models.** Build prompts with `tokenizer.apply_chat_template(..., add_generation_prompt=True)`. A hand-written format that differs from the training format degrades quality with no error. Watch for a doubled BOS token.
+      5. **generate.** Defaults come from the model's `generation_config` and may sample or truncate early. Set `max_new_tokens` and the sampling parameters explicitly. For decoder-only models the output includes the prompt tokens.
+      6. **Mode.** `from_pretrained` returns the model in eval mode. Call `.train()` in a custom fine-tuning loop.
+      7. **Warnings.** "Some weights were newly initialized" means a head or a key mismatch. Read it.
+      8. **Reproducibility and safety.** Pin a `revision`. `trust_remote_code=True` runs code from the repository, so review it. Adding tokens requires `resize_token_embeddings`.
+
+      For serving at volume, move from `generate` to a dedicated inference server; the `pipeline` API is for prototyping.
+    probes:
+      - Why left padding for decoder-only generation, and right padding for training?
+      - What does merging a LoRA adapter change at inference time?
