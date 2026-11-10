@@ -599,7 +599,7 @@ window.Quarto = {
 </ul>
 <details class="qa" id="llmapp-001">
 <summary>
-<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> What is an agent, concretely? Walk me through the loop and tell me which parts belong to the model and which to your code.
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Google</span> What is an agent, concretely? Walk me through the loop and tell me which parts belong to the model and which to your code.
 </summary>
 <p>An agent is a model run in a loop where the model, not the code, picks the next action from what it has observed so far. It has four parts:</p>
 <ul>
@@ -615,10 +615,16 @@ window.Quarto = {
 <li>Which stop conditions would you enforce in code even if the prompt already states them?</li>
 <li>What does the model see when a tool call fails?</li>
 </ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>Google, Software Engineer, Jul 2026: Scalable and safe agentic system with deterministic controls (<a href="https://prachub.com/interview-questions/design-a-scalable-and-safe-agentic-system">PracHub</a>)</li>
+</ul>
+</div>
 </details>
 <details class="qa" id="llmapp-002">
 <summary>
-<span class="tag tag-core">core</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> When does a fixed workflow beat an agent, and when is an agent worth it?
+<span class="tag tag-core">core</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Anthropic</span> When does a fixed workflow beat an agent, and when is an agent worth it?
 </summary>
 <p>Use the least autonomy that solves the task. A single call for classification, extraction or Q&amp;A; a workflow (code-defined steps, model fills each one) when the steps are known in advance; an agent only when the path depends on what is discovered along the way.</p>
 <p>Why not default to an agent:</p>
@@ -634,6 +640,12 @@ window.Quarto = {
 <li>Give an example you would build as a workflow that a team wanted to build as an agent.</li>
 <li>How does a verifier change the <span class="math inline">\(p^n\)</span> argument?</li>
 </ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>Anthropic, Machine Learning Engineer, undated: Design an agentic system that adapts to new tasks (<a href="https://www.aced.io/questions/5606/design-agentic-ai-system">Aced (formerly Exponent)</a>)</li>
+</ul>
+</div>
 </details>
 <details class="qa" id="llmapp-003">
 <summary>
@@ -861,7 +873,7 @@ window.Quarto = {
 </details>
 <details class="qa" id="llmapp-009">
 <summary>
-<span class="tag tag-staff">staff</span><span class="tag tag-type">design</span><span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Design the harness for a coding agent that works in a developer’s repository and can run shell commands.
+<span class="tag tag-staff">staff</span><span class="tag tag-type">design</span><span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at OpenAI</span> Design the harness for a coding agent that works in a developer’s repository and can run shell commands.
 </summary>
 <p><strong>Tools.</strong> Search (grep, glob), read with line ranges, edit by exact string replacement or patch (cheaper and safer than whole-file rewrites), shell, and a way to run tests. Tool output is bounded; large output goes to a file the agent can page through.</p>
 <p><strong>Sandbox.</strong> Run commands in a container, VM or OS-level sandbox: file writes limited to the workspace, network denied by default with an allowlist (package registries), no ambient credentials in the environment. State which capability sits inside which boundary; an external MCP tool is not covered by the shell sandbox.</p>
@@ -878,6 +890,12 @@ window.Quarto = {
 <li>How would you let the agent work unattended overnight without widening the risk?</li>
 <li>A post-tool hook finds a secret in the diff. What can it still prevent?</li>
 </ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>OpenAI, Machine Learning Engineer, Apr 2026: Agent harness and evaluation system for a tool-using agent (<a href="https://prachub.com/interview-questions/design-an-agent-harness-and-evaluation-system">PracHub</a>)</li>
+</ul>
+</div>
 </details>
 <details class="qa" id="llmapp-010">
 <summary>
@@ -1042,7 +1060,7 @@ window.Quarto = {
 </details>
 <details class="qa" id="llmapp-019">
 <summary>
-<span class="tag tag-senior">senior</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Context windows now reach a million tokens. Why still build retrieval, and when would you just put everything in the prompt?
+<span class="tag tag-senior">senior</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at OpenAI</span> Context windows now reach a million tokens. Why still build retrieval, and when would you just put everything in the prompt?
 </summary>
 <p>Put it all in the prompt when the corpus is small enough to fit comfortably, changes rarely, and every user may see all of it. With prompt caching the repeated prefix is cheap on later requests, there is no retrieval miss, and the model can reason across documents. This is the right first version for a knowledge base of tens to a few hundred pages.</p>
 <p>Build retrieval when any of these holds:</p>
@@ -1062,6 +1080,13 @@ window.Quarto = {
 <li>How would you measure the distractor effect on your own data?</li>
 <li>What does per-user access control do to your cache hit rate?</li>
 </ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>OpenAI, Product Manager, Apr 2026: How context window length affects quality, cost and latency (<a href="https://prachub.com/interview-questions/how-context-window-length-shapes-llm-quality-cost-and-latency">PracHub</a>)</li>
+<li>OpenAI, Machine Learning Engineer, undated: Effect of adjusting an LLM’s context window size (<a href="https://www.aced.io/questions/5612/adjust-llm-context-window-size">Aced (formerly Exponent)</a>)</li>
+</ul>
+</div>
 </details>
 <details class="qa" id="llmapp-020">
 <summary>
@@ -1088,7 +1113,7 @@ window.Quarto = {
 </details>
 <details class="qa" id="llmapp-021">
 <summary>
-<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">AI</span> How do you run prompt engineering as an engineering discipline rather than trial and error?
+<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">AI</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at OpenAI, Anthropic</span> How do you run prompt engineering as an engineering discipline rather than trial and error?
 </summary>
 <p>Treat prompts, tool descriptions and model settings as code with tests.</p>
 <ul>
@@ -1106,6 +1131,12 @@ window.Quarto = {
 <li>A prompt change fixes one customer’s issue and lowers the suite score by a point. Ship?</li>
 <li>How large does the golden set need to be to detect a 3-point regression?</li>
 </ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>OpenAI / Anthropic, Machine Learning Engineer, undated: Your approach to prompt engineering (<a href="https://www.aced.io/questions/5603/prompt-engineering-approach">Aced (formerly Exponent)</a>)</li>
+</ul>
+</div>
 </details>
 </section>
 <section id="rag" class="level3">
@@ -1120,7 +1151,7 @@ window.Quarto = {
 </ul>
 <details class="qa" id="llmapp-022">
 <summary>
-<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Walk me through a RAG system end to end, offline and online, and say where it usually breaks.
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at OpenAI, Amazon</span> Walk me through a RAG system end to end, offline and online, and say where it usually breaks.
 </summary>
 <p><strong>Offline (ingestion).</strong></p>
 <ol type="1">
@@ -1146,6 +1177,16 @@ window.Quarto = {
 <li>Which stage would you instrument first, and with what metric?</li>
 <li>How do you handle a question the corpus cannot answer?</li>
 </ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>OpenAI, Machine Learning Engineer, Dec 2025: Design and optimise a RAG system over a private corpus (<a href="https://prachub.com/interview-questions/design-and-optimize-a-rag-system">PracHub</a>)</li>
+<li>OpenAI, Machine Learning Engineer, Aug 2025: Production RAG for enterprise document question answering (<a href="https://prachub.com/interview-questions/design-a-production-rag-system">PracHub</a>)</li>
+<li>OpenAI, Machine Learning Engineer, Jul 2025: Enterprise search using RAG (<a href="https://prachub.com/interview-questions/design-an-ml-search-system-with-rag">PracHub</a>)</li>
+<li>OpenAI, Machine Learning Engineer, Jul 2025: Low-latency RAG for customer support (<a href="https://prachub.com/interview-questions/design-a-low-latency-rag-system">PracHub</a>)</li>
+<li>Amazon, Data Scientist, Jan 2026: Design and evaluate a RAG system for internal Q&amp;A (<a href="https://prachub.com/interview-questions/design-and-evaluate-a-rag-system">PracHub</a>)</li>
+</ul>
+</div>
 </details>
 <details class="qa" id="llmapp-023">
 <summary>
@@ -1276,7 +1317,7 @@ window.Quarto = {
 </details>
 <details class="qa" id="llmapp-027">
 <summary>
-<span class="tag tag-senior">senior</span><span class="tag tag-type">debugging</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Users report that your RAG assistant gives confidently wrong answers. How do you find the cause and fix it?
+<span class="tag tag-senior">senior</span><span class="tag tag-type">debugging</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at OpenAI, Anthropic, Google</span> Users report that your RAG assistant gives confidently wrong answers. How do you find the cause and fix it?
 </summary>
 <p>Take a sample of wrong answers with their traces and assign each to the first stage that failed:</p>
 <ol type="1">
@@ -1300,10 +1341,18 @@ window.Quarto = {
 <li>Two retrieved documents contradict each other. What should the system do?</li>
 <li>How do you measure abstention quality without making the system refuse everything?</li>
 </ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>OpenAI / Anthropic, Machine Learning Engineer, undated: Handle hallucinations in a generative model deployed to users (<a href="https://www.aced.io/questions/5611/handle-hallucinations-deployed-ai-model">Aced (formerly Exponent)</a>)</li>
+<li>Anthropic, Machine Learning Engineer, undated: Fix a conversational model that is confidently wrong in high-risk contexts (<a href="https://www.aced.io/questions/5788/fix-overly-confident-model">Aced (formerly Exponent)</a>)</li>
+<li>Google, Product Manager, Oct 2026: Detect and contain confident false outputs in a customer-facing product (<a href="https://prachub.com/interview-questions/detecting-and-containing-llm-hallucinations-in-a-customer-facing-ai-product">PracHub</a>)</li>
+</ul>
+</div>
 </details>
 <details class="qa" id="llmapp-028">
 <summary>
-<span class="tag tag-staff">staff</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Design enterprise RAG over documents with access controls (SharePoint, Drive, Confluence, Slack) for a company with tens of thousands of employees.
+<span class="tag tag-staff">staff</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at OpenAI, Google</span> Design enterprise RAG over documents with access controls (SharePoint, Drive, Confluence, Slack) for a company with tens of thousands of employees.
 </summary>
 <p><strong>Requirements to pin down.</strong> Sources and volume, freshness target for content and for permission changes, the non-negotiable (a user never sees content they cannot open at source), citations, audit, tenancy and data residency.</p>
 <p><strong>Ingestion.</strong> One connector per source with incremental sync (change feeds or webhooks) and a periodic full reconcile to catch missed events and deletions. Each document is stored with its ACL: users, groups, inheritance and link-sharing rules. Source principals are mapped to one company identity; group membership is synced separately because it changes without the document changing.</p>
@@ -1324,10 +1373,18 @@ window.Quarto = {
 <li>Why is filtering the generated answer not sufficient?</li>
 <li>How would you test for a permission leak before launch?</li>
 </ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>OpenAI, Machine Learning Engineer, Sep 2026: Multi-tenant enterprise RAG assistant with hybrid retrieval, reranking and access controls (<a href="https://prachub.com/interview-questions/design-a-multi-tenant-enterprise-rag-assistant-hybrid-retrieval-reranking-acls">PracHub</a>)</li>
+<li>OpenAI, Machine Learning Engineer, Sep 2025: Multi-tenant enterprise document search with ML ranking (<a href="https://prachub.com/interview-questions/design-an-ml-search-system">PracHub</a>)</li>
+<li>Google, Software Engineer, Aug 2026: Internal document-search agent with permissions and citations (<a href="https://prachub.com/interview-questions/design-an-agent-for-internal-document-search">PracHub</a>)</li>
+</ul>
+</div>
 </details>
 <details class="qa" id="llmapp-029">
 <summary>
-<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> How do you evaluate a RAG system? Be specific about retrieval versus generation.
+<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Amazon</span> How do you evaluate a RAG system? Be specific about retrieval versus generation.
 </summary>
 <p>Evaluate the stages separately, then end to end, because an end-to-end score cannot tell you which stage to fix.</p>
 <p><strong>Retrieval.</strong> Labelled pairs of query and relevant chunk or document ids.</p>
@@ -1352,6 +1409,12 @@ window.Quarto = {
 <li>Your labelled set only marks one relevant chunk per query but several exist. What happens to your metrics?</li>
 <li>How would you get retrieval labels cheaply?</li>
 </ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>Amazon, Data Scientist, Jan 2026: Design and evaluate a RAG system for internal Q&amp;A (<a href="https://prachub.com/interview-questions/design-and-evaluate-a-rag-system">PracHub</a>)</li>
+</ul>
+</div>
 </details>
 </section>
 <section id="tool-use" class="level3">
@@ -1523,7 +1586,7 @@ window.Quarto = {
 </ul>
 <details class="qa" id="llmapp-033">
 <summary>
-<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> What is prompt injection, what is indirect prompt injection, and why can you not fix it with a better system prompt?
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Anthropic</span> What is prompt injection, what is indirect prompt injection, and why can you not fix it with a better system prompt?
 </summary>
 <p>A language model receives instructions and data in one token stream and has no reliable way to tell them apart. Prompt injection exploits this.</p>
 <ul>
@@ -1547,6 +1610,12 @@ window.Quarto = {
 <li>Your agent summarises a web page and can send email. What is the attack and what do you remove?</li>
 <li>Why does markdown image rendering matter?</li>
 </ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>Anthropic, Product Manager, Apr 2026: Dual-use requests, jailbreaks and layered defences (<a href="https://prachub.com/interview-questions/keeping-llm-output-safe-dual-use-requests-jailbreaks-and-layered-defenses">PracHub</a>)</li>
+</ul>
+</div>
 </details>
 <details class="qa" id="llmapp-034">
 <summary>
@@ -1623,7 +1692,7 @@ window.Quarto = {
 </ul>
 <details class="qa" id="llmapp-038">
 <summary>
-<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> What determines the cost and latency of an LLM feature, and which levers do you pull first?
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Google</span> What determines the cost and latency of an LLM feature, and which levers do you pull first?
 </summary>
 <p><strong>Cost per request</strong> is <span class="math inline">\(\text{uncached input} \times p_{in} + \text{cached input} \times p_{cache} + \text{output} \times p_{out}\)</span>. Output tokens (including reasoning tokens) are priced several times higher than input tokens on most APIs. An agent multiplies this by the number of steps, and each step re-sends the history.</p>
 <p><strong>Latency</strong> is roughly time to first token plus output tokens divided by generation speed. Time to first token grows with queueing and with uncached prompt length; total latency is dominated by output length.</p>
@@ -1643,6 +1712,12 @@ window.Quarto = {
 <li>Streaming is on and users still complain it is slow. What do you look at?</li>
 <li>When is a semantic cache a bad idea?</li>
 </ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>Google, Software Engineer, Jan 2026: Choose between fast and cheap model options (<a href="https://prachub.com/interview-questions/choose-fast-or-cheap-models">PracHub</a>)</li>
+</ul>
+</div>
 </details>
 <details class="qa" id="llmapp-039">
 <summary>

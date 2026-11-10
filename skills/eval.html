@@ -708,7 +708,7 @@ window.Quarto = {
 </ul>
 <details class="qa" id="eval-034">
 <summary>
-<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> What is the difference between data drift and concept drift, how do you detect each, and what do you do about it?
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Nvidia</span> What is the difference between data drift and concept drift, how do you detect each, and what do you do about it?
 </summary>
 <ul>
 <li><strong>Covariate (data) drift</strong>: the input distribution <span class="math inline">\(P(X)\)</span> changes; the relation <span class="math inline">\(P(Y \mid X)\)</span> may be intact.</li>
@@ -733,6 +733,12 @@ window.Quarto = {
 <li>Labels arrive 30 days late. How do you know today that the model is failing?</li>
 <li>Which drift alerts would you page on, and which only log?</li>
 </ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>Nvidia, Machine Learning Engineer, Feb 2026: Bias-variance trade-off, calibration and model drift (<a href="https://prachub.com/interview-questions/explain-bias-variance-calibration-and-model-drift">PracHub</a>)</li>
+</ul>
+</div>
 </details>
 <details class="qa" id="eval-035">
 <summary>
@@ -936,7 +942,7 @@ window.Quarto = {
 </details>
 <details class="qa" id="eval-003">
 <summary>
-<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> When is an LLM judge trustworthy? How do you validate one and what biases do you look for?
+<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Apple</span> When is an LLM judge trustworthy? How do you validate one and what biases do you look for?
 </summary>
 <p>A judge is a classifier and is trusted only as far as it has been measured.</p>
 <p><strong>Validation.</strong></p>
@@ -962,6 +968,12 @@ window.Quarto = {
 <li>Judge-human agreement is 85% and human-human is 80%. What does that mean?</li>
 <li>How does the correction formula behave when TPR is close to FPR?</li>
 </ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>Apple, Machine Learning Engineer, Aug 2025: Annotation agreement, and LLM versus human judges (<a href="https://prachub.com/interview-questions/explain-annotation-agreement-and-llm-vs-human-judges">PracHub</a>)</li>
+</ul>
+</div>
 </details>
 <details class="qa" id="eval-004">
 <summary>
@@ -988,7 +1000,7 @@ window.Quarto = {
 </details>
 <details class="qa" id="eval-005">
 <summary>
-<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> How is evaluating an agent different from evaluating a single model response?
+<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at OpenAI</span> How is evaluating an agent different from evaluating a single model response?
 </summary>
 <p>An agent produces a trajectory with side effects, is more variable, and costs far more per example.</p>
 <p><strong>Outcome versus trajectory grading.</strong></p>
@@ -1006,6 +1018,12 @@ window.Quarto = {
 <li>A task passes 3 of 5 trials. How do you count it?</li>
 <li>How do you evaluate an agent whose tasks touch the live web?</li>
 </ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>OpenAI, Machine Learning Engineer, Apr 2026: Agent harness and evaluation system for a tool-using agent (<a href="https://prachub.com/interview-questions/design-an-agent-harness-and-evaluation-system">PracHub</a>)</li>
+</ul>
+</div>
 </details>
 <details class="qa" id="eval-006">
 <summary>
@@ -1046,7 +1064,7 @@ window.Quarto = {
 </ul>
 <details class="qa" id="eval-011">
 <summary>
-<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Which classification metric do you use when positives are rare, and why is accuracy or ROC-AUC not enough?
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Meta, TikTok</span> Which classification metric do you use when positives are rare, and why is accuracy or ROC-AUC not enough?
 </summary>
 <p>Definitions: precision <span class="math inline">\(= TP/(TP+FP)\)</span>, recall <span class="math inline">\(= TP/(TP+FN)\)</span>, false positive rate <span class="math inline">\(= FP/(FP+TN)\)</span>. ROC-AUC is the probability that a random positive is scored above a random negative. PR-AUC summarises precision over recall.</p>
 <p><strong>Accuracy</strong> is uninformative under imbalance: at 1% prevalence, predicting all negative scores 99%.</p>
@@ -1064,6 +1082,13 @@ window.Quarto = {
 <li>Two models have the same ROC-AUC. How can one be much better in production?</li>
 <li>How does negative downsampling affect precision and calibration?</li>
 </ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>Meta, Data Scientist, Oct 2025: Metrics for a fake-user classifier (<a href="https://prachub.com/interview-questions/choose-metrics-for-fake-user-classifier">PracHub</a>)</li>
+<li>TikTok, Data Scientist, Nov 2025: When to prioritise precision or recall (<a href="https://prachub.com/interview-questions/when-prioritize-precision-vs-recall">PracHub</a>)</li>
+</ul>
+</div>
 </details>
 <details class="qa" id="eval-012">
 <summary>

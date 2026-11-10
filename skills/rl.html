@@ -612,7 +612,7 @@ Q^\pi(s, a) = r(s, a) + \gamma\, \mathbb E_{s' \sim P}\big[V^\pi(s')\big].\]</sp
 </details>
 <details class="qa" id="rl-006">
 <summary>
-<span class="tag tag-senior">senior</span><span class="tag tag-type">derivation</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> What is generalized advantage estimation? Write it down and explain what lambda trades off.
+<span class="tag tag-senior">senior</span><span class="tag tag-type">derivation</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at TikTok</span> What is generalized advantage estimation? Write it down and explain what lambda trades off.
 </summary>
 <p>The policy gradient needs an estimate of <span class="math inline">\(A^\pi(s_t, a_t)\)</span>. Two extremes:</p>
 <ul>
@@ -629,6 +629,12 @@ Q^\pi(s, a) = r(s, a) + \gamma\, \mathbb E_{s' \sim P}\big[V^\pi(s')\big].\]</sp
 <li>Early in training the critic is poor. Would you raise or lower <span class="math inline">\(\lambda\)</span>?</li>
 <li>How do you handle an episode that was cut off by a time limit?</li>
 </ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>TikTok, Software Engineer, Jan 2026: RL policy types and modern policy-gradient methods (TRPO, PPO, GAE) (<a href="https://prachub.com/interview-questions/explain-rl-policy-types-and-modern-policy-gradients">PracHub</a>)</li>
+</ul>
+</div>
 </details>
 <details class="qa" id="rl-007">
 <summary>
@@ -668,7 +674,7 @@ Q^\pi(s, a) = r(s, a) + \gamma\, \mathbb E_{s' \sim P}\big[V^\pi(s')\big].\]</sp
 </details>
 <details class="qa" id="rl-008">
 <summary>
-<span class="tag tag-senior">senior</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> Explain the PPO clipped objective and write the loss in PyTorch. Which implementation details decide whether it works?
+<span class="tag tag-senior">senior</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at TikTok</span> Explain the PPO clipped objective and write the loss in PyTorch. Which implementation details decide whether it works?
 </summary>
 <p>PPO wants several gradient epochs from each on-policy batch without moving the policy so far that the batch stops being representative. With the ratio <span class="math inline">\(r_t(\theta) = \pi_\theta(a_t \mid s_t) / \pi_{\text{old}}(a_t \mid s_t)\)</span>:</p>
 <p><span class="math display">\[L^{\text{CLIP}} = \mathbb E_t\Big[\min\big(r_t \hat A_t,\ \operatorname{clip}(r_t, 1 - \epsilon, 1 + \epsilon)\, \hat A_t\big)\Big].\]</span></p>
@@ -689,6 +695,12 @@ Q^\pi(s, a) = r(s, a) + \gamma\, \mathbb E_{s' \sim P}\big[V^\pi(s')\big].\]</sp
 <li>The approximate KL spikes after the second epoch. What do you change?</li>
 <li>How is this loss used when the policy is a language model generating a sequence of tokens?</li>
 </ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>TikTok, Software Engineer, Jan 2026: RL policy types and modern policy-gradient methods (TRPO, PPO, GAE) (<a href="https://prachub.com/interview-questions/explain-rl-policy-types-and-modern-policy-gradients">PracHub</a>)</li>
+</ul>
+</div>
 </details>
 <details class="qa" id="rl-009">
 <summary>
@@ -964,7 +976,7 @@ Q^\pi(s, a) = r(s, a) + \gamma\, \mathbb E_{s' \sim P}\big[V^\pi(s')\big].\]</sp
 </details>
 <details class="qa" id="rl-018">
 <summary>
-<span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Agents exploit their reward. How do you design a reward, and what process catches specification gaming before it ships?
+<span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Google</span> Agents exploit their reward. How do you design a reward, and what process catches specification gaming before it ships?
 </summary>
 <p>Treat the reward as a specification that an optimiser will satisfy literally. Wherever it differs from what you want, a strong enough learner finds the difference: collecting a progress bonus in a loop, exploiting a simulator bug, satisfying a test by special-casing it, or maximising a learned judge’s score with text the judge likes rather than a correct answer.</p>
 <p><strong>Design principles.</strong></p>
@@ -987,6 +999,12 @@ Q^\pi(s, a) = r(s, a) + \gamma\, \mathbb E_{s' \sim P}\big[V^\pi(s')\big].\]</sp
 <li>Reward rises steadily while held-out task success is flat. What do you check?</li>
 <li>How does this apply when the reward is another model’s judgement?</li>
 </ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>Google, Machine Learning Engineer, Aug 2026: Reward hacking in LLM post-training and how to detect and prevent it (<a href="https://prachub.com/interview-questions/detect-and-prevent-reward-hacking">PracHub</a>)</li>
+</ul>
+</div>
 </details>
 <details class="qa" id="rl-019">
 <summary>

@@ -627,7 +627,7 @@ window.Quarto = {
 </details>
 <details class="qa" id="mlops-003">
 <summary>
-<span class="tag tag-senior">senior</span><span class="tag tag-type">debugging</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Three days after a launch that looked good offline and in the first day of the experiment, the online metric for the new model falls below control. How do you investigate?
+<span class="tag tag-senior">senior</span><span class="tag tag-type">debugging</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at OpenAI</span> Three days after a launch that looked good offline and in the first day of the experiment, the online metric for the new model falls below control. How do you investigate?
 </summary>
 <p>Establish what changed before theorising about the model.</p>
 <ol type="1">
@@ -644,6 +644,12 @@ window.Quarto = {
 <li>How would you distinguish a novelty effect from a real regression?</li>
 <li>Which of these checks can be automated as a pre-launch gate?</li>
 </ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>OpenAI, Software Engineer, Aug 2025: Diagnose a sudden accuracy drop in a deployed ML pipeline (<a href="https://prachub.com/interview-questions/debug-a-machine-learning-pipeline">PracHub</a>)</li>
+</ul>
+</div>
 </details>
 <details class="qa" id="mlops-004">
 <summary>
@@ -843,7 +849,7 @@ window.Quarto = {
 </details>
 <details class="qa" id="mlops-008">
 <summary>
-<span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Design the monitoring for a model whose labels arrive weeks after the prediction. What do you alert on?
+<span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Google</span> Design the monitoring for a model whose labels arrive weeks after the prediction. What do you alert on?
 </summary>
 <p>Monitor four layers, from the fastest and least specific signal to the slowest and most meaningful.</p>
 <ol type="1">
@@ -865,6 +871,12 @@ window.Quarto = {
 <li>Which of these would have caught your last incident?</li>
 <li>How do you choose thresholds without paging on every holiday?</li>
 </ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>Google, Product Manager, Apr 2026: Metrics for the health of a production ML pipeline (<a href="https://prachub.com/interview-questions/measuring-the-health-of-a-production-ml-system-from-data-quality-to-business-impact">PracHub</a>)</li>
+</ul>
+</div>
 </details>
 <details class="qa" id="mlops-009">
 <summary>
@@ -1180,7 +1192,7 @@ window.Quarto = {
 </details>
 <details class="qa" id="mlops-023">
 <summary>
-<span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Your training data and request logs contain personal data. How do you handle it, and what happens when a user asks for their data to be deleted?
+<span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Anthropic</span> Your training data and request logs contain personal data. How do you handle it, and what happens when a user asks for their data to be deleted?
 </summary>
 <p><strong>Minimise first.</strong> Collect and keep only the fields the model needs. Drop or coarsen the rest at ingestion (precise location to region, birth date to age band). Data that was never stored needs no protection.</p>
 <p><strong>Separate identity from content.</strong> Replace direct identifiers with pseudonymous keys and keep the mapping in a separate, tightly controlled store. Pseudonymised data is still personal data, since it can often be re-identified by joining, but the separation limits who can do so.</p>
@@ -1194,6 +1206,13 @@ window.Quarto = {
 <li>How do you find every place a user’s data has been copied to?</li>
 <li>What would you log from an LLM product’s requests, and for how long?</li>
 </ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>Anthropic, Machine Learning Engineer, undated: Handle a model that exposes sensitive training data (<a href="https://www.aced.io/questions/5601/handle-model-exposing-data-from-training-set">Aced (formerly Exponent)</a>)</li>
+<li>Anthropic, Machine Learning Engineer, undated: Keep user data safe and private when building AI systems (<a href="https://www.aced.io/questions/5602/build-ai-systems-data-safety-privacy">Aced (formerly Exponent)</a>)</li>
+</ul>
+</div>
 </details>
 <details class="qa" id="mlops-024">
 <summary>

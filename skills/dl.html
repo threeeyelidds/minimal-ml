@@ -711,7 +711,7 @@ window.Quarto = {
 </details>
 <details class="qa" id="dl-002">
 <summary>
-<span class="tag tag-core">core</span><span class="tag tag-type">derivation</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> Derive the backward pass of a linear layer Y = X W^T + b for a batch of inputs, given the upstream gradient dL/dY. State all shapes.
+<span class="tag tag-core">core</span><span class="tag tag-type">derivation</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at OpenAI, Anthropic</span> Derive the backward pass of a linear layer Y = X W^T + b for a batch of inputs, given the upstream gradient dL/dY. State all shapes.
 </summary>
 <p>Shapes: <span class="math inline">\(X\in\mathbb{R}^{B\times d_{in}}\)</span>, <span class="math inline">\(W\in\mathbb{R}^{d_{out}\times d_{in}}\)</span>, <span class="math inline">\(b\in\mathbb{R}^{d_{out}}\)</span>, <span class="math inline">\(Y\in\mathbb{R}^{B\times d_{out}}\)</span>, and the upstream gradient <span class="math inline">\(G=\partial L/\partial Y\in\mathbb{R}^{B\times d_{out}}\)</span>.</p>
 <p>Element-wise, <span class="math inline">\(Y_{nj}=\sum_iX_{ni}W_{ji}+b_j\)</span>. Applying the chain rule to each argument:</p>
@@ -740,6 +740,15 @@ window.Quarto = {
 <li>How would you compute per-example gradient norms for the whole network in one backward pass?</li>
 <li>What changes for a convolution?</li>
 </ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>OpenAI, Machine Learning Engineer, Apr 2026: Debug a small GPT and backpropagate through a matrix multiply (<a href="https://prachub.com/interview-questions/debug-minigpt-and-backpropagate-matmul">PracHub</a>)</li>
+<li>OpenAI, Machine Learning Engineer, Apr 2026: Backpropagation for a tiny network by hand (<a href="https://prachub.com/interview-questions/implement-backprop-for-a-tiny-network">PracHub</a>)</li>
+<li>OpenAI, Software Engineer, Sep 2025: Implement and debug backpropagation for a two-layer network in NumPy (<a href="https://prachub.com/interview-questions/implement-and-debug-backprop-in-numpy">PracHub</a>)</li>
+<li>Anthropic, Software Engineer, Sep 2025: Implement and derive backprop for a single-neuron classifier (<a href="https://prachub.com/interview-questions/implement-and-derive-backprop-from-scratch">PracHub</a>)</li>
+</ul>
+</div>
 </details>
 <details class="qa" id="dl-003">
 <summary>
@@ -1210,7 +1219,7 @@ q^\top k=\sum_{i=1}^{d_k}q_ik_i,\qquad
 </details>
 <details class="qa" id="dl-019">
 <summary>
-<span class="tag tag-core">core</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Implement scaled dot-product attention and multi-head self-attention with a causal mask in PyTorch. How do you test that it is correct?
+<span class="tag tag-core">core</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Anthropic, Meta, Nvidia +3</span> Implement scaled dot-product attention and multi-head self-attention with a causal mask in PyTorch. How do you test that it is correct?
 </summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> math</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
@@ -1253,6 +1262,20 @@ q^\top k=\sum_{i=1}^{d_k}q_ik_i,\qquad
 <li>Add a key-padding mask for variable-length batches.</li>
 <li>Change this to grouped-query attention. Which shapes change?</li>
 </ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>Anthropic, Software Engineer, Sep 2025: Numerically stable scaled dot-product attention in PyTorch (<a href="https://prachub.com/interview-questions/implement-and-analyze-custom-attention">PracHub</a>)</li>
+<li>Meta, Machine Learning Engineer, Sep 2026: Forward pass of multi-head attention from scratch (<a href="https://prachub.com/interview-questions/implement-the-forward-pass-of-multi-head-attention-from-scratch">PracHub</a>)</li>
+<li>Meta, Machine Learning Engineer, Jun 2026: Self-attention: implementation, complexity and efficient variants (<a href="https://prachub.com/interview-questions/self-attention-implementation-complexity-and-efficient-variants">PracHub</a>)</li>
+<li>Nvidia, Software Engineer, Jul 2025: Transformers and the query, key and value matrices (<a href="https://prachub.com/interview-questions/explain-transformers-and-qkv-matrices">PracHub</a>)</li>
+<li>TikTok, Machine Learning Engineer, Feb 2026: Pseudocode for self-attention and cross-entropy (<a href="https://prachub.com/interview-questions/write-self-attention-and-cross-entropy-pseudocode">PracHub</a>)</li>
+<li>Amazon, Machine Learning Engineer, Jan 2026: Multi-head attention with a KV cache and grouped-query attention (<a href="https://prachub.com/interview-questions/implement-multi-head-attention-with-a-kv-cache-and-cached-grouped-query-attention">PracHub</a>)</li>
+<li>Amazon, Applied Scientist, Jul 2026: Numerically stable sigmoid, softmax and scaled dot-product attention (<a href="https://prachub.com/interview-questions/implement-stable-sigmoid-softmax-and-scaled-dot-product-attention">PracHub</a>)</li>
+<li>Apple, Machine Learning Engineer, Apr 2026: Masked multi-head self-attention (<a href="https://prachub.com/interview-questions/implement-masked-multi-head-self-attention">PracHub</a>)</li>
+<li>Apple, Software Engineer, Sep 2025: Multi-head self-attention, implemented correctly (<a href="https://prachub.com/interview-questions/implement-multi-head-self-attention-correctly">PracHub</a>)</li>
+</ul>
+</div>
 </details>
 <details class="qa" id="dl-020">
 <summary>
@@ -1384,7 +1407,7 @@ N\approx12Ld^2+Vd
 </details>
 <details class="qa" id="dl-024">
 <summary>
-<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> What is the KV cache in autoregressive decoding? Derive its memory footprint and the compute it saves, and explain what it changes about serving.
+<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at TikTok, Amazon</span> What is the KV cache in autoregressive decoding? Derive its memory footprint and the compute it saves, and explain what it changes about serving.
 </summary>
 <p>In a causal decoder the keys and values of earlier tokens, at every layer, do not depend on later tokens. So at each step only the new token is run through the network: compute its query, key and value in each layer, append the key and value to the cache, and attend from the single new query over all cached keys.</p>
 <p><strong>Compute.</strong> Without a cache, step <span class="math inline">\(t\)</span> re-runs <span class="math inline">\(t\)</span> tokens, so generating <span class="math inline">\(n\)</span> tokens costs <span class="math inline">\(O(n^2)\)</span> token-forwards. With the cache it costs <span class="math inline">\(n\)</span> token-forwards, and the attention over the prefix adds <span class="math inline">\(O(t)\)</span> per step.</p>
@@ -1405,10 +1428,17 @@ N\approx12Ld^2+Vd
 <li>Why are keys and values cached but not queries?</li>
 <li>Why is prefill compute bound and decode memory-bandwidth bound?</li>
 </ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>TikTok, Machine Learning Engineer, Jan 2026: FlashAttention, the KV cache and rotary position embeddings (<a href="https://prachub.com/interview-questions/explain-flashattention-kv-cache-and-rope">PracHub</a>)</li>
+<li>Amazon, Machine Learning Engineer, Jan 2026: Multi-head attention with a KV cache and grouped-query attention (<a href="https://prachub.com/interview-questions/implement-multi-head-attention-with-a-kv-cache-and-cached-grouped-query-attention">PracHub</a>)</li>
+</ul>
+</div>
 </details>
 <details class="qa" id="dl-025">
 <summary>
-<span class="tag tag-staff">staff</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> What do multi-query attention, grouped-query attention and FlashAttention each change relative to standard multi-head attention, and what does each leave unchanged?
+<span class="tag tag-staff">staff</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Meta, TikTok</span> What do multi-query attention, grouped-query attention and FlashAttention each change relative to standard multi-head attention, and what does each leave unchanged?
 </summary>
 <p><strong>Baseline (MHA).</strong> <span class="math inline">\(h\)</span> heads, each with its own query, key and value projections. The cache holds <span class="math inline">\(2\,h\,d_h\)</span> numbers per token and layer.</p>
 <p><strong>Multi-query attention (MQA).</strong> All heads share one key head and one value head; queries stay per head. The KV cache shrinks by a factor of <span class="math inline">\(h\)</span>, and <span class="math inline">\(W_K\)</span> and <span class="math inline">\(W_V\)</span> shrink to <span class="math inline">\(d\times d_h\)</span>. Quality drops noticeably in larger models.</p>
@@ -1433,6 +1463,13 @@ N\approx12Ld^2+Vd
 <li>If FLOPs are unchanged, where exactly does FlashAttention’s speed-up come from?</li>
 <li>Can you get attention maps out of a FlashAttention forward pass?</li>
 </ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>Meta, Machine Learning Engineer, Jun 2026: Self-attention: implementation, complexity and efficient variants (<a href="https://prachub.com/interview-questions/self-attention-implementation-complexity-and-efficient-variants">PracHub</a>)</li>
+<li>TikTok, Machine Learning Engineer, Jan 2026: FlashAttention, the KV cache and rotary position embeddings (<a href="https://prachub.com/interview-questions/explain-flashattention-kv-cache-and-rope">PracHub</a>)</li>
+</ul>
+</div>
 </details>
 </section>
 <section id="training-dynamics" class="level3">
@@ -1654,7 +1691,7 @@ m_t=\beta_1m_{t-1}+(1-\beta_1)g_t,\qquad v_t=\beta_2v_{t-1}+(1-\beta_2)g_t^2,
 </ul>
 <details class="qa" id="dl-026">
 <summary>
-<span class="tag tag-senior">senior</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Implement next-token sampling with temperature, top-k and nucleus (top-p) filtering in PyTorch. Explain what each control does and the order in which they are applied.
+<span class="tag tag-senior">senior</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Anthropic</span> Implement next-token sampling with temperature, top-k and nucleus (top-p) filtering in PyTorch. Explain what each control does and the order in which they are applied.
 </summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -1695,10 +1732,16 @@ m_t=\beta_1m_{t-1}+(1-\beta_1)g_t,\qquad v_t=\beta_2v_{t-1}+(1-\beta_2)g_t^2,
 <li>With temperature 0.7 and top_p 0.9, what changes if you apply top-p before the temperature?</li>
 <li>How does beam search differ in what it optimises, and why is it rarely used for open-ended generation?</li>
 </ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>Anthropic, Machine Learning Engineer, undated: Adjust the creativity of a generative model (<a href="https://www.aced.io/questions/5609/adjust-gen-ai-model-creativity">Aced (formerly Exponent)</a>)</li>
+</ul>
+</div>
 </details>
 <details class="qa" id="dl-029">
 <summary>
-<span class="tag tag-senior">senior</span><span class="tag tag-type">derivation</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> Derive the evidence lower bound for a VAE, interpret its two terms, and explain the reparameterisation trick and posterior collapse.
+<span class="tag tag-senior">senior</span><span class="tag tag-type">derivation</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Google</span> Derive the evidence lower bound for a VAE, interpret its two terms, and explain the reparameterisation trick and posterior collapse.
 </summary>
 <p>The model is <span class="math inline">\(p_\theta(x,z)=p(z)\,p_\theta(x\mid z)\)</span>, and <span class="math inline">\(\log p_\theta(x)=\log\int p(z)\,p_\theta(x\mid z)\,dz\)</span> is intractable. Introduce an encoder <span class="math inline">\(q_\phi(z\mid x)\)</span>. For any <span class="math inline">\(q\)</span>:</p>
 <p><span class="math display">\[
@@ -1722,6 +1765,12 @@ m_t=\beta_1m_{t-1}+(1-\beta_1)g_t,\qquad v_t=\beta_2v_{t-1}+(1-\beta_2)g_t^2,
 <li>Why is the bound loose with a diagonal-Gaussian encoder?</li>
 <li>Derive the closed-form KL between a diagonal Gaussian and the standard normal.</li>
 </ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>Google, Machine Learning Engineer, Aug 2026: VAEs, the ELBO, the KL term and reparameterisation (<a href="https://prachub.com/interview-questions/explain-vaes-elbo-kl-and-reparameterization">PracHub</a>)</li>
+</ul>
+</div>
 </details>
 <details class="qa" id="dl-030">
 <summary>

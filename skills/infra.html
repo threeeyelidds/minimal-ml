@@ -839,7 +839,7 @@ window.Quarto = {
 </details>
 <details class="qa" id="infra-010">
 <summary>
-<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> On a shared GPU cluster, how do quotas, priorities and preemption work, and why can GPUs sit idle while jobs are waiting?
+<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Anthropic</span> On a shared GPU cluster, how do quotas, priorities and preemption work, and why can GPUs sit idle while jobs are waiting?
 </summary>
 <p><strong>The policy tools.</strong></p>
 <ul>
@@ -864,6 +864,12 @@ window.Quarto = {
 <li>How does backfilling work, and why does it need job time limits?</li>
 <li>A team complains its jobs are preempted too often. What do you look at?</li>
 </ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>Anthropic, Software Engineer, Aug 2026: Schedule one-GPU and eight-GPU jobs fairly (<a href="https://prachub.com/interview-questions/schedule-one-gpu-and-eight-gpu-model-jobs">PracHub</a>)</li>
+</ul>
+</div>
 </details>
 <details class="qa" id="infra-011">
 <summary>
@@ -916,7 +922,7 @@ window.Quarto = {
 </ul>
 <details class="qa" id="infra-012">
 <summary>
-<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> What are the ways to parallelise training across GPUs? Say what each one splits and what it has to communicate.
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Google, Nvidia</span> What are the ways to parallelise training across GPUs? Say what each one splits and what it has to communicate.
 </summary>
 <table class="caption-top table">
 <colgroup>
@@ -974,6 +980,13 @@ window.Quarto = {
 <li>Why does FSDP save memory compared with DDP, and what does it pay?</li>
 <li>Which of these would you combine for a model ten times too large for one GPU?</li>
 </ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>Google, Machine Learning Engineer, Aug 2026: Pipeline parallelism in RL post-training (<a href="https://prachub.com/interview-questions/explain-pipeline-parallelism-in-grpo-training">PracHub</a>)</li>
+<li>Nvidia, Software Engineer, Sep 2025: Training optimisation and tensor versus pipeline parallelism (<a href="https://prachub.com/interview-questions/explain-optimization-and-tensor-vs-pipeline-parallelism">PracHub</a>)</li>
+</ul>
+</div>
 </details>
 <details class="qa" id="infra-013">
 <summary>
@@ -1644,7 +1657,7 @@ window.Quarto = {
 </details>
 <details class="qa" id="infra-031">
 <summary>
-<span class="tag tag-senior">senior</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> Implement a minimal scalar reverse-mode autodiff engine in Python that supports addition, multiplication and tanh, with a backward method.
+<span class="tag tag-senior">senior</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at OpenAI</span> Implement a minimal scalar reverse-mode autodiff engine in Python that supports addition, multiplication and tanh, with a backward method.
 </summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> math</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -1708,6 +1721,12 @@ window.Quarto = {
 <li>Add subtraction, division and a power operation using what is already there.</li>
 <li>What changes when values are tensors and addition broadcasts?</li>
 </ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>OpenAI, Software Engineer, Sep 2026: Minimal reverse-mode autograd engine on tensors (<a href="https://prachub.com/interview-questions/implement-a-minimal-reverse-mode-autograd-engine-on-pytorch-tensors">PracHub</a>)</li>
+</ul>
+</div>
 </details>
 <details class="qa" id="infra-032">
 <summary>

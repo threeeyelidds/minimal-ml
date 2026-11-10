@@ -26,6 +26,10 @@ a.btn.ghost { background: transparent; color: var(--minimal-ink) !important; bor
 .tag-senior { color: #91b8ff; border-color: #3b4f73; }
 .tag-staff { color: #bca9e8; border-color: #54487a; }
 .tag-track { font-weight: 500; }
+.tag-rep { color: #e5ad7c; border-color: #6b5137; font-weight: 500; }
+.reported { margin-top: 0.9rem; padding: 0.5rem 0.9rem; border-left: 3px solid #6b5137; font-size: 0.92rem; color: var(--minimal-muted); }
+.reported p { margin-bottom: 0.3rem; }
+.reported ul { margin-bottom: 0.2rem; }
 .tag-status.st-new { opacity: 0.7; }
 .tag-status.st-learning { color: #e5ad7c; border-color: #6b5137; }
 .tag-status.st-known { color: #8dcba5; border-color: #3c5a48; }

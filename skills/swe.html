@@ -1256,7 +1256,7 @@ window.Quarto = {
 </ul>
 <details class="qa" id="swe-019">
 <summary>
-<span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">AI</span> Design the client side of a streaming chat interface in React. How do tokens get from the server to the screen, and what breaks in production?
+<span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">AI</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at OpenAI</span> Design the client side of a streaming chat interface in React. How do tokens get from the server to the screen, and what breaks in production?
 </summary>
 <p><strong>Transport.</strong> POST the request with <code>fetch</code> and read <code>response.body</code> as a stream of SSE frames. The browser’s <code>EventSource</code> only does GET without custom headers or a body, which is why most LLM clients parse SSE over <code>fetch</code> themselves. Use WebSocket only when the client also streams to the server (voice, collaborative editing). Decode with <code>TextDecoder</code> in streaming mode and buffer until a blank line: network chunks align with neither event boundaries nor UTF-8 character boundaries.</p>
 <p><strong>State and rendering.</strong></p>
@@ -1282,6 +1282,12 @@ window.Quarto = {
 <li>Why can you not use EventSource for a chat completion request?</li>
 <li>The UI freezes on long answers containing code blocks. Where do you look?</li>
 </ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>OpenAI, Software Engineer, Aug 2025: AI chatbot system with a front-end focus and storage constraints (<a href="https://prachub.com/interview-questions/design-ai-chat-bot-system">PracHub</a>)</li>
+</ul>
+</div>
 </details>
 </section>
 <section id="linux" class="level3">

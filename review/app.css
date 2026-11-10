@@ -61,6 +61,7 @@ kbd { background: var(--minimal-surface); border: 1px solid var(--minimal-line);
 .rv-answer table { display: block; overflow-x: auto; }
 .rv-probesbox { margin-top: 1rem; padding: 0.7rem 0.95rem; border-left: 3px solid var(--minimal-line); color: var(--minimal-muted); font-size: 0.93rem; }
 .rv-probesbox ul { margin: 0.2rem 0 0; padding-left: 1.1rem; }
+.rv-reportedbox { border-left-color: #6b5137; }
 .rv-probetitle { font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.06em; }
 
 .rv-grades { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; margin-top: 1.2rem; }

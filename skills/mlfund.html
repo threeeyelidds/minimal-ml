@@ -572,7 +572,7 @@ window.Quarto = {
 </ul>
 <details class="qa" id="mlfund-001">
 <summary>
-<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Explain the bias-variance decomposition. In practice, how do you tell which of the two is limiting a model, and what do you change in each case?
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Nvidia, Amazon</span> Explain the bias-variance decomposition. In practice, how do you tell which of the two is limiting a model, and what do you change in each case?
 </summary>
 <p>For squared loss at a point <span class="math inline">\(x\)</span>, with <span class="math inline">\(y = f(x) + \varepsilon\)</span>, <span class="math inline">\(\mathbb{E}[\varepsilon]=0\)</span>, <span class="math inline">\(\operatorname{Var}(\varepsilon)=\sigma^2\)</span>, and the expectation taken over training sets <span class="math inline">\(D\)</span>:</p>
 <p><span class="math display">\[
@@ -593,6 +593,13 @@ window.Quarto = {
 <li>Why does bagging reduce variance but not bias, while boosting mainly reduces bias?</li>
 <li>How would you estimate the irreducible error on a real dataset?</li>
 </ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>Nvidia, Machine Learning Engineer, Feb 2026: Bias-variance trade-off, calibration and model drift (<a href="https://prachub.com/interview-questions/explain-bias-variance-calibration-and-model-drift">PracHub</a>)</li>
+<li>Amazon, Data Scientist, Oct 2025: Core ML concepts and metrics, including bias-variance (<a href="https://prachub.com/interview-questions/explain-core-ml-concepts-and-metrics">PracHub</a>)</li>
+</ul>
+</div>
 </details>
 <details class="qa" id="mlfund-002">
 <summary>
@@ -630,7 +637,7 @@ window.Quarto = {
 </details>
 <details class="qa" id="mlfund-004">
 <summary>
-<span class="tag tag-staff">staff</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> What is double descent, and does it contradict the bias-variance trade-off? Be precise about what is established and what is not.
+<span class="tag tag-staff">staff</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Anthropic</span> What is double descent, and does it contradict the bias-variance trade-off? Be precise about what is established and what is not.
 </summary>
 <p>Test error as a function of capacity can fall, rise to a peak near the <strong>interpolation threshold</strong> (where the model can just fit the training set exactly), and fall again as capacity grows further. The same shape has been reported against training time (epoch-wise) and, near the threshold, against sample size.</p>
 <p>It does not contradict the decomposition, which is an identity. It contradicts the assumption that variance grows monotonically with parameter count. Near the threshold there is essentially one interpolating solution and it must fit the noise, so variance spikes. Far beyond it there are many interpolating solutions and the optimiser’s implicit bias picks a low-norm one.</p>
@@ -642,10 +649,16 @@ window.Quarto = {
 <li>Why does the minimum-norm solution generalise better than an arbitrary interpolating one?</li>
 <li>Near the threshold, how can adding training data make test error worse?</li>
 </ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>Anthropic, Machine Learning Engineer, Apr 2026: Design an experiment to study sample-wise double descent (<a href="https://prachub.com/interview-questions/design-a-double-descent-experiment">PracHub</a>)</li>
+</ul>
+</div>
 </details>
 <details class="qa" id="mlfund-005">
 <summary>
-<span class="tag tag-senior">senior</span><span class="tag tag-type">debugging</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> A model scores 0.93 AUC in 5-fold cross-validation and 0.71 in its first week in production. Walk through how you would find the cause.
+<span class="tag tag-senior">senior</span><span class="tag tag-type">debugging</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at OpenAI</span> A model scores 0.93 AUC in 5-fold cross-validation and 0.71 in its first week in production. Walk through how you would find the cause.
 </summary>
 <p>A gap this large is usually leakage or a split that does not match deployment, not drift. I check in this order:</p>
 <ol type="1">
@@ -664,6 +677,12 @@ window.Quarto = {
 <li>How do you choose the gap in a temporal split?</li>
 <li>Feature selection never looks at validation predictions. Why is doing it before the split still leakage?</li>
 </ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>OpenAI, Software Engineer, Jul 2025: Debug a churn classifier that generalises poorly (<a href="https://prachub.com/interview-questions/debug-a-failing-ml-classifier">PracHub</a>)</li>
+</ul>
+</div>
 </details>
 <details class="qa" id="mlfund-006">
 <summary>
@@ -689,7 +708,7 @@ p=\frac{s\,p_s}{1-p_s+s\,p_s}=\frac{p_s}{p_s+(1-p_s)/s}
 </details>
 <details class="qa" id="mlfund-007">
 <summary>
-<span class="tag tag-core">core</span><span class="tag tag-type">derivation</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Derive the logistic regression loss from maximum likelihood, then its gradient and Hessian. What do they tell you about optimisation?
+<span class="tag tag-core">core</span><span class="tag tag-type">derivation</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Apple</span> Derive the logistic regression loss from maximum likelihood, then its gradient and Hessian. What do they tell you about optimisation?
 </summary>
 <p>Model <span class="math inline">\(y_i\in\{0,1\}\)</span> as Bernoulli with <span class="math inline">\(p_i=\sigma(z_i)\)</span>, <span class="math inline">\(z_i=w^\top x_i+b\)</span>. The likelihood is <span class="math inline">\(\prod_i p_i^{y_i}(1-p_i)^{1-y_i}\)</span>, so the negative log-likelihood is</p>
 <p><span class="math display">\[
@@ -714,6 +733,12 @@ L(w)=-\sum_i\big[y_i\log p_i+(1-y_i)\log(1-p_i)\big]=\sum_i\big[\log(1+e^{z_i})-
 <li>What happens to the weights on perfectly separable data, and what does L2 change?</li>
 <li>Write the multiclass version and its gradient.</li>
 </ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>Apple, Data Scientist, Jul 2025: Write the logistic regression loss (<a href="https://prachub.com/interview-questions/write-the-logistic-regression-loss-function">PracHub</a>)</li>
+</ul>
+</div>
 </details>
 <details class="qa" id="mlfund-008">
 <summary>
@@ -761,7 +786,7 @@ L(w)=-\sum_i\big[y_i\log p_i+(1-y_i)\log(1-p_i)\big]=\sum_i\big[\log(1+e^{z_i})-
 </details>
 <details class="qa" id="mlfund-011">
 <summary>
-<span class="tag tag-core">core</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Implement k-means in NumPy with k-means++ initialisation. State the objective, why the algorithm converges, and where it fails.
+<span class="tag tag-core">core</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Meta</span> Implement k-means in NumPy with k-means++ initialisation. State the objective, why the algorithm converges, and where it fails.
 </summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -802,10 +827,16 @@ L(w)=-\sum_i\big[y_i\log p_i+(1-y_i)\log(1-p_i)\big]=\sum_i\big[\log(1+e^{z_i})-
 <li>Why does the mean minimise the within-cluster sum of squares, and what would you use for L1 distance?</li>
 <li>How would you make this work for 100 million points?</li>
 </ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>Meta, Machine Learning Engineer, Sep 2026: k-means clustering from scratch (<a href="https://prachub.com/interview-questions/implement-k-means-clustering-from-scratch-3">PracHub</a>)</li>
+</ul>
+</div>
 </details>
 <details class="qa" id="mlfund-012">
 <summary>
-<span class="tag tag-senior">senior</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Implement ROC-AUC from scratch in O(n log n), handling tied scores correctly. Explain why the formula works.
+<span class="tag tag-senior">senior</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at TikTok</span> Implement ROC-AUC from scratch in O(n log n), handling tied scores correctly. Explain why the formula works.
 </summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -831,6 +862,12 @@ L(w)=-\sum_i\big[y_i\log p_i+(1-y_i)\log(1-p_i)\big]=\sum_i\big[\log(1+e^{z_i})-
 <li>How would you compute a confidence interval for this AUC?</li>
 <li>Modify it to compute average precision. What changes about tie handling?</li>
 </ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>TikTok, Software Engineer, Jan 2026: Implement ROC-AUC, softmax and logistic regression (<a href="https://prachub.com/interview-questions/implement-auc-roc-softmax-and-logistic-regression">PracHub</a>)</li>
+</ul>
+</div>
 </details>
 </section>
 <section id="statistics" class="level3">
@@ -1039,7 +1076,7 @@ E=1+\tfrac12E_H+\tfrac12E,\qquad E_H=1+\tfrac12\cdot 0+\tfrac12E
 </ul>
 <details class="qa" id="mlfund-038">
 <summary>
-<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Two annotators agree on 85% of items. Is that good? Explain how you measure label quality and what label noise does to training and to evaluation.
+<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Apple</span> Two annotators agree on 85% of items. Is that good? Explain how you measure label quality and what label noise does to training and to evaluation.
 </summary>
 <p>It cannot be judged without chance agreement. Cohen’s kappa corrects for it:</p>
 <p><span class="math display">\[
@@ -1056,6 +1093,12 @@ E=1+\tfrac12E_H+\tfrac12E,\qquad E_H=1+\tfrac12\cdot 0+\tfrac12E
 <li>{‘Majority vote versus Dawid-Skene’: ‘when does the difference matter?’}</li>
 <li>Annotators agree with each other but are consistently wrong. How would you find out?</li>
 </ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>Apple, Machine Learning Engineer, Aug 2025: Annotation agreement, and LLM versus human judges (<a href="https://prachub.com/interview-questions/explain-annotation-agreement-and-llm-vs-human-judges">PracHub</a>)</li>
+</ul>
+</div>
 </details>
 <details class="qa" id="mlfund-039">
 <summary>
@@ -1124,7 +1167,7 @@ E=1+\tfrac12E_H+\tfrac12E,\qquad E_H=1+\tfrac12\cdot 0+\tfrac12E
 </ul>
 <details class="qa" id="mlfund-010">
 <summary>
-<span class="tag tag-core">core</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Implement binary logistic regression with mini-batch SGD and L2 regularisation in NumPy, including a numerically stable loss.
+<span class="tag tag-core">core</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at TikTok</span> Implement binary logistic regression with mini-batch SGD and L2 regularisation in NumPy, including a numerically stable loss.
 </summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -1163,10 +1206,16 @@ E=1+\tfrac12E_H+\tfrac12E,\qquad E_H=1+\tfrac12\cdot 0+\tfrac12E
 <li>Extend it to multiclass softmax regression. What changes in the gradient?</li>
 <li>How would you add L1 so that weights become exactly zero?</li>
 </ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>TikTok, Software Engineer, Jan 2026: Implement ROC-AUC, softmax and logistic regression (<a href="https://prachub.com/interview-questions/implement-auc-roc-softmax-and-logistic-regression">PracHub</a>)</li>
+</ul>
+</div>
 </details>
 <details class="qa" id="mlfund-023">
 <summary>
-<span class="tag tag-senior">senior</span><span class="tag tag-type">derivation</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> Derive how XGBoost sets a leaf weight and scores a candidate split. Why second order, and what do lambda, gamma and min_child_weight do?
+<span class="tag tag-senior">senior</span><span class="tag tag-type">derivation</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at TikTok</span> Derive how XGBoost sets a leaf weight and scores a candidate split. Why second order, and what do lambda, gamma and min_child_weight do?
 </summary>
 <p>Boosting adds one tree per round: <span class="math inline">\(\hat y^{(t)}=\hat y^{(t-1)}+f_t(x)\)</span>. Expand the loss to second order around the current prediction, with <span class="math inline">\(g_i=\partial_{\hat y}\ell(y_i,\hat y_i^{(t-1)})\)</span> and <span class="math inline">\(h_i=\partial^2_{\hat y}\ell\)</span>:</p>
 <p><span class="math display">\[
@@ -1186,6 +1235,12 @@ w_j^*=-\frac{G_j}{H_j+\lambda},\qquad
 <li>What goes wrong with a custom loss whose second derivative can be zero or negative?</li>
 <li>How does a random-forest split criterion differ from this?</li>
 </ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>TikTok, Data Scientist, Oct 2025: Tune XGBoost and prevent overfitting (<a href="https://prachub.com/interview-questions/explain-and-tune-xgboost-prevent-overfitting">PracHub</a>)</li>
+</ul>
+</div>
 </details>
 <details class="qa" id="mlfund-024">
 <summary>
@@ -1572,7 +1627,7 @@ L_\tau(y,q)=\max\big(\tau\,(y-q),\ (\tau-1)\,(y-q)\big)
 </ul>
 <details class="qa" id="mlfund-035">
 <summary>
-<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> What does it mean for a classifier to be calibrated, how do you measure it, and how do Platt scaling, isotonic regression and temperature scaling differ?
+<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Nvidia</span> What does it mean for a classifier to be calibrated, how do you measure it, and how do Platt scaling, isotonic regression and temperature scaling differ?
 </summary>
 <p>Calibrated means <span class="math inline">\(P(Y{=}1\mid\hat p=p)=p\)</span>: of the cases scored 0.2, 20% are positive. It matters whenever the score is used as a probability: bids (<span class="math inline">\(\text{pCTR}\times\text{value}\)</span>), expected loss, cost-based thresholds, combining models. It is irrelevant to pure ranking, since AUC is invariant to monotone maps.</p>
 <p><strong>Measuring.</strong> A reliability diagram with bin counts, and</p>
@@ -1621,6 +1676,12 @@ L_\tau(y,q)=\max\big(\tau\,(y-q),\ (\tau-1)\,(y-q)\big)
 <li>Why does temperature scaling not change accuracy, and when is that a limitation?</li>
 <li>Negatives were downsampled in training. Do you fix that with Platt scaling or analytically?</li>
 </ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>Nvidia, Machine Learning Engineer, Feb 2026: Bias-variance trade-off, calibration and model drift (<a href="https://prachub.com/interview-questions/explain-bias-variance-calibration-and-model-drift">PracHub</a>)</li>
+</ul>
+</div>
 </details>
 <details class="qa" id="mlfund-036">
 <summary>

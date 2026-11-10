@@ -931,7 +931,7 @@ window.Quarto = {
 </ul>
 <details class="qa" id="recsys-010">
 <summary>
-<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> How do ranking models use a user’s behaviour history? Explain DIN-style target attention and what you do when the history has thousands of events.
+<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at TikTok</span> How do ranking models use a user’s behaviour history? Explain DIN-style target attention and what you do when the history has thousands of events.
 </summary>
 <p>The simplest user representation mean-pools the embeddings of recent items. It is one fixed vector regardless of the candidate, so a user with several interests is blurred into their average.</p>
 <p><strong>Target attention (DIN)</strong> makes the user representation depend on the candidate. For history items <span class="math inline">\(e_1..e_L\)</span> and candidate <span class="math inline">\(v\)</span>, an attention unit (an MLP over <span class="math inline">\(e_j\)</span>, <span class="math inline">\(v\)</span> and their interaction) gives weights <span class="math inline">\(a_j=a(e_j,v)\)</span> and the user vector is <span class="math inline">\(\sum_j a_j e_j\)</span>. Behaviours related to the candidate dominate: a candidate handbag attends to past bag purchases, not to phone browsing. The original DIN does not softmax-normalise the weights, so the strength of interest is preserved. DIEN adds a recurrent layer to model how interests evolve; transformer variants apply self-attention over the sequence, with event type, time gap and position embeddings, and then attend from the candidate.</p>
@@ -947,10 +947,16 @@ window.Quarto = {
 <li>Self-attention over the history or target attention from the candidate - when does each win?</li>
 <li>How do you keep the sequence feature consistent between training and serving?</li>
 </ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>TikTok, Machine Learning Engineer, Dec 2025: Query, key and value for cross-attention in a recommender (<a href="https://prachub.com/interview-questions/define-qkv-for-recommender-cross-attention">PracHub</a>)</li>
+</ul>
+</div>
 </details>
 <details class="qa" id="recsys-029">
 <summary>
-<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> How do you handle cold start for a new user and for a new item? They are different problems; treat them separately.
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Google</span> How do you handle cold start for a new user and for a new item? They are different problems; treat them separately.
 </summary>
 <p><strong>New user</strong>: no history, so personalised models fall back to priors.</p>
 <ul>
@@ -971,6 +977,12 @@ window.Quarto = {
 <li>How would you measure whether the new-item exploration budget is the right size?</li>
 <li>What about a new market where both users and items are new?</li>
 </ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>Google, Machine Learning Engineer, Mar 2026: Cold-start strategies for ranking (<a href="https://prachub.com/interview-questions/explain-ranking-cold-start-strategies">PracHub</a>)</li>
+</ul>
+</div>
 </details>
 <details class="qa" id="recsys-031">
 <summary>
@@ -1168,7 +1180,7 @@ window.Quarto = {
 </details>
 <details class="qa" id="recsys-042">
 <summary>
-<span class="tag tag-core">core</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> Design the ranking system for a home feed of short videos or posts, for a product with a hundred million daily users.
+<span class="tag tag-core">core</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at OpenAI, Meta</span> Design the ranking system for a home feed of short videos or posts, for a product with a hundred million daily users.
 </summary>
 <p><strong>1. Objective.</strong> The business goal is long-term retention; it is too slow to train on, so predict short-term actions and combine them. Positive: watch time or completion, like, share, comment, follow. Negative: quick skip, hide, report. Guardrails: content safety, creator-side exposure, latency (p99 under roughly 200 ms for the ranking path).</p>
 <p><strong>2. Data and labels.</strong> Impression logs joined with actions in an attribution window; features logged at serving time. Labels per impression for each action; watch time as a regression or as bucketed classification, normalised for video length. Train on a temporal split and update continuously (hourly or streaming), since content turns over in days.</p>
@@ -1185,6 +1197,13 @@ window.Quarto = {
 <li>Which single component would you build first with a team of three?</li>
 <li>How do you handle watch time across videos of very different length?</li>
 </ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>OpenAI, Machine Learning Engineer, Dec 2025: End-to-end recommendation system for a personalised feed (<a href="https://prachub.com/interview-questions/design-a-recommendation-system-end-to-end">PracHub</a>)</li>
+<li>Meta, Machine Learning Engineer, Dec 2025: Comment ranking for a news feed (<a href="https://prachub.com/interview-questions/design-comment-ranking-for-a-news-feed">PracHub</a>)</li>
+</ul>
+</div>
 </details>
 </section>
 <section id="ranking" class="level3">
@@ -1199,7 +1218,7 @@ window.Quarto = {
 </ul>
 <details class="qa" id="recsys-009">
 <summary>
-<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> Walk me through the main ranking architectures: Wide &amp; Deep, DeepFM, DCN. Why do ranking models need explicit feature crosses when an MLP is a universal approximator?
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Apple</span> Walk me through the main ranking architectures: Wide &amp; Deep, DeepFM, DCN. Why do ranking models need explicit feature crosses when an MLP is a universal approximator?
 </summary>
 <p>Ranking inputs are mostly sparse categorical features (user id, item id, category, context) embedded and concatenated with dense features. The signal is largely in interactions, such as user-language × item-language or user-segment × creator. An MLP on concatenated embeddings can represent a product of two inputs only approximately and needs many units and samples to do it, so architectures add multiplicative structure explicitly.</p>
 <ul>
@@ -1219,6 +1238,12 @@ window.Quarto = {
 <li>Why is a dot product hard for an MLP to learn?</li>
 <li>Where would you put a new high-cardinality feature, and how do you handle its tail?</li>
 </ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>Apple, Machine Learning Engineer, Mar 2026: Compare DCN v1 and v2, then design an A/B test (<a href="https://prachub.com/interview-questions/compare-dcn-v1-vs-v2-and-a-b-test">PracHub</a>)</li>
+</ul>
+</div>
 </details>
 <details class="qa" id="recsys-013">
 <summary>
@@ -1479,7 +1504,7 @@ window.Quarto = {
 </details>
 <details class="qa" id="recsys-023">
 <summary>
-<span class="tag tag-senior">senior</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> People say “for organic ranking only the order matters, but for ads you need calibration”. Explain why, and where the statement is too simple.
+<span class="tag tag-senior">senior</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Meta</span> People say “for organic ranking only the order matters, but for ads you need calibration”. Explain why, and where the statement is too simple.
 </summary>
 <p>In a single-objective organic ranker, the page is the top-<span class="math inline">\(k\)</span> by score. Any strictly increasing transform of the score gives the same page, so AUC or NDCG is what matters and the absolute value is irrelevant.</p>
 <p>In ads the predicted probability is used as a number:</p>
@@ -1502,6 +1527,12 @@ window.Quarto = {
 <li>How would you measure calibration for ads that rarely win an auction?</li>
 <li>Can a post-hoc calibrator change the auction outcome?</li>
 </ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>Meta, Machine Learning Engineer, Jan 2026: Low-latency ads ranking with calibration (<a href="https://prachub.com/interview-questions/design-an-ads-ranking-system-with-calibration">PracHub</a>)</li>
+</ul>
+</div>
 </details>
 <details class="qa" id="recsys-024">
 <summary>
@@ -1646,7 +1677,7 @@ window.Quarto = {
 </details>
 <details class="qa" id="recsys-012">
 <summary>
-<span class="tag tag-staff">staff</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> The ranker outputs a dozen predictions. How do you combine them into one ranking score, and how are the weights chosen?
+<span class="tag tag-staff">staff</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at TikTok</span> The ranker outputs a dozen predictions. How do you combine them into one ranking score, and how are the weights chosen?
 </summary>
 <p>The usual form is a value model, a weighted combination of calibrated predictions:</p>
 <p><span class="math display">\[\text{score}=\sum_k w_k\,\hat p_k\quad\text{or}\quad \prod_k \hat p_k^{\,\alpha_k},\]</span></p>
@@ -1669,10 +1700,16 @@ window.Quarto = {
 <li>Why must the heads be calibrated for the weights to be meaningful?</li>
 <li>How would you personalise the weights, and what is the risk?</li>
 </ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>TikTok, Data Scientist, Oct 2025: Multi-objective recommender balancing growth and monetisation (<a href="https://prachub.com/interview-questions/design-recommendations-objective-balancing-growth-and-monetization">PracHub</a>)</li>
+</ul>
+</div>
 </details>
 <details class="qa" id="recsys-030">
 <summary>
-<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> Explain the exploration-exploitation problem in recommendation. Compare epsilon-greedy, UCB and Thompson sampling, and tell me how exploration is actually done with a deep ranker.
+<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Google</span> Explain the exploration-exploitation problem in recommendation. Compare epsilon-greedy, UCB and Thompson sampling, and tell me how exploration is actually done with a deep ranker.
 </summary>
 <p>A recommender learns only from what it shows. Always showing the current best estimate (pure exploitation) means items and interests with uncertain estimates never get data, so errors persist. Exploration spends some impressions to reduce uncertainty.</p>
 <ul>
@@ -1692,6 +1729,12 @@ window.Quarto = {
 <li>Why is Thompson sampling more robust than UCB to delayed feedback?</li>
 <li>How would you explore over users’ interests rather than over items?</li>
 </ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>Google, Machine Learning Engineer, Jul 2025: Feedback-driven contextual bandit recommender (<a href="https://prachub.com/interview-questions/design-feedback-driven-recommender">PracHub</a>)</li>
+</ul>
+</div>
 </details>
 </section>
 <section id="genrec" class="level3">

@@ -156,6 +156,7 @@ ul.task-list li input[type="checkbox"] {
   <li><a href="#level-experience-and-pay" id="toc-level-experience-and-pay" class="nav-link" data-scroll-target="#level-experience-and-pay">Level, experience and pay</a></li>
   <li><a href="#inventory" id="toc-inventory" class="nav-link" data-scroll-target="#inventory">Every skill, by area</a></li>
   <li><a href="#loops" id="toc-loops" class="nav-link" data-scroll-target="#loops">What interviews test beyond the posting</a></li>
+  <li><a href="#reported" id="toc-reported" class="nav-link" data-scroll-target="#reported">Questions candidates report being asked</a></li>
   <li><a href="#coverage-of-this-site" id="toc-coverage-of-this-site" class="nav-link" data-scroll-target="#coverage-of-this-site">Coverage of this site</a></li>
   <li><a href="#method" id="toc-method" class="nav-link" data-scroll-target="#method">Method and limits</a></li>
   </ul>
@@ -3744,6 +3745,1643 @@ Top 25 technical skills in research engineer postings
 </tbody>
 </table>
 <p>Two consequences for preparation. First, coding and behavioural rounds carry more weight than their share of posting text suggests. Second, the design round is where the posting’s skills are tested together, so the <a href="../skills/cases.html">design cases</a> are the best single place to practise them.</p>
+</section>
+<section id="reported" class="level2">
+<h2 class="anchored" data-anchor-id="reported">Questions candidates report being asked</h2>
+<p>The cards on this site were written from the skills the postings name. They were not copied from interviews. To check them against practice, 201 questions that two third-party sites list as asked in interviews at 8 employers from the sample were collected on 10 November 2026. Each is matched to the cards that cover its topic.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Employer</th>
+<th style="text-align: right;">Reported questions</th>
+<th style="text-align: right;">With a card here</th>
+<th style="text-align: right;">No card yet</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">OpenAI</td>
+<td style="text-align: right;">68</td>
+<td style="text-align: right;">31</td>
+<td style="text-align: right;">37</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Anthropic</td>
+<td style="text-align: right;">50</td>
+<td style="text-align: right;">34</td>
+<td style="text-align: right;">16</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Meta</td>
+<td style="text-align: right;">27</td>
+<td style="text-align: right;">17</td>
+<td style="text-align: right;">10</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Google</td>
+<td style="text-align: right;">23</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">7</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">TikTok</td>
+<td style="text-align: right;">14</td>
+<td style="text-align: right;">13</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Amazon</td>
+<td style="text-align: right;">9</td>
+<td style="text-align: right;">9</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Apple</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Nvidia</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><strong>All</strong></td>
+<td style="text-align: right;"><strong>201</strong></td>
+<td style="text-align: right;"><strong>127</strong></td>
+<td style="text-align: right;"><strong>74</strong></td>
+</tr>
+</tbody>
+</table>
+<p>127 of the reported questions are covered by 86 cards. Those cards carry an “asked at” tag on the <a href="../skills/index.html">skill pages</a> and in the <a href="../review/index.html">review app</a>, which can filter to them or run them as a mock round. 74 reported questions have no card yet; they are listed below with their source so they can be practised from there.</p>
+<p><strong>How far to trust this.</strong></p>
+<ul>
+<li>The reports are self-submitted to those sites by candidates and are not verified here. PracHub describes its listings as real questions from candidate reports; Aced (formerly Exponent) is a user-contributed question bank plus first-person interview write-ups. Three entries are first-person write-ups; the rest are single listings.</li>
+<li>The topic column is a paraphrase. A card “covers” a report when it treats the same topic, not when it reproduces the question. Follow the link for the source’s own wording.</li>
+<li>The sample is what was readable without an account. Glassdoor, 1Point3Acres and Blind hold more reports behind logins and were not used.</li>
+<li>Roles are as the source lists them and include some product manager and data scientist interviews, whose ML questions overlap with engineering ones.</li>
+<li>Interview questions change. Treat these as evidence about what kind of question is asked, not as a list to memorise.</li>
+</ul>
+<p><strong>What the reports show.</strong></p>
+<ul>
+<li><em>OpenAI, ML coding.</em> A small set of exercises recurs: debugging a small transformer with planted bugs and then adding a KV cache (10 of 68 reports), backpropagation by hand (6), a vectorised nearest-neighbour classifier (6), prefix products with their backward pass (4), and cleaning labels from noisy annotators (4). The design questions are mostly retrieval and enterprise search (10).</li>
+<li><em>Anthropic.</em> 18 of 50 reports are inference-system design: batching, routing and scheduling on a GPU pool, and distributing model weights. Several others ask about safety and model behaviour.</li>
+<li><em>Meta.</em> Recommendation, ranking and place recommendation (10 of 27) and integrity classifiers (5), with LLM system designs appearing in 2026.</li>
+<li><em>Across employers.</em> Implementing attention is the single most reported coding task (11 reports at six employers). Behavioural questions are the standard ones: a mistake, a conflict, the project you are most proud of.</li>
+</ul>
+<p>This agrees with the <a href="#loops">interview loop table</a>: coding and design carry the rounds, and the design round tests the posting’s skills together.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>All reported questions, by employer
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-1" class="callout-1-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<section id="reported-openai" class="level3">
+<h3 class="anchored" data-anchor-id="reported-openai">OpenAI</h3>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Reported</th>
+<th style="text-align: left;">Role</th>
+<th style="text-align: left;">Topic of the question</th>
+<th style="text-align: left;">Source</th>
+<th style="text-align: left;">Cards</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Oct 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Majority-vote labels from three noisy annotators, then beat that baseline</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/majority-vote-labels-from-three-noisy-annotators-then-beat-the-baseline">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Sep 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Multi-tenant enterprise RAG assistant with hybrid retrieval, reranking and access controls</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-a-multi-tenant-enterprise-rag-assistant-hybrid-retrieval-reranking-acls">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/llmapp.html#llmapp-028">llmapp-028</a>, <a href="../skills/cases.html#cases-006">cases-006</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Sep 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Debug a small PyTorch transformer with planted bugs, then add a KV cache</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/debug-a-small-pytorch-transformer-with-four-bugs-then-add-a-kv-cache">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Sep 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Hand-written gradients for a prefix product and a stable cross-entropy</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/hand-written-gradients-prefix-product-backward-pass-and-stable-cross-entropy">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Sep 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Vectorised 1-nearest-neighbour in NumPy and its equivalence to a linear layer</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/vectorized-1-nearest-neighbor-in-numpy-and-its-equivalence-to-a-linear-layer">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Sep 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Debug a transformer implementation and add a KV cache for decoding</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/debug-a-transformer-implementation-and-implement-a-kv-cache-for-decoding">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Sep 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">1-nearest-neighbour classifier with a Manhattan-distance follow-up</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/implement-a-1-nearest-neighbor-classifier-with-a-manhattan-distance-follow-up">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Sep 2026</td>
+<td style="text-align: left;">Software Engineer</td>
+<td style="text-align: left;">Minimal reverse-mode autograd engine on tensors</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/implement-a-minimal-reverse-mode-autograd-engine-on-pytorch-tensors">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/infra.html#infra-031">infra-031</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Aug 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Vectorise 1-nearest-neighbour and express it as a network forward pass</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/vectorize-one-nearest-neighbor-and-express-it-as-a-neural-forward-pass">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Aug 2026</td>
+<td style="text-align: left;">Research Engineer</td>
+<td style="text-align: left;">First-person report of two screens: a five-part grid simulation of infection spread; vectorised 1-nearest-neighbour, then as a network forward pass, then with L1 distance</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-experiences/openai-research-engineer-interview-experience-two-back-to-back-screens-no-break-rejected">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Jul 2026</td>
+<td style="text-align: left;">Software Engineer</td>
+<td style="text-align: left;">Asynchronous video generation service with GPU fleet scheduling</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-a-video-generation-service-with-gpu-fleet-management">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Jun 2026</td>
+<td style="text-align: left;">Software Engineer</td>
+<td style="text-align: left;">Text-to-video platform around a large model</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-a-text-to-video-generation-platform-sora-style">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Jun 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Masked cross-entropy with label smoothing</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/implement-masked-cross-entropy-with-label-smoothing">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">May 2026</td>
+<td style="text-align: left;">Software Engineer</td>
+<td style="text-align: left;">Text-to-video generation system</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-a-text-to-video-generation-system">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">May 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">1-nearest-neighbour classifier in NumPy</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/implement-1nn-with-numpy">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Apr 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Agent harness and evaluation system for a tool-using agent</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-an-agent-harness-and-evaluation-system">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/llmapp.html#llmapp-009">llmapp-009</a>, <a href="../skills/cases.html#cases-008">cases-008</a>, <a href="../skills/eval.html#eval-005">eval-005</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Apr 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Mine novel images from a massive unlabelled corpus</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/mine-novel-images-from-unlabeled-data">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Apr 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Real-time sensor intelligence system</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-a-real-time-sensor-intelligence-system">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Apr 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Improve training when labels come from noisy annotators</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/improve-training-with-noisy-annotators">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Apr 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Sharded matrix multiplication and its backpropagation</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/derive-sharded-matrix-multiplication-and-backpropagation">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Apr 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Compute entropy and implement 1-nearest-neighbour</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/compute-entropy-and-implement-1-nn">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Apr 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Debug a small GPT and backpropagate through a matrix multiply</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/debug-minigpt-and-backpropagate-matmul">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/dl.html#dl-002">dl-002</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Apr 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Matrix prefix products and their gradients</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/compute-matrix-prefix-products-and-gradients">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Apr 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Backpropagation for a tiny network by hand</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/implement-backprop-for-a-tiny-network">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/dl.html#dl-002">dl-002</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Apr 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Filter bad human annotations</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/filter-bad-human-annotations">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Apr 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Defend a research direction and design its experiments</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/defend-a-research-direction-and-experiment-design">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/research.html#research-007">research-007</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Apr 2026</td>
+<td style="text-align: left;">Product Manager</td>
+<td style="text-align: left;">What an LLM hallucination is, its types and causes</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/pinning-down-what-an-llm-hallucination-is-types-causes-and-boundaries">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/llm.html#llm-003">llm-003</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Apr 2026</td>
+<td style="text-align: left;">Product Manager</td>
+<td style="text-align: left;">How context window length affects quality, cost and latency</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/how-context-window-length-shapes-llm-quality-cost-and-latency">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/llmapp.html#llmapp-019">llmapp-019</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Mar 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Debug a broken transformer</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/debug-a-broken-transformer">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Feb 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Improve a classifier trained on noisy multi-annotator labels</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/improve-classifier-with-noisy-multi-annotator-labels">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Feb 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Backpropagation through a product of weight matrices</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/derive-backpropagation-for-matrix-product-layers">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Feb 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Debug a transformer and add a KV cache for generation</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/debug-transformer-and-add-kv-cache">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Feb 2026</td>
+<td style="text-align: left;">Data Scientist</td>
+<td style="text-align: left;">Neural-network layers in NumPy, with matrix multiplication and broadcasting</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/implement-numpy-neural-network-layers">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Jan 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Image classifier trained on dirty data</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/how-would-you-build-an-image-classifier-with-dirty-data">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Jan 2026</td>
+<td style="text-align: left;">Software Engineer</td>
+<td style="text-align: left;">Restart strategy for a randomised solver from its runtime distribution</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-restart-strategy-for-oracle-solver">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Jan 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Debug a transformer that runs but behaves wrongly</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/debug-a-broken-transformer-implementation">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Dec 2025</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Design and optimise a RAG system over a private corpus</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-and-optimize-a-rag-system">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/llmapp.html#llmapp-022">llmapp-022</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Dec 2025</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">End-to-end recommendation system for a personalised feed</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-a-recommendation-system-end-to-end">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/cases.html#cases-002">cases-002</a>, <a href="../skills/recsys.html#recsys-042">recsys-042</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Dec 2025</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Out-of-distribution detection with production monitoring</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-an-ood-detection-system">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Dec 2025</td>
+<td style="text-align: left;">Software Engineer</td>
+<td style="text-align: left;">Enterprise assistant over internal documents</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-an-enterprise-rag-assistant-for-internal-docs">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/cases.html#cases-006">cases-006</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Dec 2025</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Fallback for an assistant that cannot answer reliably</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-a-chatbot-fallback-for-unknown-questions">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/llm.html#llm-003">llm-003</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Dec 2025</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Pipeline that selects high-quality math documents from web crawls</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/select-high-quality-math-documents-from-crawls">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/llm.html#llm-007">llm-007</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Oct 2025</td>
+<td style="text-align: left;">Data Scientist</td>
+<td style="text-align: left;">Debug and fix a PyTorch transformer training loop</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/debug-and-fix-a-pytorch-transformer-training-loop">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Sep 2025</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Multi-tenant enterprise document search with ML ranking</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-an-ml-search-system">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/llmapp.html#llmapp-028">llmapp-028</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Sep 2025</td>
+<td style="text-align: left;">Software Engineer</td>
+<td style="text-align: left;">Implement and debug backpropagation for a two-layer network in NumPy</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/implement-and-debug-backprop-in-numpy">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/dl.html#dl-002">dl-002</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Sep 2025</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">End-to-end binary classifier workflow with data analysis, fairness and a report</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/train-a-classifier-and-analyze-dataset">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Aug 2025</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Production RAG for enterprise document question answering</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-a-production-rag-system">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/llmapp.html#llmapp-022">llmapp-022</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Aug 2025</td>
+<td style="text-align: left;">Software Engineer</td>
+<td style="text-align: left;">AI chatbot system with a front-end focus and storage constraints</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-ai-chat-bot-system">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/swe.html#swe-019">swe-019</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Aug 2025</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">End-to-end enterprise RAG search</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-enterprise-rag-search-system">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/cases.html#cases-006">cases-006</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Aug 2025</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Debug a transformer text classifier, then train and evaluate it</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/debug-transformer-and-train-classifier">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Aug 2025</td>
+<td style="text-align: left;">Software Engineer</td>
+<td style="text-align: left;">Diagnose a sudden accuracy drop in a deployed ML pipeline</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/debug-a-machine-learning-pipeline">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/mlops.html#mlops-003">mlops-003</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Aug 2025</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Prefix products and their backward pass, including zeros</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/implement-prefix-products-and-their-backward-pass">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Aug 2025</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Diagnose transformer training and inference bugs</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/diagnose-transformer-training-and-inference-bugs">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Jul 2025</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Enterprise search using RAG</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-an-ml-search-system-with-rag">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/llmapp.html#llmapp-022">llmapp-022</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Jul 2025</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Low-latency RAG for customer support</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-a-low-latency-rag-system">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/llmapp.html#llmapp-022">llmapp-022</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Jul 2025</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Debug an encoder-decoder transformer training pipeline</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/debug-a-transformer-training-pipeline">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Jul 2025</td>
+<td style="text-align: left;">Software Engineer</td>
+<td style="text-align: left;">Debug a churn classifier that generalises poorly</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/debug-a-failing-ml-classifier">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/mlfund.html#mlfund-005">mlfund-005</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Jul 2025</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Build and troubleshoot an image classifier on noisy data, with backprop</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/build-and-troubleshoot-image-classification-and-backprop">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">undated</td>
+<td style="text-align: left;">Research Engineer</td>
+<td style="text-align: left;">First-person report: code a system that distributes work between people and AI under a list of partly underspecified requirements</td>
+<td style="text-align: left;"><a href="https://www.aced.io/experiences/openai-senior-machine-learning-engineer-interview-9b7da4">Aced (formerly Exponent)</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">undated</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Handle hallucinations in a generative model deployed to users (also listed for Anthropic)</td>
+<td style="text-align: left;"><a href="https://www.aced.io/questions/5611/handle-hallucinations-deployed-ai-model">Aced (formerly Exponent)</a></td>
+<td style="text-align: left;"><a href="../skills/llm.html#llm-003">llm-003</a>, <a href="../skills/llmapp.html#llmapp-027">llmapp-027</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">undated</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Define hallucinations in LLMs (also listed for Anthropic)</td>
+<td style="text-align: left;"><a href="https://www.aced.io/questions/5610/define-llm-hallucinations">Aced (formerly Exponent)</a></td>
+<td style="text-align: left;"><a href="../skills/llm.html#llm-003">llm-003</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">undated</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Your approach to prompt engineering (also listed for Anthropic)</td>
+<td style="text-align: left;"><a href="https://www.aced.io/questions/5603/prompt-engineering-approach">Aced (formerly Exponent)</a></td>
+<td style="text-align: left;"><a href="../skills/llmapp.html#llmapp-021">llmapp-021</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">undated</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Adapt a generative model to perform well in a specific domain (also listed for Anthropic)</td>
+<td style="text-align: left;"><a href="https://www.aced.io/questions/5608/adapt-gen-ai-model-for-domain">Aced (formerly Exponent)</a></td>
+<td style="text-align: left;"><a href="../skills/llm.html#llm-004">llm-004</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">undated</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Effect of adjusting an LLM’s context window size</td>
+<td style="text-align: left;"><a href="https://www.aced.io/questions/5612/adjust-llm-context-window-size">Aced (formerly Exponent)</a></td>
+<td style="text-align: left;"><a href="../skills/llmapp.html#llmapp-019">llmapp-019</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">undated</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">A time you made a mistake</td>
+<td style="text-align: left;"><a href="https://www.aced.io/questions/240/mistake">Aced (formerly Exponent)</a></td>
+<td style="text-align: left;"><a href="../skills/senior.html#senior-004">senior-004</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">undated</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">A conflict with someone and how you resolved it (also listed for Anthropic)</td>
+<td style="text-align: left;"><a href="https://www.aced.io/questions/140/conflict-resolution-learning">Aced (formerly Exponent)</a></td>
+<td style="text-align: left;"><a href="../skills/senior.html#senior-005">senior-005</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">undated</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">A disagreement with your manager</td>
+<td style="text-align: left;"><a href="https://www.aced.io/questions/241/disagreement-manager">Aced (formerly Exponent)</a></td>
+<td style="text-align: left;"><a href="../skills/senior.html#senior-005">senior-005</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">undated</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">The project you are most proud of</td>
+<td style="text-align: left;"><a href="https://www.aced.io/questions/1031/project-you-are-most-proud-of">Aced (formerly Exponent)</a></td>
+<td style="text-align: left;"><a href="../skills/senior.html#senior-001">senior-001</a></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="reported-anthropic" class="level3">
+<h3 class="anchored" data-anchor-id="reported-anthropic">Anthropic</h3>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Reported</th>
+<th style="text-align: left;">Role</th>
+<th style="text-align: left;">Topic of the question</th>
+<th style="text-align: left;">Source</th>
+<th style="text-align: left;">Cards</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Sep 2026</td>
+<td style="text-align: left;">Software Engineer</td>
+<td style="text-align: left;">Performance model of a sharded matrix multiply: FLOPs, memory, network</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/performance-model-a-sharded-matrix-multiply-flops-memory-network-and-roofline">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Sep 2026</td>
+<td style="text-align: left;">Software Engineer</td>
+<td style="text-align: left;">Route and batch inference across eight GPUs</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/route-and-batch-inference-with-eight-gpus">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Aug 2026</td>
+<td style="text-align: left;">Software Engineer</td>
+<td style="text-align: left;">Identify the most important AI safety risk</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/identify-the-most-important-ai-safety-risk">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/research.html#research-030">research-030</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Aug 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Schedule large-model and small-model inference on an eight-GPU pool</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/schedule-large-and-small-model-inference-on-an-eight-gpu-pool">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Aug 2026</td>
+<td style="text-align: left;">Software Engineer</td>
+<td style="text-align: left;">Review and scale an inference service design</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/review-and-scale-an-inference-service-design">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/serving.html#serving-029">serving-029</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Aug 2026</td>
+<td style="text-align: left;">Software Engineer</td>
+<td style="text-align: left;">Schedule one-GPU and eight-GPU jobs fairly</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/schedule-one-gpu-and-eight-gpu-model-jobs">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/infra.html#infra-010">infra-010</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Aug 2026</td>
+<td style="text-align: left;">Software Engineer</td>
+<td style="text-align: left;">Improve an inference service with admission control, batching, shedding, caching and idempotency</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/improve-an-ml-inference-service">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/serving.html#serving-029">serving-029</a>, <a href="../skills/serving.html#serving-030">serving-030</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Jul 2026</td>
+<td style="text-align: left;">Software Engineer</td>
+<td style="text-align: left;">Low-latency GPU inference service</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-a-low-latency-gpu-inference-service">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/serving.html#serving-010">serving-010</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">May 2026</td>
+<td style="text-align: left;">Software Engineer</td>
+<td style="text-align: left;">Distribute and activate model weights without exposing partial state</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-safe-distribution-and-activation-of-model-weights">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Apr 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Design an experiment to study sample-wise double descent</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-a-double-descent-experiment">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/mlfund.html#mlfund-004">mlfund-004</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Apr 2026</td>
+<td style="text-align: left;">Product Manager</td>
+<td style="text-align: left;">Choose between prompting, retrieval and fine-tuning to specialise a model</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/choosing-between-prompting-retrieval-and-fine-tuning-to-specialize-an-llm">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/llm.html#llm-004">llm-004</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Apr 2026</td>
+<td style="text-align: left;">Product Manager</td>
+<td style="text-align: left;">Dual-use requests, jailbreaks and layered defences</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/keeping-llm-output-safe-dual-use-requests-jailbreaks-and-layered-defenses">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/llmapp.html#llmapp-033">llmapp-033</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Apr 2026</td>
+<td style="text-align: left;">Software Engineer</td>
+<td style="text-align: left;">Distribute large model weight files to a GPU worker fleet</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-model-weight-distribution">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Mar 2026</td>
+<td style="text-align: left;">Software Engineer</td>
+<td style="text-align: left;">Request batching for GPU inference</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-gpu-inference-request-batching">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/serving.html#serving-002">serving-002</a>, <a href="../skills/serving.html#serving-003">serving-003</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Mar 2026</td>
+<td style="text-align: left;">Software Engineer</td>
+<td style="text-align: left;">Estimate feed-forward layer compute, memory and sharding communication</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/estimate-ffn-compute-memory-and-sharding-communication">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Feb 2026</td>
+<td style="text-align: left;">Software Engineer</td>
+<td style="text-align: left;">Find the bugs in a simplified GRPO training step and explain the importance ratios</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/debug-a-grpo-training-loop-and-explain-ratios">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/llm.html#llm-017">llm-017</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Feb 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Batch inference pipeline design</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/explain-batch-inference-design">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/serving.html#serving-001">serving-001</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Feb 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Model downloader with versioning and integrity checks</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-a-model-downloader">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Jan 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Production ML serving system with focus on scaling and reliability</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-a-production-ml-serving-system">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/serving.html#serving-029">serving-029</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Sep 2025</td>
+<td style="text-align: left;">Software Engineer</td>
+<td style="text-align: left;">Implement and derive backprop for a single-neuron classifier</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/implement-and-derive-backprop-from-scratch">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/dl.html#dl-002">dl-002</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Sep 2025</td>
+<td style="text-align: left;">Software Engineer</td>
+<td style="text-align: left;">Numerically stable scaled dot-product attention in PyTorch</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/implement-and-analyze-custom-attention">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/dl.html#dl-019">dl-019</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Sep 2025</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Routing and scheduling layer for heterogeneous GPU and CPU backends</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-an-inference-routing-and-scheduling-layer">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Sep 2025</td>
+<td style="text-align: left;">Software Engineer</td>
+<td style="text-align: left;">Asynchronous post-and-poll batch inference API</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-a-batch-inference-api">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/serving.html#serving-001">serving-001</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Sep 2025</td>
+<td style="text-align: left;">Software Engineer</td>
+<td style="text-align: left;">Binary text classifier using only an LLM log-probability helper</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-an-llm-based-binary-classifier">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Sep 2025</td>
+<td style="text-align: left;">Software Engineer</td>
+<td style="text-align: left;">Review an inference API design for scale</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/review-an-inference-api-design-for-scale">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/serving.html#serving-029">serving-029</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Sep 2025</td>
+<td style="text-align: left;">Software Engineer</td>
+<td style="text-align: left;">Low-latency synchronous inference API</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-a-low-latency-ml-inference-api">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/serving.html#serving-010">serving-010</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Aug 2025</td>
+<td style="text-align: left;">Software Engineer</td>
+<td style="text-align: left;">GPU-backed inference API for multiple models</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-a-gpu-inference-api">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/serving.html#serving-004">serving-004</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">undated</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Inference batching system for one GPU, up to 100 inputs per batch, synchronous callers</td>
+<td style="text-align: left;"><a href="https://www.aced.io/questions/5780/inference-batching-system">Aced (formerly Exponent)</a></td>
+<td style="text-align: left;"><a href="../skills/serving.html#serving-002">serving-002</a>, <a href="../skills/serving.html#serving-003">serving-003</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">undated</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Implement an LRU cache</td>
+<td style="text-align: left;"><a href="https://www.aced.io/questions/3625/lru-cache">Aced (formerly Exponent)</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">undated</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Implement an in-memory database in a timed assessment</td>
+<td style="text-align: left;"><a href="https://www.aced.io/questions/6237/implement-inmemory-database-codesignal">Aced (formerly Exponent)</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">undated</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Implement a streaming database under given constraints</td>
+<td style="text-align: left;"><a href="https://www.aced.io/questions/6236/implement-streaming-database-constraints-requirements">Aced (formerly Exponent)</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">undated</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Design an agentic system that adapts to new tasks</td>
+<td style="text-align: left;"><a href="https://www.aced.io/questions/5606/design-agentic-ai-system">Aced (formerly Exponent)</a></td>
+<td style="text-align: left;"><a href="../skills/llmapp.html#llmapp-002">llmapp-002</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">undated</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Your views on AI safety, ethics, guardrails and governance</td>
+<td style="text-align: left;"><a href="https://www.aced.io/questions/6266/explain-ai-safety-ethics-governance">Aced (formerly Exponent)</a></td>
+<td style="text-align: left;"><a href="../skills/research.html#research-030">research-030</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">undated</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Why this company</td>
+<td style="text-align: left;"><a href="https://www.aced.io/questions/5596/why-anthropic">Aced (formerly Exponent)</a></td>
+<td style="text-align: left;"><a href="../skills/research.html#research-030">research-030</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">undated</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Align a model with intended objectives and prevent harmful behaviour</td>
+<td style="text-align: left;"><a href="https://www.aced.io/questions/6235/align-ai-model-objectives-prevent-harm">Aced (formerly Exponent)</a></td>
+<td style="text-align: left;"><a href="../skills/llm.html#llm-019">llm-019</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">undated</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Prevent a generative model from producing harmful content</td>
+<td style="text-align: left;"><a href="https://www.aced.io/questions/5607/gen-ai-address-harmful-content">Aced (formerly Exponent)</a></td>
+<td style="text-align: left;"><a href="../skills/llm.html#llm-019">llm-019</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">undated</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Adjust the creativity of a generative model</td>
+<td style="text-align: left;"><a href="https://www.aced.io/questions/5609/adjust-gen-ai-model-creativity">Aced (formerly Exponent)</a></td>
+<td style="text-align: left;"><a href="../skills/dl.html#dl-026">dl-026</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">undated</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Fix a conversational model that is confidently wrong in high-risk contexts</td>
+<td style="text-align: left;"><a href="https://www.aced.io/questions/5788/fix-overly-confident-model">Aced (formerly Exponent)</a></td>
+<td style="text-align: left;"><a href="../skills/llmapp.html#llmapp-027">llmapp-027</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">undated</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Handle a model that exposes sensitive training data</td>
+<td style="text-align: left;"><a href="https://www.aced.io/questions/5601/handle-model-exposing-data-from-training-set">Aced (formerly Exponent)</a></td>
+<td style="text-align: left;"><a href="../skills/mlops.html#mlops-023">mlops-023</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">undated</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Keep user data safe and private when building AI systems</td>
+<td style="text-align: left;"><a href="https://www.aced.io/questions/5602/build-ai-systems-data-safety-privacy">Aced (formerly Exponent)</a></td>
+<td style="text-align: left;"><a href="../skills/mlops.html#mlops-023">mlops-023</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">undated</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">The hardest part of tuning or fine-tuning a model in a past project</td>
+<td style="text-align: left;"><a href="https://www.aced.io/questions/6263/describe-past-project-model-tuning">Aced (formerly Exponent)</a></td>
+<td style="text-align: left;"><a href="../skills/senior.html#senior-001">senior-001</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">undated</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Plan and execute a tool-use scenario</td>
+<td style="text-align: left;"><a href="https://www.aced.io/questions/6267/solve-tooling-scenario-make-plan">Aced (formerly Exponent)</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">undated</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Improve the reliability and performance of a PDF workflow with long context windows</td>
+<td style="text-align: left;"><a href="https://www.aced.io/questions/7110/improve-pdf-workflow-reliability-performance">Aced (formerly Exponent)</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">undated</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Design a model-API implementation for a customer in a regulated industry</td>
+<td style="text-align: left;"><a href="https://www.aced.io/questions/6264/design-claude-api-implementation-regulated-industry">Aced (formerly Exponent)</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">undated</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Ethical risks of deploying agentic AI in high-stakes environments</td>
+<td style="text-align: left;"><a href="https://www.aced.io/questions/5605/agentic-ai-systems-ethical-risk">Aced (formerly Exponent)</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="reported-meta" class="level3">
+<h3 class="anchored" data-anchor-id="reported-meta">Meta</h3>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Reported</th>
+<th style="text-align: left;">Role</th>
+<th style="text-align: left;">Topic of the question</th>
+<th style="text-align: left;">Source</th>
+<th style="text-align: left;">Cards</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Sep 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Real-time question-answering chatbot, including training data and RL rewards</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-a-real-time-question-answering-chatbot-training-data-rl-tasks-and-rewards">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Sep 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Forward pass of multi-head attention from scratch</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/implement-the-forward-pass-of-multi-head-attention-from-scratch">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/dl.html#dl-019">dl-019</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Sep 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">k-means clustering from scratch</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/implement-k-means-clustering-from-scratch-3">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/mlfund.html#mlfund-011">mlfund-011</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Jul 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Large-scale personalised recommendation system end to end</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-a-large-scale-personalized-recommendation-system-end-to-end">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/cases.html#cases-002">cases-002</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Jun 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">LLM-based conversational assistant covering pretraining, alignment, retrieval and serving</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-an-llm-based-conversational-assistant-chatbot">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Jun 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">LLM-based coding assistant end to end</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-an-llm-based-coding-assistant">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/cases.html#cases-008">cases-008</a>, <a href="../skills/llm.html#llm-037">llm-037</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Jun 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Self-attention: implementation, complexity and efficient variants</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/self-attention-implementation-complexity-and-efficient-variants">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/dl.html#dl-019">dl-019</a>, <a href="../skills/dl.html#dl-025">dl-025</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Jun 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Fundamentals: optimisers, scaling laws and clustering</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/machine-learning-fundamentals-optimizers-scaling-laws-and-clustering">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/llm.html#llm-038">llm-038</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">May 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">1-nearest-neighbour on embeddings and a forward pass</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/implement-1nn-embeddings-and-forward-pass">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Apr 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Prevent private code leakage in coding agents</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/prevent-private-code-leakage-in-coding-agents">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Mar 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Place recommendation for a maps or local-discovery product</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-place-recommendation-system">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Feb 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Image copyright-violation detection</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-an-image-copyright-violation-detection-system">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/cases.html#cases-014">cases-014</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Feb 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Short-video recommendation system</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-a-short-video-recommendation-system-2">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/cases.html#cases-002">cases-002</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Jan 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Real-time nearby-place and notification ranking</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-nearby-and-notification-ranking">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Jan 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Location recommendation system</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-a-location-recommendation-system">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Jan 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Weapon-sale ad detection system</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-a-weapon-sale-ad-detection-system">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/cases.html#cases-014">cases-014</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Jan 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Low-latency ads ranking with calibration</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-an-ads-ranking-system-with-calibration">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/recsys.html#recsys-023">recsys-023</a>, <a href="../skills/cases.html#cases-004">cases-004</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Dec 2025</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Detect weapon-selling ads in posts using several modalities</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-weapon-selling-ad-detection-from-posts">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/cases.html#cases-014">cases-014</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Dec 2025</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Comment ranking for a news feed</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-comment-ranking-for-a-news-feed">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/recsys.html#recsys-042">recsys-042</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Nov 2025</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Harmful-content text classifier</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/build-harmful-content-text-classifier">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/cases.html#cases-014">cases-014</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Oct 2025</td>
+<td style="text-align: left;">Data Scientist</td>
+<td style="text-align: left;">Ad recommendation and ranking system</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-an-ad-recommendation-and-ranking-system">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/cases.html#cases-004">cases-004</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Oct 2025</td>
+<td style="text-align: left;">Data Scientist</td>
+<td style="text-align: left;">Metrics for a fake-user classifier</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/choose-metrics-for-fake-user-classifier">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/eval.html#eval-011">eval-011</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Sep 2025</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Large-scale mixture-of-experts pretraining pipeline</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-a-scalable-moe-pretraining-pipeline">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/llm.html#llm-040">llm-040</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Sep 2025</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Asynchronous RLHF-style post-training system for a production chat model</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/architect-an-asynchronous-rl-post-training-system">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/llm.html#llm-014">llm-014</a>, <a href="../skills/cases.html#cases-011">cases-011</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Sep 2025</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Model that predicts the probability a user dislikes a feed item</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-a-newsfeed-dislike-model">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Sep 2025</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Real-time nearby place recommendations for a mobile app</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-nearby-place-recommendations">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Aug 2025</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Image and multimodal generation systems</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-image-and-multimodal-generation-systems">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="reported-google" class="level3">
+<h3 class="anchored" data-anchor-id="reported-google">Google</h3>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Reported</th>
+<th style="text-align: left;">Role</th>
+<th style="text-align: left;">Topic of the question</th>
+<th style="text-align: left;">Source</th>
+<th style="text-align: left;">Cards</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Oct 2026</td>
+<td style="text-align: left;">Product Manager</td>
+<td style="text-align: left;">When an LLM feature should use prompting or fine-tuning instead of retrieval</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/when-an-llm-feature-should-use-prompting-or-fine-tuning-instead-of-retrieval">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/llm.html#llm-004">llm-004</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Oct 2026</td>
+<td style="text-align: left;">Product Manager</td>
+<td style="text-align: left;">Detect and contain confident false outputs in a customer-facing product</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/detecting-and-containing-llm-hallucinations-in-a-customer-facing-ai-product">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/llmapp.html#llmapp-027">llmapp-027</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Oct 2026</td>
+<td style="text-align: left;">Software Engineer</td>
+<td style="text-align: left;">LLM agent for manufacturing status, work orders and quotes</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-an-llm-agent-for-manufacturing-production-status-work-orders-and-quotes">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Aug 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">KL divergence in language models, including direction and support</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/explain-kl-divergence-in-language-models">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Aug 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Reward hacking in LLM post-training and how to detect and prevent it</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/detect-and-prevent-reward-hacking">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/llm.html#llm-018">llm-018</a>, <a href="../skills/rl.html#rl-018">rl-018</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Aug 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Importance sampling in LLM training, including variance and clipping</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/explain-importance-sampling-in-llm-training">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Aug 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Compare supervised, reward-based, preference-based and group-relative post-training</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/compare-language-model-post-training-methods">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/llm.html#llm-017">llm-017</a>, <a href="../skills/llm.html#llm-014">llm-014</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Aug 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">VAEs, the ELBO, the KL term and reparameterisation</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/explain-vaes-elbo-kl-and-reparameterization">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/dl.html#dl-029">dl-029</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Aug 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Interpret perplexity for an autoregressive language model</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/interpret-language-model-perplexity">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/llm.html#llm-001">llm-001</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Aug 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Watch-next video recommender, with its losses and optimiser updates derived</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-a-watch-next-video-recommender-and-derive-its-losses-and-optimizer-update-rules">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/cases.html#cases-002">cases-002</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Aug 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Pipeline parallelism in RL post-training</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/explain-pipeline-parallelism-in-grpo-training">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/infra.html#infra-012">infra-012</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Aug 2026</td>
+<td style="text-align: left;">Software Engineer</td>
+<td style="text-align: left;">Internal document-search agent with permissions and citations</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-an-agent-for-internal-document-search">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/llmapp.html#llmapp-028">llmapp-028</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Jul 2026</td>
+<td style="text-align: left;">Software Engineer</td>
+<td style="text-align: left;">Scalable and safe agentic system with deterministic controls</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-a-scalable-and-safe-agentic-system">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/llmapp.html#llmapp-001">llmapp-001</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Apr 2026</td>
+<td style="text-align: left;">Product Manager</td>
+<td style="text-align: left;">Metrics for the health of a production ML pipeline</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/measuring-the-health-of-a-production-ml-system-from-data-quality-to-business-impact">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/mlops.html#mlops-008">mlops-008</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Mar 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Cold-start strategies for ranking</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/explain-ranking-cold-start-strategies">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/recsys.html#recsys-029">recsys-029</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Feb 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Chatbot over structured and unstructured data</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-a-chatbot-over-structured-and-unstructured-data">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Feb 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">App-store recommendation system</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-an-app-store-app-recommendation-system">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Jan 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Fraud detection system</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-a-fraud-detection-system-2">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/cases.html#cases-013">cases-013</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Jan 2026</td>
+<td style="text-align: left;">Software Engineer</td>
+<td style="text-align: left;">Choose between fast and cheap model options</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/choose-fast-or-cheap-models">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/llmapp.html#llmapp-038">llmapp-038</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Dec 2025</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">GRPO-style reinforcement training for diffusion models</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/explain-grpo-style-training-for-diffusion-models">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Dec 2025</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Real-time recommendation system</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-a-real-time-recommendation-system">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/cases.html#cases-002">cases-002</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Sep 2025</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Multi-GPU matrix multiplication</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-multi-gpu-matrix-multiplication">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Jul 2025</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Feedback-driven contextual bandit recommender</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-feedback-driven-recommender">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/recsys.html#recsys-030">recsys-030</a></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="reported-tiktok" class="level3">
+<h3 class="anchored" data-anchor-id="reported-tiktok">TikTok</h3>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Reported</th>
+<th style="text-align: left;">Role</th>
+<th style="text-align: left;">Topic of the question</th>
+<th style="text-align: left;">Source</th>
+<th style="text-align: left;">Cards</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Feb 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Pseudocode for self-attention and cross-entropy</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/write-self-attention-and-cross-entropy-pseudocode">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/dl.html#dl-019">dl-019</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Feb 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Overfitting, dropout, normalisation and RL post-training</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/explain-overfitting-dropout-normalization-rl-post-training">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Jan 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">FlashAttention, the KV cache and rotary position embeddings</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/explain-flashattention-kv-cache-and-rope">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/dl.html#dl-024">dl-024</a>, <a href="../skills/dl.html#dl-025">dl-025</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Jan 2026</td>
+<td style="text-align: left;">Software Engineer</td>
+<td style="text-align: left;">Implement ROC-AUC, softmax and logistic regression</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/implement-auc-roc-softmax-and-logistic-regression">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/mlfund.html#mlfund-012">mlfund-012</a>, <a href="../skills/mlfund.html#mlfund-010">mlfund-010</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Jan 2026</td>
+<td style="text-align: left;">Software Engineer</td>
+<td style="text-align: left;">RL policy types and modern policy-gradient methods (TRPO, PPO, GAE)</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/explain-rl-policy-types-and-modern-policy-gradients">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/rl.html#rl-008">rl-008</a>, <a href="../skills/rl.html#rl-006">rl-006</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Dec 2025</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">End-to-end deep dive on a vision-language model project</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/explain-your-vlm-project-end-to-end">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/llm.html#llm-028">llm-028</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Dec 2025</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Query, key and value for cross-attention in a recommender</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/define-qkv-for-recommender-cross-attention">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/recsys.html#recsys-010">recsys-010</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Dec 2025</td>
+<td style="text-align: left;">Software Engineer</td>
+<td style="text-align: left;">Explain DPO and construct its training data</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/explain-dpo-and-construct-its-training-data">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/llm.html#llm-015">llm-015</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Nov 2025</td>
+<td style="text-align: left;">Data Scientist</td>
+<td style="text-align: left;">When to prioritise precision or recall</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/when-prioritize-precision-vs-recall">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/eval.html#eval-011">eval-011</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Oct 2025</td>
+<td style="text-align: left;">Data Scientist</td>
+<td style="text-align: left;">Ad selection across three advertiser objectives</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-an-ad-selection-system-across-objectives">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/cases.html#cases-004">cases-004</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Oct 2025</td>
+<td style="text-align: left;">Data Scientist</td>
+<td style="text-align: left;">Multi-objective recommender balancing growth and monetisation</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-recommendations-objective-balancing-growth-and-monetization">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/recsys.html#recsys-012">recsys-012</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Oct 2025</td>
+<td style="text-align: left;">Data Scientist</td>
+<td style="text-align: left;">SHAP versus variance inflation under collinearity</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/explain-shap-vs-vif-under-collinearity">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/llm.html#llm-035">llm-035</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Oct 2025</td>
+<td style="text-align: left;">Data Scientist</td>
+<td style="text-align: left;">Tune XGBoost and prevent overfitting</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/explain-and-tune-xgboost-prevent-overfitting">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/mlfund.html#mlfund-023">mlfund-023</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Jul 2025</td>
+<td style="text-align: left;">Data Scientist</td>
+<td style="text-align: left;">Real-time card fraud detection</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-real-time-credit-card-fraud-detection-system">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/cases.html#cases-013">cases-013</a></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="reported-amazon" class="level3">
+<h3 class="anchored" data-anchor-id="reported-amazon">Amazon</h3>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Reported</th>
+<th style="text-align: left;">Role</th>
+<th style="text-align: left;">Topic of the question</th>
+<th style="text-align: left;">Source</th>
+<th style="text-align: left;">Cards</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Sep 2026</td>
+<td style="text-align: left;">Software Engineer</td>
+<td style="text-align: left;">How a decoder-only transformer produces next-token probabilities and how an inference engine serves it efficiently</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/explain-decoder-only-llm-architecture-and-how-vllm-serves-it-efficiently">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/llm.html#llm-001">llm-001</a>, <a href="../skills/serving.html#serving-005">serving-005</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Jul 2026</td>
+<td style="text-align: left;">Applied Scientist</td>
+<td style="text-align: left;">Numerically stable sigmoid, softmax and scaled dot-product attention</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/implement-stable-sigmoid-softmax-and-scaled-dot-product-attention">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/dl.html#dl-019">dl-019</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Jun 2026</td>
+<td style="text-align: left;">Applied Scientist</td>
+<td style="text-align: left;">Subword tokenisation design and KL-regularised fine-tuning</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/llm-fundamentals-tokenization-design-and-kl-regularized-sft">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/llm.html#llm-026">llm-026</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Jun 2026</td>
+<td style="text-align: left;">Applied Scientist</td>
+<td style="text-align: left;">Critic-free RL for a reasoning model: parallelism and reward design</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/grpo-deep-dive-critic-free-rl-parallelism-mla-and-reward-design-for-a-reasoning-llm">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/llm.html#llm-017">llm-017</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Jan 2026</td>
+<td style="text-align: left;">Data Scientist</td>
+<td style="text-align: left;">Design and evaluate a RAG system for internal Q&amp;A</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-and-evaluate-a-rag-system">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/llmapp.html#llmapp-022">llmapp-022</a>, <a href="../skills/llmapp.html#llmapp-029">llmapp-029</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Jan 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Multi-head attention with a KV cache and grouped-query attention</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/implement-multi-head-attention-with-a-kv-cache-and-cached-grouped-query-attention">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/dl.html#dl-019">dl-019</a>, <a href="../skills/dl.html#dl-024">dl-024</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Jan 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">GRPO computations in NumPy: group-relative advantages and shaped rewards</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/grpo-in-numpy-group-relative-advantages-process-rewards-and-shaped-rewards">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/llm.html#llm-017">llm-017</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Oct 2025</td>
+<td style="text-align: left;">Data Scientist</td>
+<td style="text-align: left;">Core ML concepts and metrics, including bias-variance</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/explain-core-ml-concepts-and-metrics">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/mlfund.html#mlfund-001">mlfund-001</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Jul 2025</td>
+<td style="text-align: left;">Software Engineer</td>
+<td style="text-align: left;">Attention and transformers, including BERT versus GPT</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/explain-attention-and-transformers">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/llm.html#llm-002">llm-002</a></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="reported-apple" class="level3">
+<h3 class="anchored" data-anchor-id="reported-apple">Apple</h3>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Reported</th>
+<th style="text-align: left;">Role</th>
+<th style="text-align: left;">Topic of the question</th>
+<th style="text-align: left;">Source</th>
+<th style="text-align: left;">Cards</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Apr 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Masked multi-head self-attention</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/implement-masked-multi-head-self-attention">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/dl.html#dl-019">dl-019</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Mar 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Compare DCN v1 and v2, then design an A/B test</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/compare-dcn-v1-vs-v2-and-a-b-test">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/recsys.html#recsys-009">recsys-009</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Jan 2026</td>
+<td style="text-align: left;">Data Scientist</td>
+<td style="text-align: left;">Route queries between an assistant and a large model</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/design-siri-vs-gpt-query-routing">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Nov 2025</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Vision encoders and the bottleneck into a language model</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/explain-vision-encoders-and-llm-bottlenecks">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/llm.html#llm-028">llm-028</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Sep 2025</td>
+<td style="text-align: left;">Software Engineer</td>
+<td style="text-align: left;">Multi-head self-attention, implemented correctly</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/implement-multi-head-self-attention-correctly">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/dl.html#dl-019">dl-019</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Aug 2025</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Annotation agreement, and LLM versus human judges</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/explain-annotation-agreement-and-llm-vs-human-judges">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/mlfund.html#mlfund-038">mlfund-038</a>, <a href="../skills/eval.html#eval-003">eval-003</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Jul 2025</td>
+<td style="text-align: left;">Data Scientist</td>
+<td style="text-align: left;">Write the logistic regression loss</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/write-the-logistic-regression-loss-function">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/mlfund.html#mlfund-007">mlfund-007</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">undated</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">First-person report of a phone screen: implement intersection over union, then mean average precision</td>
+<td style="text-align: left;"><a href="https://www.aced.io/experiences/apple-senior-machine-learning-engineer-interview-649eca">Aced (formerly Exponent)</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="reported-nvidia" class="level3">
+<h3 class="anchored" data-anchor-id="reported-nvidia">Nvidia</h3>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Reported</th>
+<th style="text-align: left;">Role</th>
+<th style="text-align: left;">Topic of the question</th>
+<th style="text-align: left;">Source</th>
+<th style="text-align: left;">Cards</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Sep 2026</td>
+<td style="text-align: left;">Software Engineer</td>
+<td style="text-align: left;">Convert 32-bit float tensors to int8: scale, zero point, clipping and outliers</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/fp32-to-int8-tensor-quantization-scale-zero-point-clipping-and-outliers">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/serving.html#serving-014">serving-014</a>, <a href="../skills/serving.html#serving-015">serving-015</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Sep 2026</td>
+<td style="text-align: left;">Applied Scientist</td>
+<td style="text-align: left;">Deep dive on your own model-training project</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/research-project-deep-dive-motivation-training-pipeline-results-and-takeaways">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/senior.html#senior-001">senior-001</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Jun 2026</td>
+<td style="text-align: left;">Product Manager</td>
+<td style="text-align: left;">How raw text becomes an LLM training set: filtering, deduplication, mixing, evaluation</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/plan-how-raw-text-becomes-llm-training-data-filtering-dedup-mixing-evaluation">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/llm.html#llm-007">llm-007</a></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Feb 2026</td>
+<td style="text-align: left;">Machine Learning Engineer</td>
+<td style="text-align: left;">Bias-variance trade-off, calibration and model drift</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/explain-bias-variance-calibration-and-model-drift">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/mlfund.html#mlfund-001">mlfund-001</a>, <a href="../skills/mlfund.html#mlfund-035">mlfund-035</a>, <a href="../skills/eval.html#eval-034">eval-034</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Jan 2026</td>
+<td style="text-align: left;">Software Engineer</td>
+<td style="text-align: left;">MLP tensor shapes and PyTorch broadcasting</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/derive-mlp-shapes-and-explain-pytorch-broadcasting">PracHub</a></td>
+<td style="text-align: left;"><span class="muted">none yet</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Sep 2025</td>
+<td style="text-align: left;">Software Engineer</td>
+<td style="text-align: left;">Training optimisation and tensor versus pipeline parallelism</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/explain-optimization-and-tensor-vs-pipeline-parallelism">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/infra.html#infra-012">infra-012</a></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Jul 2025</td>
+<td style="text-align: left;">Software Engineer</td>
+<td style="text-align: left;">Transformers and the query, key and value matrices</td>
+<td style="text-align: left;"><a href="https://prachub.com/interview-questions/explain-transformers-and-qkv-matrices">PracHub</a></td>
+<td style="text-align: left;"><a href="../skills/dl.html#dl-019">dl-019</a></td>
+</tr>
+</tbody>
+</table>
+</section>
+</div>
+</div>
+</div>
 </section>
 <section id="coverage-of-this-site" class="level2">
 <h2 class="anchored" data-anchor-id="coverage-of-this-site">Coverage of this site</h2>

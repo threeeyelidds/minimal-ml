@@ -576,7 +576,7 @@ window.Quarto = {
 </details>
 <details class="qa" id="serving-029">
 <summary>
-<span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> The model your product depends on is slow or unavailable. Design the fallbacks and the degradation path.
+<span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Anthropic</span> The model your product depends on is slow or unavailable. Design the fallbacks and the degradation path.
 </summary>
 <p>Decide in advance what the product does at each level of impairment, so that an incident executes a plan.</p>
 <p><strong>Detect quickly and per request.</strong></p>
@@ -608,10 +608,19 @@ window.Quarto = {
 <li>Which direction is the safe default when a fraud model times out?</li>
 <li>How do you keep a fallback model’s quality from being discovered during the incident?</li>
 </ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>Anthropic, Software Engineer, Aug 2026: Review and scale an inference service design (<a href="https://prachub.com/interview-questions/review-and-scale-an-inference-service-design">PracHub</a>)</li>
+<li>Anthropic, Software Engineer, Aug 2026: Improve an inference service with admission control, batching, shedding, caching and idempotency (<a href="https://prachub.com/interview-questions/improve-an-ml-inference-service">PracHub</a>)</li>
+<li>Anthropic, Machine Learning Engineer, Jan 2026: Production ML serving system with focus on scaling and reliability (<a href="https://prachub.com/interview-questions/design-a-production-ml-serving-system">PracHub</a>)</li>
+<li>Anthropic, Software Engineer, Sep 2025: Review an inference API design for scale (<a href="https://prachub.com/interview-questions/review-an-inference-api-design-for-scale">PracHub</a>)</li>
+</ul>
+</div>
 </details>
 <details class="qa" id="serving-030">
 <summary>
-<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> How do you set timeouts and retries for calls to a model service without making an outage worse? Where do hedged requests fit?
+<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Anthropic</span> How do you set timeouts and retries for calls to a model service without making an outage worse? Where do hedged requests fit?
 </summary>
 <p><strong>Timeouts.</strong> Every call needs one, derived from the caller’s remaining deadline. Too long, and threads pile up behind a dead dependency; too short, and normal tail requests fail and are retried, adding load. Set it a little above the dependency’s healthy p99 and pass the remaining budget downstream, so that a retry never exceeds what the user is still waiting for.</p>
 <p><strong>Retries.</strong> Retry only failures that are likely transient (connection errors, 429, 503, timeouts) and only operations that are idempotent or carry an idempotency key.</p>
@@ -630,6 +639,12 @@ window.Quarto = {
 <li>Explain how retries can turn a brief slowdown into a sustained outage.</li>
 <li>Why must hedging be disabled or capped when the service is overloaded?</li>
 </ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>Anthropic, Software Engineer, Aug 2026: Improve an inference service with admission control, batching, shedding, caching and idempotency (<a href="https://prachub.com/interview-questions/improve-an-ml-inference-service">PracHub</a>)</li>
+</ul>
+</div>
 </details>
 <details class="qa" id="serving-031">
 <summary>
@@ -688,7 +703,7 @@ window.Quarto = {
 </details>
 <details class="qa" id="serving-010">
 <summary>
-<span class="tag tag-core">core</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> You are given a 200 ms p99 budget for an endpoint that calls a model. How do you break it down, and how do you make sure each part is measured?
+<span class="tag tag-core">core</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Anthropic</span> You are given a 200 ms p99 budget for an endpoint that calls a model. How do you break it down, and how do you make sure each part is measured?
 </summary>
 <p>Write the request path as stages and give each a budget that sums to less than the total, leaving slack for variance.</p>
 <p>A typical breakdown:</p>
@@ -754,6 +769,13 @@ window.Quarto = {
 <li>The model stage is within budget but end-to-end p99 is 400 ms. Where do you look first?</li>
 <li>How would this breakdown change for a streaming LLM response?</li>
 </ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>Anthropic, Software Engineer, Jul 2026: Low-latency GPU inference service (<a href="https://prachub.com/interview-questions/design-a-low-latency-gpu-inference-service">PracHub</a>)</li>
+<li>Anthropic, Software Engineer, Sep 2025: Low-latency synchronous inference API (<a href="https://prachub.com/interview-questions/design-a-low-latency-ml-inference-api">PracHub</a>)</li>
+</ul>
+</div>
 </details>
 <details class="qa" id="serving-011">
 <summary>
@@ -844,7 +866,7 @@ window.Quarto = {
 </ul>
 <details class="qa" id="serving-001">
 <summary>
-<span class="tag tag-core">core</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Online, batch, streaming or asynchronous inference: how do you choose for a given feature?
+<span class="tag tag-core">core</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Anthropic</span> Online, batch, streaming or asynchronous inference: how do you choose for a given feature?
 </summary>
 <p>Choose by when the input is known and how soon the output is needed.</p>
 <table class="caption-top table">
@@ -902,10 +924,17 @@ window.Quarto = {
 <li>Your nightly batch scores cover users who never log in. How would you cut that waste?</li>
 <li>What changes when a batch feature moves online?</li>
 </ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>Anthropic, Machine Learning Engineer, Feb 2026: Batch inference pipeline design (<a href="https://prachub.com/interview-questions/explain-batch-inference-design">PracHub</a>)</li>
+<li>Anthropic, Software Engineer, Sep 2025: Asynchronous post-and-poll batch inference API (<a href="https://prachub.com/interview-questions/design-a-batch-inference-api">PracHub</a>)</li>
+</ul>
+</div>
 </details>
 <details class="qa" id="serving-002">
 <summary>
-<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> What is dynamic batching in a model server, why does it help on a GPU, and how do you set its parameters?
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Anthropic</span> What is dynamic batching in a model server, why does it help on a GPU, and how do you set its parameters?
 </summary>
 <p>A model server receives single requests but a GPU is most efficient on batches. Dynamic batching holds incoming requests briefly, groups them into one tensor, runs one forward pass and splits the results.</p>
 <p><strong>Why it helps.</strong> A forward pass costs roughly <span class="math inline">\(t(b) = t_0 + t_1 b\)</span>: a fixed overhead (kernel launches, memory traffic for the weights) plus a per-item part that stays small until the GPU saturates. Throughput <span class="math inline">\(b / t(b)\)</span> rises with <span class="math inline">\(b\)</span> toward <span class="math inline">\(1/t_1\)</span>. At batch 1 a large GPU is mostly idle.</p>
@@ -922,10 +951,17 @@ window.Quarto = {
 <li>At low traffic, dynamic batching makes latency worse. What do you do?</li>
 <li>How does padding waste change your choice of batch composition?</li>
 </ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>Anthropic, Software Engineer, Mar 2026: Request batching for GPU inference (<a href="https://prachub.com/interview-questions/design-gpu-inference-request-batching">PracHub</a>)</li>
+<li>Anthropic, Machine Learning Engineer, undated: Inference batching system for one GPU, up to 100 inputs per batch, synchronous callers (<a href="https://www.aced.io/questions/5780/inference-batching-system">Aced (formerly Exponent)</a>)</li>
+</ul>
+</div>
 </details>
 <details class="qa" id="serving-003">
 <summary>
-<span class="tag tag-senior">senior</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Implement a dynamic batcher with asyncio: requests are awaited individually, and the model is called on batches of up to N items or after at most T milliseconds.
+<span class="tag tag-senior">senior</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Anthropic</span> Implement a dynamic batcher with asyncio: requests are awaited individually, and the model is called on batches of up to N items or after at most T milliseconds.
 </summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> asyncio</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -981,10 +1017,17 @@ window.Quarto = {
 <li>How would you drop requests whose client has already given up?</li>
 <li>What happens to latency if <code>infer_fn</code> is called on the event loop thread?</li>
 </ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>Anthropic, Software Engineer, Mar 2026: Request batching for GPU inference (<a href="https://prachub.com/interview-questions/design-gpu-inference-request-batching">PracHub</a>)</li>
+<li>Anthropic, Machine Learning Engineer, undated: Inference batching system for one GPU, up to 100 inputs per batch, synchronous callers (<a href="https://www.aced.io/questions/5780/inference-batching-system">Aced (formerly Exponent)</a>)</li>
+</ul>
+</div>
 </details>
 <details class="qa" id="serving-004">
 <summary>
-<span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Design a serving platform for several hundred models, most of them rarely called, on a limited pool of GPUs.
+<span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Anthropic</span> Design a serving platform for several hundred models, most of them rarely called, on a limited pool of GPUs.
 </summary>
 <p>One GPU per model is unaffordable when most models are idle, so the design is about sharing memory and absorbing cold starts.</p>
 <p><strong>Classify the models.</strong> A few hot models get dedicated, autoscaled replicas. The long tail shares a pool. If many models are fine-tunes of one base, serve them as adapters on a shared base model: the base stays in GPU memory and a small adapter is selected per request, which turns hundreds of models into one deployment.</p>
@@ -1003,6 +1046,12 @@ window.Quarto = {
 <li>How do you detect and stop thrashing?</li>
 <li>What changes if the models are adapters over one shared base model?</li>
 </ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>Anthropic, Software Engineer, Aug 2025: GPU-backed inference API for multiple models (<a href="https://prachub.com/interview-questions/design-a-gpu-inference-api">PracHub</a>)</li>
+</ul>
+</div>
 </details>
 </section>
 <section id="autoscaling" class="level3">
@@ -1300,7 +1349,7 @@ window.Quarto = {
 </ul>
 <details class="qa" id="serving-005">
 <summary>
-<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> How does an LLM inference engine serve many concurrent requests efficiently? Explain prefill and decode, continuous batching and how the KV cache is managed.
+<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Amazon</span> How does an LLM inference engine serve many concurrent requests efficiently? Explain prefill and decode, continuous batching and how the KV cache is managed.
 </summary>
 <p><strong>Two phases.</strong> <em>Prefill</em> processes the whole prompt in one parallel pass and fills the KV cache; its time grows with prompt length and determines time to first token (TTFT). <em>Decode</em> then produces one token per forward pass per sequence, reading the cache; it is limited mostly by memory bandwidth and determines tokens per second.</p>
 <p><strong>Continuous batching.</strong> With request-level batching a batch runs until its longest sequence finishes, so short answers wait and new requests queue. Continuous (iteration level) batching re-forms the batch at every decode step: finished sequences leave, and waiting requests join after their prefill. GPU slots are never held by finished sequences, which raises throughput several times on mixed-length traffic.</p>
@@ -1313,6 +1362,12 @@ window.Quarto = {
 <li>Why is decode bound by memory bandwidth and prefill by compute?</li>
 <li>Throughput is high but streaming stutters. Which scheduling decision is responsible?</li>
 </ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>Amazon, Software Engineer, Sep 2026: How a decoder-only transformer produces next-token probabilities and how an inference engine serves it efficiently (<a href="https://prachub.com/interview-questions/explain-decoder-only-llm-architecture-and-how-vllm-serves-it-efficiently">PracHub</a>)</li>
+</ul>
+</div>
 </details>
 <details class="qa" id="serving-006">
 <summary>
@@ -1394,7 +1449,7 @@ window.Quarto = {
 </ul>
 <details class="qa" id="serving-014">
 <summary>
-<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Explain quantization for inference. What is the mapping, and how do post-training quantization and quantization-aware training differ?
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Nvidia</span> Explain quantization for inference. What is the mapping, and how do post-training quantization and quantization-aware training differ?
 </summary>
 <p>Quantization stores and computes with low-precision integers instead of 32-bit floats. The affine mapping from a real value <span class="math inline">\(x\)</span> to an integer <span class="math inline">\(q\)</span> in <span class="math inline">\([q_{\min}, q_{\max}]\)</span>:</p>
 <p><span class="math display">\[q = \operatorname{clip}\big(\operatorname{round}(x / s) + z,\ q_{\min}, q_{\max}\big), \qquad
@@ -1413,10 +1468,16 @@ window.Quarto = {
 <li>Why must the zero point be an exact integer?</li>
 <li>Your calibration set does not cover a rare input type. What happens at inference?</li>
 </ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>Nvidia, Software Engineer, Sep 2026: Convert 32-bit float tensors to int8: scale, zero point, clipping and outliers (<a href="https://prachub.com/interview-questions/fp32-to-int8-tensor-quantization-scale-zero-point-clipping-and-outliers">PracHub</a>)</li>
+</ul>
+</div>
 </details>
 <details class="qa" id="serving-015">
 <summary>
-<span class="tag tag-core">core</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> Implement uniform affine quantization and dequantization of a tensor in NumPy, for both the asymmetric and the symmetric case.
+<span class="tag tag-core">core</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Nvidia</span> Implement uniform affine quantization and dequantization of a tensor in NumPy, for both the asymmetric and the symmetric case.
 </summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -1455,6 +1516,12 @@ window.Quarto = {
 <li>Why does one outlier weight hurt min-max quantization so much?</li>
 <li>How many distinct values can a 4-bit symmetric quantizer represent, and what does that imply for the scale?</li>
 </ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>Nvidia, Software Engineer, Sep 2026: Convert 32-bit float tensors to int8: scale, zero point, clipping and outliers (<a href="https://prachub.com/interview-questions/fp32-to-int8-tensor-quantization-scale-zero-point-clipping-and-outliers">PracHub</a>)</li>
+</ul>
+</div>
 </details>
 <details class="qa" id="serving-016">
 <summary>
