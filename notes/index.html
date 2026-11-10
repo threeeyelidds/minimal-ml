@@ -46,7 +46,7 @@ ul.task-list li input[type="checkbox"] {
 <link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-447e42e69aaa9833c0ba1b986f430b20.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-bb4e448514b610e090e2765a04a7f37d.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="dark">
+<link href="../site_libs/bootstrap/bootstrap-980fa6b4eab38a5377f72c7fe6f39b73.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="dark">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -79,6 +79,7 @@ ul.task-list li input[type="checkbox"] {
 
 <link rel="stylesheet" href="../styles.css">
 <link rel="stylesheet" href="../colors.css">
+<link rel="stylesheet" href="../prep.css">
 </head>
 
 <body class="nav-fixed quarto-light"><a id="quarto-skip-link" class="visually-hidden-focusable" href="#quarto-document-content">Skip to main content</a>
@@ -100,6 +101,26 @@ ul.task-list li input[type="checkbox"] {
   <li class="nav-item">
     <a class="nav-link" href="../index.html"> 
 <span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../report/index.html"> 
+<span class="menu-text">Report</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../skills/index.html"> 
+<span class="menu-text">Skills</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../review/index.html"> 
+<span class="menu-text">Review</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../plan/index.html"> 
+<span class="menu-text">Plan</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../jobs/index.html"> 
+<span class="menu-text">Open roles</span></a>
   </li>  
   <li class="nav-item">
     <a class="nav-link active" href="../notes/index.html" aria-current="page"> 
@@ -126,11 +147,12 @@ ul.task-list li input[type="checkbox"] {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#foundations" id="toc-foundations" class="nav-link active" data-scroll-target="#foundations">Foundations</a></li>
-  <li><a href="#transformers" id="toc-transformers" class="nav-link" data-scroll-target="#transformers">Transformers</a></li>
-  <li><a href="#advanced" id="toc-advanced" class="nav-link" data-scroll-target="#advanced">Advanced</a></li>
-  <li><a href="#applied-ml" id="toc-applied-ml" class="nav-link" data-scroll-target="#applied-ml">Applied ML</a></li>
-  <li><a href="#algorithms" id="toc-algorithms" class="nav-link" data-scroll-target="#algorithms">Algorithms</a></li>
+  <li><a href="#ml-fundamentals" id="toc-ml-fundamentals" class="nav-link active" data-scroll-target="#ml-fundamentals">ML fundamentals</a></li>
+  <li><a href="#deep-learning" id="toc-deep-learning" class="nav-link" data-scroll-target="#deep-learning">Deep learning</a></li>
+  <li><a href="#llms-and-foundation-models" id="toc-llms-and-foundation-models" class="nav-link" data-scroll-target="#llms-and-foundation-models">LLMs and foundation models</a></li>
+  <li><a href="#llm-applications-and-agents" id="toc-llm-applications-and-agents" class="nav-link" data-scroll-target="#llm-applications-and-agents">LLM applications and agents</a></li>
+  <li><a href="#reinforcement-learning" id="toc-reinforcement-learning" class="nav-link" data-scroll-target="#reinforcement-learning">Reinforcement learning</a></li>
+  <li><a href="#coding" id="toc-coding" class="nav-link" data-scroll-target="#coding">Coding</a></li>
   <li><a href="#coming-next" id="toc-coming-next" class="nav-link" data-scroll-target="#coming-next">Coming next</a></li>
   </ul>
 </nav>
@@ -141,6 +163,7 @@ ul.task-list li input[type="checkbox"] {
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
 <h1 class="title">Notes</h1>
+<p class="subtitle lead">Long-form deep dives, grouped by the skill area they support</p>
 </div>
 
 
@@ -157,60 +180,74 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
-<section id="foundations" class="level2">
-<h2 class="anchored" data-anchor-id="foundations">Foundations</h2>
+<p>These notes go deeper than the question cards. Each group links to its <a href="../skills/index.html">skill area</a>, where the demand numbers, checklist and questions are.</p>
+<section id="ml-fundamentals" class="level2">
+<h2 class="anchored" data-anchor-id="ml-fundamentals">ML fundamentals</h2>
+<p>Area page: <a href="../skills/mlfund.html">ML fundamentals and statistics</a></p>
 <ul>
-<li><a href="../notes/foundations/activations.html">Activation Functions</a></li>
-<li><a href="../notes/foundations/catenary-cosh-tanh.html">悬链线、cosh 和激活函数：教科书没串起来的一条线</a></li>
 <li><a href="../notes/foundations/losses.html">Losses from First Principles</a></li>
 <li><a href="../notes/foundations/prediction_decision_losses.html">Prediction and Decision Losses</a></li>
-<li><a href="../notes/foundations/generative_losses.html">Distribution Learning Losses</a></li>
-<li><a href="../notes/foundations/distillation.html">Distillation: Learning from a Teacher</a></li>
-<li><a href="../notes/foundations/representation_learning.html">Representation Learning from First Principles</a></li>
-<li><a href="../notes/foundations/optimizers.html">Zeroth-, First-, and Second-Order Optimization</a></li>
-<li><a href="../notes/foundations/rnn_lstm.html">RNNs and LSTMs</a></li>
-</ul>
-</section>
-<section id="transformers" class="level2">
-<h2 class="anchored" data-anchor-id="transformers">Transformers</h2>
-<ul>
-<li><a href="../notes/tokenization.html">Tokenization Across Modalities: language, vision, item IDs</a></li>
-<li><a href="../notes/transformers/attention.html">Attention</a></li>
-<li><a href="../notes/transformers/transformer.html">Transformers</a></li>
-<li><a href="../notes/transformers/positional_encoding.html">Positional Encoding: RoPE or NoPE</a></li>
-</ul>
-</section>
-<section id="advanced" class="level2">
-<h2 class="anchored" data-anchor-id="advanced">Advanced</h2>
-<ul>
-<li><a href="../notes/advanced/advanced_attention.html">Attention Techniques in Modern LLMs</a></li>
-<li><a href="../notes/advanced/linear_attention.html">Linear Attention</a></li>
-<li><a href="../notes/advanced/continual_intelligence_ttt.html">From Test-Time Training to Continual Intelligence — Original Version</a></li>
-<li><a href="../notes/advanced/continual_intelligence_ttt_expanded.html">From Test-Time Training to Continual Intelligence — Expanded Version</a></li>
-</ul>
-</section>
-<section id="applied-ml" class="level2">
-<h2 class="anchored" data-anchor-id="applied-ml">Applied ML</h2>
-<ul>
-<li><a href="../notes/applied_ml/agentic_search.html">Agentic Search: is it a fake problem</a></li>
-<li><a href="../notes/applied_ml/harness.html">Agent Harness: turning prediction into decision</a></li>
-<li><a href="../notes/applied_ml/cursor_continual_training.html">Case Study: Cursor’s Continual Training Loop</a></li>
-<li><a href="../notes/applied_ml/codex.html">Codex: anatomy of an open-source coding agent</a></li>
-</ul>
-</section>
-<section id="algorithms" class="level2">
-<h2 class="anchored" data-anchor-id="algorithms">Algorithms</h2>
-<ul>
-<li><a href="../notes/algorithms/dynamic_programming_and_graph_algorithms.html">Dynamic Programming and Graph Algorithms from First Principles</a></li>
-<li><a href="../notes/algorithms/rl_algo.html">From Graph Algorithms to Reinforcement Learning</a></li>
+<li><a href="../notes/foundations/calibration.html">Model Calibration: From CTR/CVR to Calibrated Decisions</a></li>
 <li><a href="../notes/algorithms/probabilistic_modeling_tricks.html">Probabilistic modeling tricks</a></li>
 <li><a href="../notes/algorithms/probabilistic-modeling-practice-solutions.html">Probabilistic Modeling Practice: 20 Worked Problems</a></li>
 </ul>
 </section>
+<section id="deep-learning" class="level2">
+<h2 class="anchored" data-anchor-id="deep-learning">Deep learning</h2>
+<p>Area page: <a href="../skills/dl.html">Deep learning</a></p>
+<ul>
+<li><a href="../notes/foundations/activations.html">Activation Functions</a></li>
+<li><a href="../notes/foundations/catenary-cosh-tanh.html">悬链线、cosh 和激活函数：教科书没串起来的一条线</a></li>
+<li><a href="../notes/foundations/optimizers.html">Zeroth-, First-, and Second-Order Optimization</a></li>
+<li><a href="../notes/foundations/generative_losses.html">Distribution Learning Losses</a></li>
+<li><a href="../notes/foundations/representation_learning.html">Representation Learning from First Principles</a></li>
+<li><a href="../notes/foundations/rnn_lstm.html">RNNs and LSTMs</a></li>
+<li><a href="../notes/transformers/attention.html">Attention</a></li>
+<li><a href="../notes/transformers/transformer.html">Transformers</a></li>
+<li><a href="../notes/transformers/positional_encoding.html">Positional Encoding: RoPE or NoPE</a></li>
+<li><a href="../notes/advanced/advanced_attention.html">Attention Techniques in Modern LLMs</a></li>
+<li><a href="../notes/advanced/linear_attention.html">Linear Attention</a></li>
+</ul>
+</section>
+<section id="llms-and-foundation-models" class="level2">
+<h2 class="anchored" data-anchor-id="llms-and-foundation-models">LLMs and foundation models</h2>
+<p>Area page: <a href="../skills/llm.html">LLMs and foundation models</a></p>
+<ul>
+<li><a href="../notes/tokenization.html">Tokenization Across Modalities: language, vision, item IDs</a></li>
+<li><a href="../notes/foundations/distillation.html">Distillation: Learning from a Teacher</a></li>
+<li><a href="../notes/advanced/continual_intelligence_ttt.html">From Test-Time Training to Continual Intelligence — Original Version</a></li>
+<li><a href="../notes/advanced/continual_intelligence_ttt_expanded.html">From Test-Time Training to Continual Intelligence — Expanded Version</a></li>
+<li><a href="../notes/applied_ml/cursor_continual_training.html">Case Study: Cursor’s Continual Training Loop</a></li>
+</ul>
+</section>
+<section id="llm-applications-and-agents" class="level2">
+<h2 class="anchored" data-anchor-id="llm-applications-and-agents">LLM applications and agents</h2>
+<p>Area page: <a href="../skills/llmapp.html">LLM application engineering</a></p>
+<ul>
+<li><a href="../notes/applied_ml/harness.html">Agent Harness: turning prediction into decision</a></li>
+<li><a href="../notes/applied_ml/codex.html">Codex: anatomy of an open-source coding agent</a></li>
+<li><a href="../notes/applied_ml/agentic_search.html">Agentic Search: is it a fake problem</a></li>
+</ul>
+</section>
+<section id="reinforcement-learning" class="level2">
+<h2 class="anchored" data-anchor-id="reinforcement-learning">Reinforcement learning</h2>
+<p>Area page: <a href="../skills/rl.html">Reinforcement learning and decision making</a></p>
+<ul>
+<li><a href="../notes/algorithms/rl_algo.html">From Graph Algorithms to Reinforcement Learning</a></li>
+</ul>
+</section>
+<section id="coding" class="level2">
+<h2 class="anchored" data-anchor-id="coding">Coding</h2>
+<p>Area page: <a href="../skills/swe.html">Programming and software engineering</a></p>
+<ul>
+<li><a href="../notes/algorithms/dynamic_programming_and_graph_algorithms.html">Dynamic Programming and Graph Algorithms from First Principles</a></li>
+</ul>
+</section>
 <section id="coming-next" class="level2">
 <h2 class="anchored" data-anchor-id="coming-next">Coming next</h2>
+<p>The <a href="../plan/index.html">plan</a> lists the high-demand skills that have question cards but no deep dive yet. Planned before the rewrite and still open:</p>
 <ul>
-<li>post-train</li>
+<li>post-training</li>
 <li>modern recommender as a decision system</li>
 <li>density estimation, from energy-based models to flow matching</li>
 <li>causality and counterfactuals</li>
@@ -698,6 +735,49 @@ ul.task-list li input[type="checkbox"] {
   window.quartoScrollableRegionsLabels = {"code":"Scrollable code","output":"Scrollable output"};
   </script>
 </div> <!-- /content -->
+<script>
+/* Site-wide: persistent checklists and review status on the skill pages. */
+(function () {
+  "use strict";
+  function get(k) { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch (e) { return {}; } }
+  function set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* storage blocked: ticks last for this page view */ } }
+
+  var chk = get("prep.chk.v1");
+  document.querySelectorAll("input.chk").forEach(function (el) {
+    el.checked = !!chk[el.dataset.chk];
+    el.addEventListener("change", function () {
+      if (el.checked) chk[el.dataset.chk] = 1; else delete chk[el.dataset.chk];
+      set("prep.chk.v1", chk);
+    });
+  });
+
+  var cards = (get("prep.v1").cards) || {};
+  document.querySelectorAll("details.qa[id]").forEach(function (el) {
+    var r = cards[el.id];
+    if (r) el.classList.add(r.ivl >= 7 ? "st-known" : "st-learning");
+  });
+
+  // open the question a link points at
+  function openTarget() {
+    var id = decodeURIComponent(location.hash.slice(1));
+    var el = id && document.getElementById(id);
+    if (el && el.tagName === "DETAILS") { el.open = true; el.scrollIntoView({ block: "start" }); }
+  }
+  window.addEventListener("hashchange", openTarget);
+  openTarget();
+
+  var mp = document.getElementById("map-progress");
+  if (mp) {
+    var seen = Object.keys(cards).length, known = Object.keys(cards).filter(function (k) { return cards[k].ivl >= 7; }).length;
+    var ticks = Object.keys(chk).length;
+    if (seen || ticks) {
+      mp.className = "tile";
+      mp.style.marginBottom = "1.2rem";
+      mp.textContent = "Your progress in this browser: " + seen + " cards reviewed, " + known + " known, " + ticks + " checklist items ticked.";
+    }
+  }
+})();
+</script>
 
 
 

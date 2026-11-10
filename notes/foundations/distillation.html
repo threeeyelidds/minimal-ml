@@ -81,7 +81,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../../site_libs/quarto-html/quarto-syntax-highlighting-dark-447e42e69aaa9833c0ba1b986f430b20.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../../site_libs/bootstrap/bootstrap-bb4e448514b610e090e2765a04a7f37d.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="dark">
+<link href="../../site_libs/bootstrap/bootstrap-980fa6b4eab38a5377f72c7fe6f39b73.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="dark">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -143,6 +143,7 @@ window.Quarto = {
 
 <link rel="stylesheet" href="../../styles.css">
 <link rel="stylesheet" href="../../colors.css">
+<link rel="stylesheet" href="../../prep.css">
 </head>
 
 <body class="nav-fixed quarto-light"><a id="quarto-skip-link" class="visually-hidden-focusable" href="#quarto-document-content">Skip to main content</a>
@@ -164,6 +165,26 @@ window.Quarto = {
   <li class="nav-item">
     <a class="nav-link" href="../../index.html"> 
 <span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../report/index.html"> 
+<span class="menu-text">Report</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../skills/index.html"> 
+<span class="menu-text">Skills</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../review/index.html"> 
+<span class="menu-text">Review</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../plan/index.html"> 
+<span class="menu-text">Plan</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../jobs/index.html"> 
+<span class="menu-text">Open roles</span></a>
   </li>  
   <li class="nav-item">
     <a class="nav-link" href="../../notes/index.html"> 
@@ -206,6 +227,13 @@ window.Quarto = {
   <ul class="collapse">
   <li><a href="#feature-matching" id="toc-feature-matching" class="nav-link" data-scroll-target="#feature-matching">Feature matching</a></li>
   <li><a href="#relational-matching" id="toc-relational-matching" class="nav-link" data-scroll-target="#relational-matching">Relational matching</a></li>
+  </ul></li>
+  <li><a href="#learning-from-an-unreliable-teacher" id="toc-learning-from-an-unreliable-teacher" class="nav-link" data-scroll-target="#learning-from-an-unreliable-teacher">Learning from an Unreliable Teacher</a></li>
+  <li><a href="#multi-teacher-distillation-and-moe" id="toc-multi-teacher-distillation-and-moe" class="nav-link" data-scroll-target="#multi-teacher-distillation-and-moe">Multi-Teacher Distillation and MoE</a>
+  <ul class="collapse">
+  <li><a href="#combining-distributions-or-selecting-a-teacher" id="toc-combining-distributions-or-selecting-a-teacher" class="nav-link" data-scroll-target="#combining-distributions-or-selecting-a-teacher">Combining distributions or selecting a teacher</a></li>
+  <li><a href="#recent-coding-and-agentic-model-examples" id="toc-recent-coding-and-agentic-model-examples" class="nav-link" data-scroll-target="#recent-coding-and-agentic-model-examples">Recent coding and agentic model examples</a></li>
+  <li><a href="#how-this-combines-with-moe" id="toc-how-this-combines-with-moe" class="nav-link" data-scroll-target="#how-this-combines-with-moe">How this combines with MoE</a></li>
   </ul></li>
   <li><a href="#choosing-the-distillation-objective" id="toc-choosing-the-distillation-objective" class="nav-link" data-scroll-target="#choosing-the-distillation-objective">Choosing the Distillation Objective</a></li>
   <li><a href="#common-failure-modes" id="toc-common-failure-modes" class="nav-link" data-scroll-target="#common-failure-modes">Common Failure Modes</a></li>
@@ -276,6 +304,39 @@ p_{\theta,\tau}(i\mid x)
 \left(q_\tau(\cdot\mid x)\|p_{\theta,\tau}(\cdot\mid x)\right).
 \]</span></p>
 <p>The teacher supplies the expectation, so missing a teacher-supported class is costly. The entropy of <span class="math inline">\(q_\tau\)</span> is constant with respect to the student; therefore this is equivalent to soft-label cross-entropy up to a constant.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>One-hot targets: CE = forward KL = NLL
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>If the target is one-hot at the observed class <span class="math inline">\(y\)</span>, then <span class="math inline">\(q(i\mid x)=\mathbf{1}[i=y]\)</span> and its entropy is zero: <span class="math inline">\(H(q)=0\)</span>. Thus the losses are exactly equal:</p>
+<p><span class="math display">\[
+\operatorname{CE}(q,p_\theta)
+= \operatorname{KL}(q\|p_\theta) + H(q)
+= \operatorname{KL}(q\|p_\theta)
+= -\log p_\theta(y\mid x)
+= \operatorname{NLL}(y,p_\theta).
+\]</span></p>
+<p>This equality uses <strong>forward KL</strong>, from target to student, with the same predicted distribution and loss scaling. For soft targets, CE and forward KL differ by the target entropy, but still have the same student gradients when the target is fixed.</p>
+<p>To see why, expand the identity for a soft target:</p>
+<p><span class="math display">\[
+\underbrace{-\sum_i q_i\log p_{\theta,i}}_{\operatorname{CE}(q,p_\theta)}
+= \underbrace{\sum_i q_i\log\frac{q_i}{p_{\theta,i}}}_{\operatorname{KL}(q\|p_\theta)}
++ \underbrace{\left(-\sum_i q_i\log q_i\right)}_{H(q)}.
+\]</span></p>
+<p>When the teacher target <span class="math inline">\(q\)</span> is fixed, <span class="math inline">\(H(q)\)</span> does not depend on the student parameters <span class="math inline">\(\theta\)</span>, so its gradient is zero:</p>
+<p><span class="math display">\[
+\nabla_\theta\operatorname{CE}(q,p_\theta)
+= \nabla_\theta\operatorname{KL}(q\|p_\theta).
+\]</span></p>
+<p>The loss values differ, but they produce the same student updates under the same scaling and optimizer. For example, if <span class="math inline">\(q=(0.5,0.5)\)</span>, then <span class="math inline">\(H(q)=\log 2\approx0.693\)</span> (using natural logarithms). CE is always KL plus <span class="math inline">\(0.693\)</span>, regardless of the student prediction. When <span class="math inline">\(p_\theta=q\)</span>, KL is zero while CE is <span class="math inline">\(0.693\)</span>. For a one-hot target, <span class="math inline">\(H(q)=0\)</span>, so even the loss values are identical.</p>
+</div>
+</div>
 <p>Larger <span class="math inline">\(\tau\)</span> reveals relative preferences among non-maximum classes. Dividing logits by <span class="math inline">\(\tau\)</span> also shrinks their gradients, so the conventional <span class="math inline">\(\tau^2\)</span> factor approximately preserves gradient scale when comparing temperatures.</p>
 <p>A common supervised mixture is</p>
 <p><span class="math display">\[
@@ -289,7 +350,7 @@ p_{\theta,\tau}(i\mid x)
 <p>The hard label anchors the student to observed outcomes; the soft target transfers the teacher’s richer geometry. A teacher can also be wrong, biased, or miscalibrated, so the mixture is not automatically better than either term.</p>
 <section id="minimal-implementation" class="level3">
 <h3 class="anchored" data-anchor-id="minimal-implementation">Minimal implementation</h3>
-<div id="547d5702" class="cell" data-execution_count="1">
+<div id="183e8813" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch.nn.functional <span class="im">as</span> F</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -456,6 +517,83 @@ r_t
 \]</span></p>
 <p>This preserves teacher geometry while allowing rotations or different feature bases. It connects distillation to <a href="../../notes/foundations/representation_learning.html">Representation Learning</a>.</p>
 <p>Self-distillation methods such as BYOL- and DINO-style training use a momentum or stop-gradient teacher to create a stable target. Their main challenge is not compression but preventing representational collapse.</p>
+</section>
+</section>
+<section id="learning-from-an-unreliable-teacher" class="level2">
+<h2 class="anchored" data-anchor-id="learning-from-an-unreliable-teacher">Learning from an Unreliable Teacher</h2>
+<p>The strongest practical evidence here supports <strong>checking teacher-generated supervision against external feedback</strong>, rather than assuming that confidence or agreement makes a target correct. The following are documented practices and findings, not a universal recipe for arbitrary teacher noise.</p>
+<ul>
+<li><strong>Filter generated solutions using correctness signals.</strong> DeepSeek-R1 samples multiple reasoning responses, retains those judged correct, and applies readability filters. Its smaller Qwen/Llama students receive SFT on the resulting curated dataset. Some judgments use a model supplied with ground truth, so the pipeline is not entirely rule-verified. See <a href="https://arxiv.org/html/2501.12948v1#S2.SS3.SSS3">DeepSeek-R1 (2025), §§2.3.3–2.4</a>.</li>
+<li><strong>For coding, execute the proposed solution and validate tool use.</strong> Qwen3-Coder-Next filters unsuccessful trajectories and malformed tool calls, and verifies SFT responses using compiler, runtime, and environment feedback. This is a concrete alternative to trusting the generator’s self-assessment. See <a href="https://arxiv.org/html/2603.00729v1#S4.SS1">Qwen3-Coder-Next (2026), §§3.1.2 and 4.1</a>.</li>
+<li><strong>Do not equate confidence with correctness.</strong> Guo et al.&nbsp;show that modern networks can be miscalibrated and study temperature scaling on held-out data. Calibration can improve probability estimates; a positive scalar temperature preserves class ranking and cannot fix a wrong top prediction. See <a href="https://proceedings.mlr.press/v70/guo17a.html">On Calibration of Modern Neural Networks (ICML 2017)</a>. For fitting methods and calibration-oriented training, see <a href="../../notes/foundations/calibration.html">Model Calibration: From CTR/CVR to Calibrated Decisions</a>.</li>
+<li><strong>Select by student task performance, not teacher imitation alone.</strong> Stanton et al.&nbsp;find that closer teacher matching does not always improve generalization. This supports evaluating downstream quality separately from distillation loss. See <a href="https://proceedings.nips.cc/paper_files/paper/2021/hash/376c6b9ff3bedbbea56751a84fffc10c-Abstract.html">Does Knowledge Distillation Really Work? (NeurIPS 2021)</a>.</li>
+</ul>
+<p>A practical synthesis is to retain trusted supervision, filter teacher outputs where meaningful verification is available, and compare against a student trained without distillation on held-out tasks. Tune the teacher contribution on validation data; use a separate test set for the final comparison. These are evaluation recommendations drawn from the evidence above, not an established optimal weighting rule. Passing tests does not prove every reasoning step correct, and shared teacher errors can survive consensus.</p>
+</section>
+<section id="multi-teacher-distillation-and-moe" class="level2">
+<h2 class="anchored" data-anchor-id="multi-teacher-distillation-and-moe">Multi-Teacher Distillation and MoE</h2>
+<p>Multiple teachers can provide complementary supervision: for example, one specializes in repository repair, another in web development, and another in single-turn code questions. There are distinct ways to combine them.</p>
+<section id="combining-distributions-or-selecting-a-teacher" class="level3">
+<h3 class="anchored" data-anchor-id="combining-distributions-or-selecting-a-teacher">Combining distributions or selecting a teacher</h3>
+<p>For teachers <span class="math inline">\(q_1,\ldots,q_K\)</span> over the same output space, a generic probability mixture is</p>
+<p><span class="math display">\[
+\bar q(\cdot\mid x)=\sum_{k=1}^K a_k(x)q_k(\cdot\mid x),
+\qquad a_k(x)\geq0,\quad\sum_k a_k(x)=1.
+\]</span></p>
+<p>At a fixed input and temperature, with fixed weights and teachers,</p>
+<p><span class="math display">\[
+\sum_k a_k\operatorname{KL}(q_k\|p_\theta)
+=\operatorname{KL}(\bar q\|p_\theta)
++\sum_k a_k\operatorname{KL}(q_k\|\bar q).
+\]</span></p>
+<p>The last term is independent of the student, so weighted <strong>forward KL</strong> to individual teachers has the same student gradient as forward KL to their probability mixture. This is an algebraic identity, not a claim about the implementation of the reports below. It does not extend unchanged to reverse KL or averaging raw logits.</p>
+<p>Alternatively, select a specialist <span class="math inline">\(k=d(x)\)</span> for each task, or collect and verify generated solutions from several teachers for sequence-level SFT. Direct token-distribution matching requires compatible token spaces or an explicit alignment; text-based distillation can cross tokenizer boundaries.</p>
+</section>
+<section id="recent-coding-and-agentic-model-examples" class="level3">
+<h3 class="anchored" data-anchor-id="recent-coding-and-agentic-model-examples">Recent coding and agentic model examples</h3>
+<p><strong>Qwen3-Coder-Next (2026).</strong> The report describes specialists for Web Development, User Experience, Single-turn RL, and Software Engineering, trained from a shared starting model and distilled back into the SFT model. The deployed model is an MoE with 80B total and 3B active parameters. Section 4.2.5 documents consolidation but does not specify the distillation loss, teacher weights, or whether rollouts are on-policy; those details should not be inferred. See the <a href="https://arxiv.org/html/2603.00729v1#S4.SS2.SSS5">technical report, §§1 and 4.2.5</a>.</p>
+<p><strong>MiMo-V2-Flash (2026).</strong> This 309B-total/15B-active MoE uses Multi-Teacher On-Policy Distillation (MOPD). A teacher is selected by prompt domain; the student generates the trajectories. Its token-level signal is based on</p>
+<p><span class="math display">\[
+\log q_{d(x)}(y_t\mid h_t)-\log p_\theta(y_t\mid h_t),
+\]</span></p>
+<p>corresponding to reverse-KL distillation. The training surrogate combines this signal with outcome-reward advantages and corrects training/inference policy mismatch. Thus MOPD here means domain-specialist supervision on student rollouts, not averaging every teacher on every token. See the <a href="https://arxiv.org/html/2601.02780v2#S4.SS4">technical report, §4.4</a>.</p>
+</section>
+<section id="how-this-combines-with-moe" class="level3">
+<h3 class="anchored" data-anchor-id="how-this-combines-with-moe">How this combines with MoE</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Concept</th>
+<th>What is selected or transferred?</th>
+<th>Where it operates</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Multi-teacher supervision</td>
+<td>A full teacher model or a mixture of teacher targets</td>
+<td>Training supervision</td>
+</tr>
+<tr class="even">
+<td>Sparse MoE routing</td>
+<td>Internal expert subnetworks for each token</td>
+<td>Forward passes during training and inference</td>
+</tr>
+<tr class="odd">
+<td>Distillation into one deployed model</td>
+<td>Behaviors from teachers transferred into student parameters</td>
+<td>Removes the need to serve the teacher ensemble</td>
+</tr>
+</tbody>
+</table>
+<p>A domain teacher is a complete model; it is not necessarily one internal MoE expert. Distilling several teachers into an MoE student does not imply a one-to-one mapping between teachers and expert subnetworks. The student can retain internal MoE routing while deployment uses only that single model.</p>
+<p>MoE also introduces a concrete on-policy training concern: MiMo reports replaying the expert routes recorded during rollout to reduce routing mismatch between inference and training. See <a href="https://arxiv.org/html/2601.02780v2#S4.SS6.SSS1">MiMo-V2-Flash, §4.6.1</a>. Conversely, an MoE teacher can supervise a dense student: DeepSeek-R1 distills into dense Qwen and Llama models through curated outputs, without copying its internal routing. See <a href="https://arxiv.org/html/2501.12948v1#S2.SS4">DeepSeek-R1, §2.4</a>.</p>
+<p>For an experiment, compare each single teacher with the multi-teacher setup under a matched student-training budget, and report results by domain as well as in aggregate. This is a suggested evaluation design: the reports establish working systems, not that every additional teacher or MoE architecture improves distillation.</p>
 </section>
 </section>
 <section id="choosing-the-distillation-objective" class="level2">
@@ -1065,6 +1203,49 @@ r_t
   window.quartoScrollableRegionsLabels = {"code":"Scrollable code","output":"Scrollable output"};
   </script>
 </div> <!-- /content -->
+<script>
+/* Site-wide: persistent checklists and review status on the skill pages. */
+(function () {
+  "use strict";
+  function get(k) { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch (e) { return {}; } }
+  function set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* storage blocked: ticks last for this page view */ } }
+
+  var chk = get("prep.chk.v1");
+  document.querySelectorAll("input.chk").forEach(function (el) {
+    el.checked = !!chk[el.dataset.chk];
+    el.addEventListener("change", function () {
+      if (el.checked) chk[el.dataset.chk] = 1; else delete chk[el.dataset.chk];
+      set("prep.chk.v1", chk);
+    });
+  });
+
+  var cards = (get("prep.v1").cards) || {};
+  document.querySelectorAll("details.qa[id]").forEach(function (el) {
+    var r = cards[el.id];
+    if (r) el.classList.add(r.ivl >= 7 ? "st-known" : "st-learning");
+  });
+
+  // open the question a link points at
+  function openTarget() {
+    var id = decodeURIComponent(location.hash.slice(1));
+    var el = id && document.getElementById(id);
+    if (el && el.tagName === "DETAILS") { el.open = true; el.scrollIntoView({ block: "start" }); }
+  }
+  window.addEventListener("hashchange", openTarget);
+  openTarget();
+
+  var mp = document.getElementById("map-progress");
+  if (mp) {
+    var seen = Object.keys(cards).length, known = Object.keys(cards).filter(function (k) { return cards[k].ivl >= 7; }).length;
+    var ticks = Object.keys(chk).length;
+    if (seen || ticks) {
+      mp.className = "tile";
+      mp.style.marginBottom = "1.2rem";
+      mp.textContent = "Your progress in this browser: " + seen + " cards reviewed, " + known + " known, " + ticks + " checklist items ticked.";
+    }
+  }
+})();
+</script>
 
 
 

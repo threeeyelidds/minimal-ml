@@ -1,0 +1,101 @@
+/* Review app. Uses the site tokens from styles.css and prep.css. */
+
+#rv-bank { display: none; }
+#rv-app { max-width: 980px; margin: 0 auto; }
+
+.rv-tabs { display: flex; gap: 0.25rem; border-bottom: 1px solid var(--minimal-line); margin: 0.5rem 0 1.25rem; flex-wrap: wrap; }
+.rv-tab { background: none; border: 0; border-bottom: 2px solid transparent; color: var(--minimal-muted); padding: 0.6rem 0.9rem; font: inherit; font-weight: 600; cursor: pointer; }
+.rv-tab:hover { color: var(--minimal-ink); }
+.rv-tab.on { color: var(--minimal-ink); border-bottom-color: var(--minimal-accent); }
+
+.rv-filters { display: flex; flex-wrap: wrap; gap: 0.6rem 0.8rem; align-items: flex-end; }
+.rv-field { display: flex; flex-direction: column; gap: 0.2rem; font-size: 0.78rem; color: var(--minimal-muted); min-width: 0; }
+.rv-field select, .rv-field input {
+  background: var(--minimal-surface); color: var(--minimal-ink); border: 1px solid var(--minimal-line);
+  border-radius: 6px; padding: 0.42rem 0.55rem; font: inherit; font-size: 0.92rem; max-width: 100%;
+}
+.rv-field select { max-width: 15rem; }
+.rv-search { flex: 1 1 12rem; }
+.rv-search input { width: 100%; }
+.rv-chips { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 0.8rem 0 0.2rem; }
+.rv-chip { background: transparent; color: var(--minimal-muted); border: 1px solid var(--minimal-line); border-radius: 999px; padding: 0.2rem 0.65rem; font: inherit; font-size: 0.82rem; cursor: pointer; }
+.rv-chip:hover { color: var(--minimal-ink); border-color: var(--minimal-muted); }
+.rv-chip.on { background: var(--minimal-accent-soft); color: var(--minimal-accent); border-color: var(--minimal-accent); }
+
+.rv-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.7rem; margin: 1.1rem 0; }
+.rv-stat { background: var(--minimal-surface); border: 1px solid var(--minimal-line); border-radius: 10px; padding: 0.8rem 0.95rem; }
+.rv-stat[role="button"] { cursor: pointer; }
+.rv-stat.sel { border-color: var(--minimal-accent); }
+.rv-stat .n { font-size: 1.75rem; font-weight: 700; letter-spacing: -0.03em; line-height: 1.15; font-variant-numeric: tabular-nums; }
+.rv-stat .l { color: var(--minimal-muted); font-size: 0.86rem; }
+.rv-stat .s { color: var(--minimal-muted); font-size: 0.76rem; opacity: 0.8; }
+.rv-stat .meter { margin-top: 0.5rem; }
+
+.rv-actions { display: flex; flex-wrap: wrap; gap: 0.55rem; margin: 1rem 0; align-items: center; }
+.rv-btn { background: var(--minimal-surface); color: var(--minimal-ink); border: 1px solid var(--minimal-line); border-radius: 8px; padding: 0.55rem 0.95rem; font: inherit; font-weight: 600; cursor: pointer; }
+.rv-btn:hover:not([disabled]) { border-color: var(--minimal-muted); }
+.rv-btn.primary { background: var(--minimal-accent); color: #10141a; border-color: var(--minimal-accent); }
+.rv-btn.primary:hover:not([disabled]) { filter: brightness(1.08); }
+.rv-btn.small { padding: 0.25rem 0.6rem; font-size: 0.82rem; font-weight: 500; }
+.rv-btn.danger { color: #e7aaa2; }
+.rv-btn[disabled] { opacity: 0.45; cursor: default; }
+.rv-btn:focus-visible, .rv-tab:focus-visible, .rv-chip:focus-visible, .rv-grade:focus-visible { outline: 2px solid var(--minimal-accent); outline-offset: 2px; }
+.rv-hint { color: var(--minimal-muted); font-size: 0.88rem; }
+.rv-warn { color: #e5ad7c; font-size: 0.9rem; }
+kbd { background: var(--minimal-surface); border: 1px solid var(--minimal-line); border-bottom-width: 2px; border-radius: 4px; padding: 0 0.35rem; font-size: 0.82em; color: var(--minimal-ink); }
+
+.rv-sessionhead { display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.9rem; }
+.rv-progress { flex: 1; height: 6px; background: var(--minimal-surface); border-radius: 3px; overflow: hidden; }
+.rv-progressbar { height: 100%; background: var(--minimal-accent); transition: width 0.2s; }
+.rv-count, .rv-timer { color: var(--minimal-muted); font-size: 0.86rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.rv-stage { background: var(--minimal-surface); border: 1px solid var(--minimal-line); border-radius: 12px; padding: 1.3rem 1.5rem 1.2rem; }
+.rv-meta { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; margin-bottom: 0.8rem; }
+.rv-crumb { color: var(--minimal-muted); font-size: 0.84rem; text-decoration: none; margin-right: 0.3rem; }
+.rv-crumb:hover { color: var(--minimal-accent); }
+.rv-question { font-size: 1.22rem; font-weight: 600; line-height: 1.45; letter-spacing: -0.012em; }
+.rv-question p { margin: 0; }
+.rv-answer { border-top: 1px solid var(--minimal-line); margin-top: 1.1rem; padding-top: 1.1rem; overflow-wrap: anywhere; }
+.rv-answer > :last-child { margin-bottom: 0; }
+.rv-answer pre { overflow-x: auto; }
+.rv-answer table { display: block; overflow-x: auto; }
+.rv-probesbox { margin-top: 1rem; padding: 0.7rem 0.95rem; border-left: 3px solid var(--minimal-line); color: var(--minimal-muted); font-size: 0.93rem; }
+.rv-probesbox ul { margin: 0.2rem 0 0; padding-left: 1.1rem; }
+.rv-probetitle { font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.06em; }
+
+.rv-grades { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; margin-top: 1.2rem; }
+.rv-grade { display: flex; flex-direction: column; gap: 0.1rem; align-items: center; background: var(--minimal-bg); color: var(--minimal-ink); border: 1px solid var(--minimal-line); border-radius: 8px; padding: 0.55rem 0.4rem; font: inherit; cursor: pointer; }
+.rv-grade span { color: var(--minimal-muted); font-size: 0.76rem; }
+.rv-grade:hover { border-color: var(--minimal-muted); }
+.rv-grade.g0 b { color: #e7aaa2; } .rv-grade.g1 b { color: #e5ad7c; } .rv-grade.g2 b { color: #8dcba5; } .rv-grade.g3 b { color: #91b8ff; }
+@media (max-width: 560px) { .rv-grades { grid-template-columns: repeat(2, 1fr); } .rv-stage { padding: 1rem; } .rv-question { font-size: 1.08rem; } }
+
+.rv-list { display: flex; flex-direction: column; }
+.rv-list .qa summary { display: flex; gap: 0.5rem; align-items: baseline; }
+.rv-qinline { flex: 1; }
+.dot { width: 0.55rem; height: 0.55rem; border-radius: 50%; display: inline-block; flex: none; background: var(--minimal-line); align-self: center; }
+.dot.st-learning { background: #e5ad7c; } .dot.st-known { background: #8dcba5; }
+
+.rv-rounds { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 0.8rem; margin-top: 1rem; }
+.rv-round { background: var(--minimal-surface); border: 1px solid var(--minimal-line); border-radius: 10px; padding: 1rem 1.1rem; display: flex; flex-direction: column; }
+.rv-round h4 { margin: 0 0 0.3rem; font-size: 1.02rem; }
+.rv-round p { color: var(--minimal-muted); font-size: 0.88rem; flex: 1; margin-bottom: 0.8rem; }
+.rv-round .rv-btn { align-self: flex-start; }
+
+.rv-tablewrap { overflow-x: auto; }
+.rv-table { width: 100%; border-collapse: collapse; font-size: 0.93rem; }
+.rv-table th { text-align: left; color: var(--minimal-muted); font-weight: 500; font-size: 0.8rem; border-bottom: 1px solid var(--minimal-line); padding: 0.4rem 0.6rem 0.4rem 0; }
+.rv-table td { border-bottom: 1px solid var(--minimal-line); padding: 0.45rem 0.6rem 0.45rem 0; vertical-align: middle; }
+.meter { height: 6px; min-width: 90px; background: var(--minimal-bg); border: 1px solid var(--minimal-line); border-radius: 4px; overflow: hidden; }
+.meter > div { height: 100%; background: #8dcba5; }
+.stack { display: inline-flex; width: 160px; max-width: 40vw; height: 8px; background: var(--minimal-line); border-radius: 4px; overflow: hidden; vertical-align: middle; }
+.stack .k { background: #8dcba5; } .stack .l { background: #e5ad7c; }
+
+.rv-days { display: flex; gap: 4px; align-items: flex-end; height: 90px; margin: 0.6rem 0 0.3rem; }
+.rv-days .day { flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 3px; }
+.rv-days .col { width: 100%; max-width: 26px; min-height: 2px; background: var(--minimal-accent); border-radius: 3px 3px 0 0; opacity: 0.85; }
+.rv-days span { font-size: 0.68rem; color: var(--minimal-muted); }
+
+.rv-summary { background: var(--minimal-surface); border: 1px solid var(--minimal-line); border-radius: 12px; padding: 1.2rem 1.4rem; }
+.rv-summary h3 { margin-top: 0; }
+@media (max-width: 560px) { .rv-tab { padding: 0.5rem 0.5rem; font-size: 0.92rem; } }

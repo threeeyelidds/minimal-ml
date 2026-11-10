@@ -1,0 +1,2257 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.11.9">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>ML fundamentals and statistics – Minimal ML</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/scrollable-regions/scrollable-regions.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-447e42e69aaa9833c0ba1b986f430b20.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-980fa6b4eab38a5377f72c7fe6f39b73.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="dark">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<meta name="google-site-verification" content="Ztjr25pGaioeZP-mkoIn_MkNmmsFXWcU6I6W2tEPli0">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../styles.css">
+<link rel="stylesheet" href="../colors.css">
+<link rel="stylesheet" href="../prep.css">
+</head>
+
+<body class="nav-sidebar docked nav-fixed quarto-light"><a id="quarto-skip-link" class="visually-hidden-focusable" href="#quarto-document-content">Skip to main content</a>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark" aria-label="Site">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">Minimal ML</span>
+    </a>
+  </div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../report/index.html"> 
+<span class="menu-text">Report</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link active" href="../skills/index.html" aria-current="page"> 
+<span class="menu-text">Skills</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../review/index.html"> 
+<span class="menu-text">Review</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../plan/index.html"> 
+<span class="menu-text">Plan</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../jobs/index.html"> 
+<span class="menu-text">Open roles</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../notes/index.html"> 
+<span class="menu-text">Notes</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../essays/index.html"> 
+<span class="menu-text">Essays</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+            <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav" aria-label="Toolbar">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="Breadcrumbs"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../skills/swe.html">The loop</a></li><li class="breadcrumb-item"><a href="../skills/mlfund.html">ML fundamentals and statistics</a></li></ol></nav>
+        <a class="flex-grow-1" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto" aria-label="Section">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Skill map</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/cases.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Design cases</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" aria-controls="quarto-sidebar-section-1" aria-expanded="true">
+ <span class="menu-text" id="quarto-sidebar-section-1-label">The loop</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-1" aria-labelledby="quarto-sidebar-section-1-label" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/swe.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Programming and software engineering</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/mlfund.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">ML fundamentals and statistics</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/dl.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Deep learning</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/eval.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Evaluation and experimentation</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/senior.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Senior-level scope and leadership</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" aria-controls="quarto-sidebar-section-2" aria-expanded="true">
+ <span class="menu-text" id="quarto-sidebar-section-2-label">LLMs and agents</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-2" aria-labelledby="quarto-sidebar-section-2-label" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/llm.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">LLMs and foundation models (training side)</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/llmapp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">LLM application engineering (agents, RAG, prompts)</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/rl.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Reinforcement learning and decision making</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/research.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Research skills</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" aria-controls="quarto-sidebar-section-3" aria-expanded="true">
+ <span class="menu-text" id="quarto-sidebar-section-3-label">Product ML</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-3" aria-labelledby="quarto-sidebar-section-3-label" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/recsys.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Search, recommendation, ads and ranking</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/domain.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Domain specialties</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" aria-controls="quarto-sidebar-section-4" aria-expanded="true">
+ <span class="menu-text" id="quarto-sidebar-section-4-label">Systems</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-4" aria-labelledby="quarto-sidebar-section-4-label" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/infra.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Training infrastructure and data systems</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/serving.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Inference, serving and model optimization</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/mlops.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">MLOps, cloud and production operations</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" aria-labelledby="toc-title" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#what-the-postings-ask-for" id="toc-what-the-postings-ask-for" class="nav-link active" data-scroll-target="#what-the-postings-ask-for">What the postings ask for</a>
+  <ul class="collapse">
+  <li><a href="#in-the-postings-words" id="toc-in-the-postings-words" class="nav-link" data-scroll-target="#in-the-postings-words">In the postings’ words</a></li>
+  </ul></li>
+  <li><a href="#the-senior-bar" id="toc-the-senior-bar" class="nav-link" data-scroll-target="#the-senior-bar">The senior bar</a></li>
+  <li><a href="#skills-checklists-and-questions" id="toc-skills-checklists-and-questions" class="nav-link" data-scroll-target="#skills-checklists-and-questions">Skills, checklists and questions</a>
+  <ul class="collapse">
+  <li><a href="#ml-fundamentals" id="toc-ml-fundamentals" class="nav-link" data-scroll-target="#ml-fundamentals">Machine learning fundamentals <span class="demand">16% of postings</span></a></li>
+  <li><a href="#statistics" id="toc-statistics" class="nav-link" data-scroll-target="#statistics">Statistics and probability <span class="demand">13% of postings</span></a></li>
+  <li><a href="#labeling" id="toc-labeling" class="nav-link" data-scroll-target="#labeling">Data labeling, curation and quality <span class="demand">13% of postings</span></a></li>
+  <li><a href="#classical-ml" id="toc-classical-ml" class="nav-link" data-scroll-target="#classical-ml">Classical models (GBDT, linear, trees) <span class="demand">12% of postings</span></a></li>
+  <li><a href="#anomaly" id="toc-anomaly" class="nav-link" data-scroll-target="#anomaly">Anomaly, fraud and risk detection <span class="demand">8% of postings</span></a></li>
+  <li><a href="#data-analysis" id="toc-data-analysis" class="nav-link" data-scroll-target="#data-analysis">Data analysis (pandas, numpy, notebooks) <span class="demand">8% of postings</span></a></li>
+  <li><a href="#feature-eng" id="toc-feature-eng" class="nav-link" data-scroll-target="#feature-eng">Feature engineering <span class="demand">7% of postings</span></a></li>
+  <li><a href="#math" id="toc-math" class="nav-link" data-scroll-target="#math">Linear algebra, calculus, optimization math <span class="demand">5% of postings</span></a></li>
+  <li><a href="#timeseries" id="toc-timeseries" class="nav-link" data-scroll-target="#timeseries">Time series and forecasting <span class="demand">5% of postings</span></a></li>
+  <li><a href="#bayesian" id="toc-bayesian" class="nav-link" data-scroll-target="#bayesian">Bayesian and probabilistic modeling <span class="demand">4% of postings</span></a></li>
+  <li><a href="#causal" id="toc-causal" class="nav-link" data-scroll-target="#causal">Causal inference <span class="demand">3% of postings</span></a></li>
+  </ul></li>
+  <li><a href="#deep-dives-on-this-site" id="toc-deep-dives-on-this-site" class="nav-link" data-scroll-target="#deep-dives-on-this-site">Deep dives on this site</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content" tabindex="-1">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="Breadcrumbs"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../skills/swe.html">The loop</a></li><li class="breadcrumb-item"><a href="../skills/mlfund.html">ML fundamentals and statistics</a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title">ML fundamentals and statistics</h1>
+<p class="subtitle lead">Named in 52% of 2253 senior postings · 40 review cards</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!-- Generated by tools/build_site.py. Edit bank/*.yml or the script, not this file. -->
+<p>The breadth round: generalisation, losses and metrics, classical models, feature engineering, statistics and probability, the maths underneath, and the applied specialities that sit on top of them (forecasting, fraud and risk, causal inference, calibration, labelling). Half of the postings name at least one skill in this area, and ML-engineer postings name it most often, usually as “strong ML fundamentals” plus statistics. Interviewers use it to check that a candidate can reason from first principles when a model misbehaves, not only run a library.</p>
+<p class="area-meta">
+<span class="chip">ML breadth / fundamentals</span><span class="chip">ML coding (implement from scratch)</span><span class="chip">Statistics and probability</span><span class="chip">ML system design (as supporting depth)</span><span class="chip">Take-home or live data analysis</span><a class="btn-review" href="../review/index.html#area=mlfund">Review these cards →</a>
+</p>
+<section id="what-the-postings-ask-for" class="level2">
+<h2 class="anchored" data-anchor-id="what-the-postings-ask-for">What the postings ask for</h2>
+<p>Share of postings that name each skill, overall and by track.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Skill</th>
+<th style="text-align: left;">All postings</th>
+<th style="text-align: right;">MLE</th>
+<th style="text-align: right;">AI eng</th>
+<th style="text-align: right;">Research eng</th>
+<th style="text-align: right;">Cards</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><a href="#ml-fundamentals">Machine learning fundamentals</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:16%"></span><span class="pct">16%</span></span></td>
+<td style="text-align: right;">28%</td>
+<td style="text-align: right;">8%</td>
+<td style="text-align: right;">16%</td>
+<td style="text-align: right;">11</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="#statistics">Statistics and probability</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:13%"></span><span class="pct">13%</span></span></td>
+<td style="text-align: right;">20%</td>
+<td style="text-align: right;">8%</td>
+<td style="text-align: right;">14%</td>
+<td style="text-align: right;">7</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="#labeling">Data labeling, curation and quality</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:13%"></span><span class="pct">13%</span></span></td>
+<td style="text-align: right;">16%</td>
+<td style="text-align: right;">10%</td>
+<td style="text-align: right;">20%</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="#classical-ml">Classical models (GBDT, linear, trees)</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:12%"></span><span class="pct">12%</span></span></td>
+<td style="text-align: right;">16%</td>
+<td style="text-align: right;">11%</td>
+<td style="text-align: right;">3%</td>
+<td style="text-align: right;">4</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="#anomaly">Anomaly, fraud and risk detection</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:8%"></span><span class="pct">8%</span></span></td>
+<td style="text-align: right;">11%</td>
+<td style="text-align: right;">7%</td>
+<td style="text-align: right;">6%</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="#data-analysis">Data analysis (pandas, numpy, notebooks)</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:8%"></span><span class="pct">8%</span></span></td>
+<td style="text-align: right;">10%</td>
+<td style="text-align: right;">6%</td>
+<td style="text-align: right;">7%</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="#feature-eng">Feature engineering</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:7%"></span><span class="pct">7%</span></span></td>
+<td style="text-align: right;">14%</td>
+<td style="text-align: right;">3%</td>
+<td style="text-align: right;">2%</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="#math">Linear algebra, calculus, optimization math</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:5%"></span><span class="pct">5%</span></span></td>
+<td style="text-align: right;">6%</td>
+<td style="text-align: right;">4%</td>
+<td style="text-align: right;">6%</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="#timeseries">Time series and forecasting</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:5%"></span><span class="pct">5%</span></span></td>
+<td style="text-align: right;">5%</td>
+<td style="text-align: right;">4%</td>
+<td style="text-align: right;">5%</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="#bayesian">Bayesian and probabilistic modeling</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:4%"></span><span class="pct">4%</span></span></td>
+<td style="text-align: right;">6%</td>
+<td style="text-align: right;">2%</td>
+<td style="text-align: right;">7%</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="#causal">Causal inference</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:3%"></span><span class="pct">3%</span></span></td>
+<td style="text-align: right;">5%</td>
+<td style="text-align: right;">1%</td>
+<td style="text-align: right;">2%</td>
+<td style="text-align: right;">2</td>
+</tr>
+</tbody>
+</table>
+<section id="in-the-postings-words" class="level3">
+<h3 class="anchored" data-anchor-id="in-the-postings-words">In the postings’ words</h3>
+<blockquote class="blockquote">
+<p>5+ years of experience optimizing ML algorithms, configurations, and infrastructure</p>
+<p><span class="quote-src"><a href="https://capitalone.wd12.myworkdayjobs.com/Capital_One/job/McLean-VA/Machine-Learning-Engineer-5_R1003974-1">Capital One · Machine Learning Engineer 5</a></span></p>
+</blockquote>
+<blockquote class="blockquote">
+<p>Advanced degree (Master’s or Doctorate) in Computer Science, Machine Learning, Statistics, or a related quantitative field</p>
+<p><span class="quote-src"><a href="https://jpmc.fa.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1001/job/210755702">JPMorgan Chase · Applied AI ML Engineer Lead</a></span></p>
+</blockquote>
+<blockquote class="blockquote">
+<p>Experience building batch and streaming data pipelines and feature stores (e.g., Spark, Flink, Kafka), with attention to data quality and training/serving skew.</p>
+<p><span class="quote-src"><a href="https://careers.roblox.com/jobs/8275414?gh_jid=8275414">Roblox · Senior Software Engineer (Machine Learning) - Economy ML</a></span></p>
+</blockquote>
+<blockquote class="blockquote">
+<p>You operate systems reliably as on-call and root-cause at least one significant production regression.</p>
+<p><span class="quote-src"><a href="https://jobs.smartrecruiters.com/LinkedIn3/744000142012329-senior-ai-engineer-nyc-">LinkedIn · Senior AI Engineer (NYC)</a></span></p>
+</blockquote>
+<blockquote class="blockquote">
+<p>Experience working on content moderation, spam detection, fraud, or Trust &amp; Safety ML teams.</p>
+<p><span class="quote-src"><a href="https://jobs.apple.com/en-us/details/200659417-3760">Apple · Sr.&nbsp;Machine Learning Engineer</a></span></p>
+</blockquote>
+<blockquote class="blockquote">
+<p>Python for tooling and analysis, e.g.&nbsp;NumPy and trimesh.</p>
+<p><span class="quote-src"><a href="https://boards.greenhouse.io/andurilindustries/jobs/5265127007?gh_jid=5265127007">Anduril · Winter 2027 Research Engineer Co-op</a></span></p>
+</blockquote>
+<blockquote class="blockquote">
+<p>Experience designing and operating production ML systems, including several of: large-scale data and feature pipelines, distributed model training, low-latency inference, model deployment, or production monitoring.</p>
+<p><span class="quote-src"><a href="https://stripe.com/jobs/search?gh_jid=7983456">Stripe · Machine Learning Engineer, Radar</a></span></p>
+</blockquote>
+</section>
+</section>
+<section id="the-senior-bar" class="level2">
+<h2 class="anchored" data-anchor-id="the-senior-bar">The senior bar</h2>
+<p>What separates a senior answer from a mid-level one in this area.</p>
+<ul>
+<li>Derives the standard results on a whiteboard (logistic loss and gradient, the XGBoost split gain, the downsampling correction, a sample-size formula) and says what each implies in practice.</li>
+<li>Treats evaluation as a design problem. Chooses the split unit and time gap that match deployment, names the leakage paths, and puts an interval on every reported number.</li>
+<li>Separates ranking quality from calibration and from the decision threshold, and knows which of the three a given product needs.</li>
+<li>Knows what the labels really are. Asks about delay, selection by the previous model, annotator agreement and sampling before trusting a metric.</li>
+<li>Reaches for the simple strong baseline first (regularised linear model, tuned GBDT, seasonal naive) and can say when it stops being enough.</li>
+<li>States the assumptions behind a statistical or causal claim, and what would falsify them, instead of quoting a p-value.</li>
+</ul>
+</section>
+<section id="skills-checklists-and-questions" class="level2">
+<h2 class="anchored" data-anchor-id="skills-checklists-and-questions">Skills, checklists and questions</h2>
+<p>Tick an item when you can explain it without notes; ticks are saved in this browser. Open a question to see the answer.</p>
+<section id="ml-fundamentals" class="level3">
+<h3 class="anchored" data-anchor-id="ml-fundamentals">Machine learning fundamentals <span class="demand">16% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="mlfund.ml-fundamentals.0"> Write the bias-variance decomposition and diagnose which term dominates from learning curves</li>
+<li><input type="checkbox" class="chk" data-chk="mlfund.ml-fundamentals.1"> Explain why L1 gives exact zeros and L2 does not, with the Laplace and Gaussian prior view</li>
+<li><input type="checkbox" class="chk" data-chk="mlfund.ml-fundamentals.2"> State what double descent shows and what it does not</li>
+<li><input type="checkbox" class="chk" data-chk="mlfund.ml-fundamentals.3"> Design a split that matches deployment (group, time, gap) and list the common leakage paths</li>
+<li><input type="checkbox" class="chk" data-chk="mlfund.ml-fundamentals.4"> Derive the probability correction after negative downsampling and after class weighting</li>
+<li><input type="checkbox" class="chk" data-chk="mlfund.ml-fundamentals.5"> Say when ROC-AUC, PR-AUC, log loss and NDCG disagree and which one a product needs</li>
+<li><input type="checkbox" class="chk" data-chk="mlfund.ml-fundamentals.6"> Implement k-means and ROC-AUC from scratch and state their complexity</li>
+</ul>
+<details class="qa" id="mlfund-001">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Explain the bias-variance decomposition. In practice, how do you tell which of the two is limiting a model, and what do you change in each case?
+</summary>
+<p>For squared loss at a point <span class="math inline">\(x\)</span>, with <span class="math inline">\(y = f(x) + \varepsilon\)</span>, <span class="math inline">\(\mathbb{E}[\varepsilon]=0\)</span>, <span class="math inline">\(\operatorname{Var}(\varepsilon)=\sigma^2\)</span>, and the expectation taken over training sets <span class="math inline">\(D\)</span>:</p>
+<p><span class="math display">\[
+\mathbb{E}\big[(y-\hat f_D(x))^2\big]
+= \underbrace{\big(\mathbb{E}_D[\hat f_D(x)]-f(x)\big)^2}_{\text{bias}^2}
++ \underbrace{\operatorname{Var}_D[\hat f_D(x)]}_{\text{variance}}
++ \underbrace{\sigma^2}_{\text{noise}}
+\]</span></p>
+<p><strong>Diagnosis</strong> comes from learning curves, not from the formula:</p>
+<ul>
+<li>High bias: training and validation error are both high and close together; more data does not help.</li>
+<li>High variance: a large train-validation gap; validation error keeps improving with more data; results move a lot across seeds or folds.</li>
+</ul>
+<p><strong>Fixes.</strong> Bias: more capacity, better features, less regularisation, longer training. Variance: more data, regularisation, early stopping, a simpler model, or averaging. Averaging <span class="math inline">\(M\)</span> models with variance <span class="math inline">\(\sigma^2\)</span> and pairwise correlation <span class="math inline">\(\rho\)</span> gives variance <span class="math inline">\(\rho\sigma^2 + (1-\rho)\sigma^2/M\)</span>, which is why bagging works only as far as the models are decorrelated.</p>
+<p><strong>Caveats.</strong> The additive form is specific to squared loss. Variance is not monotone in parameter count for over-parameterised models (double descent). The noise term is a floor you should estimate, for example from agreement between duplicate labels, before chasing the last point of error.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Why does bagging reduce variance but not bias, while boosting mainly reduces bias?</li>
+<li>How would you estimate the irreducible error on a real dataset?</li>
+</ul>
+</details>
+<details class="qa" id="mlfund-002">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Compare L1 and L2 regularisation. Why does L1 produce exact zeros while L2 does not, and when would you choose each?
+</summary>
+<p>L2 adds <span class="math inline">\(\frac{\lambda}{2}\|w\|_2^2\)</span>. Its gradient <span class="math inline">\(\lambda w\)</span> shrinks each weight in proportion to its size, so weights get small but never reach zero. L1 adds <span class="math inline">\(\lambda\|w\|_1\)</span>. Its subgradient <span class="math inline">\(\lambda\,\mathrm{sign}(w)\)</span> is a constant pull, so any weight whose loss gradient is smaller than <span class="math inline">\(\lambda\)</span> in magnitude is held exactly at zero.</p>
+<p>With an orthonormal design (<span class="math inline">\(X^\top X = I\)</span>, loss <span class="math inline">\(\frac12\|y-Xw\|^2\)</span>) both have closed forms:</p>
+<p><span class="math display">\[
+\hat w_j^{\text{ridge}} = \frac{w_j^{\text{OLS}}}{1+\lambda},
+\qquad
+\hat w_j^{\text{lasso}} = \mathrm{sign}(w_j^{\text{OLS}})\,\max\big(|w_j^{\text{OLS}}|-\lambda,\,0\big)
+\]</span></p>
+<p>Ridge rescales; lasso soft-thresholds. Probabilistically, L2 is MAP with a Gaussian prior and L1 is MAP with a Laplace prior.</p>
+<p><strong>Choose L1</strong> for feature selection and sparse serving models (FTRL-Proximal with L1 is the classic sparse CTR setup). It is unstable with correlated features, picking one of a group arbitrarily; elastic net fixes that.</p>
+<p><strong>Choose L2</strong> when many features carry small effects or are correlated. It adds <span class="math inline">\(\lambda\)</span> to every Hessian eigenvalue, so the problem becomes strongly convex and better conditioned.</p>
+<p><strong>Pitfalls.</strong> The penalty depends on feature scale, so standardise first. Do not penalise the bias. Plain SGD on L1 does not give exact zeros; use a proximal (soft-threshold) update. With Adam, an L2 term in the loss is not the same as weight decay (AdamW).</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Along a direction where <span class="math inline">\(X^\top X\)</span> has eigenvalue <span class="math inline">\(s^2\)</span>, by how much does ridge shrink the OLS solution?</li>
+<li>Why must features be standardised before regularising?</li>
+</ul>
+</details>
+<details class="qa" id="mlfund-003">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> Early stopping and dropout are both called regularisers. What is each one actually doing, and in what sense is dropout an approximate ensemble?
+</summary>
+<p><strong>Early stopping</strong> limits how far the parameters travel from initialisation. For gradient descent from zero on a quadratic loss, the component of the solution along a Hessian eigen-direction with eigenvalue <span class="math inline">\(h\)</span> is scaled by <span class="math inline">\(1-(1-\eta h)^t\)</span> after <span class="math inline">\(t\)</span> steps, while L2 scales it by <span class="math inline">\(h/(h+\lambda)\)</span>. The two agree approximately when <span class="math inline">\(\lambda \approx 1/(\eta t)\)</span>: low-curvature directions, the ones the data determines poorly, are learned last. In practice, monitor a validation metric with patience and restore the best checkpoint. The set used for stopping is no longer an unbiased estimate, so keep a separate test set.</p>
+<p><strong>Dropout</strong> samples a mask per step and trains a random sub-network; all <span class="math inline">\(2^n\)</span> sub-networks share weights. Inverted dropout multiplies kept activations by <span class="math inline">\(1/(1-p)\)</span> during training so that inference uses the full network unchanged. That single forward pass approximates averaging the sub-networks’ predictions: it is the exact normalised geometric mean for a single softmax layer and an approximation for deep non-linear networks. For linear regression, dropout on the inputs equals, in expectation, an L2 penalty weighted by each feature’s second moment.</p>
+<p><strong>Failure modes.</strong> Forgetting <code>model.eval()</code>. Dropout placed before BatchNorm shifts activation variance between training and inference. In large-data pretraining the model under-fits, so dropout is often set to zero. Keeping dropout on at inference (MC dropout) gives a cheap, rough uncertainty estimate.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Why is the early-stopped validation score optimistic?</li>
+<li>Why do networks trained on noisy labels benefit from early stopping in particular?</li>
+</ul>
+</details>
+<details class="qa" id="mlfund-004">
+<summary>
+<span class="tag tag-staff">staff</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> What is double descent, and does it contradict the bias-variance trade-off? Be precise about what is established and what is not.
+</summary>
+<p>Test error as a function of capacity can fall, rise to a peak near the <strong>interpolation threshold</strong> (where the model can just fit the training set exactly), and fall again as capacity grows further. The same shape has been reported against training time (epoch-wise) and, near the threshold, against sample size.</p>
+<p>It does not contradict the decomposition, which is an identity. It contradicts the assumption that variance grows monotonically with parameter count. Near the threshold there is essentially one interpolating solution and it must fit the noise, so variance spikes. Far beyond it there are many interpolating solutions and the optimiser’s implicit bias picks a low-norm one.</p>
+<p>Linear regression makes this concrete. The minimum-norm least-squares solution is <span class="math inline">\(\hat w = X^{+}y\)</span>, and its variance contains <span class="math inline">\(\sum_i 1/s_i^2\)</span> over the singular values of <span class="math inline">\(X\)</span>. When the number of features is close to <span class="math inline">\(n\)</span> the smallest singular value approaches zero and the variance blows up.</p>
+<p><strong>Established:</strong> the phenomenon in deep networks (Belkin et al., 2019; Nakkiran et al., 2019), proofs for linear and random-feature models, a larger peak with more label noise, and that well-tuned regularisation (ridge, weight decay, early stopping) largely removes the peak.</p>
+<p><strong>Not established:</strong> that bigger is always better, or that parameter count is the right complexity measure. Practical reading: if validation error rises with model size, check regularisation and label noise before concluding the model is too big.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Why does the minimum-norm solution generalise better than an arbitrary interpolating one?</li>
+<li>Near the threshold, how can adding training data make test error worse?</li>
+</ul>
+</details>
+<details class="qa" id="mlfund-005">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">debugging</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> A model scores 0.93 AUC in 5-fold cross-validation and 0.71 in its first week in production. Walk through how you would find the cause.
+</summary>
+<p>A gap this large is usually leakage or a split that does not match deployment, not drift. I check in this order:</p>
+<ol type="1">
+<li><strong>Split unit.</strong> Random K-fold assumes independent rows. If the same user, patient, device or near-duplicate appears in train and validation, the model memorises the entity. Use group K-fold on the entity that will be new at serving time.</li>
+<li><strong>Time.</strong> A random split trains on the future. Use a forward split with a gap at least as long as the label delay and the longest feature window.</li>
+<li><strong>Feature leakage.</strong> Features computed after the label event, or from the label: a target encoding fit on all rows, an aggregate whose window includes the event, a status field updated after the outcome. Rank single-feature AUCs; an implausibly strong feature is the suspect. Compare feature timestamps with prediction time.</li>
+<li><strong>Preprocessing fit on all data.</strong> Scalers, imputers, feature selection, PCA or oversampling applied before the split. Fit them inside each training fold.</li>
+<li><strong>Selection on the reported folds.</strong> Hyperparameters, early stopping and thresholds tuned on the same folds that produced 0.93. Use nested CV or an untouched test set.</li>
+<li><strong>Training-serving skew.</strong> The feature is computed differently online (defaults, freshness, units). Join logged serving features to offline features for the same ids and compare.</li>
+<li>Only then real shift: population, label definition, seasonality.</li>
+</ol>
+<p>To confirm, rebuild the split to mimic deployment (time plus group). The offline score should drop towards 0.71; if it does not, the problem is on the serving side.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>When is plain K-fold fine?</li>
+<li>How do you choose the gap in a temporal split?</li>
+<li>Feature selection never looks at validation predictions. Why is doing it before the split still leakage?</li>
+</ul>
+</details>
+<details class="qa" id="mlfund-006">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">derivation</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> You train a CTR model on logs where negatives were downsampled to 10%. Derive the correction that restores calibrated probabilities, and say when you would prefer reweighting, or no resampling at all.
+</summary>
+<p>Keep every positive and each negative with probability <span class="math inline">\(s\)</span>. Sampling depends only on the label, so the class-conditional feature densities are unchanged and the odds in the sample are inflated by <span class="math inline">\(1/s\)</span>:</p>
+<p><span class="math display">\[
+\frac{p_s}{1-p_s}=\frac{1}{s}\cdot\frac{p}{1-p}
+\;\Rightarrow\;
+\operatorname{logit}(p)=\operatorname{logit}(p_s)+\log s,
+\qquad
+p=\frac{s\,p_s}{1-p_s+s\,p_s}=\frac{p_s}{p_s+(1-p_s)/s}
+\]</span></p>
+<p>With <span class="math inline">\(s=0.1\)</span> and <span class="math inline">\(p_s=0.2\)</span>, <span class="math inline">\(p\approx 0.0244\)</span>; multiplying by <span class="math inline">\(s\)</span> (0.02) is only the small-probability approximation. In serving, add <span class="math inline">\(\log s\)</span> to the logit.</p>
+<p><strong>Alternatives.</strong> Weight each kept negative by <span class="math inline">\(1/s\)</span> in the loss: the weighted loss is unbiased for the full-data loss, so outputs are calibrated directly, at the price of higher gradient variance. Class weights <span class="math inline">\(w_1, w_0\)</span> in BCE move the optimum to <span class="math inline">\(w_1 q/(w_1 q + w_0(1-q))\)</span>, a logit offset of <span class="math inline">\(\log(w_1/w_0)\)</span> that you undo the same way.</p>
+<p><strong>When.</strong> Negative downsampling is a compute decision; it loses little when negatives vastly outnumber positives. Imbalance itself does not break a probabilistic model trained with log loss; what matters is the absolute number of positives. So the default is the natural distribution (or downsample and correct), a threshold chosen from costs, and evaluation on unsampled data. Oversampling duplicates rows and invites overfitting, and focal loss or class weights break calibration unless corrected.</p>
+<p>Do not correct twice (weights and offset together), and use per-example rates if sampling depended on features.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Hard-negative mining gives each example its own sampling rate. How do you correct then?</li>
+<li>Which of ROC-AUC, PR-AUC and log loss change when you evaluate on the downsampled set?</li>
+</ul>
+</details>
+<details class="qa" id="mlfund-007">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">derivation</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Derive the logistic regression loss from maximum likelihood, then its gradient and Hessian. What do they tell you about optimisation?
+</summary>
+<p>Model <span class="math inline">\(y_i\in\{0,1\}\)</span> as Bernoulli with <span class="math inline">\(p_i=\sigma(z_i)\)</span>, <span class="math inline">\(z_i=w^\top x_i+b\)</span>. The likelihood is <span class="math inline">\(\prod_i p_i^{y_i}(1-p_i)^{1-y_i}\)</span>, so the negative log-likelihood is</p>
+<p><span class="math display">\[
+L(w)=-\sum_i\big[y_i\log p_i+(1-y_i)\log(1-p_i)\big]=\sum_i\big[\log(1+e^{z_i})-y_i z_i\big].
+\]</span></p>
+<p>Differentiating the second form, <span class="math inline">\(\partial L/\partial z_i=\sigma(z_i)-y_i=p_i-y_i\)</span>, hence</p>
+<p><span class="math display">\[
+\nabla_w L=X^\top(p-y),\qquad \nabla_w^2 L=X^\top S X,\quad S=\operatorname{diag}\big(p_i(1-p_i)\big).
+\]</span></p>
+<p>What follows:</p>
+<ul>
+<li><span class="math inline">\(S\succeq 0\)</span>, so the loss is convex and any local minimum is global. There is no closed form; use gradient methods, L-BFGS or Newton (IRLS).</li>
+<li>The gradient is residual times input, the same form as least squares and softmax regression. That is the canonical-link property of GLMs.</li>
+<li>On linearly separable data there is no finite maximiser: <span class="math inline">\(\|w\|\to\infty\)</span>. Regularise.</li>
+<li>MSE on a sigmoid output is non-convex in <span class="math inline">\(w\)</span> and carries a factor <span class="math inline">\(p(1-p)\)</span> that vanishes exactly when the model is confidently wrong. Log loss cancels that factor.</li>
+<li>Minimising cross-entropy is MLE and equals minimising <span class="math inline">\(\mathrm{KL}(\text{data}\,\|\,\text{model})\)</span> up to a constant. It is a proper scoring rule, so a well-specified model is calibrated at the optimum.</li>
+<li>With labels in <span class="math inline">\(\{-1,+1\}\)</span> the same loss is <span class="math inline">\(\log(1+e^{-y z})\)</span>.</li>
+<li>Numerics: compute from logits (<code>np.logaddexp(0, z) - y*z</code>, <code>BCEWithLogitsLoss</code>), never <code>log(sigmoid(z))</code>.</li>
+</ul>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>What happens to the weights on perfectly separable data, and what does L2 change?</li>
+<li>Write the multiclass version and its gradient.</li>
+</ul>
+</details>
+<details class="qa" id="mlfund-008">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> When do ROC-AUC, PR-AUC and log loss disagree, and which would you report for a classifier with 0.1% positives?
+</summary>
+<p>They measure different things.</p>
+<ul>
+<li><strong>ROC-AUC</strong> is <span class="math inline">\(P(\text{score of a random positive} &gt; \text{score of a random negative})\)</span>. It depends only on the ranking, and is invariant to the class prior and to any monotone transform of the scores. With rare positives the false-positive rate has a huge denominator: at 0.1% prevalence a 1% FPR already means about ten false positives per positive, so ROC can look excellent while precision is poor.</li>
+<li><strong>PR-AUC</strong> (average precision) uses precision <span class="math inline">\(TP/(TP+FP)\)</span>, which depends on prevalence. A random classifier scores the prevalence, not 0.5, so values are not comparable across datasets. It concentrates on the top of the ranking.</li>
+<li><strong>Log loss</strong> is a proper scoring rule: it rewards calibration and sharpness, and is hurt by a few confident errors and by prior shift. A monotone rescaling changes log loss but not AUC. Compare it with the entropy of the base rate, <span class="math inline">\(-\pi\log\pi-(1-\pi)\log(1-\pi)\)</span>.</li>
+</ul>
+<p>Typical disagreements: better AUC with worse log loss means miscalibration, which is fixable post hoc; better log loss with the same AUC means only calibration improved.</p>
+<p>At 0.1% positives I report the operating-point metric the product uses (precision at a fixed recall, recall at <span class="math inline">\(k\)</span> reviews per day, recall at a fixed FPR), PR-AUC as a summary, and calibration if the scores are consumed as probabilities. All with intervals: with 100 positives in the test set, the standard error of recall can be 5 points.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Why does negative downsampling leave ROC-AUC unchanged in expectation but change PR-AUC?</li>
+<li>Two models have the same AUC. How can one still be much better in production?</li>
+</ul>
+</details>
+<details class="qa" id="mlfund-009">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Define NDCG@k. Why is it preferred to precision@k for graded relevance, and what are its pitfalls?
+</summary>
+<p><span class="math display">\[
+\mathrm{DCG@}k=\sum_{i=1}^{k}\frac{2^{rel_i}-1}{\log_2(i+1)},
+\qquad
+\mathrm{NDCG@}k=\frac{\mathrm{DCG@}k}{\mathrm{IDCG@}k}
+\]</span></p>
+<p>IDCG is the DCG of the ideal ordering for that query, so NDCG lies in <span class="math inline">\([0,1]\)</span> and is averaged over queries. Example: grades <span class="math inline">\([2,3,0]\)</span> give <span class="math inline">\(\mathrm{DCG}=3+7/\log_2 3=7.42\)</span>; the ideal order <span class="math inline">\([3,2,0]\)</span> gives <span class="math inline">\(8.89\)</span>; NDCG is <span class="math inline">\(0.83\)</span>.</p>
+<p>It uses graded labels and discounts by position. Precision@k is binary and ignores order inside the top <span class="math inline">\(k\)</span>; MRR looks only at the first relevant result; MAP is binary.</p>
+<p>Pitfalls:</p>
+<ul>
+<li>There are two gain conventions, <span class="math inline">\(2^{rel}-1\)</span> and <span class="math inline">\(rel\)</span>. Say which one.</li>
+<li>A query with no relevant document has <span class="math inline">\(\mathrm{IDCG}=0\)</span>; scoring it 0 versus skipping it changes the mean.</li>
+<li>Per-query normalisation weights every query equally, whatever its traffic.</li>
+<li>Unjudged documents are usually counted as irrelevant, which penalises a new system that surfaces documents the old one never showed.</li>
+<li>The log discount is a convention, not a measured examination curve; click-derived labels also carry position bias.</li>
+<li>It is piecewise constant in the scores, so training uses surrogates: pairwise logistic loss, LambdaRank / LambdaMART (pair gradients weighted by the <span class="math inline">\(|\Delta\mathrm{NDCG}|\)</span> of swapping the pair), or listwise softmax.</li>
+</ul>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How does LambdaMART optimise NDCG if NDCG has zero gradient almost everywhere?</li>
+<li>What does the unjudged-equals-irrelevant rule do when you compare a new retriever with the incumbent?</li>
+</ul>
+</details>
+<details class="qa" id="mlfund-011">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Implement k-means in NumPy with k-means++ initialisation. State the objective, why the algorithm converges, and where it fails.
+</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> kmeanspp(X, k, rng):</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    C <span class="op">=</span> [X[rng.integers(<span class="bu">len</span>(X))]]</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    d2 <span class="op">=</span> ((X <span class="op">-</span> C[<span class="dv">0</span>]) <span class="op">**</span> <span class="dv">2</span>).<span class="bu">sum</span>(<span class="dv">1</span>)                     <span class="co"># squared distance to the nearest centre so far</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(k <span class="op">-</span> <span class="dv">1</span>):</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>        C.append(X[rng.choice(<span class="bu">len</span>(X), p<span class="op">=</span>d2 <span class="op">/</span> d2.<span class="bu">sum</span>())])   <span class="co"># sample proportional to D^2</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>        d2 <span class="op">=</span> np.minimum(d2, ((X <span class="op">-</span> C[<span class="op">-</span><span class="dv">1</span>]) <span class="op">**</span> <span class="dv">2</span>).<span class="bu">sum</span>(<span class="dv">1</span>))</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.array(C)</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> kmeans(X, k, iters<span class="op">=</span><span class="dv">100</span>, tol<span class="op">=</span><span class="fl">1e-8</span>, seed<span class="op">=</span><span class="dv">0</span>):</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    rng <span class="op">=</span> np.random.default_rng(seed)</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    C <span class="op">=</span> kmeanspp(X, k, rng)</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(iters):</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>        d2 <span class="op">=</span> (X<span class="op">**</span><span class="dv">2</span>).<span class="bu">sum</span>(<span class="dv">1</span>)[:, <span class="va">None</span>] <span class="op">-</span> <span class="dv">2</span> <span class="op">*</span> X <span class="op">@</span> C.T <span class="op">+</span> (C<span class="op">**</span><span class="dv">2</span>).<span class="bu">sum</span>(<span class="dv">1</span>)   <span class="co"># (n, k), no (n, k, d) tensor</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>        a <span class="op">=</span> d2.argmin(<span class="dv">1</span>)                              <span class="co"># assignment step</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>        newC <span class="op">=</span> C.copy()</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(k):</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> (a <span class="op">==</span> j).<span class="bu">any</span>():                        <span class="co"># empty cluster: keep the old centre</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>                newC[j] <span class="op">=</span> X[a <span class="op">==</span> j].mean(<span class="dv">0</span>)           <span class="co"># update step</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>        shift <span class="op">=</span> np.<span class="bu">abs</span>(newC <span class="op">-</span> C).<span class="bu">max</span>()</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>        C <span class="op">=</span> newC</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> shift <span class="op">&lt;</span> tol:</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>            <span class="cf">break</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> C, a</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Objective:</strong> <span class="math inline">\(J=\sum_i\|x_i-c_{a_i}\|^2\)</span>. The assignment step minimises <span class="math inline">\(J\)</span> over assignments with centres fixed; the update step minimises it over centres with assignments fixed (the mean minimises squared distance). <span class="math inline">\(J\)</span> never increases and there are finitely many partitions, so it converges, but only to a local optimum. Each iteration costs <span class="math inline">\(O(nkd)\)</span>.</p>
+<p>Pitfalls:</p>
+<ul>
+<li>Initialisation matters. Random initialisation can put two centres in one true cluster; k-means++ gives an <span class="math inline">\(O(\log k)\)</span> approximation in expectation, and you still run several restarts and keep the lowest <span class="math inline">\(J\)</span>.</li>
+<li>Empty clusters must be handled.</li>
+<li>Features must be scaled, because Euclidean distance is scale dependent.</li>
+<li>It assumes roughly spherical clusters of similar size. It is the hard-assignment limit of EM for a Gaussian mixture with shared spherical covariance.</li>
+<li><span class="math inline">\(k\)</span> is chosen from outside the algorithm (elbow, silhouette, or the downstream task); <span class="math inline">\(J\)</span> always falls as <span class="math inline">\(k\)</span> grows.</li>
+</ul>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Why does the mean minimise the within-cluster sum of squares, and what would you use for L1 distance?</li>
+<li>How would you make this work for 100 million points?</li>
+</ul>
+</details>
+<details class="qa" id="mlfund-012">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Implement ROC-AUC from scratch in O(n log n), handling tied scores correctly. Explain why the formula works.
+</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> roc_auc(y, s):</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    y, s <span class="op">=</span> np.asarray(y), np.asarray(s)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    _, inv, cnt <span class="op">=</span> np.unique(s, return_inverse<span class="op">=</span><span class="va">True</span>, return_counts<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    last <span class="op">=</span> np.cumsum(cnt)                   <span class="co"># 1-based rank of the last item in each tie group</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    ranks <span class="op">=</span> (last <span class="op">-</span> (cnt <span class="op">-</span> <span class="dv">1</span>) <span class="op">/</span> <span class="dv">2</span>)[inv]     <span class="co"># average rank within ties</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    n_pos <span class="op">=</span> y.<span class="bu">sum</span>()</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    n_neg <span class="op">=</span> <span class="bu">len</span>(y) <span class="op">-</span> n_pos</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> (ranks[y <span class="op">==</span> <span class="dv">1</span>].<span class="bu">sum</span>() <span class="op">-</span> n_pos <span class="op">*</span> (n_pos <span class="op">+</span> <span class="dv">1</span>) <span class="op">/</span> <span class="dv">2</span>) <span class="op">/</span> (n_pos <span class="op">*</span> n_neg)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Why it works.</strong> AUC is the fraction of (positive, negative) pairs ranked correctly, with ties counting one half; this is the Mann-Whitney U statistic divided by <span class="math inline">\(n_+ n_-\)</span>. A positive with ascending rank <span class="math inline">\(r\)</span> has <span class="math inline">\(r-1\)</span> items below it. Summing over positives counts positive-negative pairs plus the <span class="math inline">\(n_+(n_+-1)/2\)</span> positive-positive pairs; subtracting those leaves <span class="math inline">\(U=\sum_{i\in +} r_i - n_+(n_++1)/2\)</span>. Average ranks give tied pairs the half credit.</p>
+<p>What an interviewer checks:</p>
+<ul>
+<li>Ties. Sorting and ranking without tie handling makes the result depend on sort order. A constant score must give exactly 0.5.</li>
+<li>Complexity: the sort dominates, <span class="math inline">\(O(n\log n)\)</span>. The brute-force pair count is <span class="math inline">\(O(n_+ n_-)\)</span> and is a good test oracle.</li>
+<li>Edge case: with only one class present, AUC is undefined. Raise or return NaN, not 0.</li>
+<li>Equivalent route: sweep thresholds over sorted scores, accumulate TPR and FPR, integrate with the trapezoid rule, grouping tied scores into one step.</li>
+<li>Per-group AUC (per query or per user) is a different metric from global AUC and is often the one a ranking product needs.</li>
+</ul>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How would you compute a confidence interval for this AUC?</li>
+<li>Modify it to compute average precision. What changes about tie handling?</li>
+</ul>
+</details>
+</section>
+<section id="statistics" class="level3">
+<h3 class="anchored" data-anchor-id="statistics">Statistics and probability <span class="demand">13% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="mlfund.statistics.0"> Define a p-value and a confidence interval exactly and list the usual misreadings</li>
+<li><input type="checkbox" class="chk" data-chk="mlfund.statistics.1"> Derive the per-arm sample size for a two-sample test and use the 16 sigma^2 / delta^2 rule</li>
+<li><input type="checkbox" class="chk" data-chk="mlfund.statistics.2"> Explain family-wise error versus false discovery rate, and why peeking inflates false positives</li>
+<li><input type="checkbox" class="chk" data-chk="mlfund.statistics.3"> Implement a percentile bootstrap, resampling the independent unit, paired for model comparisons</li>
+<li><input type="checkbox" class="chk" data-chk="mlfund.statistics.4"> Solve Bayes-rule problems in odds form and expectation problems with indicators and first-step analysis</li>
+<li><input type="checkbox" class="chk" data-chk="mlfund.statistics.5"> Implement reservoir sampling and prove it is uniform</li>
+</ul>
+<details class="qa" id="mlfund-013">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> An A/B test reports p = 0.03 and a 95% confidence interval of [0.1%, 1.9%] for the lift. State precisely what each number means, and name the most common misreadings.
+</summary>
+<p><strong>p-value:</strong> the probability, under the null hypothesis and the test’s model assumptions, of a statistic at least as extreme as the one observed. It is <span class="math inline">\(P(\text{data this extreme}\mid H_0)\)</span>, not <span class="math inline">\(P(H_0\mid\text{data})\)</span>.</p>
+<p><strong>95% confidence interval:</strong> the output of a procedure that covers the true parameter in 95% of repeated experiments. This particular interval either contains it or does not. “95% probability the lift is in the interval” is a Bayesian credible-interval statement and needs a prior. The two are linked: a 95% interval that excludes zero corresponds to a two-sided <span class="math inline">\(p&lt;0.05\)</span> from the same test.</p>
+<p>Misreadings:</p>
+<ol type="1">
+<li>Reading <span class="math inline">\(p\)</span> as the chance the null is true. That depends on the prior and the power: if 10% of tested ideas are real, with 80% power and <span class="math inline">\(\alpha=0.05\)</span>, the share of significant results that are false is <span class="math inline">\(0.045/(0.045+0.08)=36\%\)</span>.</li>
+<li>Not significant is not the same as no effect. Look at the interval width.</li>
+<li>Statistical versus practical significance. With millions of users, negligible effects reach significance.</li>
+<li>Significant estimates from under-powered tests overstate the effect (winner’s curse).</li>
+<li>The guarantee assumes a fixed sample size and one pre-chosen metric. Peeking and many metrics break it.</li>
+<li>The analysis unit must match the randomisation unit. Randomising users but analysing page views understates the variance; use the delta method or a cluster bootstrap.</li>
+</ol>
+<p>Report the effect size with its interval, not only the p-value.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Define type I and type II errors and relate them to alpha and power.</li>
+<li>Why does treating page views as independent give p-values that are too small?</li>
+</ul>
+</details>
+<details class="qa" id="mlfund-014">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">derivation</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Derive the sample size per arm needed to detect an absolute lift delta in a conversion rate with a two-sided test at level alpha and power 1 - beta. What does the formula imply for detecting small effects?
+</summary>
+<p>With <span class="math inline">\(n\)</span> users per arm and per-user variance <span class="math inline">\(\sigma^2\)</span> (<span class="math inline">\(=p(1-p)\)</span> for a rate), the difference in means has standard error <span class="math inline">\(\mathrm{SE}=\sqrt{2\sigma^2/n}\)</span>. We reject when <span class="math inline">\(|\hat\Delta|&gt;z_{1-\alpha/2}\,\mathrm{SE}\)</span>. Under the alternative, <span class="math inline">\(\hat\Delta\sim N(\delta,\mathrm{SE}^2)\)</span>, and power <span class="math inline">\(1-\beta\)</span> requires <span class="math inline">\(\delta-z_{1-\alpha/2}\,\mathrm{SE}\ge z_{1-\beta}\,\mathrm{SE}\)</span> (the other tail is negligible). Solving for <span class="math inline">\(n\)</span>:</p>
+<p><span class="math display">\[
+n=\frac{2\sigma^2\,(z_{1-\alpha/2}+z_{1-\beta})^2}{\delta^2}\;\approx\;\frac{16\,\sigma^2}{\delta^2}
+\quad\text{for }\alpha=0.05,\ \text{power }0.8,
+\]</span></p>
+<p>since <span class="math inline">\(2(1.96+0.84)^2\approx 15.7\)</span>.</p>
+<p><strong>Example.</strong> Baseline 5%, target a 2% relative lift, so <span class="math inline">\(\delta=0.001\)</span> and <span class="math inline">\(\sigma^2=0.0475\)</span>: about 746,000 users per arm.</p>
+<p>Implications:</p>
+<ul>
+<li><span class="math inline">\(n\propto 1/\delta^2\)</span>: halving the minimum detectable effect costs four times the traffic.</li>
+<li><span class="math inline">\(n\propto\sigma^2\)</span>: variance reduction is worth as much as traffic. CUPED regresses out a pre-experiment covariate and multiplies variance by <span class="math inline">\(1-\rho^2\)</span>; stratification, capping heavy tails and triggered analysis also help.</li>
+<li>Variance is proportional to <span class="math inline">\(1/n_A+1/n_B\)</span>, so a 50/50 split is the most efficient.</li>
+<li><span class="math inline">\(\sigma^2\)</span> must be measured at the randomisation unit. With clusters of size <span class="math inline">\(m\)</span> and intra-class correlation <span class="math inline">\(\rho\)</span>, variance inflates by about <span class="math inline">\(1+(m-1)\rho\)</span>.</li>
+<li>Power is a design-time quantity. Post-hoc “observed power” adds nothing beyond the p-value.</li>
+</ul>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How does CUPED work, and what makes a good covariate?</li>
+<li>What changes for a one-sided test, or for a ratio metric such as revenue per session?</li>
+</ul>
+</details>
+<details class="qa" id="mlfund-015">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Your experiment tracks 20 metrics, and the team checks the dashboard every day and wants to stop as soon as something is significant. What goes wrong statistically, and what do you do about it?
+</summary>
+<p>Two separate inflations of the false-positive rate.</p>
+<p><strong>Many metrics.</strong> With 20 independent true-null metrics at <span class="math inline">\(\alpha=0.05\)</span>, the chance that at least one is significant is <span class="math inline">\(1-0.95^{20}\approx 64\%\)</span>. Controls:</p>
+<ul>
+<li>Family-wise error: Bonferroni (<span class="math inline">\(\alpha/m\)</span>, valid under any dependence, conservative) or Holm (step-down, never less powerful than Bonferroni, also valid under any dependence).</li>
+<li>False discovery rate: Benjamini-Hochberg. Sort the p-values, find the largest <span class="math inline">\(k\)</span> with <span class="math inline">\(p_{(k)}\le\frac{k}{m}q\)</span>, and reject the <span class="math inline">\(k\)</span> smallest. It controls the expected share of false discoveries at <span class="math inline">\(q\)</span> under independence or positive dependence.</li>
+<li>In practice: one pre-registered primary metric for the decision, a few guardrails, and FDR control for the exploratory rest.</li>
+</ul>
+<p><strong>Peeking.</strong> Under the null the p-value wanders, so testing repeatedly and stopping at the first <span class="math inline">\(p&lt;0.05\)</span> gives a false-positive rate far above 5%, and it tends to 1 as the number of looks grows. Fixes:</p>
+<ul>
+<li>A fixed horizon with a single analysis.</li>
+<li>Group-sequential designs with alpha spending. O’Brien-Fleming boundaries are very strict early and close to nominal at the end.</li>
+<li>Always-valid inference (mixture SPRT, confidence sequences): continuous monitoring is allowed, at the cost of wider intervals.</li>
+</ul>
+<p>A third version of the same problem is post-hoc slicing: “it worked for Android users in one country” is a hypothesis for the next experiment, not a result.</p>
+<p>The trade-off in every case is power: each correction widens intervals, so limit the number of confirmatory questions.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>When is Bonferroni far too conservative, and what do you use instead?</li>
+<li>Does a Bayesian analysis make optional stopping harmless?</li>
+</ul>
+</details>
+<details class="qa" id="mlfund-016">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Implement a bootstrap confidence interval for an arbitrary metric. Then say how you would use it to compare two models on the same test set, and when the bootstrap fails.
+</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> bootstrap_ci(x, stat<span class="op">=</span>np.mean, B<span class="op">=</span><span class="dv">10_000</span>, alpha<span class="op">=</span><span class="fl">0.05</span>, seed<span class="op">=</span><span class="dv">0</span>):</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Percentile bootstrap. x holds one entry per independent unit."""</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    rng <span class="op">=</span> np.random.default_rng(seed)</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> np.asarray(x)</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    n <span class="op">=</span> <span class="bu">len</span>(x)</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    reps <span class="op">=</span> np.array([stat(x[rng.integers(<span class="dv">0</span>, n, n)]) <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(B)])</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    lo, hi <span class="op">=</span> np.quantile(reps, [alpha <span class="op">/</span> <span class="dv">2</span>, <span class="dv">1</span> <span class="op">-</span> alpha <span class="op">/</span> <span class="dv">2</span>])</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> stat(x), (lo, hi)</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Paired comparison of models A and B on the same examples:</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="co"># est, (lo, hi) = bootstrap_ci(correct_a - correct_b)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The bootstrap treats the empirical distribution as the population: resample <span class="math inline">\(n\)</span> units with replacement, recompute the statistic, and read the interval from the quantiles of the replicates.</p>
+<p>What an interviewer checks:</p>
+<ul>
+<li><strong>Resample the independent unit.</strong> Users, queries or documents, not rows. Row-level resampling of correlated rows gives intervals that are too narrow.</li>
+<li><strong>Pair the comparison.</strong> Resample example indices once and compute both models on the same resample, or bootstrap the per-example difference as above. Unpaired intervals ignore the strong correlation between the two models’ errors and are far too wide.</li>
+<li>For metrics that are not a mean of per-example values (AUC, F1, NDCG), resample indices and recompute the whole metric on each replicate.</li>
+<li><span class="math inline">\(B\)</span>: about 1,000 is enough for a standard error; use 10,000 for 95% limits.</li>
+<li><strong>Failures:</strong> small <span class="math inline">\(n\)</span>; extreme statistics such as the maximum; heavy tails where a few values dominate; dependence in time (use a block bootstrap). The percentile interval is biased for skewed statistics; BCa corrects that.</li>
+<li>It quantifies sampling noise in the test set only. It does not cover training-seed variance or distribution shift.</li>
+</ul>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Model B beats A by 0.4 points on 2,000 examples. Is that real, and how would you decide?</li>
+<li>Why does each bootstrap sample contain only about 63% of the distinct original points, and does that matter?</li>
+</ul>
+</details>
+<details class="qa" id="mlfund-017">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> A fraud detector flags 95% of fraudulent transactions and 5% of legitimate ones. 1% of transactions are fraud. A transaction is flagged: what is the probability it is fraud? What if a second, independent detector with the same rates also flags it?
+</summary>
+<p>About 16%.</p>
+<p><span class="math display">\[
+P(F\mid +)=\frac{0.95\times 0.01}{0.95\times 0.01+0.05\times 0.99}=\frac{0.0095}{0.059}\approx 0.161
+\]</span></p>
+<p>The table version is the fastest check: of 10,000 transactions, 100 are fraud and 95 are flagged; 9,900 are legitimate and 495 are flagged; <span class="math inline">\(95/590=16\%\)</span>.</p>
+<p><strong>Odds form</strong> scales to further evidence: posterior odds = prior odds × likelihood ratio. Prior odds are <span class="math inline">\(1:99\)</span> and the likelihood ratio is <span class="math inline">\(0.95/0.05=19\)</span>, giving <span class="math inline">\(19:99\)</span>. A second flag that is conditionally independent given the class multiplies by 19 again: <span class="math inline">\(361:99\)</span>, or 78.5%. In log-odds, evidence adds, which is exactly the structure of naive Bayes and of logistic regression.</p>
+<p>What the question tests:</p>
+<ul>
+<li>Base-rate neglect. Precision depends on prevalence: the same detector at 0.1% prevalence gives 1.9%.</li>
+<li>The independence that matters is conditional on the class. Two detectors built on the same features are correlated, and multiplying their likelihood ratios double-counts evidence.</li>
+<li>Translation into ML terms: 95% is recall, 5% is the false-positive rate, and the answer is precision.</li>
+</ul>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>What prevalence would make the precision of a single flag 50%?</li>
+<li>How would you estimate the likelihood ratio of a detector from data?</li>
+</ul>
+</details>
+<details class="qa" id="mlfund-018">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Probability rounds lean on a few expectation tricks. Show them on: (a) the expected number of fixed points of a random permutation of n items, (b) the expected number of draws to collect all n coupons, (c) the expected number of fair-coin flips until two heads in a row.
+</summary>
+<p><strong>(a) Linearity with indicators.</strong> Let <span class="math inline">\(I_i=1\)</span> if item <span class="math inline">\(i\)</span> stays in place; <span class="math inline">\(\mathbb{E}[I_i]=1/n\)</span>. Then <span class="math inline">\(\mathbb{E}[\sum_i I_i]=n\cdot\frac1n=1\)</span> for every <span class="math inline">\(n\)</span>. Linearity needs no independence, and the indicators here are dependent.</p>
+<p><strong>(b) Split into geometric stages.</strong> With <span class="math inline">\(k\)</span> distinct coupons in hand, the wait for a new one is geometric with success probability <span class="math inline">\((n-k)/n\)</span> and mean <span class="math inline">\(n/(n-k)\)</span>. Summing over stages gives <span class="math inline">\(n\sum_{j=1}^{n}\frac1j=nH_n\approx n(\ln n+0.577)\)</span>. For <span class="math inline">\(n=10\)</span> that is 29.3 draws.</p>
+<p><strong>(c) First-step analysis.</strong> Let <span class="math inline">\(E\)</span> be the expected flips from the start and <span class="math inline">\(E_H\)</span> the expected flips after one head:</p>
+<p><span class="math display">\[
+E=1+\tfrac12E_H+\tfrac12E,\qquad E_H=1+\tfrac12\cdot 0+\tfrac12E
+\]</span></p>
+<p>Substituting gives <span class="math inline">\(E=6\)</span>.</p>
+<p>The rest of the toolkit:</p>
+<ul>
+<li>Tower rule <span class="math inline">\(\mathbb{E}[X]=\mathbb{E}[\mathbb{E}[X\mid Y]]\)</span> and total variance <span class="math inline">\(\operatorname{Var}(X)=\mathbb{E}[\operatorname{Var}(X\mid Y)]+\operatorname{Var}(\mathbb{E}[X\mid Y])\)</span>.</li>
+<li>Tail sum: <span class="math inline">\(\mathbb{E}[X]=\sum_{k\ge1}P(X\ge k)\)</span> for non-negative integer <span class="math inline">\(X\)</span>.</li>
+<li>Symmetry: the <span class="math inline">\(k\)</span>-th element of a random order is a running maximum with probability <span class="math inline">\(1/k\)</span>, so the expected number of records is <span class="math inline">\(H_n\)</span>; the expected maximum of <span class="math inline">\(n\)</span> uniforms on <span class="math inline">\([0,1]\)</span> is <span class="math inline">\(n/(n+1)\)</span>.</li>
+<li>Jensen: <span class="math inline">\(\mathbb{E}[f(X)]\ge f(\mathbb{E}[X])\)</span> for convex <span class="math inline">\(f\)</span>, so <span class="math inline">\(\mathbb{E}[1/X]\ne 1/\mathbb{E}[X]\)</span> and the mean of ratios is not the ratio of means.</li>
+</ul>
+<p>Sanity-check small cases (<span class="math inline">\(n=1,2\)</span>) before stating a result.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>What is the variance of the number of fixed points?</li>
+<li>Expected flips until the pattern HT instead of HH. Why is it different?</li>
+</ul>
+</details>
+<details class="qa" id="mlfund-019">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Sample k items uniformly at random from a stream of unknown length in one pass and O(k) memory. Implement it and prove that it is uniform.
+</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> random</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> reservoir_sample(stream, k, rng<span class="op">=</span>random):</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    res <span class="op">=</span> []</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i, x <span class="kw">in</span> <span class="bu">enumerate</span>(stream):      <span class="co"># i is 0-based; i + 1 items seen so far</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> i <span class="op">&lt;</span> k:</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>            res.append(x)</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span>:</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>            j <span class="op">=</span> rng.randint(<span class="dv">0</span>, i)       <span class="co"># inclusive on both ends: uniform over i + 1 values</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> j <span class="op">&lt;</span> k:</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>                res[j] <span class="op">=</span> x              <span class="co"># happens with probability k / (i + 1)</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> res</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Proof by induction.</strong> Claim: after <span class="math inline">\(m\ge k\)</span> items, each is in the reservoir with probability <span class="math inline">\(k/m\)</span>. It holds at <span class="math inline">\(m=k\)</span>. When item <span class="math inline">\(m+1\)</span> arrives it enters with probability <span class="math inline">\(k/(m+1)\)</span>. An item already in the reservoir survives unless the newcomer enters and picks its slot: <span class="math inline">\(1-\frac{k}{m+1}\cdot\frac1k=\frac{m}{m+1}\)</span>. So its probability becomes <span class="math inline">\(\frac{k}{m}\cdot\frac{m}{m+1}=\frac{k}{m+1}\)</span>.</p>
+<p>Time is <span class="math inline">\(O(n)\)</span>, memory <span class="math inline">\(O(k)\)</span>.</p>
+<p>What an interviewer checks:</p>
+<ul>
+<li>Off-by-one in the random index. <code>randint(0, i)</code> is inclusive; with NumPy use <code>rng.integers(0, i + 1)</code>.</li>
+<li>The newcomer replaces a uniformly chosen slot. Always replacing the oldest item is not uniform.</li>
+<li>Weighted version (Efraimidis-Spirakis): give each item the key <span class="math inline">\(u^{1/w}\)</span> with <span class="math inline">\(u\sim U(0,1)\)</span> and keep the <span class="math inline">\(k\)</span> largest keys in a heap.</li>
+<li>Distributed version: reservoirs from shards cannot simply be concatenated; merge by sampling from each in proportion to its shard’s count, or use the random-key method (keep the <span class="math inline">\(k\)</span> smallest uniform keys), which merges trivially.</li>
+<li>Typical uses: an unbiased sample of logs for labelling or evaluation, and bounded replay buffers.</li>
+</ul>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Each inclusion probability is k/m. Does that alone prove every k-subset is equally likely?</li>
+<li>How would you sample uniformly per user instead of per event?</li>
+</ul>
+</details>
+</section>
+<section id="labeling" class="level3">
+<h3 class="anchored" data-anchor-id="labeling">Data labeling, curation and quality <span class="demand">13% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="mlfund.labeling.0"> Compute Cohen’s kappa and explain why raw agreement misleads under class imbalance</li>
+<li><input type="checkbox" class="chk" data-chk="mlfund.labeling.1"> Explain how random and systematic label noise affect training and evaluation differently</li>
+<li><input type="checkbox" class="chk" data-chk="mlfund.labeling.2"> Design an active-learning loop and name its sampling-bias pitfalls</li>
+<li><input type="checkbox" class="chk" data-chk="mlfund.labeling.3"> Describe weak supervision with labelling functions and how to validate it</li>
+<li><input type="checkbox" class="chk" data-chk="mlfund.labeling.4"> Build a test set with known sampling weights when positives are rare</li>
+</ul>
+<details class="qa" id="mlfund-038">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Two annotators agree on 85% of items. Is that good? Explain how you measure label quality and what label noise does to training and to evaluation.
+</summary>
+<p>It cannot be judged without chance agreement. Cohen’s kappa corrects for it:</p>
+<p><span class="math display">\[
+\kappa=\frac{p_o-p_e}{1-p_e},\qquad p_e=\sum_c p_{1,c}\,p_{2,c}
+\]</span></p>
+<p>where <span class="math inline">\(p_{a,c}\)</span> is the share of items annotator <span class="math inline">\(a\)</span> assigns to class <span class="math inline">\(c\)</span>. With balanced binary labels <span class="math inline">\(p_e=0.5\)</span> and <span class="math inline">\(\kappa=0.70\)</span>. If both annotators mark 90% negative, <span class="math inline">\(p_e=0.82\)</span> and <span class="math inline">\(\kappa\approx0.17\)</span>: barely above chance. For more than two annotators use Fleiss’ kappa; for missing ratings or ordinal scales, Krippendorff’s alpha. Kappa moves with prevalence, so report per-class agreement and the annotator confusion matrix as well.</p>
+<p><strong>What low agreement means.</strong> Unclear guidelines (the cheapest thing to fix: tighten the guideline and add examples), genuinely ambiguous items (keep the label distribution instead of forcing a majority), or weak annotators (gold questions, per-annotator accuracy; Dawid-Skene estimates each annotator’s confusion matrix and the true labels jointly with EM).</p>
+<p><strong>Training.</strong> Random, class-independent noise mostly costs sample efficiency and calibration. Large models tolerate a fair amount but eventually memorise it, so early stopping helps. Systematic noise that depends on class or features is learned as signal. Mitigations: relabel the most suspicious items (confident learning flags examples whose out-of-fold probability for the given label is low), noise-robust losses or label smoothing, and extra annotations where disagreement is high.</p>
+<p><strong>Evaluation.</strong> Noise here is worse. It caps the measurable score, compresses the differences between models and can reorder them. Spend labelling budget first on a clean, multiply-annotated, adjudicated test set. Human-human agreement is the reference ceiling for the metric.</p>
+<p>When an LLM is the annotator, measure it against human gold with the same statistics and look for systematic bias it shares with the model under evaluation.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>With a fixed budget, do you label 3N items once or N items three times?</li>
+<li>{‘Majority vote versus Dawid-Skene’: ‘when does the difference matter?’}</li>
+<li>Annotators agree with each other but are consistently wrong. How would you find out?</li>
+</ul>
+</details>
+<details class="qa" id="mlfund-039">
+<summary>
+<span class="tag tag-staff">staff</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> You have 5 million unlabelled items, budget to label 20,000, and a positive rate of about 1%. Design the labelling and curation plan.
+</summary>
+<p><strong>1. Definition and test set first.</strong> Write the guideline, pilot a few hundred items with two or three annotators, measure kappa and revise until agreement is acceptable. Then build the test set before anything else. A uniform sample of 5,000 holds about 50 positives, too few for a usable recall estimate. So stratify: over-sample strata that are likely positive (by heuristic or model score), record each item’s inclusion probability, and weight by its inverse to recover unbiased population metrics. Label it multiple times, adjudicate, and freeze it.</p>
+<p><strong>2. Enrich for positives.</strong> Random sampling returns 1%. Use weak signals: rules and keywords, an existing model’s scores, user reports, nearest neighbours of known positives in embedding space, zero-shot LLM scoring. Label a mix of enriched and random items.</p>
+<p><strong>3. Weak supervision for breadth.</strong> Write labelling functions (rules, distant supervision, LLM prompts). A label model estimates their accuracies and correlations without ground truth and outputs probabilistic labels for the whole pool, which train the end model. It is cheap and inherits the systematic errors of the functions, so validate on the gold set.</p>
+<p><strong>4. Active-learning loop.</strong> Train, score the pool, select a batch, label, repeat, for example five rounds of 3,000. Select by uncertainty (margin or entropy) or committee disagreement, combined with diversity (spread across embedding clusters) so a batch is not near-duplicates. Keep 10 to 20% of each batch random.</p>
+<p>Pitfalls:</p>
+<ul>
+<li>The labelled set is no longer i.i.d. It cannot serve as an evaluation set, and it biases the training distribution.</li>
+<li>Uncertainty sampling is drawn to ambiguous and noisy items, where annotators also disagree.</li>
+<li>Cold start: early models have meaningless uncertainty. Begin with diverse or enriched sampling.</li>
+<li>Gains over random sampling are often modest with strong pretrained encoders. Measure them using the random slice.</li>
+</ul>
+<p><strong>5. Quality control.</strong> Interleaved gold items, per-annotator accuracy, 10% double labelling, model-assisted relabelling of suspicious items, and a dataset version tied to the guideline version.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Why keep a random slice in every active-learning round?</li>
+<li>How do you get unbiased precision and recall from a stratified test set?</li>
+<li>When would you replace human labels with LLM labels, and how would you check them?</li>
+</ul>
+</details>
+<details class="qa" id="mlfund-040">
+<summary>
+<span class="tag tag-staff">staff</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> A new data source (a vendor-labelled set, or a large scrape) is proposed for the training corpus. How do you decide whether it should go in, before paying for a full training run?
+</summary>
+<p>Treat it as a change that needs evidence at three levels: the rows, the distribution, and the effect on the model.</p>
+<p><strong>1. Row-level audit.</strong></p>
+<ul>
+<li>Read a random sample yourself before computing anything. A few hundred rows reveal most systematic problems: boilerplate, truncation, wrong language, templated or machine-generated text, labels that follow a shortcut.</li>
+<li>Estimate the error rate with an interval. Auditing about 385 random rows gives at most ±5 points at 95% confidence; stratify by source and label so that no slice hides.</li>
+<li>For vendor labels, seed gold items, double-label a subset and compute kappa against your own annotators.</li>
+</ul>
+<p><strong>2. Set-level checks.</strong></p>
+<ul>
+<li><strong>Duplicates.</strong> Exact (hash of normalised content) and near-duplicates (MinHash / LSH or embedding similarity), both inside the new set and against the existing corpus. Duplicates silently reweight the training distribution.</li>
+<li><strong>Evaluation contamination.</strong> Overlap with every test and benchmark set, by the same exact and near-duplicate methods. Any overlap invalidates later comparisons.</li>
+<li><strong>Coverage.</strong> Compare with the target distribution, not only with the old corpus: language, domain, length, class balance, time range. Ask what the source adds that was missing.</li>
+<li><strong>Provenance.</strong> Licence, personal data, and how the source was selected, since selection bias becomes model bias.</li>
+</ul>
+<p><strong>3. Model-level evidence.</strong></p>
+<ul>
+<li>Run a small-scale ablation with and without the source at equal training budget, with at least a few seeds, and read slice metrics rather than one average. A source can help its own domain and hurt elsewhere.</li>
+<li>Filter rather than accept or reject wholesale: heuristics, a quality classifier or a model-based score, with the threshold chosen on the ablation and not by intuition.</li>
+<li>Decide how to mix: sampling weight or cap per source, so a large low-quality source cannot dominate.</li>
+</ul>
+<p><strong>4. Make it reversible.</strong> Version the dataset, keep lineage from each row to its source and filter version, and record the audit numbers, so a regression found months later can be traced and the source removed.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>The ablation shows no difference at small scale. Does that mean the data is useless at full scale?</li>
+<li>How would you detect near-duplicates across a billion documents?</li>
+<li>What would make you reject a source that improves the headline metric?</li>
+</ul>
+</details>
+</section>
+<section id="classical-ml" class="level3">
+<h3 class="anchored" data-anchor-id="classical-ml">Classical models (GBDT, linear, trees) <span class="demand">12% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="mlfund.classical-ml.0"> Derive the XGBoost leaf weight and split gain from the second-order expansion</li>
+<li><input type="checkbox" class="chk" data-chk="mlfund.classical-ml.1"> Implement a split search in O(n log n) per feature with prefix sums</li>
+<li><input type="checkbox" class="chk" data-chk="mlfund.classical-ml.2"> Implement logistic regression with mini-batch SGD and a numerically stable loss</li>
+<li><input type="checkbox" class="chk" data-chk="mlfund.classical-ml.3"> Explain why boosted trees win on tabular data and where they lose</li>
+<li><input type="checkbox" class="chk" data-chk="mlfund.classical-ml.4"> Compare random forests and boosting in bias-variance terms and name the main hyperparameters</li>
+</ul>
+<details class="qa" id="mlfund-010">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Implement binary logistic regression with mini-batch SGD and L2 regularisation in NumPy, including a numerically stable loss.
+</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> sigmoid(z):</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.exp(<span class="op">-</span>np.logaddexp(<span class="dv">0</span>, <span class="op">-</span>z))          <span class="co"># stable for large |z|</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> fit_logreg(X, y, lr<span class="op">=</span><span class="fl">0.1</span>, l2<span class="op">=</span><span class="fl">1e-4</span>, epochs<span class="op">=</span><span class="dv">20</span>, batch<span class="op">=</span><span class="dv">64</span>, seed<span class="op">=</span><span class="dv">0</span>):</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    rng <span class="op">=</span> np.random.default_rng(seed)</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    n, d <span class="op">=</span> X.shape</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>    w, b <span class="op">=</span> np.zeros(d), <span class="fl">0.0</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(epochs):</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>        perm <span class="op">=</span> rng.permutation(n)                 <span class="co"># reshuffle every epoch</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">0</span>, n, batch):</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>            idx <span class="op">=</span> perm[i:i <span class="op">+</span> batch]</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>            g <span class="op">=</span> sigmoid(X[idx] <span class="op">@</span> w <span class="op">+</span> b) <span class="op">-</span> y[idx]  <span class="co"># dL/dz = p - y</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>            w <span class="op">-=</span> lr <span class="op">*</span> (X[idx].T <span class="op">@</span> g <span class="op">/</span> <span class="bu">len</span>(idx) <span class="op">+</span> l2 <span class="op">*</span> w)</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>            b <span class="op">-=</span> lr <span class="op">*</span> g.mean()                    <span class="co"># no penalty on the bias</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> w, b</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> log_loss(X, y, w, b):</span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>    z <span class="op">=</span> X <span class="op">@</span> w <span class="op">+</span> b</span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.mean(np.logaddexp(<span class="dv">0</span>, z) <span class="op">-</span> y <span class="op">*</span> z)    <span class="co"># log(1 + e^z) - y z</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Cost is <span class="math inline">\(O(\text{epochs}\cdot n\cdot d)\)</span>.</p>
+<p>What an interviewer checks:</p>
+<ul>
+<li>The gradient is <span class="math inline">\(X^\top(p-y)/m\)</span>; you should be able to derive it, and verify it with finite differences.</li>
+<li>Stability: <code>1 / (1 + np.exp(-z))</code> overflows for large negative <code>z</code>, and <code>log(p)</code> gives <code>-inf</code> when <code>p</code> rounds to 0. Work with logits.</li>
+<li>Shapes: <code>y</code> must be <code>(n,)</code>. If it is <code>(n, 1)</code>, <code>p - y</code> broadcasts to <code>(n, n)</code> without an error.</li>
+<li>Mean rather than sum over the batch, so the learning rate does not depend on batch size.</li>
+<li>Standardise features: SGD on badly scaled inputs is slow, and the L2 penalty is scale dependent.</li>
+<li>Zero initialisation is fine here because the problem is convex and has no hidden-unit symmetry to break.</li>
+<li>Stopping: a fixed epoch count is a placeholder; in practice monitor validation loss.</li>
+</ul>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Extend it to multiclass softmax regression. What changes in the gradient?</li>
+<li>How would you add L1 so that weights become exactly zero?</li>
+</ul>
+</details>
+<details class="qa" id="mlfund-023">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">derivation</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> Derive how XGBoost sets a leaf weight and scores a candidate split. Why second order, and what do lambda, gamma and min_child_weight do?
+</summary>
+<p>Boosting adds one tree per round: <span class="math inline">\(\hat y^{(t)}=\hat y^{(t-1)}+f_t(x)\)</span>. Expand the loss to second order around the current prediction, with <span class="math inline">\(g_i=\partial_{\hat y}\ell(y_i,\hat y_i^{(t-1)})\)</span> and <span class="math inline">\(h_i=\partial^2_{\hat y}\ell\)</span>:</p>
+<p><span class="math display">\[
+\text{obj}^{(t)}\approx\sum_i\Big[g_if_t(x_i)+\tfrac12h_if_t(x_i)^2\Big]+\gamma T+\tfrac12\lambda\sum_{j=1}^{T}w_j^2
+\]</span></p>
+<p>A tree sends each example to one of <span class="math inline">\(T\)</span> leaves with weight <span class="math inline">\(w_j\)</span>. With <span class="math inline">\(G_j=\sum_{i\in j}g_i\)</span> and <span class="math inline">\(H_j=\sum_{i\in j}h_i\)</span> the objective separates by leaf, <span class="math inline">\(\sum_j\big[G_jw_j+\tfrac12(H_j+\lambda)w_j^2\big]+\gamma T\)</span>, so</p>
+<p><span class="math display">\[
+w_j^*=-\frac{G_j}{H_j+\lambda},\qquad
+\text{gain}=\frac12\left[\frac{G_L^2}{H_L+\lambda}+\frac{G_R^2}{H_R+\lambda}-\frac{(G_L+G_R)^2}{H_L+H_R+\lambda}\right]-\gamma .
+\]</span></p>
+<p><strong>Split search.</strong> For each feature, scan sorted values (exact) or at most a few hundred histogram bins (<code>hist</code>, LightGBM), accumulating <span class="math inline">\(G_L,H_L\)</span>, and keep the best gain. Missing values get a learned default direction by trying both sides.</p>
+<p><strong>Why second order.</strong> The leaf weight is a Newton step, so each leaf gets a correctly scaled step for any twice-differentiable loss. For squared loss <span class="math inline">\(h=1\)</span> and it reduces to the mean residual. For log loss <span class="math inline">\(g=p-y\)</span> and <span class="math inline">\(h=p(1-p)\)</span>.</p>
+<p><strong>Regularisers.</strong> <span class="math inline">\(\lambda\)</span> shrinks leaf weights, most where <span class="math inline">\(H\)</span> is small. <span class="math inline">\(\gamma\)</span> is the minimum gain needed to keep a split. <code>min_child_weight</code> is a lower bound on a child’s <span class="math inline">\(H\)</span>; for log loss <span class="math inline">\(H\)</span> is small where predictions are already confident, so it stops splitting nearly pure nodes. Shrinkage (the learning rate) and row or column subsampling act on top.</p>
+<p>Variants: LightGBM grows leaf-wise and adds GOSS and feature bundling; CatBoost uses ordered boosting, ordered target statistics and symmetric trees.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>What goes wrong with a custom loss whose second derivative can be zero or negative?</li>
+<li>How does a random-forest split criterion differ from this?</li>
+</ul>
+</details>
+<details class="qa" id="mlfund-024">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> Implement the best-split search for a regression decision stump in NumPy. It should run in O(n log n) per feature, not O(n^2).
+</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> best_split(X, y):</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Return (gain, feature, threshold) maximising the reduction in squared error."""</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    n, d <span class="op">=</span> X.shape</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    total <span class="op">=</span> y.<span class="bu">sum</span>()</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    best <span class="op">=</span> (<span class="fl">0.0</span>, <span class="va">None</span>, <span class="va">None</span>)</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(d):</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>        order <span class="op">=</span> np.argsort(X[:, j], kind<span class="op">=</span><span class="st">"mergesort"</span>)</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>        xs, ys <span class="op">=</span> X[order, j], y[order]</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>        left <span class="op">=</span> np.cumsum(ys)[:<span class="op">-</span><span class="dv">1</span>]                 <span class="co"># sum of y in the left child for a split after row i</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>        nl <span class="op">=</span> np.arange(<span class="dv">1</span>, n)</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>        gain <span class="op">=</span> left<span class="op">**</span><span class="dv">2</span> <span class="op">/</span> nl <span class="op">+</span> (total <span class="op">-</span> left)<span class="op">**</span><span class="dv">2</span> <span class="op">/</span> (n <span class="op">-</span> nl) <span class="op">-</span> total<span class="op">**</span><span class="dv">2</span> <span class="op">/</span> n</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>        gain[xs[<span class="dv">1</span>:] <span class="op">==</span> xs[:<span class="op">-</span><span class="dv">1</span>]] <span class="op">=</span> <span class="op">-</span>np.inf         <span class="co"># cannot split between equal values</span></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>        i <span class="op">=</span> <span class="bu">int</span>(gain.argmax())</span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> gain[i] <span class="op">&gt;</span> best[<span class="dv">0</span>]:</span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>            best <span class="op">=</span> (<span class="bu">float</span>(gain[i]), j, <span class="bu">float</span>((xs[i] <span class="op">+</span> xs[i <span class="op">+</span> <span class="dv">1</span>]) <span class="op">/</span> <span class="dv">2</span>))</span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> best</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Why the formula.</strong> The squared error of a node around its mean is <span class="math inline">\(\sum y^2-S^2/n\)</span> with <span class="math inline">\(S=\sum y\)</span>. The <span class="math inline">\(\sum y^2\)</span> terms cancel between parent and children, so</p>
+<p><span class="math display">\[
+\text{gain}=\frac{S_L^2}{n_L}+\frac{S_R^2}{n_R}-\frac{S^2}{n}.
+\]</span></p>
+<p>One sort and one prefix sum per feature evaluate every threshold in <span class="math inline">\(O(n)\)</span> after an <span class="math inline">\(O(n\log n)\)</span> sort. Recomputing child means per threshold is the <span class="math inline">\(O(n^2)\)</span> version.</p>
+<p>What an interviewer checks:</p>
+<ul>
+<li>Thresholds only between distinct values; midpoints as thresholds.</li>
+<li>A feature that is constant, or no positive gain, returns no split.</li>
+<li><code>min_samples_leaf</code> is a mask on <code>nl</code> and <code>n - nl</code>.</li>
+<li>Classification is the same scan with per-class prefix counts and Gini or entropy.</li>
+<li>The XGBoost gain is this formula with <span class="math inline">\(S\to G\)</span>, <span class="math inline">\(n\to H+\lambda\)</span> and a factor <span class="math inline">\(\frac12\)</span>.</li>
+<li>Production libraries sort once (or pre-bin into histograms) and reuse that across nodes, and build the sibling histogram by subtraction.</li>
+</ul>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Extend this to a full tree. What is the complexity for depth D?</li>
+<li>How would you handle a categorical feature with 1,000 levels?</li>
+</ul>
+</details>
+<details class="qa" id="mlfund-025">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Why do gradient-boosted trees still tend to beat neural networks on tabular data, and when would you pick a linear model or a neural network instead?
+</summary>
+<p>Tabular data has heterogeneous features, targets with sharp thresholds, many uninformative columns and usually <span class="math inline">\(10^4\)</span> to <span class="math inline">\(10^6\)</span> rows. The inductive bias of trees fits that; an MLP’s does not.</p>
+<ul>
+<li>Splits are axis-aligned and invariant to monotone transforms: no scaling, heavy tails are harmless, missing values are handled natively.</li>
+<li>Piecewise-constant functions capture thresholds and interactions directly, while MLPs are biased towards smooth functions.</li>
+<li>Greedy split selection ignores useless features. An MLP is rotation invariant and needs more data to find which axes matter (Grinsztajn et al., 2022, on medium-sized benchmarks).</li>
+<li>Good defaults, minutes on CPU, little tuning.</li>
+</ul>
+<p><strong>Boosting versus random forest.</strong> Boosting reduces bias with many shallow trees fit sequentially; it needs a learning rate and early stopping and is more sensitive to label noise. A forest averages deep decorrelated trees to cut variance; it parallelises, is hard to mis-tune and gives out-of-bag estimates.</p>
+<p><strong>Where trees lose.</strong> Extrapolation: predictions are constant outside the training range, which hurts with trends. Very high-cardinality ids, raw text, images and sequences. Online updates. Multi-task learning and shared representations.</p>
+<p><strong>Pick a linear model</strong> for very sparse high-dimensional features with huge data and online updates (hashed crosses with FTRL), when monotonic, auditable scores are required (credit), for microsecond latency, and always as the baseline.</p>
+<p><strong>Pick a neural network</strong> when the signal is in ids and sequences (large recommender systems), when inputs are multimodal, or when pretraining transfers. Hybrids are common: embeddings fed to a GBDT, or GBDT leaf indices fed to a linear model.</p>
+<p>Tabular foundation models report wins on small datasets; treat that as benchmark specific and always run a tuned GBDT baseline.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>A tree cannot extrapolate a linear trend. How do you work around that in a forecasting problem?</li>
+<li>What do monotonic constraints buy you, and what do they cost?</li>
+</ul>
+</details>
+</section>
+<section id="anomaly" class="level3">
+<h3 class="anchored" data-anchor-id="anomaly">Anomaly, fraud and risk detection <span class="demand">8% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="mlfund.anomaly.0"> Explain how delayed chargebacks and blocking by the previous model bias labels, and how to correct each</li>
+<li><input type="checkbox" class="chk" data-chk="mlfund.anomaly.1"> Derive the cost-based threshold c_FP / (c_FP + c_FN) and say why it needs calibrated scores</li>
+<li><input type="checkbox" class="chk" data-chk="mlfund.anomaly.2"> Choose metrics for extreme imbalance (precision at k, recall at a fixed false-positive rate) with intervals</li>
+<li><input type="checkbox" class="chk" data-chk="mlfund.anomaly.3"> Describe unsupervised detectors (isolation forest, reconstruction error) and how to evaluate them without labels</li>
+</ul>
+<details class="qa" id="mlfund-031">
+<summary>
+<span class="tag tag-staff">staff</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> You own a payment-fraud model. Labels arrive as chargebacks up to 90 days later, and the current system blocks the transactions it scores as risky. What does that do to your training data and evaluation, and how do you design around it?
+</summary>
+<p>There are two different biases, and they need different fixes.</p>
+<p><strong>1. Delayed labels (censoring).</strong> A recent transaction with no chargeback is unlabelled, not negative. Training on recent weeks as they stand teaches the model to under-predict, and calibration drifts. Options:</p>
+<ul>
+<li>Train only on matured data. Measure the delay distribution and choose the window from it. The price is staleness against an adversary that adapts.</li>
+<li>Use recent data with a correction: weight observed positives by the inverse probability that a fraud of that age would already have been reported, or fit a delayed-feedback model of outcome and delay jointly.</li>
+<li>Use faster proxy labels (issuer fraud alerts, customer reports, manual review), treated as noisy.</li>
+</ul>
+<p>Always evaluate on matured windows.</p>
+<p><strong>2. Selective labels.</strong> Blocked transactions never produce an outcome, so the labelled population is “approved by the previous model”. The new model is trained and scored only where the old one said yes, features the old model relied on look weaker than they are (range restriction), and blind spots stay invisible.</p>
+<ul>
+<li><strong>Exploration.</strong> Approve a small random share of would-be blocks, with amount caps, and log the propensity. It is the only source of unbiased labels in the blocked region, and it has a cost that needs a budget and an owner.</li>
+<li><strong>Inverse propensity weighting</strong> near the threshold. It needs overlap; a deterministic block has propensity zero and cannot be corrected.</li>
+<li><strong>Other outcomes for declines:</strong> manual review, customer disputes of false declines, confirmed fraud on the same card elsewhere.</li>
+<li>Classical reject inference (extrapolating labels onto rejects) rests on assumptions you cannot test. Say so if you use it.</li>
+</ul>
+<p><strong>Also.</strong> Label noise (friendly fraud, unreported fraud), adversarial drift (time-based validation, frequent retraining, velocity and graph features), extreme imbalance, and amount-dependent costs.</p>
+<p><strong>Evaluation.</strong> A time split with a maturity gap. Report at the operating point, for example fraud value caught at a fixed false-decline rate, with intervals. Online, an A/B test that reads chargeback rate, approval rate and false-decline complaints after maturity.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How large should the exploration slice be, and who signs off on its cost?</li>
+<li>How do you compare a new model with the old one offline when the old one decided which rows have labels?</li>
+<li>How would you notice a new fraud pattern before any chargebacks arrive?</li>
+</ul>
+</details>
+<details class="qa" id="mlfund-032">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> With 0.1% positives and a false negative costing 50 times a false positive, how do you set the decision threshold? What changes if you have no reliable labels at all?
+</summary>
+<p>With a calibrated probability <span class="math inline">\(p\)</span>, flag when the expected cost of not flagging exceeds the cost of flagging, <span class="math inline">\(p\,c_{FN}&gt;(1-p)\,c_{FP}\)</span>:</p>
+<p><span class="math display">\[
+p&gt;\frac{c_{FP}}{c_{FP}+c_{FN}}=\frac{1}{51}\approx 2\%
+\]</span></p>
+<p>Not 0.5, and not a function of prevalence: prevalence enters through <span class="math inline">\(p\)</span>. So:</p>
+<ol type="1">
+<li>Keep <span class="math inline">\(p\)</span> calibrated: train on the natural distribution, or downsample and apply the logit correction.</li>
+<li>Check calibration where the decision is made, around 2%. A global ECE is dominated by the mass near zero.</li>
+<li>If cost varies per case (transaction amount), threshold the expected loss <span class="math inline">\(p\times\text{amount}\)</span> against the review cost.</li>
+<li>If review capacity is fixed, take the top <span class="math inline">\(k\)</span> by expected loss and measure precision and recall at <span class="math inline">\(k\)</span>.</li>
+<li>Pick the threshold on validation data and report on test with intervals. At 0.1%, a thousand positives needs a million rows.</li>
+</ol>
+<p>Avoid tuning for F1 by default (it encodes an arbitrary cost ratio) and avoid rebalancing to 50/50 and then thresholding at 0.5. When costs are soft, show the precision-recall or cost curve and let the owner choose. Revisit the choice as prevalence drifts: precision at a fixed threshold moves with the base rate even when the model does not.</p>
+<p><strong>No labels.</strong> Use unsupervised detectors: isolation forest (anomalies are isolated by few random splits), distance or density methods (kNN, LOF), reconstruction error from PCA or an autoencoder, and robust or seasonal residuals for metric time series. They find “unusual”, not “bad”, so expect benign rarities. Evaluate by analyst review of the top <span class="math inline">\(k\)</span> alerts, by injecting synthetic anomalies, and by replaying known incidents. Use the reviewed alerts as labels and move to a supervised or positive-unlabelled model as soon as there are enough.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How does the threshold change if the model was trained on negatives downsampled to 10% and not corrected?</li>
+<li>The scores are not calibrated and you cannot recalibrate. How do you still choose a threshold?</li>
+</ul>
+</details>
+</section>
+<section id="data-analysis" class="level3">
+<h3 class="anchored" data-anchor-id="data-analysis">Data analysis (pandas, numpy, notebooks) <span class="demand">8% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="mlfund.data-analysis.0"> Run a first-pass data audit (grain, keys, label, missingness over time, availability at prediction time)</li>
+<li><input type="checkbox" class="chk" data-chk="mlfund.data-analysis.1"> Avoid pandas pitfalls such as index alignment, NaN group keys, chained assignment and join fan-out</li>
+<li><input type="checkbox" class="chk" data-chk="mlfund.data-analysis.2"> Vectorise with NumPy broadcasting and know the shape bugs it can hide</li>
+<li><input type="checkbox" class="chk" data-chk="mlfund.data-analysis.3"> Know when to leave pandas for Polars, DuckDB or Spark</li>
+</ul>
+<details class="qa" id="mlfund-037">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">debugging</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> You are handed a 50 GB events table and asked whether it is usable for training. What do you check in a notebook, and which pandas / NumPy pitfalls do you watch for while doing it?
+</summary>
+<p><strong>Checks</strong>, in the order they usually find problems:</p>
+<ol type="1">
+<li><strong>Grain and keys.</strong> What is one row? Are there duplicates on the supposed key? Count rows before and after every join; <code>merge(..., validate="m:1")</code> turns fan-out into an error.</li>
+<li><strong>Label.</strong> Base rate over time and by segment, how it is generated, how long it takes to arrive.</li>
+<li><strong>Missingness.</strong> Null rate per column over time; a step change is a pipeline change. Look for sentinels (-1, 0, 9999, empty string) posing as data.</li>
+<li><strong>Distributions.</strong> Quantiles rather than means, units, impossible values, cardinality, constant columns, gaps in time coverage.</li>
+<li><strong>Availability.</strong> Is each column known at prediction time?</li>
+</ol>
+<p>Plot everything against time first; most data bugs appear as discontinuities.</p>
+<p><strong>Pitfalls.</strong></p>
+<ul>
+<li>Scale: do not load 50 GB into pandas. Read only the needed Parquet columns, aggregate in DuckDB, Polars or Spark, and bring a small frame into pandas. Sample by hashing a key (all rows of a user together), not with <code>head</code>.</li>
+<li><code>apply(axis=1)</code> and <code>iterrows</code> are Python loops. Use column operations, <code>np.where</code>, <code>groupby().agg</code> or <code>transform</code>.</li>
+<li>NaN: <code>NaN != NaN</code>; <code>groupby</code> drops NaN keys unless <code>dropna=False</code>; <code>mean</code> skips NaN silently; <code>count</code> excludes NaN while <code>size</code> does not; an integer id column with NaN becomes float64 and loses exactness above <span class="math inline">\(2^{53}\)</span>.</li>
+<li>Index alignment: assigning a Series aligns on the index, not position, so after a filter or sort you get silent NaNs or misplaced values.</li>
+<li>Chained assignment (<code>df[mask]["col"] = v</code>) does not reliably modify <code>df</code>, and never does under copy-on-write; use <code>df.loc[mask, "col"] = v</code>.</li>
+<li>NumPy broadcasting: <code>(n,)</code> minus <code>(n, 1)</code> gives <code>(n, n)</code> without an error. Assert shapes. Basic slices are views, and integer sums can overflow int32.</li>
+<li>Reproducibility: seed with <code>np.random.default_rng(seed)</code> and record the query and the snapshot date.</li>
+</ul>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How do you sample 1% of the data so that each sampled user keeps all of their rows?</li>
+<li>When is <code>groupby().transform</code> the right tool instead of <code>agg</code> plus a merge?</li>
+</ul>
+</details>
+</section>
+<section id="feature-eng" class="level3">
+<h3 class="anchored" data-anchor-id="feature-eng">Feature engineering <span class="demand">7% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="mlfund.feature-eng.0"> Explain target-encoding leakage and build an out-of-fold, smoothed, time-aware encoding</li>
+<li><input type="checkbox" class="chk" data-chk="mlfund.feature-eng.1"> Compare the hashing trick, learned embeddings and explicit crosses for high-cardinality ids</li>
+<li><input type="checkbox" class="chk" data-chk="mlfund.feature-eng.2"> Make a windowed aggregate feature point-in-time correct and test for training-serving skew</li>
+</ul>
+<details class="qa" id="mlfund-026">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">debugging</span><span class="tag tag-track">MLE</span> You add a target encoding of merchant id and validation AUC jumps, but the model does worse online. What happened, and how do you do target encoding safely?
+</summary>
+<p>The encoding of each training row included that row’s own label. For a rare category the encoding is almost the label itself (a merchant with one row is encoded as its <span class="math inline">\(y\)</span>), so the model learns to trust the feature. At serving time the encoding comes from other rows and is far noisier. If the encoding was fit before the split, validation rows leaked in the same way, which is why validation looked good.</p>
+<p>Doing it safely:</p>
+<ol type="1">
+<li><strong>Out-of-fold.</strong> Encode each training row from the other folds only; encode validation and test rows from training data only. Fit the encoder inside each CV fold.</li>
+<li><strong>Smooth towards the prior.</strong> <span class="math inline">\(\hat\mu_c=\dfrac{n_c\,\bar y_c+m\,\bar y}{n_c+m}\)</span>, where <span class="math inline">\(m\)</span> is a pseudo-count. Rare categories shrink to the global mean. This is the posterior mean of a Beta-Binomial model.</li>
+<li><strong>Respect time.</strong> Use only labels that existed, and had matured, before the row’s timestamp. CatBoost’s ordered target statistics apply the same idea over random permutations. This is also what the online feature can actually see.</li>
+<li><strong>Unseen categories</strong> get the prior. Add the count <span class="math inline">\(n_c\)</span> as a feature so the model knows how much to trust the encoding.</li>
+</ol>
+<p>How to recognise the leak: feature importance dominated by the encoded column; the encoded values are more extreme on training rows than on validation rows; performance collapses on low-count categories.</p>
+<p>Label-free alternatives are count or frequency encoding, hashing with a linear model, and learned embeddings.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How would you choose the pseudo-count m?</li>
+<li>Out-of-fold training rows are encoded from (K-1)/K of the data, serving rows from all of it. Does that matter?</li>
+</ul>
+</details>
+<details class="qa" id="mlfund-027">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> You have categorical features with tens of millions of values (user id, item id, query tokens) and want feature crosses. Compare the hashing trick, learned embeddings and explicit crosses, including what breaks.
+</summary>
+<p><strong>Hashing trick.</strong> Index = hash(feature name, value) mod <span class="math inline">\(2^b\)</span>. Memory is fixed, there is no vocabulary to maintain, and new values work without a pipeline change. The cost is collisions: <span class="math inline">\(n\)</span> values in <span class="math inline">\(m\)</span> buckets give about <span class="math inline">\(n^2/(2m)\)</span> colliding pairs, and collisions between frequent values hurt most. Mitigations are more bits, a separate hash space per feature, a signed hash (a second hash picks the sign, which makes inner products unbiased; Weinberger et al., 2009), and several hash functions into a shared table. Hashes are not invertible, so debugging is harder.</p>
+<p><strong>Learned embeddings.</strong> A <span class="math inline">\(V\times d\)</span> table trained end to end shares strength between similar ids. Ten million ids at <span class="math inline">\(d=64\)</span> in fp32 is 2.56 GB, so the table dominates model size. Rows for rare and new ids are barely trained: use a frequency threshold with an out-of-vocabulary bucket, hashed embeddings, or content features as a fallback. Gradients are sparse, so use sparse or per-coordinate optimisers.</p>
+<p><strong>Crosses.</strong> An explicit cross A×B memorises specific combinations (the wide part of Wide &amp; Deep). Cardinality multiplies, so crosses are hashed and need L1 or a minimum count. Factorisation machines model the interaction as <span class="math inline">\(\langle v_i,v_j\rangle\)</span> and generalise to pairs never seen together; deep models and GBDTs learn crosses implicitly. The choice is memorisation against generalisation, and production rankers usually combine both.</p>
+<p><strong>What breaks.</strong></p>
+<ul>
+<li>An id memorises the label and nothing transfers to new users; validate with a split by group and time.</li>
+<li>Vocabulary drift between training and serving.</li>
+<li>Changing the hash seed or the modulus silently remaps every feature.</li>
+<li>A cross with a high-cardinality id explodes the feature space with almost no support per value.</li>
+</ul>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How many bits would you give the hash space, and how would you measure the damage from collisions?</li>
+<li>When would you drop the id and rely on content features only?</li>
+</ul>
+</details>
+<details class="qa" id="mlfund-028">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> A model uses “the user’s purchase count over the last 30 days”. Design the feature computation so that training and serving agree, and list the failure modes.
+</summary>
+<p>The rule: every training row must see the value that was available at its prediction time, not the value as of the day the dataset was built.</p>
+<p><strong>Options, most reliable first.</strong></p>
+<ol type="1">
+<li><strong>Log and wait.</strong> Log the feature vector actually served with each request and train on those logs. Skew is zero by construction. The cost is that a new feature needs weeks of logging before it can be trained on.</li>
+<li><strong>Point-in-time join.</strong> Join each label event (entity, <span class="math inline">\(t_{\text{pred}}\)</span>) to the latest feature snapshot with timestamp at most <span class="math inline">\(t_{\text{pred}}\)</span> minus the real availability lag. Never join on “latest”.</li>
+<li><strong>One definition, two execution paths.</strong> The same feature spec drives the batch backfill and the streaming update (the job of a feature store), with a recurring check that offline values match online logged values on a sample, reported as a match rate per feature.</li>
+</ol>
+<p><strong>Failure modes.</strong></p>
+<ul>
+<li>The window includes the label event itself, or events after it.</li>
+<li>Event time versus processing time, time zones and late-arriving events at the window boundary.</li>
+<li>Freshness: the online aggregate refreshes hourly while the offline one is exact to the second, so training sees fresher data than serving.</li>
+<li>Corrections and backfills rewrite history that the online system never saw.</li>
+<li>Different handling of missing values (0 versus null) and different code in training (Python) and serving (C++ or Java).</li>
+<li>Entity-key mismatches, such as logged-out versus logged-in ids.</li>
+</ul>
+<p><strong>Monitoring.</strong> Null rate and distribution per feature, online against training (PSI or quantiles), plus a shadow recomputation for a sample of requests.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>{‘Log-and-wait versus backfill’: ‘when is each the right call?’}</li>
+<li>A feature has been in production for a year. How do you find out whether it is skewed?</li>
+</ul>
+</details>
+</section>
+<section id="math" class="level3">
+<h3 class="anchored" data-anchor-id="math">Linear algebra, calculus, optimization math <span class="demand">5% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="mlfund.math.0"> Relate PCA, the covariance eigendecomposition and the SVD, and state Eckart-Young</li>
+<li><input type="checkbox" class="chk" data-chk="mlfund.math.1"> Check convexity from the Hessian and connect the condition number to gradient-descent speed</li>
+<li><input type="checkbox" class="chk" data-chk="mlfund.math.2"> Write gradients and Hessians for least squares and logistic regression in matrix form</li>
+<li><input type="checkbox" class="chk" data-chk="mlfund.math.3"> Set up a Lagrangian, state the KKT conditions and interpret a multiplier as a price</li>
+</ul>
+<details class="qa" id="mlfund-020">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> How are PCA, the eigendecomposition of the covariance matrix and the SVD related? What does each give you computationally, and where does PCA mislead?
+</summary>
+<p>Centre <span class="math inline">\(X\in\mathbb{R}^{n\times d}\)</span>. The covariance <span class="math inline">\(C=\frac{1}{n-1}X^\top X=V\Lambda V^\top\)</span> is symmetric positive semi-definite, so it has orthonormal eigenvectors and non-negative eigenvalues. The SVD <span class="math inline">\(X=U\Sigma V^\top\)</span> has the same <span class="math inline">\(V\)</span>, with <span class="math inline">\(\lambda_i=s_i^2/(n-1)\)</span> for singular values <span class="math inline">\(s_i\)</span>. The principal directions are the columns of <span class="math inline">\(V\)</span>, the projected data is <span class="math inline">\(XV=U\Sigma\)</span>, and component <span class="math inline">\(i\)</span> explains <span class="math inline">\(s_i^2/\sum_j s_j^2\)</span> of the variance.</p>
+<p><strong>Optimality (Eckart-Young).</strong> The truncated SVD <span class="math inline">\(X_k=U_k\Sigma_kV_k^\top\)</span> is the best rank-<span class="math inline">\(k\)</span> approximation in Frobenius and spectral norm, with Frobenius error <span class="math inline">\(\sqrt{\sum_{i&gt;k}s_i^2}\)</span>. Maximising projected variance and minimising reconstruction error are the same problem, and a linear autoencoder recovers the same subspace.</p>
+<p><strong>Computation.</strong> Take the SVD of <span class="math inline">\(X\)</span> rather than the eigendecomposition of <span class="math inline">\(X^\top X\)</span>: forming the product squares the condition number. Full SVD costs <span class="math inline">\(O(\min(nd^2,n^2d))\)</span>; for the top <span class="math inline">\(k\)</span> use randomised SVD or Lanczos, about <span class="math inline">\(O(ndk)\)</span>.</p>
+<p><strong>Eigen versus SVD.</strong> Eigendecomposition needs a square matrix, and orthogonal eigenvectors need a symmetric (normal) one. The SVD exists for every matrix. For symmetric PSD matrices the two coincide.</p>
+<p><strong>Where PCA misleads.</strong> It is scale dependent, so standardise. High variance is not relevance to the label; the discriminative direction can be a low-variance one. It is linear, sensitive to outliers, and its components are defined only up to sign (and up to rotation when eigenvalues tie). Fit it on training data only.</p>
+<p>The same decomposition gives the pseudo-inverse <span class="math inline">\(X^{+}=V\Sigma^{+}U^\top\)</span> (minimum-norm least squares), the condition number <span class="math inline">\(s_{\max}/s_{\min}\)</span>, and the low-rank view behind LoRA and embedding compression.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Why are the normal equations numerically worse than QR or SVD for least squares?</li>
+<li>You keep 95% of the variance and downstream accuracy drops sharply. What happened?</li>
+</ul>
+</details>
+<details class="qa" id="mlfund-021">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> What makes an optimisation problem convex, how do you check it from the Hessian, and what do the Hessian’s eigenvalues tell you about how gradient descent behaves?
+</summary>
+<p><span class="math inline">\(f\)</span> is convex if its domain is convex and <span class="math inline">\(f(\theta x+(1-\theta)y)\le\theta f(x)+(1-\theta)f(y)\)</span>. Equivalently, the function lies above its tangents, or, for twice-differentiable <span class="math inline">\(f\)</span>, <span class="math inline">\(\nabla^2f\succeq0\)</span> everywhere. Then every local minimum is global; with strong convexity (<span class="math inline">\(\nabla^2f\succeq\mu I\)</span>, <span class="math inline">\(\mu&gt;0\)</span>) the minimiser is unique.</p>
+<p><strong>Convex:</strong> least squares (Hessian <span class="math inline">\(X^\top X\)</span>), logistic loss (<span class="math inline">\(X^\top SX\)</span>), hinge loss, L1 and L2 penalties, log-sum-exp, sums and maxima of convex functions. <strong>Not convex:</strong> anything with a hidden layer (permuting hidden units already gives equivalent minima), matrix factorisation <span class="math inline">\(\|M-UV^\top\|^2\)</span> (convex in each factor separately, hence alternating least squares), k-means.</p>
+<p><strong>Gradient descent on a quadratic</strong> with Hessian eigenvalues in <span class="math inline">\([\mu,L]\)</span>:</p>
+<ul>
+<li>It converges only if <span class="math inline">\(\eta&lt;2/L\)</span>: the largest eigenvalue caps the learning rate.</li>
+<li>With <span class="math inline">\(\eta=1/L\)</span> the error along an eigen-direction with eigenvalue <span class="math inline">\(h\)</span> shrinks by <span class="math inline">\(1-h/L\)</span> per step, so the flattest direction contracts by <span class="math inline">\(1-1/\kappa\)</span>, where <span class="math inline">\(\kappa=L/\mu\)</span> is the condition number. <span class="math inline">\(\kappa=1000\)</span> means thousands of steps.</li>
+<li>Remedies all precondition: standardising features, momentum (dependence on <span class="math inline">\(\sqrt\kappa\)</span> instead of <span class="math inline">\(\kappa\)</span>), Newton’s method (rescales by <span class="math inline">\(H^{-1}\)</span> at <span class="math inline">\(O(d^3)\)</span> cost), Adam-style diagonal scaling, normalisation layers.</li>
+</ul>
+<p><strong>Deep networks.</strong> In high dimension, saddle points are far more common than poor local minima, and gradient noise helps leave them. With full-batch gradient descent the top Hessian eigenvalue is observed to rise until it hovers near <span class="math inline">\(2/\eta\)</span> (the edge of stability; Cohen et al., 2021).</p>
+<p><strong>Mechanics.</strong> The gradient of a scalar is a vector in <span class="math inline">\(\mathbb{R}^d\)</span>; the Hessian is <span class="math inline">\(d\times d\)</span> and symmetric. You almost never form it: a Hessian-vector product costs about two backward passes.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Is the composition of two convex functions convex?</li>
+<li>Why does momentum help on ill-conditioned problems?</li>
+<li>How would you estimate the top Hessian eigenvalue of a network with a billion parameters?</li>
+</ul>
+</details>
+<details class="qa" id="mlfund-022">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">derivation</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> Use a Lagrangian to show that the maximum-entropy distribution over K outcomes with a fixed expected score is a softmax. Then state the KKT conditions and one place they matter in ML.
+</summary>
+<p>Maximise <span class="math inline">\(H(p)=-\sum_k p_k\log p_k\)</span> subject to <span class="math inline">\(\sum_k p_k=1\)</span> and <span class="math inline">\(\sum_k p_ks_k=c\)</span>.</p>
+<p><span class="math display">\[
+\mathcal{L}=-\sum_k p_k\log p_k+\lambda\Big(\sum_k p_ks_k-c\Big)+\nu\Big(\sum_k p_k-1\Big)
+\]</span></p>
+<p>Stationarity in <span class="math inline">\(p_k\)</span>: <span class="math inline">\(-\log p_k-1+\lambda s_k+\nu=0\)</span>, so <span class="math inline">\(p_k\propto e^{\lambda s_k}\)</span>, and normalising gives</p>
+<p><span class="math display">\[
+p_k=\frac{e^{\lambda s_k}}{\sum_j e^{\lambda s_j}}.
+\]</span></p>
+<p>The multiplier <span class="math inline">\(\lambda\)</span> is fixed by the constraint value <span class="math inline">\(c\)</span> and acts as an inverse temperature. The objective is concave and the constraints are linear, so this stationary point is the global maximum; the solution is strictly positive, so the constraints <span class="math inline">\(p_k\ge0\)</span> are inactive.</p>
+<p><strong>KKT conditions</strong> for <span class="math inline">\(\min f(x)\)</span> subject to <span class="math inline">\(g_i(x)\le0\)</span>, <span class="math inline">\(h_j(x)=0\)</span>, with <span class="math inline">\(\mathcal{L}=f+\sum_i\mu_ig_i+\sum_j\nu_jh_j\)</span>:</p>
+<ol type="1">
+<li>Stationarity: <span class="math inline">\(\nabla_x\mathcal{L}=0\)</span>.</li>
+<li>Primal feasibility: <span class="math inline">\(g_i\le0\)</span>, <span class="math inline">\(h_j=0\)</span>.</li>
+<li>Dual feasibility: <span class="math inline">\(\mu_i\ge0\)</span>.</li>
+<li>Complementary slackness: <span class="math inline">\(\mu_ig_i(x)=0\)</span>.</li>
+</ol>
+<p>For a convex problem satisfying Slater’s condition they are necessary and sufficient, and strong duality holds.</p>
+<p><strong>Where they matter.</strong></p>
+<ul>
+<li>SVM: complementary slackness gives non-zero multipliers only for points on or inside the margin (the support vectors), and the dual touches the data only through inner products, which is what admits kernels.</li>
+<li>Ridge and lasso: the penalised form and the constrained form <span class="math inline">\(\|w\|\le t\)</span> are the same problem, with <span class="math inline">\(\lambda\)</span> the multiplier.</li>
+<li>A multiplier is a price: the rate of change of the optimum per unit of constraint relaxation. Budget pacing, constrained RL and “maximise engagement subject to a guardrail” are solved by ascending on <span class="math inline">\(\lambda\)</span> while optimising the Lagrangian.</li>
+</ul>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>What does a multiplier of zero tell you about its constraint?</li>
+<li>Why can the duality gap be non-zero for a non-convex problem?</li>
+</ul>
+</details>
+</section>
+<section id="timeseries" class="level3">
+<h3 class="anchored" data-anchor-id="timeseries">Time series and forecasting <span class="demand">5% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="mlfund.timeseries.0"> Design a rolling-origin backtest that matches the production horizon, cadence and data latency</li>
+<li><input type="checkbox" class="chk" data-chk="mlfund.timeseries.1"> Write the pinball loss, show its minimiser is the quantile, and check quantile coverage</li>
+<li><input type="checkbox" class="chk" data-chk="mlfund.timeseries.2"> Encode seasonality (lags, calendar and Fourier features) and pick a scale-free metric such as MASE</li>
+<li><input type="checkbox" class="chk" data-chk="mlfund.timeseries.3"> Name the baselines every forecast must beat (seasonal naive, exponential smoothing)</li>
+</ul>
+<details class="qa" id="mlfund-029">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> How do you evaluate a demand-forecasting model so that the offline number predicts production accuracy? Describe the backtest.
+</summary>
+<p>Use a rolling-origin (walk-forward) backtest that replays how the model will be used.</p>
+<p><strong>Procedure.</strong> For cut-offs <span class="math inline">\(t_1&lt;\dots&lt;t_K\)</span>: train on data up to <span class="math inline">\(t_k\)</span> (expanding or sliding window), forecast the horizon <span class="math inline">\(t_k+1,\dots,t_k+h\)</span>, score, and move on. Report error per horizon step, because it grows with lead time, and the spread across cut-offs.</p>
+<p><strong>Match production.</strong></p>
+<ul>
+<li>Same retraining cadence and horizon.</li>
+<li>Same data availability. If actuals arrive two days late, the freshest usable lag at cut-off is two days old.</li>
+<li>Covariates only as known at the cut-off: calendar and planned promotions are fine, weather must be the forecast issued then, not the actuals.</li>
+<li>If history gets revised, use the vintage available at the cut-off.</li>
+</ul>
+<p><strong>Leakage paths.</strong></p>
+<ul>
+<li>Random K-fold on time-ordered data.</li>
+<li>Scaling with statistics computed over the whole series.</li>
+<li>Rolling features that include the current value, or lags shorter than the forecast horizon.</li>
+<li>Global models trained across many series must be cut by time for all series, not split by series.</li>
+<li>Tuning on the same windows you report. Keep the last windows as a final holdout.</li>
+</ul>
+<p><strong>Coverage.</strong> Test windows should span at least one full seasonal cycle, including peaks and holidays.</p>
+<p><strong>Metrics.</strong> MAE and RMSE are scale dependent. MAPE is undefined at zero and asymmetric. WAPE <span class="math inline">\(=\sum|e|/\sum|y|\)</span> suits aggregates. MASE divides MAE by the in-sample MAE of the seasonal-naive forecast, so below 1 beats naive. Use pinball loss and coverage for quantiles. Always include seasonal-naive and exponential-smoothing baselines.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>{‘Expanding or sliding training window’: ‘how do you decide?’}</li>
+<li>Stock-outs censor demand. What does that do to both training and evaluation?</li>
+</ul>
+</details>
+<details class="qa" id="mlfund-030">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> A forecast drives inventory decisions, so the business wants the 90th percentile of demand, not the mean. What loss do you train with, why does it work, and how do you handle seasonality and intermittent demand?
+</summary>
+<p>Train with the pinball (quantile) loss at <span class="math inline">\(\tau=0.9\)</span>:</p>
+<p><span class="math display">\[
+L_\tau(y,q)=\max\big(\tau\,(y-q),\ (\tau-1)\,(y-q)\big)
+\]</span></p>
+<p>Under-prediction costs <span class="math inline">\(\tau\)</span> per unit and over-prediction <span class="math inline">\(1-\tau\)</span>. Setting the derivative of the expected loss to zero, <span class="math inline">\(-\tau\,P(y&gt;q)+(1-\tau)\,P(y\le q)=0\)</span>, gives <span class="math inline">\(F(q)=\tau\)</span>: the minimiser is the <span class="math inline">\(\tau\)</span>-quantile. <span class="math inline">\(\tau=0.5\)</span> is MAE and the median. The newsvendor result picks the level: <span class="math inline">\(\tau=c_{\text{under}}/(c_{\text{under}}+c_{\text{over}})\)</span>.</p>
+<p><strong>Several quantiles.</strong> One output per <span class="math inline">\(\tau\)</span> with summed losses. Quantiles can cross; sort them or predict positive increments. Evaluate coverage (the share of actuals below <span class="math inline">\(\hat q_\tau\)</span> should be close to <span class="math inline">\(\tau\)</span>) alongside mean pinball loss. Alternatives are a parametric likelihood (negative binomial for counts) and conformal intervals, whose guarantee assumes exchangeability that time series violate.</p>
+<p><strong>Why not MSE.</strong> MSE targets the conditional mean. Log-transform plus MSE targets the median on the original scale: for log-normal data the mean is <span class="math inline">\(e^{\mu+\sigma^2/2}\)</span>, so naive back-transformation under-forecasts totals.</p>
+<p><strong>Seasonality.</strong> Calendar features, holiday flags (moving holidays need an explicit calendar), Fourier terms <span class="math inline">\(\sin(2\pi kt/P)\)</span> and <span class="math inline">\(\cos(2\pi kt/P)\)</span>, seasonal lags such as <span class="math inline">\(y_{t-7}\)</span> and <span class="math inline">\(y_{t-364}\)</span>, or decompose (STL) and model the remainder. Tree models cannot extrapolate a trend, so difference the target or predict a ratio to a lag.</p>
+<p><strong>Intermittent demand.</strong> With many zeros, MAPE is useless. Use count likelihoods (Poisson, negative binomial, zero-inflated) or Croston-type methods, evaluate at the level decisions are made, and remember that stock-outs censor observed demand.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Your 90% quantile forecast covers 80% of actuals. How do you investigate?</li>
+<li>SKU-level and total forecasts disagree. What do you do?</li>
+</ul>
+</details>
+</section>
+<section id="bayesian" class="level3">
+<h3 class="anchored" data-anchor-id="bayesian">Bayesian and probabilistic modeling <span class="demand">4% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="mlfund.bayesian.0"> Define calibration, compute ECE, and explain why ECE alone is not enough</li>
+<li><input type="checkbox" class="chk" data-chk="mlfund.bayesian.1"> Compare Platt scaling, isotonic regression and temperature scaling</li>
+<li><input type="checkbox" class="chk" data-chk="mlfund.bayesian.2"> Do a Beta-Binomial update and relate MAP to regularised MLE</li>
+<li><input type="checkbox" class="chk" data-chk="mlfund.bayesian.3"> Separate epistemic from aleatoric uncertainty and name practical estimators (ensembles, MC dropout, GPs)</li>
+</ul>
+<details class="qa" id="mlfund-035">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> What does it mean for a classifier to be calibrated, how do you measure it, and how do Platt scaling, isotonic regression and temperature scaling differ?
+</summary>
+<p>Calibrated means <span class="math inline">\(P(Y{=}1\mid\hat p=p)=p\)</span>: of the cases scored 0.2, 20% are positive. It matters whenever the score is used as a probability: bids (<span class="math inline">\(\text{pCTR}\times\text{value}\)</span>), expected loss, cost-based thresholds, combining models. It is irrelevant to pure ranking, since AUC is invariant to monotone maps.</p>
+<p><strong>Measuring.</strong> A reliability diagram with bin counts, and</p>
+<p><span class="math display">\[
+\mathrm{ECE}=\sum_b\frac{|B_b|}{n}\,\big|\,\bar y_b-\bar p_b\,\big| .
+\]</span></p>
+<p>ECE depends on the binning, is usually top-label only in multiclass, and is zero for a constant predictor that outputs the base rate. Pair it with a proper scoring rule (NLL or Brier), a ranking metric, and the aggregate ratio of mean prediction to mean label, by slice.</p>
+<p><strong>Post-hoc methods</strong>, all fit on held-out data, never on the training set:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Method</th>
+<th>Map</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Platt scaling</td>
+<td><span class="math inline">\(\sigma(az+b)\)</span></td>
+<td>Two parameters, low variance, fine with little data; assumes a sigmoid-shaped distortion</td>
+</tr>
+<tr class="even">
+<td>Temperature scaling</td>
+<td><span class="math inline">\(\mathrm{softmax}(z/T)\)</span></td>
+<td>One parameter fit by NLL; keeps the argmax, so accuracy is unchanged; cannot fix a base-rate shift or per-class bias</td>
+</tr>
+<tr class="odd">
+<td>Isotonic regression</td>
+<td>Non-decreasing step function</td>
+<td>Non-parametric and flexible; needs more data, creates ties, noisy in the tails</td>
+</tr>
+</tbody>
+</table>
+<p>All three are monotone, so ranking is preserved up to ties.</p>
+<p><strong>Sources of miscalibration.</strong> Resampling and class weights (correct analytically), focal loss and label smoothing, over-parameterised networks trained to near-zero training loss (over-confident, <span class="math inline">\(T&gt;1\)</span>), boosted trees and SVM margins, and distribution shift, since calibration is always relative to a population.</p>
+<p>A model can be calibrated overall and miscalibrated in every segment; check slices. Version the calibrator with the model: retraining the model invalidates it.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Can a model be perfectly calibrated and useless?</li>
+<li>Why does temperature scaling not change accuracy, and when is that a limitation?</li>
+<li>Negatives were downsampled in training. Do you fix that with Platt scaling or analytically?</li>
+</ul>
+</details>
+<details class="qa" id="mlfund-036">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> Give a Bayesian treatment of estimating a click-through rate from a handful of impressions. How does it relate to MLE, MAP and regularisation, and when is the extra machinery worth it?
+</summary>
+<p>Prior <span class="math inline">\(\theta\sim\mathrm{Beta}(\alpha,\beta)\)</span>; data <span class="math inline">\(k\)</span> clicks in <span class="math inline">\(n\)</span> impressions. The Beta is conjugate to the binomial, so the posterior is <span class="math inline">\(\mathrm{Beta}(\alpha+k,\ \beta+n-k)\)</span> with mean</p>
+<p><span class="math display">\[
+\frac{\alpha+k}{\alpha+\beta+n}=\frac{n}{n+\alpha+\beta}\cdot\frac{k}{n}+\frac{\alpha+\beta}{n+\alpha+\beta}\cdot\frac{\alpha}{\alpha+\beta}.
+\]</span></p>
+<p>The prior acts as <span class="math inline">\(\alpha+\beta\)</span> pseudo-impressions. With 0 clicks in 3 impressions the MLE says 0; under <span class="math inline">\(\mathrm{Beta}(1,19)\)</span> (prior mean 5%) the posterior mean is <span class="math inline">\(1/23\approx4.3\%\)</span>. The posterior mean is also the predictive probability of a click on the next impression.</p>
+<p><strong>Relations.</strong> MLE maximises <span class="math inline">\(p(D\mid\theta)\)</span>. MAP maximises <span class="math inline">\(p(D\mid\theta)\,p(\theta)\)</span>, which is MLE plus a regulariser: a Gaussian prior gives L2 and a Laplace prior gives L1. MAP is still a point estimate. Full Bayes keeps the posterior and predicts with <span class="math inline">\(p(y^*\mid D)=\int p(y^*\mid\theta)\,p(\theta\mid D)\,d\theta\)</span>.</p>
+<p><strong>What the posterior buys.</strong></p>
+<ul>
+<li>Uncertainty that shrinks with data, hence credible intervals.</li>
+<li>Exploration: Thompson sampling draws <span class="math inline">\(\theta\)</span> from the posterior and acts greedily on the draw.</li>
+<li>Partial pooling: estimate the prior from all items (empirical Bayes, hierarchical models) so long-tail items borrow strength. Smoothed target encoding is this.</li>
+</ul>
+<p><strong>Vocabulary.</strong> Epistemic uncertainty comes from limited data and is reducible; aleatoric is noise in the outcome and is not.</p>
+<p><strong>Beyond conjugacy.</strong> MCMC (asymptotically exact, slow), variational inference (maximise an ELBO; fast, tends to under-estimate variance), Laplace approximation. Gaussian processes give an exact posterior over functions at <span class="math inline">\(O(n^3)\)</span> cost and are used for small data and Bayesian optimisation. For deep networks, ensembles and MC dropout are the pragmatic approximations, and ensembles are usually the stronger baseline.</p>
+<p>It is worth it with little data per entity, a need for exploration, or decisions that depend on uncertainty. With abundant data the posterior concentrates and a point estimate is enough.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How would you choose alpha and beta from historical data?</li>
+<li>Compare Thompson sampling with UCB.</li>
+<li>What is the difference between a credible interval and a confidence interval?</li>
+</ul>
+</details>
+</section>
+<section id="causal" class="level3">
+<h3 class="anchored" data-anchor-id="causal">Causal inference <span class="demand">3% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="mlfund.causal.0"> Write the selection-bias decomposition and the assumptions behind adjustment (unconfoundedness, overlap, SUTVA)</li>
+<li><input type="checkbox" class="chk" data-chk="mlfund.causal.1"> Write the IPW and doubly robust estimators and name their failure modes</li>
+<li><input type="checkbox" class="chk" data-chk="mlfund.causal.2"> Apply difference-in-differences and say how to probe parallel trends</li>
+<li><input type="checkbox" class="chk" data-chk="mlfund.causal.3"> Distinguish uplift from response modelling and evaluate uplift with a Qini curve</li>
+</ul>
+<details class="qa" id="mlfund-033">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> Users who received a push notification show 30% higher retention. Why can’t you read that as the effect of the notification, and how would you estimate the effect from observational data?
+</summary>
+<p>Notifications were targeted, so treated and untreated users differ in ways that also drive retention. That is confounding:</p>
+<p><span class="math display">\[
+\mathbb{E}[Y\mid T{=}1]-\mathbb{E}[Y\mid T{=}0]
+=\underbrace{\mathbb{E}[Y(1)-Y(0)\mid T{=}1]}_{\text{effect on the treated}}
++\underbrace{\mathbb{E}[Y(0)\mid T{=}1]-\mathbb{E}[Y(0)\mid T{=}0]}_{\text{selection bias}}
+\]</span></p>
+<p>Randomising removes the second term. Without it, adjustment needs three assumptions: <strong>unconfoundedness</strong> <span class="math inline">\((Y(0),Y(1))\perp T\mid X\)</span>, which is untestable; <strong>overlap</strong> <span class="math inline">\(0&lt;e(x)&lt;1\)</span> for the propensity <span class="math inline">\(e(x)=P(T{=}1\mid X{=}x)\)</span>; and <strong>no interference</strong> between units (SUTVA).</p>
+<p>Estimators:</p>
+<ul>
+<li>Regression adjustment: model <span class="math inline">\(\mu_t(x)=\mathbb{E}[Y\mid X{=}x,T{=}t]\)</span> and average <span class="math inline">\(\mu_1-\mu_0\)</span>.</li>
+<li>Inverse propensity weighting: <span class="math display">\[
+\hat\tau_{\text{IPW}}=\frac1n\sum_i\left[\frac{T_iY_i}{\hat e(X_i)}-\frac{(1-T_i)Y_i}{1-\hat e(X_i)}\right]
+\]</span></li>
+<li>Doubly robust (AIPW): the regression estimate plus an IPW correction of its residuals. It is consistent if either the outcome model or the propensity model is correct.</li>
+</ul>
+<p>Failure modes:</p>
+<ul>
+<li>Propensities near 0 or 1 give huge weights. Clip or trim, use self-normalised weights, and report the effective sample size. A propensity model with AUC near 1 means there is no overlap, not that the model is good.</li>
+<li>Adjust only for pre-treatment covariates. Conditioning on a mediator or a collider adds bias.</li>
+<li>Unmeasured confounders: run sensitivity analysis and negative controls, or look for an instrument or natural experiment.</li>
+</ul>
+<p>Checks: covariate balance after weighting (standardised mean differences below about 0.1) and a placebo outcome, for example retention before the notification, which should show no effect.</p>
+<p>The same weighting underlies off-policy evaluation and position-bias correction in ranking.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Why does a more accurate propensity model sometimes make the estimate worse?</li>
+<li>What is the difference between ATE and ATT, and which does a launch decision need?</li>
+<li>Give an example of a collider in a product dataset.</li>
+</ul>
+</details>
+<details class="qa" id="mlfund-034">
+<summary>
+<span class="tag tag-staff">staff</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> Two causal questions. (a) A feature launched in one country only, with no experiment. How do you estimate its effect? (b) You ran a randomised promotion experiment and must decide who gets the promotion. How is that different from predicting who will buy?
+</summary>
+<p><strong>(a) Difference-in-differences.</strong></p>
+<p><span class="math display">\[
+\hat\tau=(\bar Y_{T,\text{post}}-\bar Y_{T,\text{pre}})-(\bar Y_{C,\text{post}}-\bar Y_{C,\text{pre}})
+\]</span></p>
+<p>It removes fixed differences between the groups and shocks common to both. The assumption is <strong>parallel trends</strong>: without the launch, both would have moved alike. It cannot be tested after launch; probe it with pre-period trends (an event-study plot whose pre-launch coefficients should be near zero) and placebo launch dates. Threats are concurrent events in one group, spillovers, anticipation and a changing user mix. With one treated country there are very few independent clusters, so naive standard errors are far too small; use cluster-robust or permutation inference. If no control is parallel, a synthetic control builds a weighted mix of untreated units that tracks the pre-period.</p>
+<p><strong>(b) Uplift.</strong> The target is <span class="math inline">\(\tau(x)=\mathbb{E}[Y(1)-Y(0)\mid X{=}x]\)</span>, not <span class="math inline">\(\mathbb{E}[Y\mid X{=}x]\)</span>. Likely buyers include “sure things” who buy anyway, so targeting on purchase propensity wastes the budget; you want those whose behaviour changes. Nobody is observed under both arms, so there is no per-row label.</p>
+<ul>
+<li>Methods: T-learner (one model per arm, subtract; noisy when the effect is small relative to outcome variance), S-learner (treatment as a feature; tends to shrink the effect towards zero), X-, R- and DR-learners, causal forests. With randomised data and propensity <span class="math inline">\(e\)</span>, the transformed outcome <span class="math inline">\(Y(T-e)/(e(1-e))\)</span> has conditional mean <span class="math inline">\(\tau(x)\)</span>.</li>
+<li>Evaluation: rank by predicted uplift and compare treated against control outcomes within each top fraction (uplift or Qini curve), then A/B test the targeting policy against treating everyone and against random targeting.</li>
+<li>Decision: treat when <span class="math inline">\(\tau(x)\times\text{value}&gt;\text{cost}\)</span>; under a budget, rank by uplift per unit cost.</li>
+</ul>
+<p>Effects are small relative to noise, so uplift models need much larger experiments than response models.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>What does a violated pre-trend look like, and what do you do then?</li>
+<li>Why can’t you evaluate an uplift model with RMSE?</li>
+</ul>
+</details>
+</section>
+</section>
+<section id="deep-dives-on-this-site" class="level2">
+<h2 class="anchored" data-anchor-id="deep-dives-on-this-site">Deep dives on this site</h2>
+<ul>
+<li><a href="../notes/foundations/losses.html">Losses from First Principles</a></li>
+<li><a href="../notes/foundations/prediction_decision_losses.html">Prediction and Decision Losses</a></li>
+<li><a href="../notes/foundations/calibration.html">Model Calibration: From CTR/CVR to Calibrated Decisions</a></li>
+<li><a href="../notes/foundations/optimizers.html">Zeroth-, First-, and Second-Order Optimization</a></li>
+<li><a href="../notes/algorithms/probabilistic_modeling_tricks.html">probabilistic modeling tricks</a></li>
+<li><a href="../notes/algorithms/probabilistic-modeling-practice-solutions.html">Probabilistic Modeling Practice: 20 Worked Problems</a></li>
+</ul>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/threeeyelidds\.github\.io\/minimal-ml\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+      window.quartoDecorateExternalLinks = function (root) {
+     var links = (root || window.document).querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+          if (!link.classList.contains('no-external-icon')) {
+          }
+        }
+      }
+      };
+      window.quartoDecorateExternalLinks(window.document);
+    // Esc closes the popup (WCAG 1.4.13) and focus leaving both trigger and
+    // popup closes it (WCAG 2.4.11); tippy handles neither for interactive popups.
+    const hideOnEscAndFocusOut = {
+      name: 'hideOnEscAndFocusOut',
+      defaultValue: true,
+      fn(instance) {
+        const dismiss = () => {
+          // A show scheduled by the trigger delay would otherwise reopen it
+          instance.clearDelayTimeouts();
+          instance.hide();
+        };
+        const onKeyDown = (event) => {
+          if (event.key !== 'Escape') {
+            return;
+          }
+          // Keep Esc from also reaching page handlers (e.g. reveal.js overview),
+          // except an open reveal.js slide menu, which Esc should close too.
+          // The menu handles keys only when its keyboard option is on.
+          const menuHandlesEsc = window.Reveal?.getPlugin?.('menu')?.isOpen() &&
+            window.Reveal.getConfig().menu?.keyboard !== false;
+          if (!menuHandlesEsc) {
+            event.stopPropagation();
+          }
+          if (instance.popper.contains(window.document.activeElement)) {
+            // Disabled while refocusing so the focus trigger does not reopen it
+            instance.disable();
+            instance.reference.focus();
+            instance.enable();
+          }
+          dismiss();
+        };
+        const onFocusOut = (event) => {
+          const target = event.relatedTarget;
+          if (target && !instance.reference.contains(target) &&
+              !instance.popper.contains(target)) {
+            dismiss();
+          }
+        };
+        // On the trigger too: a click trigger (code-annotations: select) has no
+        // blur handling. Attached for the instance's lifetime so leaving the
+        // trigger also cancels a show still pending on the trigger delay.
+        instance.reference.addEventListener('focusout', onFocusOut);
+        return {
+          onShow() {
+            window.document.addEventListener('keydown', onKeyDown, true);
+            instance.popper.addEventListener('focusout', onFocusOut);
+          },
+          onHide() {
+            window.document.removeEventListener('keydown', onKeyDown, true);
+            instance.popper.removeEventListener('focusout', onFocusOut);
+          },
+          onDestroy() {
+            instance.reference.removeEventListener('focusout', onFocusOut);
+          },
+        };
+      },
+    };
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+        plugins: [hideOnEscAndFocusOut],
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          // Each band is positioned against its own containing block, which is
+          // not the offsetParent of the lines, so place it from client rects.
+          const placeBand = (band, firstEl, lastEl, codeBlock) => {
+            const container = band.offsetParent;
+            if (container === null) {
+              return;
+            }
+            const containerRect = container.getBoundingClientRect();
+            // Reveal.js scales slides with a transform, so convert client
+            // pixels back to the CSS pixels of the container.
+            const scale = containerRect.height / container.offsetHeight || 1;
+            const firstRect = firstEl.getBoundingClientRect();
+            const lastRect = lastEl.getBoundingClientRect();
+            const top = (firstRect.top - containerRect.top) / scale - container.clientTop + container.scrollTop;
+            const height = (lastRect.bottom - firstRect.top) / scale;
+            band.style.top = top - 2 + "px";
+            band.style.height = height + 4 + "px";
+            if (codeBlock) {
+              // Without the copy button wrapper, the containing block is wider
+              // than the code block, so span the code block explicitly.
+              const blockRect = codeBlock.getBoundingClientRect();
+              band.style.left = (blockRect.left - containerRect.left) / scale - container.clientLeft + container.scrollLeft + "px";
+              band.style.width = blockRect.width / scale + "px";
+            }
+          };
+          if (lineIds.length > 0) {
+            const el = window.document.getElementById(lineIds[0]);
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const parent = el.parentElement.parentElement;
+            // cook up a div (if necessary) and position it
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            placeBand(div, el, lastEl, parent.closest("div.sourceCode") || parent);
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            placeBand(gutterDiv, el, lastEl);
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+  <script type="application/javascript">
+  window.quartoScrollableRegionsLabels = {"code":"Scrollable code","output":"Scrollable output"};
+  </script>
+</div> <!-- /content -->
+<script>
+/* Site-wide: persistent checklists and review status on the skill pages. */
+(function () {
+  "use strict";
+  function get(k) { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch (e) { return {}; } }
+  function set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* storage blocked: ticks last for this page view */ } }
+
+  var chk = get("prep.chk.v1");
+  document.querySelectorAll("input.chk").forEach(function (el) {
+    el.checked = !!chk[el.dataset.chk];
+    el.addEventListener("change", function () {
+      if (el.checked) chk[el.dataset.chk] = 1; else delete chk[el.dataset.chk];
+      set("prep.chk.v1", chk);
+    });
+  });
+
+  var cards = (get("prep.v1").cards) || {};
+  document.querySelectorAll("details.qa[id]").forEach(function (el) {
+    var r = cards[el.id];
+    if (r) el.classList.add(r.ivl >= 7 ? "st-known" : "st-learning");
+  });
+
+  // open the question a link points at
+  function openTarget() {
+    var id = decodeURIComponent(location.hash.slice(1));
+    var el = id && document.getElementById(id);
+    if (el && el.tagName === "DETAILS") { el.open = true; el.scrollIntoView({ block: "start" }); }
+  }
+  window.addEventListener("hashchange", openTarget);
+  openTarget();
+
+  var mp = document.getElementById("map-progress");
+  if (mp) {
+    var seen = Object.keys(cards).length, known = Object.keys(cards).filter(function (k) { return cards[k].ivl >= 7; }).length;
+    var ticks = Object.keys(chk).length;
+    if (seen || ticks) {
+      mp.className = "tile";
+      mp.style.marginBottom = "1.2rem";
+      mp.textContent = "Your progress in this browser: " + seen + " cards reviewed, " + known + " known, " + ticks + " checklist items ticked.";
+    }
+  }
+})();
+</script>
+
+
+
+
+</body></html>

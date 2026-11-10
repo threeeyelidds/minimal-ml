@@ -1,0 +1,1900 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.11.9">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Research skills – Minimal ML</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/scrollable-regions/scrollable-regions.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-447e42e69aaa9833c0ba1b986f430b20.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-980fa6b4eab38a5377f72c7fe6f39b73.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="dark">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<meta name="google-site-verification" content="Ztjr25pGaioeZP-mkoIn_MkNmmsFXWcU6I6W2tEPli0">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../styles.css">
+<link rel="stylesheet" href="../colors.css">
+<link rel="stylesheet" href="../prep.css">
+</head>
+
+<body class="nav-sidebar docked nav-fixed quarto-light"><a id="quarto-skip-link" class="visually-hidden-focusable" href="#quarto-document-content">Skip to main content</a>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark" aria-label="Site">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">Minimal ML</span>
+    </a>
+  </div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../report/index.html"> 
+<span class="menu-text">Report</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link active" href="../skills/index.html" aria-current="page"> 
+<span class="menu-text">Skills</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../review/index.html"> 
+<span class="menu-text">Review</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../plan/index.html"> 
+<span class="menu-text">Plan</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../jobs/index.html"> 
+<span class="menu-text">Open roles</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../notes/index.html"> 
+<span class="menu-text">Notes</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../essays/index.html"> 
+<span class="menu-text">Essays</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+            <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav" aria-label="Toolbar">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="Breadcrumbs"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../skills/llm.html">LLMs and agents</a></li><li class="breadcrumb-item"><a href="../skills/research.html">Research skills</a></li></ol></nav>
+        <a class="flex-grow-1" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto" aria-label="Section">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Skill map</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/cases.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Design cases</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" aria-controls="quarto-sidebar-section-1" aria-expanded="true">
+ <span class="menu-text" id="quarto-sidebar-section-1-label">The loop</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-1" aria-labelledby="quarto-sidebar-section-1-label" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/swe.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Programming and software engineering</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/mlfund.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">ML fundamentals and statistics</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/dl.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Deep learning</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/eval.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Evaluation and experimentation</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/senior.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Senior-level scope and leadership</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" aria-controls="quarto-sidebar-section-2" aria-expanded="true">
+ <span class="menu-text" id="quarto-sidebar-section-2-label">LLMs and agents</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-2" aria-labelledby="quarto-sidebar-section-2-label" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/llm.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">LLMs and foundation models (training side)</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/llmapp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">LLM application engineering (agents, RAG, prompts)</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/rl.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Reinforcement learning and decision making</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/research.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Research skills</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" aria-controls="quarto-sidebar-section-3" aria-expanded="true">
+ <span class="menu-text" id="quarto-sidebar-section-3-label">Product ML</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-3" aria-labelledby="quarto-sidebar-section-3-label" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/recsys.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Search, recommendation, ads and ranking</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/domain.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Domain specialties</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" aria-controls="quarto-sidebar-section-4" aria-expanded="true">
+ <span class="menu-text" id="quarto-sidebar-section-4-label">Systems</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-4" aria-labelledby="quarto-sidebar-section-4-label" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/infra.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Training infrastructure and data systems</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/serving.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Inference, serving and model optimization</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/mlops.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">MLOps, cloud and production operations</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" aria-labelledby="toc-title" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#what-the-postings-ask-for" id="toc-what-the-postings-ask-for" class="nav-link active" data-scroll-target="#what-the-postings-ask-for">What the postings ask for</a>
+  <ul class="collapse">
+  <li><a href="#in-the-postings-words" id="toc-in-the-postings-words" class="nav-link" data-scroll-target="#in-the-postings-words">In the postings’ words</a></li>
+  </ul></li>
+  <li><a href="#the-senior-bar" id="toc-the-senior-bar" class="nav-link" data-scroll-target="#the-senior-bar">The senior bar</a></li>
+  <li><a href="#skills-checklists-and-questions" id="toc-skills-checklists-and-questions" class="nav-link" data-scroll-target="#skills-checklists-and-questions">Skills, checklists and questions</a>
+  <ul class="collapse">
+  <li><a href="#research-eng" id="toc-research-eng" class="nav-link" data-scroll-target="#research-eng">Research engineering: fast, correct experiment code <span class="demand">32% of postings</span></a></li>
+  <li><a href="#publications" id="toc-publications" class="nav-link" data-scroll-target="#publications">Publications and open-source track record <span class="demand">24% of postings</span></a></li>
+  <li><a href="#fairness" id="toc-fairness" class="nav-link" data-scroll-target="#fairness">Fairness, bias and responsible AI <span class="demand">19% of postings</span></a></li>
+  <li><a href="#research-taste" id="toc-research-taste" class="nav-link" data-scroll-target="#research-taste">Research judgment: picking problems, forming hypotheses <span class="demand">18% of postings</span></a></li>
+  <li><a href="#research-collab" id="toc-research-collab" class="nav-link" data-scroll-target="#research-collab">Working with researchers / research-product bridge <span class="demand">16% of postings</span></a></li>
+  <li><a href="#papers" id="toc-papers" class="nav-link" data-scroll-target="#papers">Reading, reproducing and implementing research <span class="demand">14% of postings</span></a></li>
+  <li><a href="#safety-research" id="toc-safety-research" class="nav-link" data-scroll-target="#safety-research">AI safety and alignment <span class="demand">8% of postings</span></a></li>
+  </ul></li>
+  <li><a href="#deep-dives-on-this-site" id="toc-deep-dives-on-this-site" class="nav-link" data-scroll-target="#deep-dives-on-this-site">Deep dives on this site</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content" tabindex="-1">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="Breadcrumbs"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../skills/llm.html">LLMs and agents</a></li><li class="breadcrumb-item"><a href="../skills/research.html">Research skills</a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title">Research skills</h1>
+<p class="subtitle lead">Named in 68% of 2253 senior postings · 34 review cards</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!-- Generated by tools/build_site.py. Edit bank/*.yml or the script, not this file. -->
+<p>The research-engineer loop: reading and reproducing papers, writing experiment code that is fast and correct, judging which experiments are worth running, and working with researchers to turn a prototype into a product. About seven in ten postings name at least one of these skills, and research-engineer postings name fast, correct experiment code in two out of three cases. Safety-focused and regulated teams add questions on AI safety, fairness and responsible deployment, where they expect concrete mechanisms and measurements, not opinions.</p>
+<p class="area-meta">
+<span class="chip">Paper discussion or research presentation</span><span class="chip">Research engineering and debugging round</span><span class="chip">Research judgment conversation with the hiring manager</span><span class="chip">ML coding (implement and test a method from a paper)</span><span class="chip">Values and safety conversation at safety-focused labs</span><a class="btn-review" href="../review/index.html#area=research">Review these cards →</a>
+</p>
+<section id="what-the-postings-ask-for" class="level2">
+<h2 class="anchored" data-anchor-id="what-the-postings-ask-for">What the postings ask for</h2>
+<p>Share of postings that name each skill, overall and by track.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Skill</th>
+<th style="text-align: left;">All postings</th>
+<th style="text-align: right;">MLE</th>
+<th style="text-align: right;">AI eng</th>
+<th style="text-align: right;">Research eng</th>
+<th style="text-align: right;">Cards</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><a href="#research-eng">Research engineering: fast, correct experiment code</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:32%"></span><span class="pct">32%</span></span></td>
+<td style="text-align: right;">24%</td>
+<td style="text-align: right;">29%</td>
+<td style="text-align: right;">71%</td>
+<td style="text-align: right;">9</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="#publications">Publications and open-source track record</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:24%"></span><span class="pct">24%</span></span></td>
+<td style="text-align: right;">24%</td>
+<td style="text-align: right;">19%</td>
+<td style="text-align: right;">49%</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="#fairness">Fairness, bias and responsible AI</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:19%"></span><span class="pct">19%</span></span></td>
+<td style="text-align: right;">12%</td>
+<td style="text-align: right;">26%</td>
+<td style="text-align: right;">18%</td>
+<td style="text-align: right;">4</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="#research-taste">Research judgment: picking problems, forming hypotheses</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:18%"></span><span class="pct">18%</span></span></td>
+<td style="text-align: right;">17%</td>
+<td style="text-align: right;">13%</td>
+<td style="text-align: right;">47%</td>
+<td style="text-align: right;">9</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="#research-collab">Working with researchers / research-product bridge</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:16%"></span><span class="pct">16%</span></span></td>
+<td style="text-align: right;">14%</td>
+<td style="text-align: right;">7%</td>
+<td style="text-align: right;">57%</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="#papers">Reading, reproducing and implementing research</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:14%"></span><span class="pct">14%</span></span></td>
+<td style="text-align: right;">12%</td>
+<td style="text-align: right;">11%</td>
+<td style="text-align: right;">28%</td>
+<td style="text-align: right;">4</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="#safety-research">AI safety and alignment</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:8%"></span><span class="pct">8%</span></span></td>
+<td style="text-align: right;">7%</td>
+<td style="text-align: right;">7%</td>
+<td style="text-align: right;">19%</td>
+<td style="text-align: right;">3</td>
+</tr>
+</tbody>
+</table>
+<section id="in-the-postings-words" class="level3">
+<h3 class="anchored" data-anchor-id="in-the-postings-words">In the postings’ words</h3>
+<blockquote class="blockquote">
+<p>Research to production. Turn research prototypes into reusable, configurable components that forward deployed engineers and researchers use on every project.</p>
+<p><span class="quote-src"><a href="https://job-boards.greenhouse.io/snorkelai/jobs/6208931004">Snorkel AI · Senior / Staff Software Engineer — AI / ML</a></span></p>
+</blockquote>
+<blockquote class="blockquote">
+<p>Demonstrated experience building, training, evaluating, and deploying AI/ML systems, not just publishing.</p>
+<p><span class="quote-src"><a href="https://analogdevices.wd1.myworkdayjobs.com/External/job/US-CA-San-Jose-Rio-Robles/Staff-AI-ML-Engineer--Time-Series---Sensor-Reasoning-Models--Lorenz-Labs-_R265558">Analog Devices · Staff AI/ML Engineer, Time-Series &amp; Sensor Reasoning Models (Lorenz Labs)</a></span></p>
+</blockquote>
+<blockquote class="blockquote">
+<p>Build the evaluation, guardrails and human-in-the-loop flows that make an agent trustworthy enough to run 24/7.</p>
+<p><span class="quote-src"><a href="https://job-boards.greenhouse.io/flexport/jobs/7311883">Flexport · Staff Applied AI Engineer, Autonomous Supply Chains</a></span></p>
+</blockquote>
+<blockquote class="blockquote">
+<p>Understanding of statistical concepts such as hypothesis testing, regression analysis, and performance evaluation metrics for machine learning</p>
+<p><span class="quote-src"><a href="https://app.careerpuck.com/job-board/lyft/job/8603653002?gh_jid=8603653002">Lyft · Senior Machine Learning Engineer, Recommendations</a></span></p>
+</blockquote>
+<blockquote class="blockquote">
+<p>PhD in biomedical engineering, computational neuroscience, signal processing with a focus on biosignals or an equivalent record of applied research and engineering impact.</p>
+<p><span class="quote-src"><a href="https://wd1.myworkdaysite.com/recruiting/snapchat/snap/job/Paris-France/Research-Engineer_R0046981-1">Snap · Research Engineer</a></span></p>
+</blockquote>
+<blockquote class="blockquote">
+<p>Publish and share: Contribute to Cognition’s external safety work through papers, evals, and open methods where it makes sense.</p>
+<p><span class="quote-src"><a href="https://jobs.ashbyhq.com/cognition/023cea7e-70db-4f79-8e82-c57564466622">Cognition · Research Engineer, Safety &amp; Alignment</a></span></p>
+</blockquote>
+<blockquote class="blockquote">
+<p>Our blog provides an overview of topics that the Alignment Science team is either currently exploring or has previously explored. Our current topics of focus include…</p>
+<p><span class="quote-src"><a href="https://job-boards.greenhouse.io/anthropic/jobs/4610158008">Anthropic · [Expression of Interest] Research Engineer / Scientist, Alignment - London</a></span></p>
+</blockquote>
+</section>
+</section>
+<section id="the-senior-bar" class="level2">
+<h2 class="anchored" data-anchor-id="the-senior-bar">The senior bar</h2>
+<p>What separates a senior answer from a mid-level one in this area.</p>
+<ul>
+<li>States the hypothesis and the result that would falsify it before describing the experiment, and knows the seed-to-seed noise floor of the metric being moved.</li>
+<li>Distrusts a good result first and can list the leakage, baseline and evaluation checks run before believing a gain.</li>
+<li>Debugs by bisection against a known-good reference instead of guessing, and can name the silent bugs (schedule not applied, frozen parameters, eval preprocessing mismatch) from experience.</li>
+<li>Treats iteration time as a design target, knows where the time goes in the experiment loop and has shortened it.</li>
+<li>Presents past research with an exact account of their own contribution, the strongest objection to the result, and what they would do differently.</li>
+<li>Decides when to stop, with kill criteria set in advance, and writes up negative results so that nobody repeats them.</li>
+<li>Discusses safety and fairness with definitions, measurements and costs, and separates established results from open questions.</li>
+</ul>
+</section>
+<section id="skills-checklists-and-questions" class="level2">
+<h2 class="anchored" data-anchor-id="skills-checklists-and-questions">Skills, checklists and questions</h2>
+<p>Tick an item when you can explain it without notes; ticks are saved in this browser. Open a question to see the answer.</p>
+<section id="research-eng" class="level3">
+<h3 class="anchored" data-anchor-id="research-eng">Research engineering: fast, correct experiment code <span class="demand">32% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="research.research-eng.0"> Can list the sanity checks run before a long training job (loss at initialisation, overfit one batch, inspect decoded inputs)</li>
+<li><input type="checkbox" class="chk" data-chk="research.research-eng.1"> Can make a PyTorch run reproducible and explain what stays nondeterministic and why several seeds are still needed</li>
+<li><input type="checkbox" class="chk" data-chk="research.research-eng.2"> Can write unit tests for numerical code (gradient check, causality test, batch independence, reference equivalence)</li>
+<li><input type="checkbox" class="chk" data-chk="research.research-eng.3"> Can debug a run that trains without error but underperforms, by bisection and by logging the right quantities</li>
+<li><input type="checkbox" class="chk" data-chk="research.research-eng.4"> Can profile an experiment loop and shorten it without changing conclusions</li>
+<li><input type="checkbox" class="chk" data-chk="research.research-eng.5"> Can explain what must be recorded for a result to be reproducible months later and what makes a negative result credible</li>
+</ul>
+<details class="qa" id="research-016">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> What sanity checks do you run before launching a long training job?
+</summary>
+<p>Checks that take minutes and catch most bugs that would otherwise cost a day:</p>
+<ul>
+<li><strong>Loss at initialisation.</strong> For a <span class="math inline">\(C\)</span>-class softmax with uniform predictions the loss is <span class="math inline">\(\ln C\)</span>: about 2.30 for 10 classes, about 10.82 for a 50,257-token vocabulary. For an imbalanced binary task, initialise the output bias to <span class="math inline">\(\log\frac{p}{1-p}\)</span> and expect the entropy of the base rate. A different value means a bug in the loss, labels or initialisation.</li>
+<li><strong>Overfit one batch.</strong> Train on a single small batch with regularisation off; the loss should approach zero and predictions should match labels. Failure means the model, loss or optimiser wiring is broken.</li>
+<li><strong>Look at the exact tensors entering the model.</strong> Decode token ids back to text, display augmented images, print the labels next to them. Check the shift between inputs and targets for language models, and padding and attention masks.</li>
+<li><strong>Input-independent baseline.</strong> Zero the inputs; the model should do worse than with real inputs. If not, it is not using them.</li>
+<li><strong>Dependency check.</strong> The gradient of example <span class="math inline">\(i\)</span>’s loss with respect to example <span class="math inline">\(j\)</span>’s input should be zero; for causal models, with respect to future positions too.</li>
+<li><strong>Counts.</strong> Trainable parameter count, dataset size, steps per epoch, learning rate at a few steps of the schedule.</li>
+<li><strong>Evaluation path.</strong> Evaluate a known checkpoint and get its known number. Run evaluation and checkpoint-saving at step 10 so that they do not crash at hour 6.</li>
+<li><strong>Short run.</strong> A small-scale run whose loss curve looks like past good runs.</li>
+</ul>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>The model overfits one batch but the full run does not learn. What does that rule out, and what is left?</li>
+</ul>
+</details>
+<details class="qa" id="research-017">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> How do you make a PyTorch training run reproducible, what remains nondeterministic, and why do you still need several seeds?
+</summary>
+<p><strong>What to control.</strong></p>
+<ul>
+<li>Seed every generator: Python <code>random</code>, NumPy, <code>torch.manual_seed</code> (CPU and CUDA). Give the <code>DataLoader</code> a seeded <code>generator</code> and a <code>worker_init_fn</code>, because each worker process has its own state.</li>
+<li>Request deterministic kernels: <code>torch.use_deterministic_algorithms(True)</code>, <code>torch.backends.cudnn.benchmark = False</code>, and <code>CUBLAS_WORKSPACE_CONFIG=:4096:8</code> for some cuBLAS operations.</li>
+<li>Save and restore RNG states in checkpoints, or a resumed run diverges from an uninterrupted one.</li>
+<li>Record the code version, config, library versions and hardware type.</li>
+</ul>
+<p><strong>What remains.</strong> Floating-point addition is not associative, so anything that changes the order of operations changes the low bits: a different GPU model, library version, number of devices, or batch size. Some CUDA operations have no deterministic implementation and raise an error under the flag above. Deterministic kernels can be slower. Bit-exact reproduction is realistic on the same hardware and software stack, and not across them.</p>
+<p><strong>Why seeds are still needed.</strong> Determinism and seed variance answer different questions. Determinism is for debugging: I can replay a failure exactly. Seed variance is a property of the method to be measured: a fixed seed gives one sample from the distribution of outcomes, and comparing two methods on one seed each confounds the method with luck.</p>
+<p>It helps to separate the seeds for initialisation, data order and evaluation sampling, so that the source of variance can be identified.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>A resumed run does not match the uninterrupted one. Where do you look?</li>
+<li>Which contributes more variance in your experience, initialisation or data order, and how would you measure it?</li>
+</ul>
+</details>
+<details class="qa" id="research-018">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> Show me the unit tests you would write for numerical model code, for example a custom attention layer or loss.
+</summary>
+<p>Four kinds of tests catch most silent errors: gradient checks, causality, batch independence, and equivalence to a slow reference.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> test_gradcheck():</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    <span class="co"># double precision: float32 finite differences are too noisy</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> torch.randn(<span class="dv">3</span>, <span class="dv">5</span>, dtype<span class="op">=</span>torch.double, requires_grad<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">assert</span> torch.autograd.gradcheck(my_fn, (x,), eps<span class="op">=</span><span class="fl">1e-6</span>, atol<span class="op">=</span><span class="fl">1e-4</span>)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> test_causal(model, vocab<span class="op">=</span><span class="dv">100</span>, T<span class="op">=</span><span class="dv">16</span>, t<span class="op">=</span><span class="dv">10</span>):</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    model.<span class="bu">eval</span>()</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> torch.randint(vocab, (<span class="dv">2</span>, T))</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    x2 <span class="op">=</span> x.clone()</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    x2[:, t] <span class="op">=</span> (x2[:, t] <span class="op">+</span> <span class="dv">1</span>) <span class="op">%</span> vocab          <span class="co"># change one token</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    y, y2 <span class="op">=</span> model(x), model(x2)                 <span class="co"># (B, T, V)</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">assert</span> torch.allclose(y[:, :t], y2[:, :t], atol<span class="op">=</span><span class="fl">1e-5</span>)   <span class="co"># past unchanged</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">assert</span> <span class="kw">not</span> torch.allclose(y[:, t], y2[:, t])            <span class="co"># present changed</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> test_batch_independence(model, x):</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    model.<span class="bu">eval</span>()</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">assert</span> torch.allclose(model(x)[<span class="dv">0</span>], model(x[:<span class="dv">1</span>])[<span class="dv">0</span>], atol<span class="op">=</span><span class="fl">1e-5</span>)</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> test_matches_reference():</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>    torch.manual_seed(<span class="dv">0</span>)</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>    logits <span class="op">=</span> torch.randn(<span class="dv">4</span>, <span class="dv">7</span>)                  <span class="co"># non-square on purpose</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>    y <span class="op">=</span> torch.randint(<span class="dv">7</span>, (<span class="dv">4</span>,))</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>    ref <span class="op">=</span> <span class="op">-</span>torch.log_softmax(logits, <span class="op">-</span><span class="dv">1</span>)[torch.arange(<span class="dv">4</span>), y].mean()</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>    <span class="cf">assert</span> torch.allclose(my_cross_entropy(logits, y), ref, atol<span class="op">=</span><span class="fl">1e-6</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Pitfalls an interviewer checks:</p>
+<ul>
+<li>Use random inputs with distinct sizes on every axis. Zeros, ones and square shapes hide transposed dimensions and wrong broadcasts.</li>
+<li>Test padding: a padded batch must give the same output for each sequence as running it alone.</li>
+<li>Test the vectorised implementation against a loop-based one written for clarity, not speed.</li>
+<li>Set tolerances by dtype (about <span class="math inline">\(10^{-5}\)</span> for float32, <span class="math inline">\(10^{-10}\)</span> for float64), and test mixed precision separately.</li>
+<li>Test <code>train()</code> and <code>eval()</code> modes when dropout or normalisation layers are present.</li>
+<li>Keep the tests small enough to run on CPU in seconds, so that they run on every commit.</li>
+</ul>
+<p>These tests check invariants, which hold whatever the weights are; they complement the overfit-one-batch check, which tests learning.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Your gradcheck fails only for some inputs. What are the likely causes?</li>
+<li>How would you test a KV-cache implementation of incremental decoding?</li>
+</ul>
+</details>
+<details class="qa" id="research-019">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> How do you manage configurations and hyperparameter sweeps so that results stay reproducible and comparisons stay fair?
+</summary>
+<p><strong>Configuration.</strong> One structured, typed config per run is the single source of truth; code reads nothing from undeclared globals or environment variables. Every run stores the fully resolved config (after overrides and defaults), the git commit and any uncommitted diff, the dataset version, library versions, seeds and the launch command. Changing a default silently changes the meaning of old configs, so stored configs must be resolved, and defaults change only with a version note. Flags for dead experiments are deleted, or the config becomes unreadable.</p>
+<p><strong>Sweeps.</strong></p>
+<ul>
+<li><strong>Random search over grid</strong> when only a few hyperparameters matter: a grid of <span class="math inline">\(9\)</span> points in two dimensions tests <span class="math inline">\(3\)</span> values of the important one, random search tests <span class="math inline">\(9\)</span> (Bergstra and Bengio, 2012). Sample learning rates and regularisation log-uniformly.</li>
+<li><strong>Bayesian optimisation</strong> when runs are expensive and the space is small (under about ten dimensions).</li>
+<li><strong>Early-stopping schedulers</strong> (successive halving, Hyperband, ASHA) to spend compute on promising trials. The risk is a bias against configurations that start slowly, such as low learning rates or larger models; check with a few full-length runs.</li>
+</ul>
+<p><strong>Fairness.</strong> The baseline and the new method get the same search space size and trial count. Select on validation data only. Sweep with one seed, then rerun the top few configurations with several seeds, because the best of 50 noisy trials is biased upwards. Report sensitivity (how wide the good region is), not only the best point.</p>
+<p>The trade-off is flexibility against discipline: a rigid schema slows the first prototype, and pays for itself once two people need to compare runs.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>The best trial of a 50-trial sweep beats baseline by 0.5. Why can you not report that number?</li>
+<li>How do you choose the search range for the learning rate?</li>
+</ul>
+</details>
+<details class="qa" id="research-020">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> What does good experiment hygiene look like, and what makes a negative result worth trusting?
+</summary>
+<p><strong>Hygiene.</strong></p>
+<ul>
+<li>Write the hypothesis and the expected outcome before launching. One change per run.</li>
+<li>Commit before running; the run records the commit, config, data version and seed.</li>
+<li>Rerun the baseline in the current code and data version. Comparing with a number from three months ago compares codebases.</li>
+<li>Never select on the test set. Keep a held-out set that is touched rarely.</li>
+<li>Keep every run, including failures, in the tracker with a note. Deleting the losers turns the record into a selection.</li>
+<li>Keep a dated log: what was run, why, the result, the next step. Plots carry the run ids that produced them.</li>
+<li>Name runs so that the difference from the baseline is readable.</li>
+</ul>
+<p><strong>A credible negative result</strong> needs more care than a positive one, because “it did not work” is also what a bug produces.</p>
+<ul>
+<li>A positive control passed: the same pipeline detects an effect known to exist.</li>
+<li>The implementation was verified by tests or against a reference.</li>
+<li>The idea had a fair tuning budget, not one run with default settings.</li>
+<li>The uncertainty is stated: “no effect larger than 0.3 points at 95% confidence over 5 seeds”, not “no effect”.</li>
+<li>The scope is stated: model size, data, the regimes not tried.</li>
+</ul>
+<p>A one-page write-up with these elements stops colleagues from repeating the work and says under what conditions the idea might deserve another look.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How do you stop a team from re-running an idea that failed a year ago, without discouraging a justified retry?</li>
+</ul>
+</details>
+<details class="qa" id="research-021">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">debugging</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> A training run completes with no errors and a falling loss, but the final metric is two to three points below what you expected. How do you find the cause?
+</summary>
+<p>I find a known-good reference and bisect, splitting the problem into evaluation, data, optimisation and model.</p>
+<ol type="1">
+<li><strong>Reference.</strong> The last commit and config that produced the expected number. Rerun it now. If it also underperforms, the cause is outside the code diff: data version, environment, hardware. If it is fine, bisect commits and config differences.</li>
+<li><strong>Evaluation or training?</strong> Evaluate a known-good checkpoint with the current evaluation code. Then compare training-loss curves with the reference at equal steps: a gap from the start points to data or optimisation; an equal training loss with worse evaluation points to evaluation or overfitting.</li>
+<li><strong>Data.</strong> Inspect decoded batches after all transforms. Check label distribution, shuffling, duplicated or dropped shards, truncation length, and augmentation applied at evaluation.</li>
+<li><strong>Optimisation.</strong> Log the learning rate per step (a scheduler that is never stepped is common), gradient norm before clipping (clipping at every step means the threshold is too low), effective batch size under accumulation and multi-GPU, and which parameters receive weight decay.</li>
+<li><strong>Model.</strong> Count trainable parameters (accidental freezing), check <code>train()</code>/<code>eval()</code> mode, dropout at evaluation, mask and padding handling, initialisation, whether the loaded pretrained weights matched all keys (<code>strict=False</code> hides mismatches).</li>
+<li><strong>Numerics.</strong> Mixed-precision overflow, loss scaling, an <span class="math inline">\(\epsilon\)</span> that is too large for half precision.</li>
+<li><strong>Evaluation details.</strong> EMA weights not used, preprocessing different from training, a changed metric implementation.</li>
+</ol>
+<p>Per-layer gradient norms and update-to-weight ratios (around <span class="math inline">\(10^{-3}\)</span> is a common rule of thumb) localise a layer that is not learning.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>There is no known-good reference because this is a new model. How do you proceed?</li>
+<li>Training loss matches the reference exactly but evaluation is worse. List the three most likely causes.</li>
+</ul>
+</details>
+<details class="qa" id="research-022">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> Each experiment takes 20 hours, so the team gets one result per day. How do you make the loop faster?
+</summary>
+<p>Measure first, then cut along three lines: wasted time, proxy experiments, and parallelism.</p>
+<p><strong>Measure.</strong> Break a training step into data loading, host-to-device copy, forward and backward, optimiser, logging; and the job into start-up, training, evaluation and checkpointing. Check GPU utilisation: well below 100% usually means the input pipeline or synchronisation is the bottleneck.</p>
+<p><strong>Remove waste.</strong></p>
+<ul>
+<li>Input pipeline: more workers, pre-tokenised or pre-decoded shards, memory-mapped data, augmentation on GPU.</li>
+<li>Compute: mixed precision, compiled models, larger batches with a scaled learning rate, no per-step <code>.item()</code> or host synchronisation.</li>
+<li>Cache anything frozen: precompute the outputs of a frozen encoder once.</li>
+<li>Evaluation: a small fixed subset often, the full set rarely, and off the training GPUs.</li>
+<li>Start from a shared checkpoint when the question concerns late training.</li>
+</ul>
+<p><strong>Shorten the question.</strong> Use a proxy (smaller model, a data subset, fewer steps) and validate it: take past experiments with known full-scale outcomes and check that the proxy ranks them the same way. A proxy with poor rank correlation produces fast wrong answers.</p>
+<p><strong>Parallelise.</strong> Run the candidates as a parallel sweep instead of in sequence, and decide in advance what each outcome implies.</p>
+<p><strong>Fail fast.</strong> A two-minute smoke test that runs the training, evaluation and checkpoint code at tiny scale before submission; early-abort rules for runs that have clearly diverged.</p>
+<p>Targets I use: seconds to minutes for debugging, under an hour for a directional signal, overnight only for confirmation runs.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How do you validate that a small-scale proxy predicts the full-scale outcome?</li>
+<li>GPU utilisation is 45%. Walk me through the next ten minutes.</li>
+</ul>
+</details>
+<details class="qa" id="research-023">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">debugging</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> A new model scores 98% where the previous best was 85%, with a small change. What do you check before telling anyone?
+</summary>
+<p>A jump of that size from a small change is more likely a leak or an evaluation bug than a discovery, so I try to break the result.</p>
+<p><strong>Leakage.</strong></p>
+<ul>
+<li>Train-test overlap: exact and near duplicates; the same user, patient, document or conversation on both sides (split by group); future data in training for a temporal task.</li>
+<li>Target leakage: a feature computed from the label or after the outcome. If one feature carries almost all the importance, examine it.</li>
+<li>Preprocessing fitted on all data: normalisation statistics, feature selection, vocabulary, deduplication keyed on labels.</li>
+<li>Selection on the test set through early stopping or repeated hyperparameter tuning.</li>
+<li>For LLMs: the benchmark in the pretraining data, or the answer present in the prompt or the retrieved context.</li>
+</ul>
+<p><strong>Evaluation bugs.</strong> The metric computed on the training split; failed or filtered examples dropped from the denominator; teacher forcing at evaluation; a broken baseline run; a changed metric definition.</p>
+<p><strong>Tests that try to break it.</strong></p>
+<ul>
+<li>Shuffle training labels: the score should fall to chance.</li>
+<li>Remove or blank the input: an input-free model should be at the majority-class rate.</li>
+<li>Evaluate on fresh data collected after the training cut-off.</li>
+<li>Read fifty predictions with their inputs.</li>
+<li>Recompute the metric with an independent implementation.</li>
+<li>Look at the gain per slice: a uniform jump on every slice, including the hardest, is suspicious.</li>
+</ul>
+<p>Only after these pass do I report it, with the checks listed. Scrutiny should be proportional to surprise.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How do you detect near-duplicate leakage in a dataset of 100 million text examples?</li>
+<li>The result survives all your checks. What do you do next?</li>
+</ul>
+</details>
+<details class="qa" id="research-024">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">debugging</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> Your change beats the baseline by 0.5 points with one seed and loses with another. How do you establish whether the improvement is real?
+</summary>
+<p>I measure the variance, test the difference properly, and then reduce the variance if needed.</p>
+<p><strong>Measure.</strong> Run at least five seeds per arm, better ten, and report mean, standard deviation and <span class="math inline">\(n\)</span>. Example: with <span class="math inline">\(\sigma = 0.4\)</span> in both arms and <span class="math inline">\(n=5\)</span>, the standard error of the difference is <span class="math inline">\(0.4\sqrt{2/5} \approx 0.25\)</span>, so a 0.5 gain gives <span class="math inline">\(t \approx 2.0\)</span> with 8 degrees of freedom, short of the 5% critical value of 2.31. With <span class="math inline">\(n=10\)</span> the standard error is 0.18 and <span class="math inline">\(t \approx 2.8\)</span>, which is significant.</p>
+<p><strong>Pair.</strong> If both arms can share initialisation and data order, analyse paired differences; the shared noise cancels.</p>
+<p><strong>Locate the variance.</strong> Fix initialisation and vary data order, then the reverse, then repeat evaluation alone. If evaluation noise dominates (accuracy on <span class="math inline">\(n\)</span> examples has standard error <span class="math inline">\(\sqrt{p(1-p)/n}\)</span>, about 0.95 points for <span class="math inline">\(p=0.9\)</span>, <span class="math inline">\(n=1000\)</span>), a larger evaluation set is cheaper than more training runs.</p>
+<p><strong>Look at the distribution.</strong> A bimodal outcome, where some seeds fail outright, means the problem is instability (learning rate, warmup, initialisation), and fixing that matters more than the mean. A method that lowers variance without moving the mean can still be worth adopting.</p>
+<p><strong>Do not</strong> report the best seed, pick the seed on the test set, or stop adding seeds when the result turns significant.</p>
+<p>If the effect is smaller than the resolution I can afford, I say so: “difference of 0.5, 95% interval from -0.1 to 1.1”.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Why is stopping when the test first reaches significance a problem?</li>
+<li>How would you compare two methods when each run costs a week of compute?</li>
+</ul>
+</details>
+</section>
+<section id="publications" class="level3">
+<h3 class="anchored" data-anchor-id="publications">Publications and open-source track record <span class="demand">24% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="research.publications.0"> Can present one piece of research or open-source work in five minutes (question, approach, key number with uncertainty, own contribution, limitation)</li>
+<li><input type="checkbox" class="chk" data-chk="research.publications.1"> Can answer what exactly they did on a multi-author project without overclaiming</li>
+<li><input type="checkbox" class="chk" data-chk="research.publications.2"> Can defend the result against the strongest objection and say what did not work</li>
+<li><input type="checkbox" class="chk" data-chk="research.publications.3"> Can describe open-source work in terms of design decisions, review and maintenance, not commit counts</li>
+</ul>
+<details class="qa" id="research-005">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">behavioural</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> Tell me about a piece of research you are proud of. What exactly was your contribution?
+</summary>
+<p><strong>What is tested.</strong> Depth of understanding, an honest account of your own role, and whether you can judge your own work. Interviewers at research labs are usually able to check the details.</p>
+<p><strong>Structure.</strong></p>
+<ol type="1">
+<li>The question and why it mattered, for a listener outside the subfield.</li>
+<li>What was known and why the obvious approach failed.</li>
+<li>The approach, with the single idea that made it work.</li>
+<li>The key result as a number, with the baseline and the uncertainty.</li>
+<li>Your contribution, stated exactly: “I proposed the loss, implemented training and ran all experiments; my co-author built the data pipeline.” Middle authorship is fine if the description is precise.</li>
+<li>Limitations, and what you would do differently now.</li>
+</ol>
+<p><strong>What interviewers probe.</strong> Why this approach and not the nearest alternative; what you tried that failed; how you know the gain is real (seeds, baselines, ablations); any technical detail on any slide; what happened afterwards (citations, adoption, a follow-up that refuted it); what you would do with six more months.</p>
+<p><strong>Mistakes.</strong> Using “we” throughout so that your role is unclear; presenting only successes; being unable to reproduce a derivation from your own paper; defending a weak result instead of acknowledging it; choosing your most prestigious paper instead of the one you know best.</p>
+<p>For confidential industry work, describe the method class and relative gains, and say plainly what you cannot share.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>What is the strongest objection a reviewer raised, and were they right?</li>
+<li>If you started this project today, what would you change?</li>
+</ul>
+</details>
+<details class="qa" id="research-006">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">behavioural</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> You do not have first-author papers at the top conferences. How do you show a research or open-source track record?
+</summary>
+<p><strong>What is tested.</strong> Postings that ask for publications usually accept equivalent evidence: that you can take an open-ended technical question to a result that others can inspect and use. The interviewer wants artifacts and the decisions behind them.</p>
+<p><strong>Evidence that counts.</strong></p>
+<ul>
+<li>Open-source work with substance: a merged feature or fix in a widely used library where you can explain the design discussion, the review feedback and the trade-off chosen; or a project you maintain, with users, releases and issue triage.</li>
+<li>Reproductions and technical write-ups with real experiments, code and negative findings.</li>
+<li>Internal research with a measured outcome: the hypothesis, the experiment, the effect size, the launch decision. Give relative numbers if absolute ones are confidential.</li>
+<li>Workshop papers, technical reports, benchmark or dataset contributions, serious reviewing.</li>
+</ul>
+<p><strong>How to present it.</strong> One or two items in depth, not a list. For open source: the problem, the API or design decision, how you handled backwards compatibility and review, what maintenance cost it created. For internal work: the same structure as a paper talk.</p>
+<p><strong>Mistakes.</strong> Counting commits or stars; listing a paper you cannot discuss in detail; claiming a team result as your own; apologising for the lack of papers instead of showing the equivalent skill.</p>
+<p>Be direct about the gap if asked: say what you have not done (for example, led a paper through peer review) and what you have done that exercises the same skills.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Tell me about a design disagreement in a code review on that project and how it was resolved.</li>
+</ul>
+</details>
+</section>
+<section id="fairness" class="level3">
+<h3 class="anchored" data-anchor-id="fairness">Fairness, bias and responsible AI <span class="demand">19% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="research.fairness.0"> Can define demographic parity, equalised odds, equal opportunity, predictive parity and group calibration</li>
+<li><input type="checkbox" class="chk" data-chk="research.fairness.1"> Can derive why calibration and equal error rates cannot both hold when base rates differ</li>
+<li><input type="checkbox" class="chk" data-chk="research.fairness.2"> Can design a bias evaluation for a generative system with paired prompts and confidence intervals</li>
+<li><input type="checkbox" class="chk" data-chk="research.fairness.3"> Can compare pre-, in- and post-processing mitigation and state the cost of each</li>
+<li><input type="checkbox" class="chk" data-chk="research.fairness.4"> Can name governance practices (model cards, risk assessment, launch review, monitoring) and the main frameworks</li>
+</ul>
+<details class="qa" id="research-031">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">derivation</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Define the main group fairness criteria for a binary classifier and show why they cannot all hold at once.
+</summary>
+<p>Let <span class="math inline">\(A\)</span> be the group, <span class="math inline">\(Y\)</span> the outcome, <span class="math inline">\(\hat Y\)</span> the decision and <span class="math inline">\(S\)</span> the score.</p>
+<ul>
+<li><strong>Demographic parity:</strong> <span class="math inline">\(P(\hat Y=1\mid A=a)\)</span> equal across groups.</li>
+<li><strong>Equalised odds:</strong> true-positive and false-positive rates equal across groups (<span class="math inline">\(\hat Y \perp A \mid Y\)</span>). <strong>Equal opportunity</strong> requires only equal true-positive rates.</li>
+<li><strong>Predictive parity:</strong> equal precision, <span class="math inline">\(P(Y=1\mid \hat Y=1, A=a)\)</span>.</li>
+<li><strong>Calibration within groups:</strong> <span class="math inline">\(P(Y=1\mid S=s, A=a)=s\)</span> for every group.</li>
+</ul>
+<p><strong>Incompatibility.</strong> For a group with base rate <span class="math inline">\(p\)</span>, counting false positives two ways gives</p>
+<p><span class="math display">\[\mathrm{FPR} = \frac{p}{1-p}\cdot\frac{1-\mathrm{PPV}}{\mathrm{PPV}}\cdot(1-\mathrm{FNR}).\]</span></p>
+<p>Derivation: per unit population, true positives are <span class="math inline">\(p(1-\mathrm{FNR})\)</span> and false positives are <span class="math inline">\((1-p)\,\mathrm{FPR}\)</span>; also false positives equal true positives times <span class="math inline">\((1-\mathrm{PPV})/\mathrm{PPV}\)</span>. Equate and solve.</p>
+<p>If two groups have different <span class="math inline">\(p\)</span> and the same PPV, they cannot have both the same FPR and the same FNR unless prediction is perfect (Chouldechova, 2017). Kleinberg, Mullainathan and Raghavan (2016) prove the analogous result for calibrated scores. Demographic parity conflicts with calibration whenever base rates differ, since a calibrated score has group mean <span class="math inline">\(p\)</span>.</p>
+<p>The consequence is that the choice of criterion is a decision about which errors matter for whom, and must be made per application. The COMPAS dispute was this theorem in practice: the tool satisfied predictive parity while false-positive rates differed between groups.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Which criterion would you pick for a loan-approval model, and what does it cost?</li>
+<li>Why can a calibrated score still produce unequal false-positive rates?</li>
+</ul>
+</details>
+<details class="qa" id="research-032">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> How would you measure bias in a generative system, for example an LLM used to draft candidate summaries for recruiters?
+</summary>
+<p>Start from the harm in this product, then build measurements for it; generic stereotype benchmarks are a supplement.</p>
+<p><strong>Harms here.</strong> Allocational: summaries that are systematically less favourable or less accurate for some groups, which changes who gets interviewed. Representational: stereotyped language.</p>
+<p><strong>Counterfactual paired evaluation (the core).</strong> Take real or realistic inputs and vary only the demographic signal (name, pronouns, a school or affiliation that signals group), keeping qualifications fixed. Generate summaries and compare, within pairs:</p>
+<ul>
+<li>a favourability or recommendation score from a fixed rubric (human-rated on a sample, then a validated automated judge);</li>
+<li>factual fidelity to the source (omissions and additions);</li>
+<li>length, hedging, and the adjectives used.</li>
+</ul>
+<p>Report the mean paired difference with a confidence interval per attribute. Use many templates and inputs, and several samples per prompt, because generation is stochastic and results are sensitive to phrasing.</p>
+<p><strong>Quality of service.</strong> Does accuracy fall for non-standard English, other languages, or career paths that are rarer in training data?</p>
+<p><strong>Downstream.</strong> If recruiters act on the summaries, measure selection rates by group in the product, since small textual differences can be amplified or ignored.</p>
+<p><strong>Benchmarks.</strong> Sets such as BBQ, StereoSet and CrowS-Pairs give a broad signal, but published critiques have found validity problems in some of them, and they do not test this task.</p>
+<p><strong>Pitfalls.</strong> The judge model may itself be biased, so validate it against human ratings by group; names are noisy proxies; intersectional slices get small; “no difference” needs a stated detectable effect size.</p>
+<p>The measurement becomes a regression gate that runs on every model or prompt change.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How many pairs do you need to detect a difference of 0.1 on a 5-point rubric?</li>
+<li>For an image generator given “a doctor”, what is the right reference distribution?</li>
+</ul>
+</details>
+<details class="qa" id="research-033">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> You have measured a disparity between groups. What are the mitigation options and what does each cost?
+</summary>
+<p>First diagnose the source, because the cheapest fix depends on it: less or noisier data for one group, a label that encodes past decisions, a proxy feature, or a threshold that suits one group’s score distribution.</p>
+<p><strong>Options.</strong></p>
+<ul>
+<li><strong>Data (pre-processing).</strong> Collect more or better-labelled data for the worse-off group; reweight or resample; fix the label definition. This is often the only option that improves fairness and accuracy together. Cost: time and money, and collection may need the sensitive attribute.</li>
+<li><strong>Training (in-processing).</strong> A constraint or penalty on the disparity, adversarial removal of group information, or group-robust objectives that optimise the worst group’s loss. Cost: usually some average accuracy, extra hyperparameters, less stable training, and guarantees that hold on training data more than at test time.</li>
+<li><strong>Decision (post-processing).</strong> Group-specific thresholds, or recalibration per group. Simple and auditable. Cost: needs the attribute at decision time, which is legally restricted in some domains and jurisdictions, so involve counsel.</li>
+<li><strong>Generative systems.</strong> Instructions, counterfactual data augmentation in fine-tuning, output filters. Over-correction produces its own errors, such as inaccurate outputs where the demographic fact matters.</li>
+</ul>
+<p><strong>Costs common to all.</strong></p>
+<ul>
+<li>Criteria conflict, so fixing one disparity can widen another.</li>
+<li>Parity can be reached by making the better-off group worse (“levelling down”), which helps nobody.</li>
+<li>Parity on coarse groups can hide disparity in subgroups.</li>
+<li>Measurement needs sensitive attributes, which is in tension with data minimisation.</li>
+<li>The fix can decay under distribution shift, so it needs monitoring.</li>
+</ul>
+<p>I present the trade-off curve (disparity against utility) to the decision owner instead of choosing a point alone.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>When does a fairness constraint not reduce accuracy?</li>
+<li>You are not allowed to use the protected attribute at inference. What can you still do?</li>
+</ul>
+</details>
+<details class="qa" id="research-034">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> What governance practices do you expect around a model that affects people, and what is the engineer’s part in them?
+</summary>
+<p>Governance is the set of processes that make someone accountable for a model’s behaviour before and after launch.</p>
+<p><strong>Practices.</strong></p>
+<ul>
+<li><strong>Risk tiering and impact assessment.</strong> Classify the use case by potential harm; higher tiers require more evidence and review.</li>
+<li><strong>Documentation.</strong> Model cards (intended use, evaluation by slice, limitations) and datasheets for datasets (provenance, consent, collection process).</li>
+<li><strong>Pre-launch review.</strong> Sign-off against written criteria: sliced evaluation results, red-team findings, privacy and security review.</li>
+<li><strong>Human oversight and recourse.</strong> A review path for consequential decisions, and a way for affected people to appeal.</li>
+<li><strong>Monitoring and incident response.</strong> Sliced metrics in production, alerting, a rollback path, a post-incident process.</li>
+<li><strong>Auditability.</strong> Lineage from a prediction to model version, training data version and config; retained logs.</li>
+</ul>
+<p><strong>Frameworks.</strong> The NIST AI Risk Management Framework organises this into four functions (Govern, Map, Measure, Manage) and has a generative-AI profile. The EU AI Act sets obligations by risk tier (prohibited, high-risk, transparency obligations, minimal) and for general-purpose models; its obligations apply in phases, so check current dates. ISO/IEC 42001 is a management-system standard for AI. Details are jurisdiction and version specific.</p>
+<p><strong>The engineer’s part</strong> is to turn policy into mechanisms: evaluation gates in CI that block a release on a slice regression, dashboards by segment, data and model lineage, access control on sensitive attributes, logging designed for audit, and a tested kill switch. A policy with no automated check tends not to be followed under deadline pressure.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>What belongs in a model card that an engineer, not a policy team, must supply?</li>
+<li>How do you make a fairness requirement into a release gate without blocking every launch on noise?</li>
+</ul>
+</details>
+</section>
+<section id="research-taste" class="level3">
+<h3 class="anchored" data-anchor-id="research-taste">Research judgment: picking problems, forming hypotheses <span class="demand">18% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="research.research-taste.0"> Can explain how they choose a problem (impact, tractability, feedback speed, comparative advantage) with an example</li>
+<li><input type="checkbox" class="chk" data-chk="research.research-taste.1"> Can say what makes an experiment informative and write the predicted outcome under each hypothesis before running it</li>
+<li><input type="checkbox" class="chk" data-chk="research.research-taste.2"> Can design a controlled comparison for a training change, including the number of seeds needed for a given effect size</li>
+<li><input type="checkbox" class="chk" data-chk="research.research-taste.3"> Can explain why a tuned simple baseline comes first and name published cases where it closed the gap</li>
+<li><input type="checkbox" class="chk" data-chk="research.research-taste.4"> Can state the bitter lesson precisely, with its caveats, and apply it to a concrete decision</li>
+<li><input type="checkbox" class="chk" data-chk="research.research-taste.5"> Can describe kill criteria and a time-boxed investigation plan with decision points</li>
+</ul>
+<details class="qa" id="research-007">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> How do you decide what to work on? Give me the criteria you use to choose between research directions.
+</summary>
+<p>I compare directions on expected value per unit of time, and I make the terms explicit:</p>
+<ul>
+<li><strong>Impact if it works.</strong> Who uses the result and what changes for them? A direction with no consumer is a hobby.</li>
+<li><strong>Probability it works.</strong> Based on evidence, not enthusiasm: is there a small-scale signal, an analogous result elsewhere, a ceiling experiment showing headroom?</li>
+<li><strong>Cost and feedback speed.</strong> How long until the first informative result? I weight this heavily: a direction with one-day feedback gets twenty iterations in the time a two-week loop gets two.</li>
+<li><strong>Value if it fails.</strong> Does a negative result teach something that redirects other work, or leave reusable infrastructure?</li>
+<li><strong>Comparative advantage.</strong> Do we have data, compute, or expertise others lack? If a larger group will obviously solve it next quarter, I work on something else.</li>
+</ul>
+<p>Before committing, I run the cheapest experiment that could kill the idea: an oracle or upper-bound test (give the system the perfect version of the component and measure the gain), or a manual study on fifty examples. I write down the kill criteria and the first milestone.</p>
+<p>Across a team I want a portfolio: mostly directions with a clear path, plus a minority of higher-variance bets with capped time.</p>
+<p>The failure mode I watch for in myself is picking problems because the method is interesting, when the bottleneck for the goal is elsewhere, often in data or evaluation.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Give an example where the ceiling experiment changed your mind.</li>
+<li>How do you weigh a direction with a small chance of a very large payoff?</li>
+</ul>
+</details>
+<details class="qa" id="research-008">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> What makes an experiment informative?
+</summary>
+<p>An experiment is informative when its plausible outcomes would lead to different beliefs or decisions. The test: before running it, write down what each hypothesis predicts. If every hypothesis predicts the same result, or if no result would change what I do next, the experiment is not worth the compute.</p>
+<p>Properties of an informative experiment:</p>
+<ul>
+<li><strong>Discriminating.</strong> It is aimed at the point where competing explanations disagree, not at where they agree.</li>
+<li><strong>Controlled.</strong> One thing changes. Otherwise a positive result cannot be attributed.</li>
+<li><strong>Above the noise floor.</strong> I know the run-to-run standard deviation of the metric and the effect I am looking for is larger, or I have enough seeds and evaluation examples to resolve it.</li>
+<li><strong>Has controls.</strong> A positive control (a known effect the pipeline must detect) shows that a null result means something; a negative control (a change that must do nothing, such as shuffled labels) shows that a positive result is not an artifact.</li>
+<li><strong>Cheap relative to what it settles.</strong> Prefer the small experiment that removes most of the uncertainty over the large one that removes all of it.</li>
+</ul>
+<p>A useful ordering is by expected information per GPU-hour. Reading fifty failure cases or running a ceiling test often beats a week of training.</p>
+<p>Writing the prediction first also guards against hindsight: if I would have explained either outcome, I learned nothing.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Give an example of an experiment you decided not to run, and why.</li>
+</ul>
+</details>
+<details class="qa" id="research-009">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Why insist on a simple baseline first, and what counts as a strong one?
+</summary>
+<p>A baseline gives the number that a new method must beat, and building it tests the whole pipeline (data, evaluation, logging) with a model simple enough that bugs are visible. Without it, a gain cannot be sized and a failure cannot be localised.</p>
+<p>What counts as strong:</p>
+<ul>
+<li>The simplest method that could work for the task: majority class, a linear model or gradient-boosted trees on tabular data, BM25 for retrieval, last-value or seasonal-naive for forecasting, a prompted off-the-shelf model for an LLM task.</li>
+<li>The current method <strong>retuned with the same budget</strong> as the new one, on the same data, at the same compute.</li>
+<li>“The same model, larger or trained longer”, which is the baseline many new methods fail to beat.</li>
+</ul>
+<p>There is a published pattern of well-tuned baselines closing claimed gaps: Melis et al.&nbsp;(2018) for LSTM language models, Lucic et al.&nbsp;(2018) for GAN variants, Henderson et al.&nbsp;(2018) for deep RL, Musgrave et al.&nbsp;(2020) for metric learning, and Ferrari Dacrema et al.&nbsp;(2019) for neural recommenders.</p>
+<p>The trade-off is time. Tuning a baseline can take as long as building the method, and it feels unproductive. I cap it: same search space and number of trials as the method gets. I skip it only when a trusted, recent number exists for exactly my data and evaluation code.</p>
+<p>A side benefit: if the baseline is within noise of the goal, the project is finished early.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How do you allocate tuning budget fairly when the new method has more hyperparameters?</li>
+</ul>
+</details>
+<details class="qa" id="research-010">
+<summary>
+<span class="tag tag-staff">staff</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> A project has run for two months without a clear positive result. How do you decide whether to continue, pivot or stop?
+</summary>
+<p>I decide against criteria set before the work started, and I first rule out that the pipeline is unable to show a positive result.</p>
+<p><strong>Is it the idea or the implementation?</strong> Run a positive control: can the pipeline detect an effect known to exist (a method known to help, or an oracle version of my component)? If the oracle version gives no gain, the idea has no headroom and I stop. If the oracle helps and my version does not, the idea is alive and the gap is in execution.</p>
+<p><strong>Evidence I weigh.</strong></p>
+<ul>
+<li>Trend: is each iteration closing the gap or are results flat with rising complexity?</li>
+<li>Understanding: do I know why it fails? A mechanism I can name suggests a fix; unexplained failures after several attempts suggest a wrong model of the problem.</li>
+<li>Remaining cheap experiments: if the next informative test costs two days, run it; if it costs a month, the bar is much higher.</li>
+<li>Opportunity cost: what the same people would otherwise do.</li>
+</ul>
+<p><strong>Guard against sunk cost.</strong> The two months are spent either way. I ask whether I would start this project today knowing what I know.</p>
+<p><strong>Options are not binary.</strong> Narrow the claim to the setting where it works, reduce staffing to one person with a time box, or stop.</p>
+<p><strong>If stopping</strong>, write a short report: what was tried, the evidence, what would change the conclusion, and where the code is. Review points every two to three weeks make this decision routine instead of a crisis.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How do you tell a collaborator who is invested in the project that you think it should stop?</li>
+<li>What kill criteria would you have written at the start?</li>
+</ul>
+</details>
+<details class="qa" id="research-011">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> State the bitter lesson and tell me how it should and should not influence a research decision.
+</summary>
+<p>Sutton’s 2019 essay argues, from the history of chess, Go, speech recognition and computer vision, that general methods which scale with computation (search and learning) have in the long run outperformed methods built on human knowledge of the domain, and that researchers repeatedly underestimate this because knowledge-based methods give quicker short-term gains.</p>
+<p>Stated carefully, it is an empirical claim about long-run trends under growing compute, not a theorem.</p>
+<p><strong>How it should influence decisions.</strong></p>
+<ul>
+<li>Prefer the method whose advantage grows with data and compute. Test at two scales: if a hand-designed component gives +2 points on a small model and +0.3 on a model ten times larger, expect it to vanish.</li>
+<li>Put human effort where it compounds with scale: data, objectives, evaluation, environments and tooling.</li>
+</ul>
+<p><strong>What it does not say.</strong></p>
+<ul>
+<li>It does not say structure is useless at a fixed budget. With limited data, latency limits or a deadline, inductive bias and domain features often win today. Product work lives at a fixed budget.</li>
+<li>It does not say architecture is irrelevant: convolution and attention are human designs that made scaling possible.</li>
+<li>It does not say compute is free; serving cost and energy are real constraints.</li>
+<li>Domain knowledge does not disappear; it moves into the data, the reward and the evaluation.</li>
+</ul>
+<p>A good answer names the time horizon and the budget of the decision at hand, then applies the lesson accordingly.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Give an example where adding structure was the right call despite the bitter lesson.</li>
+<li>How would you test whether a component’s benefit survives scaling without training the large model?</li>
+</ul>
+</details>
+<details class="qa" id="research-012">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> A colleague proposes a change to the training recipe (say a new learning-rate schedule) and reports a 0.4-point gain from one run. Design the experiment that tells you whether it really helps.
+</summary>
+<p><strong>Claim and metric.</strong> Fix the primary metric, dataset and evaluation protocol before running anything. Decide the smallest effect worth adopting, say <span class="math inline">\(\delta = 0.3\)</span> points.</p>
+<p><strong>Noise floor.</strong> Run the baseline with <span class="math inline">\(k\)</span> seeds to estimate the standard deviation <span class="math inline">\(\sigma\)</span> of the final metric. With per-arm sample size <span class="math inline">\(n\)</span>, detecting <span class="math inline">\(\delta\)</span> at 5% two-sided significance and 80% power needs approximately</p>
+<p><span class="math display">\[n \approx \frac{2\,(z_{0.975}+z_{0.8})^2\,\sigma^2}{\delta^2} = \frac{15.7\,\sigma^2}{\delta^2}.\]</span></p>
+<p>If <span class="math inline">\(\sigma = 0.3 = \delta\)</span>, that is about 16 seeds per arm; if <span class="math inline">\(\sigma = 0.1\)</span>, two or three. If the count is unaffordable, reduce <span class="math inline">\(\sigma\)</span>: larger evaluation set, paired seeds (same initialisation and data order in both arms, analysed as paired differences), or averaging the last few checkpoints.</p>
+<p><strong>Fair comparison.</strong></p>
+<ul>
+<li>Retune the baseline’s schedule hyperparameters (peak rate, warmup) with the same search budget as the new schedule. A new schedule often just fixes a mistuned learning rate.</li>
+<li>Same steps, batch size, data and compute. Compare at equal compute and at convergence.</li>
+<li>Compare whole training curves, not only the endpoint; a schedule can be faster early and equal late.</li>
+</ul>
+<p><strong>Generality.</strong> Two model sizes and two datasets or tasks. An interaction with scale changes the decision.</p>
+<p><strong>Hygiene.</strong> Use the validation set for all selection; evaluate the test set once. Report every run, the mean difference with a confidence interval, and the sensitivity of each arm to its hyperparameters.</p>
+<p><strong>Decision rule.</strong> Adopt if the interval excludes zero and the lower bound is useful, the gain holds at the larger scale, and the method does not add fragile hyperparameters.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>You can afford only three seeds per arm. What do you do?</li>
+<li>The gain appears at small scale and disappears at large scale. How do you report it?</li>
+</ul>
+</details>
+<details class="qa" id="research-013">
+<summary>
+<span class="tag tag-staff">staff</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> A deployed model fails on a class of inputs and nobody knows why. You have two weeks and one teammate. Plan the investigation.
+</summary>
+<p>The plan front-loads measurement and cheap discrimination between causes, with two decision points.</p>
+<p><strong>Days 1-2: reproduce and measure.</strong> Collect 100 to 300 failing examples and a matched set of passing ones. Define the failure as a metric on a frozen set so that every later experiment reports the same number. Estimate prevalence in traffic; this sets the priority and the bar for a fix.</p>
+<p><strong>Days 2-4: characterise.</strong> Read the examples and build an error taxonomy by hand. Slice by input properties (length, language, source, time, upstream component). Check whether the failure began at a known change: model version, data refresh, preprocessing.</p>
+<p><strong>Decision point 1 (day 4).</strong> Share the taxonomy and a ranked list of hypotheses with a prior and a test cost for each. Typical families: evaluation artifact or label error; preprocessing or serving mismatch; inputs outside the training distribution; label noise or conflict in training data; capacity or optimisation (the model cannot fit the pattern); a specification gap (the desired behaviour was never defined).</p>
+<p><strong>Days 4-8: discriminate.</strong> Run the cheapest tests first: replay the inputs through the training pipeline to detect skew; search the training data for nearest neighbours of failing inputs; fine-tune on a small sample of corrected examples to see whether the model can learn it; test a larger model or the previous version.</p>
+<p><strong>Decision point 2 (day 8).</strong> Pick one cause to fix, or report that the top hypotheses are refuted.</p>
+<p><strong>Days 8-12: intervene.</strong> Data fix, pipeline fix or training change, evaluated on the frozen failure set, a held-out failure sample collected later, and the full regression suite.</p>
+<p><strong>Days 13-14: write up.</strong> Cause, evidence, fix, residual failure rate, monitoring added, what remains unknown.</p>
+<p>The teammate splits along data analysis and experiments, and we both read examples.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>At day 8 all your hypotheses are refuted. What do you tell the stakeholders?</li>
+<li>How do you avoid overfitting the fix to the 300 collected examples?</li>
+</ul>
+</details>
+<details class="qa" id="research-014">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">behavioural</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Tell me about a research bet that failed.
+</summary>
+<p><strong>What is tested.</strong> Whether you take real risks, reason well under uncertainty, notice failure early, and learn something transferable. Research has a high failure rate, so a candidate with no failures either took no risks or is not being candid.</p>
+<p><strong>Structure.</strong></p>
+<ol type="1">
+<li>The bet: the hypothesis, why it was reasonable at the time, what success would have been worth.</li>
+<li>The plan: the first milestone and what you expected to see.</li>
+<li>What happened: the evidence that it was not working, when you saw it and how long you continued.</li>
+<li>The diagnosis: why it failed (wrong assumption, no headroom, evaluation that could not detect the effect, execution).</li>
+<li>The decision: how you stopped or pivoted, and how you communicated it.</li>
+<li>What changed afterwards: a specific practice, such as running the ceiling experiment first or setting review dates, and anything salvaged (tooling, a dataset, a negative result others used).</li>
+</ol>
+<p><strong>Good signals.</strong> A real hypothesis with real cost; precise evidence; ownership of your part without self-punishment; a lesson that is a behaviour, not a platitude.</p>
+<p><strong>Mistakes.</strong> A disguised success (“it failed, but then won an award”); blaming data, compute or colleagues; a failure that was only a bug; no account of why you did not stop sooner; a lesson such as “communicate more” with nothing behind it.</p>
+<p>Prepare one story of three minutes with the numbers you can share.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>What was the earliest point at which you could have known?</li>
+<li>Would you make the same bet again with the same information?</li>
+</ul>
+</details>
+<details class="qa" id="research-015">
+<summary>
+<span class="tag tag-staff">staff</span><span class="tag tag-type">debugging</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> Your method beats the baseline by two points. The ablation that removes the component you claim is responsible loses only 0.2. What do you do?
+</summary>
+<p>The evidence says the claimed mechanism is not what produces the gain, so either the ablation is wrong or the claim is. I check in this order.</p>
+<ol type="1">
+<li><strong>Noise.</strong> Is 0.2 versus 2.0 outside seed variance for both variants? Run enough seeds to say so.</li>
+<li><strong>Is the ablation real?</strong> Verify that the component is disabled: log its outputs, assert on the code path, check the parameter count. A flag that is ignored is a common cause.</li>
+<li><strong>Is the ablated model handicapped or helped by tuning?</strong> Hyperparameters were tuned for the full model. Retune the ablated variant; the fair comparison is best against best.</li>
+<li><strong>Confounds bundled with the method.</strong> List every difference between the baseline and the full method: extra parameters, longer training, a different augmentation or data filter, a new normalisation, a changed evaluation path. Add each one to the baseline separately.</li>
+<li><strong>Interactions.</strong> Leave-one-out ablations miss redundancy: two components may each be sufficient. Run a factorial design (at least 2x2) on the main components.</li>
+<li><strong>Mechanism check.</strong> Measure the intermediate quantity the component is supposed to change. If it does not change, the story is wrong even if the number is right.</li>
+</ol>
+<p>Then I update the claim to what the evidence supports. If the two points come from the training recipe, the finding is “the recipe matters”, and the baseline should receive it. The literature has cases of this kind, where architecture gains shrank once older models received modern training recipes.</p>
+<p>What I would not do is leave the ablation out of the write-up.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How many runs does a full factorial over four components cost, and how would you reduce it?</li>
+<li>Your co-author wants to keep the original claim. How do you handle it?</li>
+</ul>
+</details>
+</section>
+<section id="research-collab" class="level3">
+<h3 class="anchored" data-anchor-id="research-collab">Working with researchers / research-product bridge <span class="demand">16% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="research.research-collab.0"> Can explain the division of labour between research scientists and research engineers and where it blurs</li>
+<li><input type="checkbox" class="chk" data-chk="research.research-collab.1"> Can list the gaps between a research prototype and a production system and a staged plan to close them</li>
+<li><input type="checkbox" class="chk" data-chk="research.research-collab.2"> Can describe how to disagree about a result by proposing the experiment that would settle it</li>
+</ul>
+<details class="qa" id="research-025">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> What is the division of labour between a research scientist and a research engineer, and what does a good research engineer contribute beyond implementation?
+</summary>
+<p>Nominally, the scientist owns the research agenda (which questions to ask, which hypotheses to test, how to interpret results) and the engineer owns the systems that make experiments possible, fast and trustworthy: training and evaluation infrastructure, data pipelines, scaling a method from a prototype to a large run, and performance work.</p>
+<p>In practice the line is blurry, and several frontier labs use one title for both. Research engineers run experiments, propose ideas and co-author papers; scientists write production-quality code. The difference is one of emphasis and of what each is finally accountable for.</p>
+<p>What a strong research engineer adds:</p>
+<ul>
+<li><strong>Iteration speed.</strong> Cutting the experiment loop from a day to an hour changes which research is feasible.</li>
+<li><strong>Trustworthiness.</strong> Tests, deterministic evaluation, tracked configs and baselines mean that a result can be believed and reproduced.</li>
+<li><strong>Scale.</strong> Making a method work at 100 times the data or model size, where new failure modes appear.</li>
+<li><strong>Scientific judgment.</strong> Questioning the experimental design, noticing a confound, proposing the cheaper experiment.</li>
+<li><strong>A path to product.</strong> Knowing early what will block deployment.</li>
+</ul>
+<p>Failure modes: the engineer as ticket-taker who implements without understanding the question; research code thrown over a wall; an infrastructure project that nobody’s experiments need.</p>
+<p>In interviews the engineer loop weighs coding and systems more heavily, and still expects opinions on papers and experiment design.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>A researcher asks you to implement something you think is the wrong experiment. What do you do?</li>
+</ul>
+</details>
+<details class="qa" id="research-026">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> A researcher has a notebook prototype that beats the production model by 3% on the offline benchmark. Take me through getting it into production.
+</summary>
+<p>The benchmark gain is a hypothesis about the product. The work is to test it under production conditions, in stages that each can stop the launch.</p>
+<ol type="1">
+<li><strong>Reproduce independently.</strong> Rerun from clean code and tracked data. Check the gain against seed variance and the usual leakage causes.</li>
+<li><strong>Check the distribution.</strong> Evaluate on recent production traffic, sliced by the segments that matter. Research benchmarks are often cleaner and older than live data.</li>
+<li><strong>Check serving-time inputs.</strong> Every feature the prototype uses must exist at request time with the same definition and freshness. Features computed offline with future information are the classic gap.</li>
+<li><strong>Define launch criteria</strong> with the researcher and product owner before more work: the online metric, guardrails, latency and cost budgets.</li>
+<li><strong>Harden.</strong> Move training into the pipeline with tests, config, data versioning and scheduled retraining. Decide what to rewrite and what to keep; preserve numerical equivalence with the prototype and test for it.</li>
+<li><strong>Fit the budget.</strong> Distil, quantise, prune or cache as needed. Every optimisation is evaluated with the same evaluation as the prototype so that quality lost is measured, not assumed.</li>
+<li><strong>Shadow, then A/B.</strong> Shadow traffic checks latency, errors and prediction distributions; the A/B test measures the online metric. Ramp with monitoring and a rollback path.</li>
+<li><strong>Operate.</strong> Drift monitoring, retraining cadence, ownership.</li>
+</ol>
+<p>The researcher stays involved throughout: they know which properties of the method are essential, and a 3% offline gain that becomes 0.5% online is information they need.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>The offline gain does not appear online. What are the likely reasons?</li>
+<li>Latency is 4x over budget. What do you try, in what order?</li>
+</ul>
+</details>
+<details class="qa" id="research-027">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">behavioural</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Tell me about a time you disagreed with a researcher or colleague about whether a result was real.
+</summary>
+<p><strong>What is tested.</strong> Whether you can challenge a result on evidence without making it personal, whether you can be persuaded, and whether the outcome was better science.</p>
+<p><strong>Structure.</strong></p>
+<ol type="1">
+<li>The result and the claim made from it, stated fairly, including why your colleague believed it.</li>
+<li>Your specific concern: a confound, a weak baseline, a single seed, a possible leak. A named mechanism, not “I was not convinced”.</li>
+<li>What you did: you checked your own understanding first, raised it privately or in the normal review forum, and proposed the experiment that would settle it, with the outcome each side predicted.</li>
+<li>The outcome, including the case where you were wrong or partly wrong.</li>
+<li>What changed afterwards: a check added to the team’s process, a revised claim, a better working relationship.</li>
+</ol>
+<p><strong>Good signals.</strong> You argued about the experiment and not the person; you offered to run the check yourself; you agreed in advance on what would count as evidence; you accepted the result.</p>
+<p><strong>Mistakes.</strong> A story where you were simply right and the other person foolish; escalating before talking to them; staying silent and letting a doubtful result ship; relitigating after the data came in.</p>
+<p>If the disagreement was about interpretation and not fact, say how you reported both readings and what decision was taken under uncertainty.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>What if the other person is senior to you and declines to run the check?</li>
+<li>Tell me about a time the check showed that you were wrong.</li>
+</ul>
+</details>
+</section>
+<section id="papers" class="level3">
+<h3 class="anchored" data-anchor-id="papers">Reading, reproducing and implementing research <span class="demand">14% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="research.papers.0"> Can state a paper’s claim, the evidence for it and the weakest link between them in two minutes</li>
+<li><input type="checkbox" class="chk" data-chk="research.papers.1"> Can list what to check before trusting a headline number (baseline tuning, compute parity, seeds, test-set use, ablations, contamination)</li>
+<li><input type="checkbox" class="chk" data-chk="research.papers.2"> Can describe an ordered procedure for closing a reproduction gap, starting from the evaluation pipeline</li>
+<li><input type="checkbox" class="chk" data-chk="research.papers.3"> Can turn a method section into a written spec (shapes, loss, schedule, unspecified details) and build it one verified component at a time</li>
+<li><input type="checkbox" class="chk" data-chk="research.papers.4"> Can walk through one paper in depth, including what it gets wrong</li>
+</ul>
+<details class="qa" id="research-001">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> How do you read an ML paper critically? What do you check before you trust the headline result?
+</summary>
+<p>I read in passes: abstract, figures and conclusion first to extract the claim; then the method and experiments; the appendix only if I plan to use or reproduce it. For each paper I write one sentence each for the claim, the evidence, and the weakest link between them.</p>
+<p>Checks before trusting a number:</p>
+<ul>
+<li><strong>Baseline strength.</strong> Was the baseline tuned with the same budget as the proposed method, or copied from an older paper with a weaker recipe? Most inflated gains come from here.</li>
+<li><strong>Parity.</strong> Same parameters, data, training steps and inference compute? A method that uses 2x compute needs a 2x-compute baseline.</li>
+<li><strong>Variance.</strong> Number of seeds, error bars, and whether the gain exceeds seed-to-seed standard deviation.</li>
+<li><strong>Test-set hygiene.</strong> Was model selection or early stopping done on the test set? Is there train-test overlap or, for LLMs, benchmark contamination in pretraining data?</li>
+<li><strong>Ablations.</strong> Do they isolate the claimed mechanism, or does the gain come from an incidental change (more parameters, longer schedule, extra data)?</li>
+<li><strong>Scope.</strong> How many datasets and scales? Does the gain shrink as the baseline gets stronger?</li>
+<li><strong>Metric and selection.</strong> Is the metric the standard one, and are qualitative examples cherry-picked?</li>
+<li><strong>Artifacts.</strong> Released code and checkpoints raise my prior; so do independent reproductions.</li>
+</ul>
+<p>The output is a decision: ignore, remember the idea, or spend a day reproducing the central result.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Which of these checks fails most often in papers you have tried to reproduce?</li>
+<li>How do you check for benchmark contamination when you cannot see the pretraining data?</li>
+</ul>
+</details>
+<details class="qa" id="research-002">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">debugging</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> You implemented a paper and your number is three points below the reported one. How do you close the gap?
+</summary>
+<p>I separate evaluation from training first, then bisect against a reference.</p>
+<ol type="1">
+<li><strong>Evaluation.</strong> Run the authors’ released checkpoint through my evaluation code. If it matches the paper, my evaluation is right and the gap is in training. If not, the gap is in preprocessing, the metric implementation, the test split or decoding settings.</li>
+<li><strong>Official code.</strong> Run it with the official config. If it reproduces, I have a known-good reference and the task becomes a diff. If it does not, the paper’s number may be best-of-N seeds, a different data version, or unreported tricks.</li>
+<li><strong>Bisect the diff.</strong> Port weights from the reference into my model and compare outputs on the same batch to about <span class="math inline">\(10^{-5}\)</span>; this isolates architecture from training. Then compare the training recipe item by item: tokenisation and augmentation, initialisation, optimiser details (Adam <span class="math inline">\(\epsilon\)</span>, decoupled versus coupled weight decay, which parameters are decayed), warmup and schedule, effective batch size with accumulation, gradient clipping, EMA of weights, label smoothing, mixed precision, training length.</li>
+<li><strong>Noise.</strong> Run three to five seeds. If the paper’s number is within my distribution’s upper tail, the “gap” is selection.</li>
+<li><strong>Ask.</strong> Email the authors with a precise question and my config.</li>
+</ol>
+<p>I time-box the effort and report “reproduced to within X under conditions Y” instead of an unbounded search. Typical culprits in my experience: evaluation preprocessing, schedule length, and EMA.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>There is no released code or checkpoint. What changes?</li>
+<li>When do you stop and conclude the result does not reproduce?</li>
+</ul>
+</details>
+<details class="qa" id="research-003">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> You are handed a paper on Monday and asked for a working implementation in the team’s codebase by Friday. How do you go about it?
+</summary>
+<p>The plan is to cut the distance between “runs” and “is correct” by building from a known-good baseline in small verified steps.</p>
+<ul>
+<li><strong>Write the spec (half a day).</strong> From the method section, the algorithm box and the appendix: tensor shapes at each step, the loss with every term and coefficient, the optimiser and schedule, data preprocessing. List the details the paper leaves unspecified; these are where reproductions fail. Check for official code or a trusted third-party implementation and read it for those details.</li>
+<li><strong>Pick the smallest faithful setting.</strong> The paper’s smallest model and dataset, or a synthetic task where the right answer is known (for example, a toy distribution the method must recover).</li>
+<li><strong>Start from our baseline.</strong> Confirm the baseline number in our codebase first. Add one component of the method at a time behind a config flag, each with a test: shape tests, a comparison against a slow reference implementation, and the overfit-one-batch check.</li>
+<li><strong>Reproduce one number.</strong> One row of one table at small scale, with the diagnostic plots the paper shows (loss curves, the quantity the method claims to change). Only then move to our data.</li>
+<li><strong>Report.</strong> What matches, what differs, which unspecified details I chose and why, cost relative to baseline.</li>
+</ul>
+<p>The common failure is the opposite order: implement everything, launch on the real task, get a mediocre number, and have no way to tell a wrong idea from a bug.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Which details do papers most often leave out?</li>
+<li>How do you test a component whose correct output you cannot compute by hand?</li>
+</ul>
+</details>
+<details class="qa" id="research-004">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">behavioural</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Walk me through a paper you like.
+</summary>
+<p><strong>What is tested.</strong> Whether you understand a piece of research at the level of mechanism and evidence, can explain it to a peer, and have opinions about its weaknesses. The choice of paper matters less than the depth.</p>
+<p><strong>Choosing.</strong> Pick a paper you have implemented, reproduced or built on, in an area close to the team’s work. Avoid a famous paper you only know from summaries, because the follow-ups will go to details.</p>
+<p><strong>Structure (five to seven minutes).</strong></p>
+<ol type="1">
+<li>The problem and why prior approaches fell short, in two sentences.</li>
+<li>The key idea in one sentence, then the mechanism at whiteboard level: inputs, outputs, the loss, the one equation that matters.</li>
+<li>The evidence: the main experiment, the baseline it beat, by how much, and whether you find the comparison fair.</li>
+<li>What is weak or missing: an untested assumption, a missing ablation, a setting where it fails.</li>
+<li>What followed: whether later work confirmed, replaced or generalised it, and what you did with it.</li>
+</ol>
+<p><strong>Mistakes.</strong> Reciting the abstract; being unable to write the objective; presenting no criticism; picking a paper to impress and then failing a follow-up about its experimental setup; talking for fifteen minutes without checking in.</p>
+<p>Prepare two papers: one classic in your area and one from the last year, with the equation, one number and one criticism for each.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>What experiment would you add to that paper?</li>
+<li>Has the result held up? How do you know?</li>
+</ul>
+</details>
+</section>
+<section id="safety-research" class="level3">
+<h3 class="anchored" data-anchor-id="safety-research">AI safety and alignment <span class="demand">8% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="research.safety-research.0"> Can map the main workstreams of a safety team (capability evaluations, misuse safeguards, alignment, oversight and control, interpretability, deployment policy)</li>
+<li><input type="checkbox" class="chk" data-chk="research.safety-research.1"> Can describe how a dangerous-capability evaluation is designed, including elicitation and thresholds</li>
+<li><input type="checkbox" class="chk" data-chk="research.safety-research.2"> Can say which safety claims are established experimentally and which are open</li>
+<li><input type="checkbox" class="chk" data-chk="research.safety-research.3"> Can answer why they want to work on safety with a specific, honest reason</li>
+</ul>
+<details class="qa" id="research-028">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> What do safety teams at AI labs work on? Give me the map and say what a research engineer does in each part.
+</summary>
+<p>Six workstreams, with different methods:</p>
+<ul>
+<li><strong>Dangerous-capability evaluations.</strong> Measuring whether a model gives meaningful uplift for severe harms (commonly chemical and biological weapons, cyber offence, and autonomous AI R&amp;D or self-replication). Engineers build task suites, sandboxes and agent scaffolds, and run evaluations at scale.</li>
+<li><strong>Misuse safeguards.</strong> Input and output classifiers, jailbreak robustness, abuse monitoring and enforcement, red-teaming. This is classifier training and adversarial evaluation under latency and false-positive budgets.</li>
+<li><strong>Alignment.</strong> Getting models to behave as intended: honesty, resistance to sycophancy, following a specification, avoiding specification gaming and goal misgeneralisation. Work includes fine-tuning methods and evaluations for deceptive or power-seeking behaviour. Published experiments in constructed settings (backdoored “sleeper agent” models, alignment-faking studies) show that such behaviours can occur; how likely they are to arise in ordinary training is an open question.</li>
+<li><strong>Oversight and control.</strong> Monitoring agent actions, sandboxing and permissions, and protocols intended to stay safe even if the model is not trustworthy; scalable oversight methods such as debate.</li>
+<li><strong>Interpretability.</strong> Probing; mechanistic work such as sparse autoencoders that decompose activations into more interpretable features, and circuit analysis. Useful findings exist, but faithfulness and coverage are unresolved, and it is not yet a reliable audit tool.</li>
+<li><strong>Responsible deployment.</strong> Frontier safety frameworks that tie capability thresholds to required safeguards, system cards, external testing, incident response.</li>
+</ul>
+<p>A grounded answer says which part interests you and names the measurement problem in it.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Pick one of these. What is the hardest unsolved measurement problem in it?</li>
+<li>How does safeguard work differ from ordinary content classification?</li>
+</ul>
+</details>
+<details class="qa" id="research-029">
+<summary>
+<span class="tag tag-staff">staff</span><span class="tag tag-type">design</span><span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Design an evaluation that tells a lab whether a new model crosses a dangerous-capability threshold in some domain, and say what should happen if it does.
+</summary>
+<p><strong>Threat model first.</strong> Specify the actor, the harm and the pathway, and which steps of the pathway a model could accelerate. The quantity of interest is uplift: what the actor can do with the model compared with existing tools such as search.</p>
+<p><strong>Evaluation layers, cheap to expensive.</strong></p>
+<ol type="1">
+<li>Automated knowledge and skill tests (expert-written questions with graded rubrics). These are rule-out tests: a model far below expert level here is unlikely to be dangerous.</li>
+<li>Agentic task suites in a sandbox, for example capture-the-flag challenges for cyber or multi-step tasks for autonomy, scored on end-to-end success.</li>
+<li>Human uplift studies: randomised groups with and without model access attempt a proxy task; the outcome is the difference in success or quality. Expensive, low sample size, closest to the threat model.</li>
+<li>Expert red-teaming for what the suites miss.</li>
+</ol>
+<p><strong>Elicitation.</strong> The evaluation must measure what a motivated user could extract, so use strong scaffolding and tools, several attempts, generous token budgets, and a variant without refusals. Under-elicitation produces false reassurance; this is the main validity risk. Test for sandbagging by checking consistency across framings.</p>
+<p><strong>Thresholds.</strong> Set them before running, with a margin: evaluations happen at intervals, capability rises between them, and elicitation improves after release.</p>
+<p><strong>Validity problems.</strong> Few tasks give wide confidence intervals; benchmarks saturate or leak; proxies must avoid being hazardous themselves; graders need domain experts.</p>
+<p><strong>If the threshold is crossed.</strong> Safeguards proportionate to the risk before deployment: misuse classifiers and monitoring for that domain, restricted access, stronger security for the weights, tested by red-teaming; or delay. The decision and evidence are reviewed by people independent of the team shipping the model.</p>
+<p>The honest caveat: threshold placement is a judgment under uncertainty, and the science of these evaluations is young.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How would you detect that a model is underperforming on purpose during an evaluation?</li>
+<li>With 30 tasks and a 40% success rate, how wide is the confidence interval, and what does that mean for a threshold at 50%?</li>
+</ul>
+</details>
+<details class="qa" id="research-030">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">behavioural</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Why do you want to work on AI safety?
+</summary>
+<p><strong>What is tested.</strong> Sincerity, knowledge of what the work consists of, and the ability to reason about uncertain claims. Interviewers at safety-focused labs hear rehearsed answers constantly and probe past them.</p>
+<p><strong>Structure of an honest answer.</strong></p>
+<ol type="1">
+<li>Your own reason, concretely. Examples of the kind of reason that holds up: failure modes you saw in deployed systems; a view that as models take more autonomous actions, reliability and misuse problems carry higher stakes; wanting to work where measurements gate deployment decisions.</li>
+<li>What you are unsure about. Say which arguments you find persuasive, which you do not, and what evidence would move you. Calibrated uncertainty reads better than conviction.</li>
+<li>What you want to do. Tie it to your skills: building evaluations, training classifiers, scaling interpretability experiments, securing agent execution.</li>
+<li>Evidence of engagement: a specific paper, system card or published safety framework from the lab you are interviewing with, and your opinion of it, including a criticism.</li>
+</ol>
+<p><strong>Mistakes.</strong> Slogans with no technical content; confident predictions about timelines or outcomes presented as fact; cynicism (“safety is marketing”); feigned passion; not having read the lab’s own published framework; treating safety and capability work as cleanly separable when much safety research needs capable models and can advance capability.</p>
+<p>If your motivation is partly that the problems are technically interesting and the team is strong, say so. A plain mixed motive is more credible than a pure one.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Which argument for concern about advanced AI do you find weakest, and why?</li>
+<li>How would you feel about working on capability evaluations that might show the model is safe to release?</li>
+</ul>
+</details>
+</section>
+</section>
+<section id="deep-dives-on-this-site" class="level2">
+<h2 class="anchored" data-anchor-id="deep-dives-on-this-site">Deep dives on this site</h2>
+<ul>
+<li><a href="../notes/foundations/optimizers.html">Zeroth-, First-, and Second-Order Optimization</a></li>
+<li><a href="../notes/foundations/calibration.html">Model Calibration: From CTR/CVR to Calibrated Decisions</a></li>
+<li><a href="../notes/applied_ml/cursor_continual_training.html">Case Study: Cursor’s Continual Training Loop</a></li>
+</ul>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/threeeyelidds\.github\.io\/minimal-ml\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+      window.quartoDecorateExternalLinks = function (root) {
+     var links = (root || window.document).querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+          if (!link.classList.contains('no-external-icon')) {
+          }
+        }
+      }
+      };
+      window.quartoDecorateExternalLinks(window.document);
+    // Esc closes the popup (WCAG 1.4.13) and focus leaving both trigger and
+    // popup closes it (WCAG 2.4.11); tippy handles neither for interactive popups.
+    const hideOnEscAndFocusOut = {
+      name: 'hideOnEscAndFocusOut',
+      defaultValue: true,
+      fn(instance) {
+        const dismiss = () => {
+          // A show scheduled by the trigger delay would otherwise reopen it
+          instance.clearDelayTimeouts();
+          instance.hide();
+        };
+        const onKeyDown = (event) => {
+          if (event.key !== 'Escape') {
+            return;
+          }
+          // Keep Esc from also reaching page handlers (e.g. reveal.js overview),
+          // except an open reveal.js slide menu, which Esc should close too.
+          // The menu handles keys only when its keyboard option is on.
+          const menuHandlesEsc = window.Reveal?.getPlugin?.('menu')?.isOpen() &&
+            window.Reveal.getConfig().menu?.keyboard !== false;
+          if (!menuHandlesEsc) {
+            event.stopPropagation();
+          }
+          if (instance.popper.contains(window.document.activeElement)) {
+            // Disabled while refocusing so the focus trigger does not reopen it
+            instance.disable();
+            instance.reference.focus();
+            instance.enable();
+          }
+          dismiss();
+        };
+        const onFocusOut = (event) => {
+          const target = event.relatedTarget;
+          if (target && !instance.reference.contains(target) &&
+              !instance.popper.contains(target)) {
+            dismiss();
+          }
+        };
+        // On the trigger too: a click trigger (code-annotations: select) has no
+        // blur handling. Attached for the instance's lifetime so leaving the
+        // trigger also cancels a show still pending on the trigger delay.
+        instance.reference.addEventListener('focusout', onFocusOut);
+        return {
+          onShow() {
+            window.document.addEventListener('keydown', onKeyDown, true);
+            instance.popper.addEventListener('focusout', onFocusOut);
+          },
+          onHide() {
+            window.document.removeEventListener('keydown', onKeyDown, true);
+            instance.popper.removeEventListener('focusout', onFocusOut);
+          },
+          onDestroy() {
+            instance.reference.removeEventListener('focusout', onFocusOut);
+          },
+        };
+      },
+    };
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+        plugins: [hideOnEscAndFocusOut],
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          // Each band is positioned against its own containing block, which is
+          // not the offsetParent of the lines, so place it from client rects.
+          const placeBand = (band, firstEl, lastEl, codeBlock) => {
+            const container = band.offsetParent;
+            if (container === null) {
+              return;
+            }
+            const containerRect = container.getBoundingClientRect();
+            // Reveal.js scales slides with a transform, so convert client
+            // pixels back to the CSS pixels of the container.
+            const scale = containerRect.height / container.offsetHeight || 1;
+            const firstRect = firstEl.getBoundingClientRect();
+            const lastRect = lastEl.getBoundingClientRect();
+            const top = (firstRect.top - containerRect.top) / scale - container.clientTop + container.scrollTop;
+            const height = (lastRect.bottom - firstRect.top) / scale;
+            band.style.top = top - 2 + "px";
+            band.style.height = height + 4 + "px";
+            if (codeBlock) {
+              // Without the copy button wrapper, the containing block is wider
+              // than the code block, so span the code block explicitly.
+              const blockRect = codeBlock.getBoundingClientRect();
+              band.style.left = (blockRect.left - containerRect.left) / scale - container.clientLeft + container.scrollLeft + "px";
+              band.style.width = blockRect.width / scale + "px";
+            }
+          };
+          if (lineIds.length > 0) {
+            const el = window.document.getElementById(lineIds[0]);
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const parent = el.parentElement.parentElement;
+            // cook up a div (if necessary) and position it
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            placeBand(div, el, lastEl, parent.closest("div.sourceCode") || parent);
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            placeBand(gutterDiv, el, lastEl);
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+  <script type="application/javascript">
+  window.quartoScrollableRegionsLabels = {"code":"Scrollable code","output":"Scrollable output"};
+  </script>
+</div> <!-- /content -->
+<script>
+/* Site-wide: persistent checklists and review status on the skill pages. */
+(function () {
+  "use strict";
+  function get(k) { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch (e) { return {}; } }
+  function set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* storage blocked: ticks last for this page view */ } }
+
+  var chk = get("prep.chk.v1");
+  document.querySelectorAll("input.chk").forEach(function (el) {
+    el.checked = !!chk[el.dataset.chk];
+    el.addEventListener("change", function () {
+      if (el.checked) chk[el.dataset.chk] = 1; else delete chk[el.dataset.chk];
+      set("prep.chk.v1", chk);
+    });
+  });
+
+  var cards = (get("prep.v1").cards) || {};
+  document.querySelectorAll("details.qa[id]").forEach(function (el) {
+    var r = cards[el.id];
+    if (r) el.classList.add(r.ivl >= 7 ? "st-known" : "st-learning");
+  });
+
+  // open the question a link points at
+  function openTarget() {
+    var id = decodeURIComponent(location.hash.slice(1));
+    var el = id && document.getElementById(id);
+    if (el && el.tagName === "DETAILS") { el.open = true; el.scrollIntoView({ block: "start" }); }
+  }
+  window.addEventListener("hashchange", openTarget);
+  openTarget();
+
+  var mp = document.getElementById("map-progress");
+  if (mp) {
+    var seen = Object.keys(cards).length, known = Object.keys(cards).filter(function (k) { return cards[k].ivl >= 7; }).length;
+    var ticks = Object.keys(chk).length;
+    if (seen || ticks) {
+      mp.className = "tile";
+      mp.style.marginBottom = "1.2rem";
+      mp.textContent = "Your progress in this browser: " + seen + " cards reviewed, " + known + " known, " + ticks + " checklist items ticked.";
+    }
+  }
+})();
+</script>
+
+
+
+
+</body></html>

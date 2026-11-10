@@ -46,7 +46,7 @@ ul.task-list li input[type="checkbox"] {
 <link href="../../site_libs/quarto-html/quarto-syntax-highlighting-dark-447e42e69aaa9833c0ba1b986f430b20.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../../site_libs/bootstrap/bootstrap-bb4e448514b610e090e2765a04a7f37d.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="dark">
+<link href="../../site_libs/bootstrap/bootstrap-980fa6b4eab38a5377f72c7fe6f39b73.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="dark">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -111,6 +111,7 @@ window.Quarto = {
 
 <link rel="stylesheet" href="../../styles.css">
 <link rel="stylesheet" href="../../colors.css">
+<link rel="stylesheet" href="../../prep.css">
 </head>
 
 <body class="nav-fixed quarto-light"><a id="quarto-skip-link" class="visually-hidden-focusable" href="#quarto-document-content">Skip to main content</a>
@@ -132,6 +133,26 @@ window.Quarto = {
   <li class="nav-item">
     <a class="nav-link" href="../../index.html"> 
 <span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../report/index.html"> 
+<span class="menu-text">Report</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../skills/index.html"> 
+<span class="menu-text">Skills</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../review/index.html"> 
+<span class="menu-text">Review</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../plan/index.html"> 
+<span class="menu-text">Plan</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../jobs/index.html"> 
+<span class="menu-text">Open roles</span></a>
   </li>  
   <li class="nav-item">
     <a class="nav-link" href="../../notes/index.html"> 
@@ -1271,6 +1292,49 @@ F(z_t,\text{command},\text{event}),
   window.quartoScrollableRegionsLabels = {"code":"Scrollable code","output":"Scrollable output"};
   </script>
 </div> <!-- /content -->
+<script>
+/* Site-wide: persistent checklists and review status on the skill pages. */
+(function () {
+  "use strict";
+  function get(k) { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch (e) { return {}; } }
+  function set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* storage blocked: ticks last for this page view */ } }
+
+  var chk = get("prep.chk.v1");
+  document.querySelectorAll("input.chk").forEach(function (el) {
+    el.checked = !!chk[el.dataset.chk];
+    el.addEventListener("change", function () {
+      if (el.checked) chk[el.dataset.chk] = 1; else delete chk[el.dataset.chk];
+      set("prep.chk.v1", chk);
+    });
+  });
+
+  var cards = (get("prep.v1").cards) || {};
+  document.querySelectorAll("details.qa[id]").forEach(function (el) {
+    var r = cards[el.id];
+    if (r) el.classList.add(r.ivl >= 7 ? "st-known" : "st-learning");
+  });
+
+  // open the question a link points at
+  function openTarget() {
+    var id = decodeURIComponent(location.hash.slice(1));
+    var el = id && document.getElementById(id);
+    if (el && el.tagName === "DETAILS") { el.open = true; el.scrollIntoView({ block: "start" }); }
+  }
+  window.addEventListener("hashchange", openTarget);
+  openTarget();
+
+  var mp = document.getElementById("map-progress");
+  if (mp) {
+    var seen = Object.keys(cards).length, known = Object.keys(cards).filter(function (k) { return cards[k].ivl >= 7; }).length;
+    var ticks = Object.keys(chk).length;
+    if (seen || ticks) {
+      mp.className = "tile";
+      mp.style.marginBottom = "1.2rem";
+      mp.textContent = "Your progress in this browser: " + seen + " cards reviewed, " + known + " known, " + ticks + " checklist items ticked.";
+    }
+  }
+})();
+</script>
 
 
 

@@ -1,0 +1,1658 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.11.9">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Reinforcement learning and decision making – Minimal ML</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/scrollable-regions/scrollable-regions.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-447e42e69aaa9833c0ba1b986f430b20.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-980fa6b4eab38a5377f72c7fe6f39b73.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="dark">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<meta name="google-site-verification" content="Ztjr25pGaioeZP-mkoIn_MkNmmsFXWcU6I6W2tEPli0">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../styles.css">
+<link rel="stylesheet" href="../colors.css">
+<link rel="stylesheet" href="../prep.css">
+</head>
+
+<body class="nav-sidebar docked nav-fixed quarto-light"><a id="quarto-skip-link" class="visually-hidden-focusable" href="#quarto-document-content">Skip to main content</a>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark" aria-label="Site">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">Minimal ML</span>
+    </a>
+  </div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../report/index.html"> 
+<span class="menu-text">Report</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link active" href="../skills/index.html" aria-current="page"> 
+<span class="menu-text">Skills</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../review/index.html"> 
+<span class="menu-text">Review</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../plan/index.html"> 
+<span class="menu-text">Plan</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../jobs/index.html"> 
+<span class="menu-text">Open roles</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../notes/index.html"> 
+<span class="menu-text">Notes</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../essays/index.html"> 
+<span class="menu-text">Essays</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+            <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav" aria-label="Toolbar">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="Breadcrumbs"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../skills/llm.html">LLMs and agents</a></li><li class="breadcrumb-item"><a href="../skills/rl.html">Reinforcement learning and decision making</a></li></ol></nav>
+        <a class="flex-grow-1" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto" aria-label="Section">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Skill map</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/cases.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Design cases</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" aria-controls="quarto-sidebar-section-1" aria-expanded="true">
+ <span class="menu-text" id="quarto-sidebar-section-1-label">The loop</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-1" aria-labelledby="quarto-sidebar-section-1-label" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/swe.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Programming and software engineering</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/mlfund.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">ML fundamentals and statistics</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/dl.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Deep learning</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/eval.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Evaluation and experimentation</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/senior.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Senior-level scope and leadership</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" aria-controls="quarto-sidebar-section-2" aria-expanded="true">
+ <span class="menu-text" id="quarto-sidebar-section-2-label">LLMs and agents</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-2" aria-labelledby="quarto-sidebar-section-2-label" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/llm.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">LLMs and foundation models (training side)</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/llmapp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">LLM application engineering (agents, RAG, prompts)</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/rl.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Reinforcement learning and decision making</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/research.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Research skills</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" aria-controls="quarto-sidebar-section-3" aria-expanded="true">
+ <span class="menu-text" id="quarto-sidebar-section-3-label">Product ML</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-3" aria-labelledby="quarto-sidebar-section-3-label" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/recsys.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Search, recommendation, ads and ranking</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/domain.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Domain specialties</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" aria-controls="quarto-sidebar-section-4" aria-expanded="true">
+ <span class="menu-text" id="quarto-sidebar-section-4-label">Systems</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-4" aria-labelledby="quarto-sidebar-section-4-label" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/infra.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Training infrastructure and data systems</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/serving.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Inference, serving and model optimization</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/mlops.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">MLOps, cloud and production operations</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" aria-labelledby="toc-title" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#what-the-postings-ask-for" id="toc-what-the-postings-ask-for" class="nav-link active" data-scroll-target="#what-the-postings-ask-for">What the postings ask for</a>
+  <ul class="collapse">
+  <li><a href="#in-the-postings-words" id="toc-in-the-postings-words" class="nav-link" data-scroll-target="#in-the-postings-words">In the postings’ words</a></li>
+  </ul></li>
+  <li><a href="#the-senior-bar" id="toc-the-senior-bar" class="nav-link" data-scroll-target="#the-senior-bar">The senior bar</a></li>
+  <li><a href="#skills-checklists-and-questions" id="toc-skills-checklists-and-questions" class="nav-link" data-scroll-target="#skills-checklists-and-questions">Skills, checklists and questions</a>
+  <ul class="collapse">
+  <li><a href="#rl" id="toc-rl" class="nav-link" data-scroll-target="#rl">Reinforcement learning <span class="demand">16% of postings</span></a></li>
+  <li><a href="#optimization-or" id="toc-optimization-or" class="nav-link" data-scroll-target="#optimization-or">Operations research and combinatorial optimization <span class="demand">4% of postings</span></a></li>
+  <li><a href="#planning" id="toc-planning" class="nav-link" data-scroll-target="#planning">Planning, search and sequential decision making <span class="demand">4% of postings</span></a></li>
+  <li><a href="#reward" id="toc-reward" class="nav-link" data-scroll-target="#reward">Reward design and credit assignment <span class="demand">2% of postings</span></a></li>
+  <li><a href="#imitation" id="toc-imitation" class="nav-link" data-scroll-target="#imitation">Imitation learning and behaviour cloning <span class="demand">1% of postings</span></a></li>
+  </ul></li>
+  <li><a href="#deep-dives-on-this-site" id="toc-deep-dives-on-this-site" class="nav-link" data-scroll-target="#deep-dives-on-this-site">Deep dives on this site</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content" tabindex="-1">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="Breadcrumbs"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../skills/llm.html">LLMs and agents</a></li><li class="breadcrumb-item"><a href="../skills/rl.html">Reinforcement learning and decision making</a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title">Reinforcement learning and decision making</h1>
+<p class="subtitle lead">Named in 20% of 2253 senior postings · 26 review cards</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!-- Generated by tools/build_site.py. Edit bank/*.yml or the script, not this file. -->
+<p>Learning to act from reward rather than from labels: Markov decision processes, value-based and policy-gradient methods, imitation from demonstrations, reward design, planning with a model, and the operations-research toolkit for decisions under constraints. One in five postings names something in this area, but it is concentrated: reinforcement learning is named in 42% of research engineer postings against 16% overall, mostly by labs that post-train language models with RL and by robotics and autonomy companies. It is tested in research and ML depth rounds (derive the policy gradient, explain PPO), in coding rounds (GAE, a clipped loss) and in design rounds that ask whether RL is the right tool at all.</p>
+<p class="area-meta">
+<span class="chip">ML depth or research round</span><span class="chip">Coding (GAE, policy-gradient loss, value iteration)</span><span class="chip">ML system design (decision systems, post-training with RL)</span><span class="chip">Project deep dive</span><a class="btn-review" href="../review/index.html#area=rl">Review these cards →</a>
+</p>
+<section id="what-the-postings-ask-for" class="level2">
+<h2 class="anchored" data-anchor-id="what-the-postings-ask-for">What the postings ask for</h2>
+<p>Share of postings that name each skill, overall and by track.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Skill</th>
+<th style="text-align: left;">All postings</th>
+<th style="text-align: right;">MLE</th>
+<th style="text-align: right;">AI eng</th>
+<th style="text-align: right;">Research eng</th>
+<th style="text-align: right;">Cards</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><a href="#rl">Reinforcement learning</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:16%"></span><span class="pct">16%</span></span></td>
+<td style="text-align: right;">19%</td>
+<td style="text-align: right;">6%</td>
+<td style="text-align: right;">42%</td>
+<td style="text-align: right;">13</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="#optimization-or">Operations research and combinatorial optimization</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:4%"></span><span class="pct">4%</span></span></td>
+<td style="text-align: right;">3%</td>
+<td style="text-align: right;">6%</td>
+<td style="text-align: right;">3%</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="#planning">Planning, search and sequential decision making</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:4%"></span><span class="pct">4%</span></span></td>
+<td style="text-align: right;">7%</td>
+<td style="text-align: right;">2%</td>
+<td style="text-align: right;">2%</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="#reward">Reward design and credit assignment</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:2%"></span><span class="pct">2%</span></span></td>
+<td style="text-align: right;">2%</td>
+<td style="text-align: right;">0%</td>
+<td style="text-align: right;">6%</td>
+<td style="text-align: right;">4</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="#imitation">Imitation learning and behaviour cloning</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:1%"></span><span class="pct">1%</span></span></td>
+<td style="text-align: right;">2%</td>
+<td style="text-align: right;">0%</td>
+<td style="text-align: right;">2%</td>
+<td style="text-align: right;">3</td>
+</tr>
+</tbody>
+</table>
+<section id="in-the-postings-words" class="level3">
+<h3 class="anchored" data-anchor-id="in-the-postings-words">In the postings’ words</h3>
+<blockquote class="blockquote">
+<p>Extensive experience with GenAI, Agentic AI, natural language processing, deep learning and deep reinforcement learning, or computer vision in a production environment</p>
+<p><span class="quote-src"><a href="https://job-boards.greenhouse.io/scaleai/jobs/4732798005">Scale AI · Senior Machine Learning Engineer, Public Sector</a></span></p>
+</blockquote>
+<blockquote class="blockquote">
+<p>Understanding of AI security (e.g., prompt injection, tool and skill supply chain risks), safety, and responsible AI practices.</p>
+<p><span class="quote-src"><a href="https://geico.wd1.myworkdayjobs.com/External/job/New-York-City-NY/Staff-Machine-Learning-Engineer--AI-Agent-Platform_R0063411">GEICO · Sr.&nbsp;Staff AI Engineer, AI Agent Platform (Agent &amp; Evaluation Harness)</a></span></p>
+</blockquote>
+<blockquote class="blockquote">
+<p>Hold a MSc in Reinforcement Learning, Robotics, Automation and Control, or a closely related field, with a strong focus on sequential decision-making and autonomous systems.</p>
+<p><span class="quote-src"><a href="https://helsing.ai/jobs/5028731101?gh_jid=5028731101">Helsing · AI Research Engineer - Reinforcement Learning</a></span></p>
+</blockquote>
+<blockquote class="blockquote">
+<p>Have worked where evaluation meets training (reward models, preference data, RLHF, DPO or similar) and know that whatever you optimize for is what the model learns</p>
+<p><span class="quote-src"><a href="https://jobs.ashbyhq.com/black-forest-labs/e7935ad1-7b9a-4c85-8b40-09cafedf7d63">Black Forest Labs · Applied Research Engineer, Evaluation</a></span></p>
+</blockquote>
+<blockquote class="blockquote">
+<p>Develop post-training approaches, including supervised fine-tuning, imitation learning, reinforcement learning, and related methods, to improve real-world robot capabilities.</p>
+<p><span class="quote-src"><a href="https://jobs.ashbyhq.com/wayve/f8628964-3c0c-4a3c-91ed-ef4ba8d829b8">Wayve · Machine Learning Scientist/Engineer</a></span></p>
+</blockquote>
+</section>
+</section>
+<section id="the-senior-bar" class="level2">
+<h2 class="anchored" data-anchor-id="the-senior-bar">The senior bar</h2>
+<p>What separates a senior answer from a mid-level one in this area.</p>
+<ul>
+<li>Decides first whether the problem needs RL at all, or whether supervised learning, a contextual bandit or a solver would do, and says what RL would cost in samples, reward design and evaluation.</li>
+<li>Derives the policy gradient and the advantage form from memory and explains every variance-reduction step as a bias-variance trade.</li>
+<li>Knows the implementation details that decide whether PPO or an off-policy method works (advantage normalisation, truncation versus termination, target networks, KL monitoring) and debugs from diagnostics, not from the return curve alone.</li>
+<li>Treats the reward as a specification that the agent will exploit, and checks learned behaviour by watching episodes and by metrics the reward does not contain.</li>
+<li>Separates what demonstrations can give (a fast start, safe behaviour near the data) from what they cannot (recovery from states the expert never visited).</li>
+<li>Can formulate an allocation or scheduling problem as a linear or integer program and say when a solver beats a learned policy.</li>
+</ul>
+</section>
+<section id="skills-checklists-and-questions" class="level2">
+<h2 class="anchored" data-anchor-id="skills-checklists-and-questions">Skills, checklists and questions</h2>
+<p>Tick an item when you can explain it without notes; ticks are saved in this browser. Open a question to see the answer.</p>
+<section id="rl" class="level3">
+<h3 class="anchored" data-anchor-id="rl">Reinforcement learning <span class="demand">16% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="rl.rl.0"> Define an MDP, the value and action-value functions and write both Bellman equations</li>
+<li><input type="checkbox" class="chk" data-chk="rl.rl.1"> Explain on-policy versus off-policy learning and the deadly triad</li>
+<li><input type="checkbox" class="chk" data-chk="rl.rl.2"> Derive the policy gradient with a baseline and say why the baseline adds no bias</li>
+<li><input type="checkbox" class="chk" data-chk="rl.rl.3"> Write generalized advantage estimation and explain what its two discount parameters trade</li>
+<li><input type="checkbox" class="chk" data-chk="rl.rl.4"> Explain the PPO clipped objective and five implementation details that matter in practice</li>
+<li><input type="checkbox" class="chk" data-chk="rl.rl.5"> Say why offline RL fails with a naive off-policy algorithm and name three families of fixes</li>
+<li><input type="checkbox" class="chk" data-chk="rl.rl.6"> Give a debugging order for an agent whose return does not improve</li>
+</ul>
+<details class="qa" id="rl-001">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Define a Markov decision process and the value functions, and write the Bellman equations. What does the Markov assumption buy you, and what do you do when it does not hold?
+</summary>
+<p>An MDP is <span class="math inline">\((\mathcal S, \mathcal A, P, r, \gamma)\)</span>: states, actions, transition kernel <span class="math inline">\(P(s' \mid s, a)\)</span>, reward <span class="math inline">\(r(s, a)\)</span> and discount <span class="math inline">\(\gamma \in [0, 1)\)</span>. A policy <span class="math inline">\(\pi(a \mid s)\)</span> induces</p>
+<p><span class="math display">\[V^\pi(s) = \mathbb E_\pi\Big[\sum_{t \ge 0} \gamma^t r_t \,\Big|\, s_0 = s\Big], \qquad
+Q^\pi(s, a) = r(s, a) + \gamma\, \mathbb E_{s' \sim P}\big[V^\pi(s')\big].\]</span></p>
+<p>Bellman expectation equation: <span class="math inline">\(V^\pi(s) = \sum_a \pi(a \mid s)\, Q^\pi(s, a)\)</span>. Bellman optimality equation:</p>
+<p><span class="math display">\[Q^*(s, a) = r(s, a) + \gamma\, \mathbb E_{s'}\big[\max_{a'} Q^*(s', a')\big],\]</span></p>
+<p>and the greedy policy with respect to <span class="math inline">\(Q^*\)</span> is optimal. The advantage <span class="math inline">\(A^\pi = Q^\pi - V^\pi\)</span> says how much better an action is than the policy’s average.</p>
+<p>The Markov property (the next state and reward depend only on the current state and action) is what makes these recursions valid: the value of a state does not depend on how you got there, so one function of the state is enough and dynamic programming applies.</p>
+<p>When the agent sees only an observation, the problem is a POMDP. Practical fixes are to build a state that is closer to Markov: stack recent frames, feed the history to a recurrent or transformer policy, or maintain a belief state. Symptoms of a non-Markov state are a value function that cannot fit and behaviour that oscillates in states that look identical to the agent.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Why must <span class="math inline">\(\gamma\)</span> be below 1 in a continuing task, and what replaces it in the average-reward setting?</li>
+<li>Is a chat conversation with a language model an MDP? What is the state?</li>
+</ul>
+</details>
+<details class="qa" id="rl-002">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> Implement value iteration for a tabular MDP in NumPy and return the greedy policy. Why does it converge, and how many iterations do you need?
+</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> value_iteration(P, R, gamma<span class="op">=</span><span class="fl">0.99</span>, tol<span class="op">=</span><span class="fl">1e-8</span>, max_iter<span class="op">=</span><span class="dv">10_000</span>):</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""P: [S, A, S] transition probabilities, R: [S, A] expected rewards."""</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    V <span class="op">=</span> np.zeros(P.shape[<span class="dv">0</span>])</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(max_iter):</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>        Q <span class="op">=</span> R <span class="op">+</span> gamma <span class="op">*</span> (P <span class="op">@</span> V)        <span class="co"># [S, A]</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>        V_new <span class="op">=</span> Q.<span class="bu">max</span>(axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>        done <span class="op">=</span> np.<span class="bu">max</span>(np.<span class="bu">abs</span>(V_new <span class="op">-</span> V)) <span class="op">&lt;</span> tol</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>        V <span class="op">=</span> V_new</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> done:</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>            <span class="cf">break</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    Q <span class="op">=</span> R <span class="op">+</span> gamma <span class="op">*</span> (P <span class="op">@</span> V)</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> V, Q.argmax(axis<span class="op">=</span><span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Convergence: the Bellman optimality operator <span class="math inline">\(T\)</span> is a <span class="math inline">\(\gamma\)</span>-contraction in the max norm, <span class="math inline">\(\lVert TV - TU \rVert_\infty \le \gamma \lVert V - U \rVert_\infty\)</span>, so it has a unique fixed point <span class="math inline">\(V^*\)</span> and <span class="math inline">\(\lVert V_k - V^* \rVert_\infty \le \gamma^k \lVert V_0 - V^* \rVert_\infty\)</span>. Reaching error <span class="math inline">\(\epsilon\)</span> takes about <span class="math inline">\(\log(1/\epsilon) / (1 - \gamma)\)</span> sweeps, each costing <span class="math inline">\(O(S^2 A)\)</span>. If successive iterates differ by less than <span class="math inline">\(\delta\)</span>, the result is within <span class="math inline">\(\gamma \delta / (1 - \gamma)\)</span> of <span class="math inline">\(V^*\)</span>.</p>
+<p>What an interviewer checks: the max is over actions and the expectation over next states (not the reverse); terminal states have zero outgoing value; the greedy policy is extracted from <span class="math inline">\(Q\)</span>, not from <span class="math inline">\(V\)</span> alone. Policy iteration is the alternative: exact evaluation by solving a linear system (<span class="math inline">\(O(S^3)\)</span>) and then greedy improvement, with far fewer but more expensive iterations.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How does the iteration count change when <span class="math inline">\(\gamma\)</span> goes from 0.9 to 0.999?</li>
+<li>What breaks when you replace the table by a neural network and the sweep by sampled updates?</li>
+</ul>
+</details>
+<details class="qa" id="rl-003">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> What is the difference between on-policy and off-policy learning? Use SARSA and Q-learning as the example, and explain the deadly triad.
+</summary>
+<p>Both learn <span class="math inline">\(Q\)</span> by temporal-difference updates; they differ in the target.</p>
+<ul>
+<li><strong>SARSA</strong> (on-policy): <span class="math inline">\(Q(s,a) \leftarrow Q(s,a) + \alpha\,[r + \gamma Q(s', a') - Q(s,a)]\)</span> with <span class="math inline">\(a'\)</span> the action the behaviour policy actually takes next. It learns the value of the policy it is following, exploration included.</li>
+<li><strong>Q-learning</strong> (off-policy): the target is <span class="math inline">\(r + \gamma \max_{a'} Q(s', a')\)</span>. It learns the value of the greedy policy whatever policy generated the data.</li>
+</ul>
+<p>Consequences. Off-policy methods can learn from a replay buffer, from old policies or from another agent’s data, which is why they are sample efficient. On-policy methods need fresh data after every update but optimise the thing they measure. The classic illustration is cliff walking: SARSA with <span class="math inline">\(\epsilon\)</span>-greedy learns the safer path because it accounts for its own random steps, while Q-learning learns the edge path that is optimal only without exploration.</p>
+<p>The <strong>deadly triad</strong>: function approximation, bootstrapping (targets built from the current estimate) and off-policy data together can make value estimates diverge. Any two are safe in theory. Practical methods keep all three and add stabilisers: target networks, double estimators, replay with limited staleness, and clipped or conservative targets.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Is PPO on-policy? It reuses each batch for several epochs.</li>
+<li>What is expected SARSA and when does it equal Q-learning?</li>
+</ul>
+</details>
+<details class="qa" id="rl-004">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> Why did deep Q-learning need a replay buffer and a target network, and what does Double DQN fix?
+</summary>
+<p>Naive Q-learning with a network regresses <span class="math inline">\(Q_\theta(s,a)\)</span> onto <span class="math inline">\(r + \gamma \max_{a'} Q_\theta(s', a')\)</span>. Two things break supervised-learning assumptions.</p>
+<ul>
+<li><strong>Correlated, non-stationary data.</strong> Consecutive transitions are highly correlated and their distribution shifts as the policy changes. A <strong>replay buffer</strong> samples past transitions uniformly, which decorrelates minibatches and reuses each transition many times.</li>
+<li><strong>Moving targets.</strong> The target depends on the parameters being updated, so each step chases itself. A <strong>target network</strong> <span class="math inline">\(Q_{\bar\theta}\)</span>, copied every few thousand steps or updated by Polyak averaging, holds the target fixed for a while.</li>
+</ul>
+<p><strong>Overestimation.</strong> The max over noisy estimates is biased upward: <span class="math inline">\(\mathbb E[\max_a \hat Q(s,a)] \ge \max_a \mathbb E[\hat Q(s,a)]\)</span>, and bootstrapping propagates the bias. <strong>Double DQN</strong> decouples selection from evaluation:</p>
+<p><span class="math display">\[y = r + \gamma\, Q_{\bar\theta}\big(s', \arg\max_{a'} Q_\theta(s', a')\big).\]</span></p>
+<p>Continuous-control methods use the same idea as clipped double Q (the minimum of two critics).</p>
+<p>Details that matter in an implementation: bootstrap with zero only on true termination and not on a time-limit truncation; use a Huber loss or clip gradients because TD errors are heavy-tailed; start learning only after the buffer has some data. Later additions (prioritised replay, dueling heads, n-step targets, distributional values) are incremental on top of these.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>What goes wrong if the target network is updated every step?</li>
+<li>Why does prioritised replay need importance-sampling weights?</li>
+</ul>
+</details>
+<details class="qa" id="rl-005">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">derivation</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> Derive the policy gradient. Why can you subtract a baseline, and why does only the reward-to-go multiply each log-probability?
+</summary>
+<p>Objective: <span class="math inline">\(J(\theta) = \mathbb E_{\tau \sim p_\theta}[R(\tau)]\)</span> with <span class="math inline">\(p_\theta(\tau) = \rho(s_0) \prod_t \pi_\theta(a_t \mid s_t)\, P(s_{t+1} \mid s_t, a_t)\)</span>.</p>
+<p><strong>Log-derivative trick.</strong> <span class="math inline">\(\nabla_\theta p_\theta = p_\theta \nabla_\theta \log p_\theta\)</span>, so</p>
+<p><span class="math display">\[\nabla_\theta J = \mathbb E_\tau\big[R(\tau)\, \nabla_\theta \log p_\theta(\tau)\big]
+= \mathbb E_\tau\Big[R(\tau) \sum_t \nabla_\theta \log \pi_\theta(a_t \mid s_t)\Big],\]</span></p>
+<p>because the initial-state and dynamics terms do not depend on <span class="math inline">\(\theta\)</span>. No model of the environment is needed and the reward need not be differentiable.</p>
+<p><strong>Causality.</strong> An action at time <span class="math inline">\(t\)</span> cannot affect rewards before <span class="math inline">\(t\)</span>; those terms have zero expectation, so <span class="math inline">\(R(\tau)\)</span> can be replaced by the reward-to-go <span class="math inline">\(G_t = \sum_{t' \ge t} \gamma^{t'-t} r_{t'}\)</span>.</p>
+<p><strong>Baseline.</strong> For any <span class="math inline">\(b(s)\)</span> that does not depend on the action,</p>
+<p><span class="math display">\[\mathbb E_{a \sim \pi_\theta}\big[\nabla_\theta \log \pi_\theta(a \mid s)\, b(s)\big]
+= b(s)\, \nabla_\theta \sum_a \pi_\theta(a \mid s) = b(s)\, \nabla_\theta 1 = 0,\]</span></p>
+<p>so subtracting it leaves the gradient unbiased and, with <span class="math inline">\(b = V^\pi\)</span>, cuts variance sharply. The result is</p>
+<p><span class="math display">\[\nabla_\theta J = \mathbb E\Big[\sum_t \nabla_\theta \log \pi_\theta(a_t \mid s_t)\, A^\pi(s_t, a_t)\Big].\]</span></p>
+<p>The estimator is unbiased only for data sampled from the current <span class="math inline">\(\pi_\theta\)</span>, which is why vanilla policy gradient is on-policy and uses each batch once.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>What changes in the derivation for a deterministic policy?</li>
+<li>Where does the variance come from, and which terms of the estimator reduce it?</li>
+</ul>
+</details>
+<details class="qa" id="rl-006">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">derivation</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> What is generalized advantage estimation? Write it down and explain what lambda trades off.
+</summary>
+<p>The policy gradient needs an estimate of <span class="math inline">\(A^\pi(s_t, a_t)\)</span>. Two extremes:</p>
+<ul>
+<li>Monte Carlo: <span class="math inline">\(G_t - V(s_t)\)</span>. Unbiased, high variance because it sums many random rewards.</li>
+<li>One-step TD: <span class="math inline">\(\delta_t = r_t + \gamma V(s_{t+1}) - V(s_t)\)</span>. Low variance, biased whenever <span class="math inline">\(V\)</span> is wrong.</li>
+</ul>
+<p>The <span class="math inline">\(n\)</span>-step estimator <span class="math inline">\(\hat A_t^{(n)} = \sum_{l=0}^{n-1} \gamma^l r_{t+l} + \gamma^n V(s_{t+n}) - V(s_t)\)</span> interpolates, and it telescopes into a sum of TD errors, <span class="math inline">\(\hat A_t^{(n)} = \sum_{l=0}^{n-1} \gamma^l \delta_{t+l}\)</span>. GAE is the exponentially weighted average of all of them with weights <span class="math inline">\((1 - \lambda)\lambda^{n-1}\)</span>:</p>
+<p><span class="math display">\[\hat A_t^{\mathrm{GAE}(\gamma, \lambda)} = \sum_{l \ge 0} (\gamma \lambda)^l\, \delta_{t+l},
+\qquad \hat A_t = \delta_t + \gamma \lambda\, \hat A_{t+1}.\]</span></p>
+<p><span class="math inline">\(\lambda = 0\)</span> gives one-step TD and <span class="math inline">\(\lambda = 1\)</span> gives Monte Carlo with a baseline. Lower <span class="math inline">\(\lambda\)</span> trusts the critic more: less variance, more bias. Values of 0.9 to 0.97 with <span class="math inline">\(\gamma\)</span> near 0.99 are the usual starting point. The value target is <span class="math inline">\(\hat A_t + V(s_t)\)</span>.</p>
+<p><span class="math inline">\(\gamma\)</span> plays a similar role: even in an undiscounted task, using <span class="math inline">\(\gamma &lt; 1\)</span> in the estimator reduces variance by ignoring far-future rewards at the price of bias.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Early in training the critic is poor. Would you raise or lower <span class="math inline">\(\lambda\)</span>?</li>
+<li>How do you handle an episode that was cut off by a time limit?</li>
+</ul>
+</details>
+<details class="qa" id="rl-007">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> Implement GAE for a batch of parallel environments in PyTorch, handling episode boundaries. What are the usual bugs?
+</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="at">@torch.no_grad</span>()</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> gae(rewards, values, dones, last_value, gamma<span class="op">=</span><span class="fl">0.99</span>, lam<span class="op">=</span><span class="fl">0.95</span>):</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""rewards, values, dones: [T, N]; last_value: [N] is V(s_T).</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co">    dones[t] = 1 if the episode terminated at step t."""</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    T <span class="op">=</span> rewards.shape[<span class="dv">0</span>]</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    adv <span class="op">=</span> torch.zeros_like(rewards)</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    next_adv <span class="op">=</span> torch.zeros_like(last_value)</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    next_value <span class="op">=</span> last_value</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> t <span class="kw">in</span> <span class="bu">reversed</span>(<span class="bu">range</span>(T)):</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>        nonterminal <span class="op">=</span> <span class="fl">1.0</span> <span class="op">-</span> dones[t]</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>        delta <span class="op">=</span> rewards[t] <span class="op">+</span> gamma <span class="op">*</span> next_value <span class="op">*</span> nonterminal <span class="op">-</span> values[t]</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>        next_adv <span class="op">=</span> delta <span class="op">+</span> gamma <span class="op">*</span> lam <span class="op">*</span> nonterminal <span class="op">*</span> next_adv</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>        adv[t] <span class="op">=</span> next_adv</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>        next_value <span class="op">=</span> values[t]</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>    returns <span class="op">=</span> adv <span class="op">+</span> values</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> adv, returns</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Pitfalls an interviewer looks for:</p>
+<ul>
+<li><strong>Boundary mask.</strong> Both the bootstrap value and the running advantage must be zeroed across a termination, otherwise credit leaks between episodes.</li>
+<li><strong>Truncation is not termination.</strong> If the episode ended on a time limit, the state still has value: bootstrap from <span class="math inline">\(V\)</span> of the final observation instead of zero. Treating truncation as termination biases values down and matters a lot in long-horizon tasks.</li>
+<li><strong>Off-by-one.</strong> <code>dones[t]</code> must refer to the transition out of step <code>t</code>; many environment wrappers report it one step later.</li>
+<li><strong>Gradients.</strong> Advantages and returns are targets, so compute them without gradient.</li>
+<li><strong>Normalisation.</strong> Advantages are usually standardised per minibatch for the policy loss; returns are not.</li>
+</ul>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Rewrite it without the Python loop. Is that worth doing?</li>
+<li>What changes with a recurrent policy?</li>
+</ul>
+</details>
+<details class="qa" id="rl-008">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> Explain the PPO clipped objective and write the loss in PyTorch. Which implementation details decide whether it works?
+</summary>
+<p>PPO wants several gradient epochs from each on-policy batch without moving the policy so far that the batch stops being representative. With the ratio <span class="math inline">\(r_t(\theta) = \pi_\theta(a_t \mid s_t) / \pi_{\text{old}}(a_t \mid s_t)\)</span>:</p>
+<p><span class="math display">\[L^{\text{CLIP}} = \mathbb E_t\Big[\min\big(r_t \hat A_t,\ \operatorname{clip}(r_t, 1 - \epsilon, 1 + \epsilon)\, \hat A_t\big)\Big].\]</span></p>
+<p>The min makes it a pessimistic bound: the objective gains nothing from pushing the ratio beyond the interval in the direction that helps, but still penalises moves that hurt. It is a first-order stand-in for TRPO’s KL trust region.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> ppo_loss(logp_new, logp_old, adv, values, returns, entropy,</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>             clip<span class="op">=</span><span class="fl">0.2</span>, vf_coef<span class="op">=</span><span class="fl">0.5</span>, ent_coef<span class="op">=</span><span class="fl">0.01</span>):</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    adv <span class="op">=</span> (adv <span class="op">-</span> adv.mean()) <span class="op">/</span> (adv.std() <span class="op">+</span> <span class="fl">1e-8</span>)</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    ratio <span class="op">=</span> (logp_new <span class="op">-</span> logp_old).exp()</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    surr <span class="op">=</span> torch.<span class="bu">min</span>(ratio <span class="op">*</span> adv, ratio.clamp(<span class="dv">1</span> <span class="op">-</span> clip, <span class="dv">1</span> <span class="op">+</span> clip) <span class="op">*</span> adv)</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    policy_loss <span class="op">=</span> <span class="op">-</span>surr.mean()</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    value_loss <span class="op">=</span> <span class="fl">0.5</span> <span class="op">*</span> (values <span class="op">-</span> returns).<span class="bu">pow</span>(<span class="dv">2</span>).mean()</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    loss <span class="op">=</span> policy_loss <span class="op">+</span> vf_coef <span class="op">*</span> value_loss <span class="op">-</span> ent_coef <span class="op">*</span> entropy.mean()</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    approx_kl <span class="op">=</span> (logp_old <span class="op">-</span> logp_new).mean()</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> loss, approx_kl</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Details that matter as much as the objective: GAE with advantage normalisation; <code>logp_old</code>, advantages and returns fixed during the epochs; stopping the epochs early when the approximate KL exceeds a threshold (around 0.01 to 0.03); learning-rate annealing; gradient clipping; observation and reward normalisation; correct truncation handling. Clipping alone does not bound the KL, so monitor it and the fraction of clipped samples.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>The approximate KL spikes after the second epoch. What do you change?</li>
+<li>How is this loss used when the policy is a language model generating a sequence of tokens?</li>
+</ul>
+</details>
+<details class="qa" id="rl-009">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> PPO or an off-policy actor-critic such as SAC? How do you choose?
+</summary>
+<p>Choose by what is scarce: environment samples or engineering and wall-clock time.</p>
+<p><strong>PPO (on-policy).</strong> Uses each batch for a few epochs and then discards it. Sample hungry, but simple, robust to hyperparameters, works for discrete and continuous actions, and scales almost linearly with parallel environments. It is the default when a fast simulator exists (thousands of environments on a GPU) and for fine-tuning large policies where stability matters more than sample count.</p>
+<p><strong>SAC, TD3, DQN family (off-policy).</strong> Reuse every transition many times through a replay buffer, so they need often an order of magnitude fewer environment steps. SAC maximises reward plus entropy, <span class="math inline">\(J = \mathbb E[\sum_t r_t + \alpha\, \mathcal H(\pi(\cdot \mid s_t))]\)</span>, with twin critics and a tuned temperature. The price is the deadly triad: more moving parts, sensitivity to the update-to-data ratio, and value overestimation. They are the default when samples are expensive, as with real robots or slow simulators.</p>
+<p>Other deciding factors:</p>
+<ul>
+<li>Existing logged or demonstration data can seed an off-policy buffer but not PPO.</li>
+<li>Very large or structured action spaces (token sequences) favour policy-gradient methods.</li>
+<li>A learned critic for long token sequences is hard, which is one reason language-model RL often uses policy-gradient methods with simple baselines.</li>
+</ul>
+<p>State the choice as a hypothesis and check it with a small run of each on the real task.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Your simulator runs at 100 000 steps per second. Does sample efficiency still matter?</li>
+<li>What is the update-to-data ratio and what happens when it is too high?</li>
+</ul>
+</details>
+<details class="qa" id="rl-010">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> How do RL agents explore, and what do you do when the reward is so sparse that random exploration never finds it?
+</summary>
+<p>Exploration methods, roughly in order of sophistication:</p>
+<ul>
+<li><strong>Undirected noise.</strong> <span class="math inline">\(\epsilon\)</span>-greedy, Boltzmann sampling, Gaussian action noise, or an entropy bonus that keeps a stochastic policy from collapsing. Cheap, and enough when reward is dense.</li>
+<li><strong>Optimism.</strong> Optimistic initial values, upper confidence bounds, count-based bonuses <span class="math inline">\(\propto 1/\sqrt{N(s)}\)</span>, with pseudo-counts or hashing for large state spaces.</li>
+<li><strong>Posterior sampling.</strong> Act greedily under a sampled value function (bootstrapped ensembles approximate this); gives temporally consistent exploration.</li>
+<li><strong>Intrinsic motivation.</strong> Reward prediction error or novelty, for example random network distillation. Prediction-error curiosity is attracted to irreducible noise (the “noisy TV” problem), which is why novelty measured on a fixed random target works better than forward-model error.</li>
+</ul>
+<p>When the reward is too sparse for any of these, change the problem rather than the noise:</p>
+<ul>
+<li>Demonstrations, to seed the policy or the replay buffer.</li>
+<li>A curriculum from easy start states or short horizons, or resets to states near the goal.</li>
+<li>Potential-based shaping from a distance or progress measure.</li>
+<li>Hindsight relabelling for goal-conditioned tasks.</li>
+<li>Hierarchy or skills learned beforehand.</li>
+</ul>
+<p>In products the constraint is usually safety and cost, not novelty: exploration is bounded to a small traffic share, to reversible actions, and logged with propensities so that it can be reused offline.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Why does an entropy bonus alone fail on a hard-exploration task?</li>
+<li>How would you explore safely on a physical system?</li>
+</ul>
+</details>
+<details class="qa" id="rl-011">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> What is offline RL, why does a standard off-policy algorithm fail on a fixed dataset, and what are the main fixes?
+</summary>
+<p>Offline RL learns a policy from a fixed log of transitions with no further interaction. It matters wherever exploration is costly or unsafe: recommendation logs, medical or industrial records, robot datasets.</p>
+<p><strong>Why naive off-policy learning fails.</strong> The Bellman target takes <span class="math inline">\(\max_{a'} Q(s', a')\)</span> over all actions, including ones the dataset never contains. The network’s values there are arbitrary extrapolations, the max picks the largest errors, and bootstrapping spreads them. Online, the agent would try those actions and be corrected; offline, nothing corrects them. The learned policy then leaves the data distribution.</p>
+<p><strong>Families of fixes.</strong></p>
+<ul>
+<li><em>Policy constraint</em>: keep the policy close to the behaviour policy (BCQ, TD3+BC, a KL or behaviour-cloning term).</li>
+<li><em>Value pessimism</em>: push down Q-values for actions outside the data (CQL) or subtract an uncertainty penalty from an ensemble.</li>
+<li><em>In-sample learning</em>: never query unseen actions; IQL fits an expectile of the value from dataset actions only, then extracts a policy by advantage-weighted regression.</li>
+<li><em>Sequence modelling</em>: condition a behaviour-cloning model on the return to go.</li>
+</ul>
+<p>What a senior answer adds: how much the result depends on the data. With narrow expert data, behaviour cloning is a strong baseline and often wins; offline RL helps when the data is broad and suboptimal, so that good trajectories can be stitched from parts. Evaluation is the hard part, since off-policy evaluation is itself unreliable; plan a guarded online test.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How would you tell from the dataset alone whether offline RL can beat behaviour cloning?</li>
+<li>What changes when you may collect a small amount of online data afterwards?</li>
+</ul>
+</details>
+<details class="qa" id="rl-012">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">debugging</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> Your RL agent’s return is flat after many hours of training. How do you debug it?
+</summary>
+<p>RL fails silently, so work from the cheapest certainty outwards.</p>
+<ol type="1">
+<li><strong>Environment and reward.</strong> Step it by hand or with a scripted policy. Can a known good policy get reward? Are observations in a sane range, is the reward scale reasonable (returns of order 1 to 100), are terminations and time limits reported correctly?</li>
+<li><strong>A problem the code must solve.</strong> Run the same code on a small known task (a classic control problem or a shortened version of your task). If that fails, the bug is in the algorithm code, not in the difficulty of the task.</li>
+<li><strong>Diagnostics instead of the return curve.</strong>
+<ul>
+<li>Policy entropy: collapsed to zero early means premature convergence; never decreasing means the policy is not learning.</li>
+<li>Approximate KL and clip fraction per update: zero means the step is too small or advantages are zero; large means the step is too big.</li>
+<li>Value explained variance: near zero or negative means the critic is useless, so advantages are noise.</li>
+<li>Gradient norms and the advantage distribution.</li>
+</ul></li>
+<li><strong>Usual culprits.</strong> Advantages not normalised, observations not normalised, truncation treated as termination, done flags off by one, old log-probabilities recomputed after the update, wrong action scaling or clipping, reward that is too sparse for the exploration used, a learning rate tuned on another task.</li>
+<li><strong>Variance.</strong> Run at least three to five seeds before concluding anything; one flat seed is common.</li>
+</ol>
+<p>Finally, watch episodes. Many “not learning” cases are an agent that learned an unintended behaviour the reward allows.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>The return rises and then collapses. What does that suggest?</li>
+<li>Which of these diagnostics would you alert on in an automated training pipeline?</li>
+</ul>
+</details>
+<details class="qa" id="rl-013">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> A team wants to “use RL” for a product decision problem. How do you decide whether RL is the right tool?
+</summary>
+<p>Ask what structure the problem really has, and take the simplest formulation that fits.</p>
+<ul>
+<li><strong>Supervised learning</strong> if the right action is known for past cases, or if the outcome of each action can be predicted and then optimised directly (predict, then choose).</li>
+<li><strong>Contextual bandit</strong> if you choose an action, see a reward for that action only, and the action does not change what you see next. Most ranking, pricing and notification decisions are treated this way.</li>
+<li><strong>Full RL</strong> only if actions have delayed consequences through the state: today’s action changes tomorrow’s options. Examples are control, games, multi-step agents, inventory and long-term user value.</li>
+<li><strong>A solver</strong> if the objective and constraints are known and the uncertainty is small.</li>
+</ul>
+<p>What full RL costs: far more data than supervised learning; a simulator or a safe way to explore; a reward that will be exploited wherever it differs from intent; evaluation that requires either online runs or unreliable off-policy estimates; and unstable training with seed variance.</p>
+<p>So the bar is: sequential structure that a myopic policy demonstrably loses on, a measurable long-horizon objective, and either a faithful simulator or logged data with enough coverage plus a guarded online test. A strong answer proposes a baseline (a heuristic, a myopic model or a bandit) and states the gap RL would have to close to pay for itself.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How would you show that the myopic policy leaves value on the table before building anything?</li>
+<li>Where does fine-tuning a language model with a reward fit in this picture?</li>
+</ul>
+</details>
+</section>
+<section id="optimization-or" class="level3">
+<h3 class="anchored" data-anchor-id="optimization-or">Operations research and combinatorial optimization <span class="demand">4% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="rl.optimization-or.0"> Formulate assignment, knapsack and scheduling problems as linear or integer programs</li>
+<li><input type="checkbox" class="chk" data-chk="rl.optimization-or.1"> Explain LP relaxation, branch and bound and what the optimality gap tells you</li>
+<li><input type="checkbox" class="chk" data-chk="rl.optimization-or.2"> Choose among an exact solver, a heuristic and a learned policy for a given latency and scale</li>
+<li><input type="checkbox" class="chk" data-chk="rl.optimization-or.3"> Combine a forecast with an optimiser and say where prediction error hurts the decision</li>
+</ul>
+<details class="qa" id="rl-024">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Formulate assigning n tasks to n workers at minimum cost as an optimisation problem. When is it easy, and what makes it a hard integer program?
+</summary>
+<p>Variables <span class="math inline">\(x_{ij} \in \{0, 1\}\)</span>, 1 if worker <span class="math inline">\(i\)</span> takes task <span class="math inline">\(j\)</span>, with cost <span class="math inline">\(c_{ij}\)</span>:</p>
+<p><span class="math display">\[\min \sum_{i,j} c_{ij} x_{ij} \quad \text{s.t.} \quad \sum_j x_{ij} = 1\ \ \forall i, \qquad
+\sum_i x_{ij} = 1\ \ \forall j.\]</span></p>
+<p><strong>Why this one is easy.</strong> The constraint matrix is totally unimodular, so the linear relaxation (<span class="math inline">\(0 \le x_{ij} \le 1\)</span>) has integral vertices and an LP solver returns a valid assignment. Specialised algorithms are faster still: the Hungarian algorithm in <span class="math inline">\(O(n^3)\)</span>, or min-cost flow.</p>
+<p><strong>What makes it hard.</strong> Side constraints break that structure: a worker’s capacity over several tasks measured in hours (generalised assignment), precedence or time windows (scheduling, routing), or fixed costs for using a resource. Then it is a mixed-integer program, NP-hard in general.</p>
+<p><strong>How solvers handle it.</strong> Branch and bound: solve the LP relaxation, which gives a lower bound; if a variable is fractional, branch on it and recurse, pruning branches whose bound is worse than the best integer solution found. Cutting planes tighten the relaxation. The solver reports the <strong>optimality gap</strong> between the best solution and the best bound, so you can stop at 1% with a guarantee.</p>
+<p>Modelling skill is choosing a formulation with a tight relaxation and knowing the standard shapes: knapsack, set cover, flow, assignment, scheduling with big-M or time-indexed variables.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How do you model “at most 3 of these 10 tasks may run in parallel”?</li>
+<li>Your solver has not closed the gap after an hour. What are your options?</li>
+</ul>
+</details>
+<details class="qa" id="rl-025">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> For a recurring combinatorial decision (matching, routing, scheduling), when do you use an exact solver, a heuristic, or a learned policy?
+</summary>
+<p>Decide by problem size, time budget, how often the problem structure changes and how much a suboptimal decision costs.</p>
+<p><strong>Exact solver (LP, MIP, constraint programming).</strong> Use when the objective and constraints can be written down, the instance solves within the time budget, and guarantees or auditability matter. Strengths: an optimality gap, hard constraints respected by construction, and a new business rule is one more constraint. It is the right default up to surprisingly large sizes for LPs and well-structured MIPs.</p>
+<p><strong>Heuristics and metaheuristics</strong> (greedy with local search, large-neighbourhood search, simulated annealing). Use when instances are too large or the deadline is milliseconds to seconds. No guarantee, but predictable runtime and usually within a few percent on routing-type problems. Often combined with a solver for subproblems.</p>
+<p><strong>Learned policy</strong> (RL or imitation of a solver). Worth it when the same distribution of instances recurs millions of times, the decision must be made in milliseconds, and either the objective is hard to write down (long-term effects, stochastic arrivals) or a solver is too slow. Costs: no feasibility guarantee without a repair step, poor generalisation to changed constraints, and training infrastructure.</p>
+<p>Common hybrids: ML predicts the uncertain inputs (demand, travel time) and a solver decides; a learned model warm-starts or guides branching; RL sets a few parameters of a solver-based policy. A senior answer starts from the solver baseline and asks what measured gap or latency constraint justifies anything more complex.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How would you guarantee feasibility for a learned policy’s output?</li>
+<li>The business adds a new hard constraint every month. How does that change your choice?</li>
+</ul>
+</details>
+<details class="qa" id="rl-026">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Design the decision system that assigns incoming delivery orders to couriers in real time. Where does ML end and optimisation begin?
+</summary>
+<p><strong>Objective and constraints.</strong> Minimise expected delivery lateness and courier cost, subject to capacity, pickup-before-dropoff, maximum detour and fairness limits. Agree on one scalar objective with explicit weights, since this is where the product trade-off lives.</p>
+<p><strong>Predict.</strong> ML supplies the uncertain inputs: travel time between points, food preparation or pickup readiness, courier acceptance probability, and demand per zone for the next 15 to 60 minutes. Calibration matters more than ranking, because the optimiser consumes the numbers.</p>
+<p><strong>Decide.</strong> Batch orders in a rolling window (for example every 10 to 30 seconds) and solve a matching between open orders (or bundles) and couriers. With one order per courier it is an assignment problem solved exactly in milliseconds; bundling makes it a routing problem handled by candidate generation plus a MIP or local search under a time limit. Waiting longer improves the match and costs latency, so the window is a tuned parameter.</p>
+<p><strong>Look ahead.</strong> Pure myopic matching ignores future orders. Add the value of courier position, estimated from the demand forecast or learned as a value function over (zone, time), to the matching cost. This is where RL-style thinking pays without replacing the solver.</p>
+<p><strong>Evaluate.</strong> A simulator replaying historical days for offline iteration, then switchback experiments by zone and time, because orders and couriers interfere and a user-level A/B test is biased.</p>
+<p><strong>Failure handling.</strong> A greedy fallback when the solver times out, and monitoring of forecast error because decision quality degrades with it.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Why can a more accurate travel-time model make decisions worse?</li>
+<li>How would you train the forecasts for decision quality instead of prediction error?</li>
+</ul>
+</details>
+</section>
+<section id="planning" class="level3">
+<h3 class="anchored" data-anchor-id="planning">Planning, search and sequential decision making <span class="demand">4% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="rl.planning.0"> Walk through the four phases of Monte Carlo tree search and write the UCT rule</li>
+<li><input type="checkbox" class="chk" data-chk="rl.planning.1"> Explain how AlphaZero-style search uses a policy prior and a value network</li>
+<li><input type="checkbox" class="chk" data-chk="rl.planning.2"> Compare model-free RL, Dyna-style methods and model-predictive control under model error</li>
+<li><input type="checkbox" class="chk" data-chk="rl.planning.3"> State when A* is optimal and how beam search trades optimality for cost</li>
+</ul>
+<details class="qa" id="rl-021">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> Explain Monte Carlo tree search and how AlphaZero-style methods combine it with neural networks.
+</summary>
+<p>MCTS builds a search tree incrementally, spending simulations where they are most informative. Each simulation has four phases:</p>
+<ol type="1">
+<li><strong>Selection.</strong> From the root, descend by a rule that balances value and uncertainty. UCT picks <span class="math inline">\(\arg\max_a\ \bar Q(s, a) + c \sqrt{\ln N(s) / N(s, a)}\)</span>.</li>
+<li><strong>Expansion.</strong> Add a child for an untried action at the leaf.</li>
+<li><strong>Evaluation.</strong> Estimate the leaf’s value, classically by a random rollout to the end.</li>
+<li><strong>Backup.</strong> Update visit counts and mean values along the path.</li>
+</ol>
+<p>After the budget is spent, act by the root’s visit counts. It is an anytime algorithm and needs only a simulator, not a heuristic.</p>
+<p><strong>AlphaZero</strong> replaces the hand-made parts with a network <span class="math inline">\(f_\theta(s) = (p, v)\)</span>:</p>
+<ul>
+<li>The value head <span class="math inline">\(v\)</span> replaces rollouts at the leaf.</li>
+<li>The policy head gives a prior that focuses selection (PUCT): <span class="math inline">\(\arg\max_a\ Q(s, a) + c\, P(s, a)\, \sqrt{N(s)} / (1 + N(s, a))\)</span>.</li>
+<li>Training closes the loop: self-play games are generated with search, the policy is trained toward the search’s visit distribution and the value toward the game outcome. Search is a policy-improvement operator and the network distils it.</li>
+</ul>
+<p>MuZero additionally learns the model, searching in a latent space.</p>
+<p>Limits: it needs a model that can be stepped from arbitrary states, the cost per move is hundreds of network evaluations, and plain MCTS handles large branching factors, stochasticity and hidden information poorly without extensions.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Why act by visit count and not by the highest mean value?</li>
+<li>How would you use search at inference time with a language model, and what plays the role of the value function?</li>
+</ul>
+</details>
+<details class="qa" id="rl-022">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> Model-based or model-free RL? What does a learned model buy you and where does it fail?
+</summary>
+<p><strong>Model-free</strong> methods learn a policy or value function directly from experience. They are simple and asymptotically strong but need many samples, because every bit of knowledge about the dynamics must be rediscovered through reward.</p>
+<p><strong>Model-based</strong> methods learn <span class="math inline">\(\hat P(s' \mid s, a)\)</span> and <span class="math inline">\(\hat r\)</span> and use them in one of three ways:</p>
+<ul>
+<li><em>Planning at decision time</em>: model-predictive control. Sample or optimise action sequences under the model (random shooting, the cross-entropy method), execute the first action, replan.</li>
+<li><em>Generating training data</em>: Dyna-style methods mix real transitions with short model rollouts to train a model-free learner.</li>
+<li><em>Learning in imagination</em>: train the policy entirely inside a latent world model.</li>
+</ul>
+<p>What it buys: sample efficiency (often an order of magnitude), reuse of the model when the reward changes, and constraint handling at planning time.</p>
+<p>Where it fails: <strong>compounding model error</strong>. A one-step error of <span class="math inline">\(\epsilon\)</span> grows with rollout length, and a planner actively seeks the states where the model is wrongly optimistic. Mitigations are short rollouts branched from real states, ensembles with a penalty on disagreement, latent models trained on multi-step prediction, and replanning at every step so errors do not accumulate in execution.</p>
+<p>Rules of thumb: prefer model-based when real samples are expensive and the dynamics are smooth and learnable (many robotics and process-control problems); prefer model-free when a fast, exact simulator exists or the dynamics are harder to model than the policy is to learn.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Why does a planner exploit model error more than a random policy would?</li>
+<li>A perfect simulator is available. Is there still a reason to learn a model?</li>
+</ul>
+</details>
+<details class="qa" id="rl-023">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Compare greedy search, beam search and A*. When is each optimal, and where do they show up in ML systems?
+</summary>
+<p>All three search a graph of partial solutions; they differ in what they keep.</p>
+<ul>
+<li><strong>Greedy</strong> keeps one candidate and extends it by the locally best step. <span class="math inline">\(O(d)\)</span> expansions for depth <span class="math inline">\(d\)</span>, no optimality guarantee.</li>
+<li><strong>Beam search</strong> keeps the best <span class="math inline">\(k\)</span> partial candidates at each depth. Cost <span class="math inline">\(O(k\, b\, d)\)</span> for branching factor <span class="math inline">\(b\)</span>. Not optimal, since the best full solution can fall off the beam early, and not monotone in <span class="math inline">\(k\)</span> for the downstream metric: in sequence generation a wider beam finds higher-probability outputs that are often shorter and blander, which is why length normalisation is needed.</li>
+<li><strong>A*</strong> expands the node with the lowest <span class="math inline">\(f(n) = g(n) + h(n)\)</span>, cost so far plus a heuristic estimate of cost to go. It returns an optimal path if <span class="math inline">\(h\)</span> is admissible (never overestimates); with a consistent heuristic no node is re-expanded. With <span class="math inline">\(h = 0\)</span> it is Dijkstra. The better the heuristic, the fewer expansions; memory is the usual limit.</li>
+</ul>
+<p>Where they appear:</p>
+<ul>
+<li>Decoding in sequence models and constrained generation (beam search over tokens or over valid identifiers).</li>
+<li>Motion and route planning (A* and its variants on grids and road graphs).</li>
+<li>Approximate nearest-neighbour search on graphs is a best-first search with a bounded candidate list.</li>
+<li>Agents that plan over actions: best-first or beam search over partial plans, with a learned value as the heuristic.</li>
+</ul>
+<p>The general pattern: a learned model supplies the scores or heuristic, and the search supplies lookahead and hard constraints the model cannot guarantee.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Give a case where beam width 5 returns a worse result than greedy.</li>
+<li>What makes a heuristic admissible but useless?</li>
+</ul>
+</details>
+</section>
+<section id="reward" class="level3">
+<h3 class="anchored" data-anchor-id="reward">Reward design and credit assignment <span class="demand">2% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="rl.reward.0"> State potential-based shaping and prove it preserves the optimal policy</li>
+<li><input type="checkbox" class="chk" data-chk="rl.reward.1"> Give examples of specification gaming and a process that catches it before deployment</li>
+<li><input type="checkbox" class="chk" data-chk="rl.reward.2"> Explain credit assignment with n-step returns, eligibility traces and hindsight relabelling</li>
+<li><input type="checkbox" class="chk" data-chk="rl.reward.3"> Relate the discount factor to an effective horizon and to the control frequency</li>
+</ul>
+<details class="qa" id="rl-017">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">derivation</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> What is potential-based reward shaping, and why does it leave the optimal policy unchanged?
+</summary>
+<p>Shaping adds a term <span class="math inline">\(F\)</span> to the reward to give the agent denser feedback. Arbitrary shaping changes what is optimal: reward “progress” and the agent may learn to oscillate to collect it repeatedly. Potential-based shaping (Ng, Harada and Russell, 1999) restricts <span class="math inline">\(F\)</span> to the difference of a potential <span class="math inline">\(\Phi\)</span> over states:</p>
+<p><span class="math display">\[F(s, a, s') = \gamma\, \Phi(s') - \Phi(s).\]</span></p>
+<p><strong>Why it is safe.</strong> Along any trajectory the shaping terms telescope:</p>
+<p><span class="math display">\[\sum_{t \ge 0} \gamma^t \big(\gamma \Phi(s_{t+1}) - \Phi(s_t)\big) = -\Phi(s_0),\]</span></p>
+<p>assuming the discounted potential vanishes at the end (bounded <span class="math inline">\(\Phi\)</span> with <span class="math inline">\(\gamma &lt; 1\)</span>, or <span class="math inline">\(\Phi = 0\)</span> at terminal states). So every policy’s return from <span class="math inline">\(s_0\)</span> shifts by the same constant. Equivalently <span class="math inline">\(Q'^*(s, a) = Q^*(s, a) - \Phi(s)\)</span>: the shift does not depend on the action, so the <span class="math inline">\(\arg\max\)</span> is unchanged. The result is also necessary in the sense that, without knowledge of the dynamics, only potential-based shaping guarantees invariance.</p>
+<p><strong>What makes a good potential.</strong> The ideal is <span class="math inline">\(\Phi = V^*\)</span>, which makes the one-step greedy action optimal; in practice use a rough estimate of progress, such as negative distance to the goal. Any cycle in state space collects zero net shaping, which is exactly what prevents the oscillation exploit.</p>
+<p>Caveats: the terminal potential must be zero in episodic tasks, and shaping changes learning speed and exploration, so a bad potential can still slow learning even though the optimum is preserved.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Give a shaping reward that is not potential-based and the behaviour it produces.</li>
+<li>How does shaping interact with a learned value function’s initialisation?</li>
+</ul>
+</details>
+<details class="qa" id="rl-018">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Agents exploit their reward. How do you design a reward, and what process catches specification gaming before it ships?
+</summary>
+<p>Treat the reward as a specification that an optimiser will satisfy literally. Wherever it differs from what you want, a strong enough learner finds the difference: collecting a progress bonus in a loop, exploiting a simulator bug, satisfying a test by special-casing it, or maximising a learned judge’s score with text the judge likes rather than a correct answer.</p>
+<p><strong>Design principles.</strong></p>
+<ul>
+<li>Reward the outcome, not the proxy for it. Prefer a sparse, verifiable task result and add density through potential-based shaping, not through extra terms.</li>
+<li>Make constraints explicit as penalties or hard terminations (safety, cost, time), and check that no behaviour earns more by violating them.</li>
+<li>Keep the reward bounded and on a known scale; unbounded terms dominate.</li>
+<li>If the reward is a learned model, assume it is exploitable: use ensembles, cap its contribution, refresh it on policy outputs and hold out a separate judge for evaluation only.</li>
+</ul>
+<p><strong>Process.</strong></p>
+<ul>
+<li>Before training, ask what the laziest policy that scores well would do, and red-team the reward on paper.</li>
+<li>During training, watch episodes at every checkpoint and track metrics that are not in the reward (task success by an independent check, constraint violations, diversity). Divergence between reward and those metrics is the signal.</li>
+<li>Evaluate on held-out tasks and with a grader the policy was never trained against.</li>
+<li>Keep the reward function versioned with the run, so a change in behaviour can be traced.</li>
+</ul>
+<p>A reward that needed many patches is usually the wrong formulation; step back to the outcome.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Reward rises steadily while held-out task success is flat. What do you check?</li>
+<li>How does this apply when the reward is another model’s judgement?</li>
+</ul>
+</details>
+<details class="qa" id="rl-019">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> What is the credit assignment problem, and which mechanisms address it?
+</summary>
+<p>Credit assignment asks which of many earlier actions caused a reward that arrives later. With a sparse terminal reward and horizon <span class="math inline">\(T\)</span>, a Monte Carlo policy gradient multiplies every action’s log-probability by the same noisy return, so the signal for any one action is weak and the variance grows with <span class="math inline">\(T\)</span>.</p>
+<p>Mechanisms:</p>
+<ul>
+<li><strong>Value functions.</strong> A critic turns a delayed reward into an immediate signal: the TD error <span class="math inline">\(r + \gamma V(s') - V(s)\)</span> says whether a step made things better or worse than expected. This is the main tool.</li>
+<li><strong>n-step returns and eligibility traces.</strong> TD(<span class="math inline">\(\lambda\)</span>) and GAE spread a TD error back over recent steps with decaying weight, trading bias for variance.</li>
+<li><strong>Baselines and advantages.</strong> Subtracting what was expected isolates the effect of the chosen action.</li>
+<li><strong>Hindsight relabelling.</strong> In goal-conditioned tasks, relabel a failed trajectory with the goal it actually reached, so every trajectory carries signal.</li>
+<li><strong>Shaping and subgoals.</strong> Potential-based shaping or hierarchical decomposition shortens the distance between an action and its feedback.</li>
+<li><strong>Structural credit assignment.</strong> Across agents or modules, counterfactual baselines (what would the team reward have been without this agent’s action) separate contributions.</li>
+</ul>
+<p>For long token sequences with one end-of-episode score, the same problem appears: all tokens share one reward. Per-step critics are hard to train there, so practice leans on group or batch baselines, many samples per prompt and shorter effective horizons.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Why does a lower discount factor make credit assignment easier and the solution worse?</li>
+<li>How would you assign credit among the steps of a multi-step agent that failed its task?</li>
+</ul>
+</details>
+<details class="qa" id="rl-020">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> What does the discount factor do, and how do you choose it?
+</summary>
+<p><span class="math inline">\(\gamma\)</span> has two roles that are often conflated.</p>
+<ul>
+<li><strong>Problem definition.</strong> It encodes how much the future matters. Rewards <span class="math inline">\(k\)</span> steps ahead are weighted by <span class="math inline">\(\gamma^k\)</span>, giving an effective horizon of about <span class="math inline">\(1 / (1 - \gamma)\)</span> steps: 100 steps at <span class="math inline">\(\gamma = 0.99\)</span>, 1000 at <span class="math inline">\(0.999\)</span>.</li>
+<li><strong>Algorithmic knob.</strong> A lower <span class="math inline">\(\gamma\)</span> shortens the horizon the estimator must cover, which lowers the variance of returns and speeds value propagation, at the price of bias toward myopic behaviour. Many tasks whose true objective is undiscounted are trained with <span class="math inline">\(\gamma &lt; 1\)</span> for this reason.</li>
+</ul>
+<p>Choosing it:</p>
+<ul>
+<li>Work in time, not steps. If the control frequency doubles, the same horizon in seconds needs <span class="math inline">\(\gamma\)</span> closer to 1: <span class="math inline">\(\gamma_{\text{new}} = \gamma_{\text{old}}^{1/2}\)</span>. Forgetting this is a common cause of a policy that became short-sighted after a change of step rate.</li>
+<li>The horizon must cover the delay between the decisive action and its reward. If the payoff arrives 500 steps later, <span class="math inline">\(\gamma = 0.99\)</span> weights it by <span class="math inline">\(0.99^{500} \approx 0.007\)</span>.</li>
+<li>Very high <span class="math inline">\(\gamma\)</span> makes values large (<span class="math inline">\(r_{\max} / (1 - \gamma)\)</span>) and learning slow and unstable; normalise returns or value targets.</li>
+</ul>
+<p>For episodic tasks with a clear terminal outcome, <span class="math inline">\(\gamma\)</span> near 1 with GAE’s <span class="math inline">\(\lambda\)</span> controlling variance is usually better than a low <span class="math inline">\(\gamma\)</span>. For continuing tasks, the average-reward formulation avoids the choice altogether.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>What happens to the optimal policy when <span class="math inline">\(\gamma\)</span> is 0?</li>
+<li>Why can a time-limit bug look like a discount problem?</li>
+</ul>
+</details>
+</section>
+<section id="imitation" class="level3">
+<h3 class="anchored" data-anchor-id="imitation">Imitation learning and behaviour cloning <span class="demand">1% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="rl.imitation.0"> Explain why behaviour cloning error compounds over the horizon and how DAgger removes the quadratic term</li>
+<li><input type="checkbox" class="chk" data-chk="rl.imitation.1"> Distinguish behaviour cloning, inverse RL and adversarial imitation by what each needs and returns</li>
+<li><input type="checkbox" class="chk" data-chk="rl.imitation.2"> Handle multimodal and suboptimal demonstrations</li>
+<li><input type="checkbox" class="chk" data-chk="rl.imitation.3"> Evaluate an imitation policy in closed loop instead of by held-out action error</li>
+</ul>
+<details class="qa" id="rl-014">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> Why does behaviour cloning degrade over long horizons, and how does DAgger fix it?
+</summary>
+<p>Behaviour cloning is supervised learning of <span class="math inline">\(\pi(a \mid s)\)</span> on expert state-action pairs. Training states come from the expert’s distribution, but at test time the states come from the learner’s own actions. A small mistake moves the agent to a state the expert rarely visited, where the policy is worse, which causes a larger mistake. This is covariate shift created by the policy itself.</p>
+<p>The standard result (Ross and Bagnell): if the policy errs with probability <span class="math inline">\(\epsilon\)</span> per step on the expert’s distribution, the expected cost over horizon <span class="math inline">\(T\)</span> can grow as <span class="math inline">\(O(\epsilon T^2)\)</span>, not <span class="math inline">\(O(\epsilon T)\)</span>, because after the first error the agent may be off-distribution for the rest of the episode.</p>
+<p><strong>DAgger</strong> closes the loop: run the current policy, ask the expert for the correct action in the states the policy visited, aggregate those labels into the dataset and retrain. The training distribution converges to the learner’s own state distribution, and the bound becomes <span class="math inline">\(O(\epsilon T)\)</span>.</p>
+<p>Its cost is an expert who can be queried on arbitrary states, which is easy for a scripted or planning expert and awkward for humans. Alternatives that need no queries: inject noise during demonstration collection so the data contains recoveries, augment with synthetic perturbations and corrective labels, predict chunks of actions to shorten the effective horizon, or fine-tune with RL after cloning.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Held-out action error is low but closed-loop success is poor. Why?</li>
+<li>How would you collect DAgger labels from a human driver safely?</li>
+</ul>
+</details>
+<details class="qa" id="rl-015">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> Compare behaviour cloning, inverse RL and adversarial imitation. What does each need and when would you go beyond behaviour cloning?
+</summary>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Method</th>
+<th>Learns</th>
+<th>Needs</th>
+<th>Weakness</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Behaviour cloning</td>
+<td>Policy by supervised learning</td>
+<td>Demonstrations only</td>
+<td>Compounding error off the data</td>
+</tr>
+<tr class="even">
+<td>Inverse RL</td>
+<td>A reward that explains the expert, then a policy</td>
+<td>Demonstrations plus environment interaction or a model</td>
+<td>Expensive (RL in the inner loop); reward is not unique</td>
+</tr>
+<tr class="odd">
+<td>Adversarial imitation (GAIL)</td>
+<td>Policy whose state-action distribution matches the expert’s</td>
+<td>Demonstrations plus interaction</td>
+<td>GAN-style instability; sample hungry</td>
+</tr>
+</tbody>
+</table>
+<p>Inverse RL is ill-posed: many rewards, including a constant, make the expert optimal. Maximum-entropy IRL resolves this by choosing the reward under which the expert’s trajectories are exponentially more likely the higher their return. Its advantage is that a reward transfers to new dynamics or embodiments where a cloned policy does not.</p>
+<p>GAIL skips the explicit reward: a discriminator separates expert from policy state-action pairs and its output is used as the reward for a policy-gradient learner. It matches the occupancy measure and so corrects compounding error, at the price of environment interaction.</p>
+<p>Go beyond behaviour cloning when: the horizon is long and recoveries are missing from the data; the demonstrations are suboptimal and you want to exceed them (offline RL or advantage-weighted cloning with a reward); or the dynamics at deployment differ from the demonstrations. Stay with cloning when data is plentiful, covers recoveries and interaction is expensive. That describes most large-scale robot and driving policies today.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Why is the constant reward a solution to inverse RL, and how does the maximum-entropy formulation rule it out?</li>
+<li>What does advantage-weighted regression do with suboptimal demonstrations?</li>
+</ul>
+</details>
+<details class="qa" id="rl-016">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> You have a large log of human operators doing a multi-step task and a simulator of medium fidelity. Design the pipeline that turns this into a deployable policy.
+</summary>
+<p><strong>1. Data.</strong> Segment the log into episodes with outcomes, filter out failed or idle segments, and check coverage: which states and recoveries are present. Split by operator and by time so the evaluation does not leak.</p>
+<p><strong>2. Clone first.</strong> Train a behaviour-cloning policy. Human data is multimodal (two valid ways to do the same step), and a regression head averages the modes into an invalid action, so use a categorical head over discretised actions, a mixture, or a generative action head. Give the policy enough history to be Markov, but watch for causal confusion: with history the model can learn to copy the previous action instead of reading the observation.</p>
+<p><strong>3. Evaluate in closed loop.</strong> Held-out action error does not predict task success. Use the simulator for success rate, time to complete and safety violations, with scenario sets for rare cases.</p>
+<p><strong>4. Improve past the demonstrations.</strong> Fine-tune with RL in the simulator, starting from the cloned policy and keeping a cloning or KL term so the policy stays near human-like behaviour where the simulator is wrong. Randomise simulator parameters to cover the fidelity gap. Use a sparse task reward plus constraints rather than an elaborate shaped reward.</p>
+<p><strong>5. Deploy with guards.</strong> Shadow mode against operators, then assisted mode with human takeover. Log interventions; they are DAgger labels for the next round.</p>
+<p>The main risks to name: simulator exploits, loss of human-like safety margins during fine-tuning, and evaluation scenarios that under-represent the tail.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How do you decide the weight of the cloning term during RL fine-tuning?</li>
+<li>Which metric would stop a rollout?</li>
+</ul>
+</details>
+</section>
+</section>
+<section id="deep-dives-on-this-site" class="level2">
+<h2 class="anchored" data-anchor-id="deep-dives-on-this-site">Deep dives on this site</h2>
+<ul>
+<li><a href="../notes/algorithms/rl_algo.html">From Graph Algorithms to Reinforcement Learning</a></li>
+</ul>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/threeeyelidds\.github\.io\/minimal-ml\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+      window.quartoDecorateExternalLinks = function (root) {
+     var links = (root || window.document).querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+          if (!link.classList.contains('no-external-icon')) {
+          }
+        }
+      }
+      };
+      window.quartoDecorateExternalLinks(window.document);
+    // Esc closes the popup (WCAG 1.4.13) and focus leaving both trigger and
+    // popup closes it (WCAG 2.4.11); tippy handles neither for interactive popups.
+    const hideOnEscAndFocusOut = {
+      name: 'hideOnEscAndFocusOut',
+      defaultValue: true,
+      fn(instance) {
+        const dismiss = () => {
+          // A show scheduled by the trigger delay would otherwise reopen it
+          instance.clearDelayTimeouts();
+          instance.hide();
+        };
+        const onKeyDown = (event) => {
+          if (event.key !== 'Escape') {
+            return;
+          }
+          // Keep Esc from also reaching page handlers (e.g. reveal.js overview),
+          // except an open reveal.js slide menu, which Esc should close too.
+          // The menu handles keys only when its keyboard option is on.
+          const menuHandlesEsc = window.Reveal?.getPlugin?.('menu')?.isOpen() &&
+            window.Reveal.getConfig().menu?.keyboard !== false;
+          if (!menuHandlesEsc) {
+            event.stopPropagation();
+          }
+          if (instance.popper.contains(window.document.activeElement)) {
+            // Disabled while refocusing so the focus trigger does not reopen it
+            instance.disable();
+            instance.reference.focus();
+            instance.enable();
+          }
+          dismiss();
+        };
+        const onFocusOut = (event) => {
+          const target = event.relatedTarget;
+          if (target && !instance.reference.contains(target) &&
+              !instance.popper.contains(target)) {
+            dismiss();
+          }
+        };
+        // On the trigger too: a click trigger (code-annotations: select) has no
+        // blur handling. Attached for the instance's lifetime so leaving the
+        // trigger also cancels a show still pending on the trigger delay.
+        instance.reference.addEventListener('focusout', onFocusOut);
+        return {
+          onShow() {
+            window.document.addEventListener('keydown', onKeyDown, true);
+            instance.popper.addEventListener('focusout', onFocusOut);
+          },
+          onHide() {
+            window.document.removeEventListener('keydown', onKeyDown, true);
+            instance.popper.removeEventListener('focusout', onFocusOut);
+          },
+          onDestroy() {
+            instance.reference.removeEventListener('focusout', onFocusOut);
+          },
+        };
+      },
+    };
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+        plugins: [hideOnEscAndFocusOut],
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          // Each band is positioned against its own containing block, which is
+          // not the offsetParent of the lines, so place it from client rects.
+          const placeBand = (band, firstEl, lastEl, codeBlock) => {
+            const container = band.offsetParent;
+            if (container === null) {
+              return;
+            }
+            const containerRect = container.getBoundingClientRect();
+            // Reveal.js scales slides with a transform, so convert client
+            // pixels back to the CSS pixels of the container.
+            const scale = containerRect.height / container.offsetHeight || 1;
+            const firstRect = firstEl.getBoundingClientRect();
+            const lastRect = lastEl.getBoundingClientRect();
+            const top = (firstRect.top - containerRect.top) / scale - container.clientTop + container.scrollTop;
+            const height = (lastRect.bottom - firstRect.top) / scale;
+            band.style.top = top - 2 + "px";
+            band.style.height = height + 4 + "px";
+            if (codeBlock) {
+              // Without the copy button wrapper, the containing block is wider
+              // than the code block, so span the code block explicitly.
+              const blockRect = codeBlock.getBoundingClientRect();
+              band.style.left = (blockRect.left - containerRect.left) / scale - container.clientLeft + container.scrollLeft + "px";
+              band.style.width = blockRect.width / scale + "px";
+            }
+          };
+          if (lineIds.length > 0) {
+            const el = window.document.getElementById(lineIds[0]);
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const parent = el.parentElement.parentElement;
+            // cook up a div (if necessary) and position it
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            placeBand(div, el, lastEl, parent.closest("div.sourceCode") || parent);
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            placeBand(gutterDiv, el, lastEl);
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+  <script type="application/javascript">
+  window.quartoScrollableRegionsLabels = {"code":"Scrollable code","output":"Scrollable output"};
+  </script>
+</div> <!-- /content -->
+<script>
+/* Site-wide: persistent checklists and review status on the skill pages. */
+(function () {
+  "use strict";
+  function get(k) { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch (e) { return {}; } }
+  function set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* storage blocked: ticks last for this page view */ } }
+
+  var chk = get("prep.chk.v1");
+  document.querySelectorAll("input.chk").forEach(function (el) {
+    el.checked = !!chk[el.dataset.chk];
+    el.addEventListener("change", function () {
+      if (el.checked) chk[el.dataset.chk] = 1; else delete chk[el.dataset.chk];
+      set("prep.chk.v1", chk);
+    });
+  });
+
+  var cards = (get("prep.v1").cards) || {};
+  document.querySelectorAll("details.qa[id]").forEach(function (el) {
+    var r = cards[el.id];
+    if (r) el.classList.add(r.ivl >= 7 ? "st-known" : "st-learning");
+  });
+
+  // open the question a link points at
+  function openTarget() {
+    var id = decodeURIComponent(location.hash.slice(1));
+    var el = id && document.getElementById(id);
+    if (el && el.tagName === "DETAILS") { el.open = true; el.scrollIntoView({ block: "start" }); }
+  }
+  window.addEventListener("hashchange", openTarget);
+  openTarget();
+
+  var mp = document.getElementById("map-progress");
+  if (mp) {
+    var seen = Object.keys(cards).length, known = Object.keys(cards).filter(function (k) { return cards[k].ivl >= 7; }).length;
+    var ticks = Object.keys(chk).length;
+    if (seen || ticks) {
+      mp.className = "tile";
+      mp.style.marginBottom = "1.2rem";
+      mp.textContent = "Your progress in this browser: " + seen + " cards reviewed, " + known + " known, " + ticks + " checklist items ticked.";
+    }
+  }
+})();
+</script>
+
+
+
+
+</body></html>

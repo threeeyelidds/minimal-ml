@@ -1,0 +1,71 @@
+/* Interview-prep components: demand bars, tags, question cards, checklists, jobs table. */
+
+.bar {
+  display: inline-block; vertical-align: middle; height: 0.55rem; width: 6rem; max-width: 22vw;
+  border-radius: 3px; margin-right: 0.5rem;
+  background: linear-gradient(to right, var(--minimal-accent) var(--w), var(--minimal-surface) var(--w));
+  border: 1px solid var(--minimal-line);
+}
+.barwrap { white-space: nowrap; }
+.pct { font-variant-numeric: tabular-nums; color: var(--minimal-ink); font-size: 0.9em; }
+.muted { color: var(--minimal-muted); }
+.demand { font-size: 0.78rem; font-weight: 500; color: var(--minimal-muted); border: 1px solid var(--minimal-line); border-radius: 999px; padding: 0.08rem 0.55rem; margin-left: 0.4rem; vertical-align: middle; white-space: nowrap; letter-spacing: 0; }
+
+.area-meta { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; margin: 1rem 0 1.4rem; }
+.chip { font-size: 0.8rem; color: var(--minimal-muted); border: 1px solid var(--minimal-line); border-radius: 999px; padding: 0.12rem 0.65rem; }
+.btn-review, a.btn {
+  display: inline-block; background: var(--minimal-accent); color: #10141a !important; font-weight: 650; text-decoration: none;
+  border-radius: 8px; padding: 0.4rem 0.9rem; margin-left: auto;
+}
+a.btn { margin-left: 0; margin-right: 0.5rem; }
+a.btn.ghost { background: transparent; color: var(--minimal-ink) !important; border: 1px solid var(--minimal-line); }
+.btn-review:hover, a.btn:hover { filter: brightness(1.08); }
+
+.tag { display: inline-block; font-size: 0.7rem; font-weight: 600; line-height: 1.5; border-radius: 4px; padding: 0 0.4rem; margin-right: 0.3rem; border: 1px solid var(--minimal-line); color: var(--minimal-muted); vertical-align: 0.12em; white-space: nowrap; letter-spacing: 0.01em; }
+.tag-core { color: #8dcba5; border-color: #3c5a48; }
+.tag-senior { color: #91b8ff; border-color: #3b4f73; }
+.tag-staff { color: #bca9e8; border-color: #54487a; }
+.tag-track { font-weight: 500; }
+.tag-status.st-new { opacity: 0.7; }
+.tag-status.st-learning { color: #e5ad7c; border-color: #6b5137; }
+.tag-status.st-known { color: #8dcba5; border-color: #3c5a48; }
+
+details.qa { border-bottom: 1px solid var(--minimal-line); padding: 0.15rem 0; }
+details.qa > summary { cursor: pointer; padding: 0.55rem 0.2rem; font-weight: 550; line-height: 1.5; list-style-position: outside; margin-left: 1.1rem; }
+details.qa > summary:hover { color: var(--minimal-accent); }
+details.qa[open] > summary { color: var(--minimal-accent); }
+details.qa[open] { padding-bottom: 0.9rem; }
+details.qa > :not(summary) { margin-left: 1.1rem; margin-right: 0.2rem; }
+details.qa pre { overflow-x: auto; }
+details.qa.st-known > summary::marker { color: #8dcba5; }
+details.qa.st-learning > summary::marker { color: #e5ad7c; }
+
+li:has(> input.chk) { list-style: none; margin-left: -1.35rem; }
+input.chk { accent-color: var(--minimal-accent); margin-right: 0.45rem; width: 0.95rem; height: 0.95rem; vertical-align: -0.1em; cursor: pointer; }
+li:has(> input.chk:checked) { color: var(--minimal-muted); }
+
+.quote-src { font-size: 0.82rem; color: var(--minimal-muted); }
+blockquote { border-left: 3px solid var(--minimal-line); color: var(--minimal-ink); }
+
+.hero { margin: 1.2rem 0 2rem; }
+.hero h1 { font-size: 2.1rem; letter-spacing: -0.03em; line-height: 1.15; margin-bottom: 0.6rem; }
+.hero p.lead { font-size: 1.12rem; color: var(--minimal-muted); max-width: 44rem; }
+.grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 0.9rem; margin: 1.2rem 0 1.8rem; }
+.tile { background: var(--minimal-surface); border: 1px solid var(--minimal-line); border-radius: 10px; padding: 1rem 1.1rem; }
+.tile h3 { margin: 0 0 0.35rem; font-size: 1.02rem; border: 0; padding: 0; }
+.tile p { margin: 0; color: var(--minimal-muted); font-size: 0.92rem; }
+.tile .big, .tile .big p { font-size: 1.7rem; font-weight: 700; letter-spacing: -0.03em; line-height: 1.2; color: var(--minimal-ink); font-variant-numeric: tabular-nums; }
+
+/* Wide data tables scroll inside their own box instead of the page. */
+main table { display: block; overflow-x: auto; max-width: 100%; }
+main table td, main table th { vertical-align: middle; }
+
+/* Jobs browser */
+#jobs-app .rv-filters { margin-bottom: 0.8rem; }
+.job { border-bottom: 1px solid var(--minimal-line); padding: 0.7rem 0; }
+.job-title { font-weight: 600; }
+.job-sub { color: var(--minimal-muted); font-size: 0.88rem; }
+.job-skills { margin-top: 0.3rem; display: flex; flex-wrap: wrap; gap: 0.25rem; }
+.job-skills .tag { font-weight: 500; margin: 0; }
+.job-skills .tag.have { color: #8dcba5; border-color: #3c5a48; }
+.job-fit { float: right; font-variant-numeric: tabular-nums; font-size: 0.85rem; color: var(--minimal-muted); margin-left: 0.8rem; }

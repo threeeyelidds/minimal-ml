@@ -1,0 +1,2007 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.11.9">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>MLOps, cloud and production operations – Minimal ML</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/scrollable-regions/scrollable-regions.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-447e42e69aaa9833c0ba1b986f430b20.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-980fa6b4eab38a5377f72c7fe6f39b73.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="dark">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<meta name="google-site-verification" content="Ztjr25pGaioeZP-mkoIn_MkNmmsFXWcU6I6W2tEPli0">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../styles.css">
+<link rel="stylesheet" href="../colors.css">
+<link rel="stylesheet" href="../prep.css">
+</head>
+
+<body class="nav-sidebar docked nav-fixed quarto-light"><a id="quarto-skip-link" class="visually-hidden-focusable" href="#quarto-document-content">Skip to main content</a>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark" aria-label="Site">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">Minimal ML</span>
+    </a>
+  </div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../report/index.html"> 
+<span class="menu-text">Report</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link active" href="../skills/index.html" aria-current="page"> 
+<span class="menu-text">Skills</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../review/index.html"> 
+<span class="menu-text">Review</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../plan/index.html"> 
+<span class="menu-text">Plan</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../jobs/index.html"> 
+<span class="menu-text">Open roles</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../notes/index.html"> 
+<span class="menu-text">Notes</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../essays/index.html"> 
+<span class="menu-text">Essays</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+            <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav" aria-label="Toolbar">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="Breadcrumbs"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../skills/infra.html">Systems</a></li><li class="breadcrumb-item"><a href="../skills/mlops.html">MLOps, cloud and production operations</a></li></ol></nav>
+        <a class="flex-grow-1" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto" aria-label="Section">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Skill map</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/cases.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Design cases</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" aria-controls="quarto-sidebar-section-1" aria-expanded="true">
+ <span class="menu-text" id="quarto-sidebar-section-1-label">The loop</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-1" aria-labelledby="quarto-sidebar-section-1-label" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/swe.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Programming and software engineering</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/mlfund.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">ML fundamentals and statistics</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/dl.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Deep learning</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/eval.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Evaluation and experimentation</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/senior.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Senior-level scope and leadership</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" aria-controls="quarto-sidebar-section-2" aria-expanded="true">
+ <span class="menu-text" id="quarto-sidebar-section-2-label">LLMs and agents</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-2" aria-labelledby="quarto-sidebar-section-2-label" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/llm.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">LLMs and foundation models (training side)</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/llmapp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">LLM application engineering (agents, RAG, prompts)</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/rl.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Reinforcement learning and decision making</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/research.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Research skills</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" aria-controls="quarto-sidebar-section-3" aria-expanded="true">
+ <span class="menu-text" id="quarto-sidebar-section-3-label">Product ML</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-3" aria-labelledby="quarto-sidebar-section-3-label" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/recsys.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Search, recommendation, ads and ranking</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/domain.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Domain specialties</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" aria-controls="quarto-sidebar-section-4" aria-expanded="true">
+ <span class="menu-text" id="quarto-sidebar-section-4-label">Systems</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-4" aria-labelledby="quarto-sidebar-section-4-label" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/infra.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Training infrastructure and data systems</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/serving.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Inference, serving and model optimization</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/mlops.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">MLOps, cloud and production operations</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" aria-labelledby="toc-title" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#what-the-postings-ask-for" id="toc-what-the-postings-ask-for" class="nav-link active" data-scroll-target="#what-the-postings-ask-for">What the postings ask for</a>
+  <ul class="collapse">
+  <li><a href="#in-the-postings-words" id="toc-in-the-postings-words" class="nav-link" data-scroll-target="#in-the-postings-words">In the postings’ words</a></li>
+  </ul></li>
+  <li><a href="#the-senior-bar" id="toc-the-senior-bar" class="nav-link" data-scroll-target="#the-senior-bar">The senior bar</a></li>
+  <li><a href="#skills-checklists-and-questions" id="toc-skills-checklists-and-questions" class="nav-link" data-scroll-target="#skills-checklists-and-questions">Skills, checklists and questions</a>
+  <ul class="collapse">
+  <li><a href="#production-ml" id="toc-production-ml" class="nav-link" data-scroll-target="#production-ml">Shipping ML to production (end-to-end lifecycle) <span class="demand">61% of postings</span></a></li>
+  <li><a href="#cloud" id="toc-cloud" class="nav-link" data-scroll-target="#cloud">Cloud platforms (AWS, GCP, Azure) <span class="demand">37% of postings</span></a></li>
+  <li><a href="#mlops" id="toc-mlops" class="nav-link" data-scroll-target="#mlops">MLOps and ML CI/CD <span class="demand">34% of postings</span></a></li>
+  <li><a href="#containers" id="toc-containers" class="nav-link" data-scroll-target="#containers">Containers and infrastructure as code <span class="demand">29% of postings</span></a></li>
+  <li><a href="#devex" id="toc-devex" class="nav-link" data-scroll-target="#devex">Developer tooling and platform ergonomics <span class="demand">26% of postings</span></a></li>
+  <li><a href="#security-privacy" id="toc-security-privacy" class="nav-link" data-scroll-target="#security-privacy">Security, privacy and compliance in ML systems <span class="demand">21% of postings</span></a></li>
+  <li><a href="#databases" id="toc-databases" class="nav-link" data-scroll-target="#databases">Databases, caches and queues <span class="demand">20% of postings</span></a></li>
+  <li><a href="#data-quality" id="toc-data-quality" class="nav-link" data-scroll-target="#data-quality">Data validation and pipeline quality <span class="demand">9% of postings</span></a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content" tabindex="-1">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="Breadcrumbs"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../skills/infra.html">Systems</a></li><li class="breadcrumb-item"><a href="../skills/mlops.html">MLOps, cloud and production operations</a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title">MLOps, cloud and production operations</h1>
+<p class="subtitle lead">Named in 87% of 2253 senior postings · 31 review cards</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!-- Generated by tools/build_site.py. Edit bank/*.yml or the script, not this file. -->
+<p>Everything between a trained model and a system that keeps working: the production lifecycle, registries and reproducibility, monitoring and retraining, the cloud and container platform underneath, the databases, caches and queues around the model, security and privacy, data validation, and the internal tooling that lets other engineers ship. It is the most widely named area in the sample: 87% of postings name something in it, and 61% ask for experience shipping ML to production end to end. It is tested in system design rounds, in the project deep dive (“how did you deploy it, how did you know it was still working”) and in debugging scenarios.</p>
+<p class="area-meta">
+<span class="chip">ML system design</span><span class="chip">Project deep dive</span><span class="chip">Debugging and incident scenarios</span><span class="chip">Platform or infrastructure design round</span><span class="chip">Behavioural (ownership, cross-team work)</span><a class="btn-review" href="../review/index.html#area=mlops">Review these cards →</a>
+</p>
+<section id="what-the-postings-ask-for" class="level2">
+<h2 class="anchored" data-anchor-id="what-the-postings-ask-for">What the postings ask for</h2>
+<p>Share of postings that name each skill, overall and by track.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Skill</th>
+<th style="text-align: left;">All postings</th>
+<th style="text-align: right;">MLE</th>
+<th style="text-align: right;">AI eng</th>
+<th style="text-align: right;">Research eng</th>
+<th style="text-align: right;">Cards</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><a href="#production-ml">Shipping ML to production (end-to-end lifecycle)</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:61%"></span><span class="pct">61%</span></span></td>
+<td style="text-align: right;">67%</td>
+<td style="text-align: right;">59%</td>
+<td style="text-align: right;">46%</td>
+<td style="text-align: right;">5</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="#cloud">Cloud platforms (AWS, GCP, Azure)</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:37%"></span><span class="pct">37%</span></span></td>
+<td style="text-align: right;">29%</td>
+<td style="text-align: right;">50%</td>
+<td style="text-align: right;">9%</td>
+<td style="text-align: right;">4</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="#mlops">MLOps and ML CI/CD</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:34%"></span><span class="pct">34%</span></span></td>
+<td style="text-align: right;">44%</td>
+<td style="text-align: right;">30%</td>
+<td style="text-align: right;">18%</td>
+<td style="text-align: right;">5</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="#containers">Containers and infrastructure as code</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:29%"></span><span class="pct">29%</span></span></td>
+<td style="text-align: right;">20%</td>
+<td style="text-align: right;">38%</td>
+<td style="text-align: right;">20%</td>
+<td style="text-align: right;">4</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="#devex">Developer tooling and platform ergonomics</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:26%"></span><span class="pct">26%</span></span></td>
+<td style="text-align: right;">16%</td>
+<td style="text-align: right;">36%</td>
+<td style="text-align: right;">18%</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="#security-privacy">Security, privacy and compliance in ML systems</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:21%"></span><span class="pct">21%</span></span></td>
+<td style="text-align: right;">14%</td>
+<td style="text-align: right;">31%</td>
+<td style="text-align: right;">6%</td>
+<td style="text-align: right;">4</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="#databases">Databases, caches and queues</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:20%"></span><span class="pct">20%</span></span></td>
+<td style="text-align: right;">12%</td>
+<td style="text-align: right;">30%</td>
+<td style="text-align: right;">3%</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="#data-quality">Data validation and pipeline quality</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:9%"></span><span class="pct">9%</span></span></td>
+<td style="text-align: right;">5%</td>
+<td style="text-align: right;">14%</td>
+<td style="text-align: right;">2%</td>
+<td style="text-align: right;">3</td>
+</tr>
+</tbody>
+</table>
+<section id="in-the-postings-words" class="level3">
+<h3 class="anchored" data-anchor-id="in-the-postings-words">In the postings’ words</h3>
+<blockquote class="blockquote">
+<p>Strong engineering skills: you can take an LLM-powered tool from prototype to production code, and write evals to measure it.</p>
+<p><span class="quote-src"><a href="https://job-boards.greenhouse.io/anthropic/jobs/5445760008">Anthropic · Applied AI Engineer, Beneficial Deployments (Clinical Development, Rare and Neglected Diseases)</a></span></p>
+</blockquote>
+<blockquote class="blockquote">
+<p>Extensive experience with AWS services (e.g.&nbsp;SageMaker, Bedrock, MSK, EKS, ECS, OpenSearch).</p>
+<p><span class="quote-src"><a href="https://astrazeneca.wd3.myworkdayjobs.com/Careers/job/US---Gaithersburg---MD/Principal-AI-Engineer---Evinova_R-263199">AstraZeneca · Principal AI Engineer - Evinova</a></span></p>
+</blockquote>
+<blockquote class="blockquote">
+<p>Deep understanding of RAG architecture, vector databases, and AI agent frameworks (e.g., LangGraph, MCP) Proficiency in automation and continuous delivery methods (CI/CD, DevSecOps)</p>
+<p><span class="quote-src"><a href="https://jpmc.fa.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1001/job/210806216">JPMorgan Chase · Lead Software Engineer - Python and AI</a></span></p>
+</blockquote>
+<blockquote class="blockquote">
+<p>You are proficient with workload orchestrators like Slurm, Kubernetes, or Ray, having used them to schedule and manage complex, concurrent training jobs at scale.</p>
+<p><span class="quote-src"><a href="https://helsing.ai/jobs/4778869101?gh_jid=4778869101">Helsing · Staff AI Research Engineer - ML Engineering</a></span></p>
+</blockquote>
+<blockquote class="blockquote">
+<p>We’re looking for a Principal Engineer to join the ML Platform team at Synthesia.</p>
+<p><span class="quote-src"><a href="https://jobs.ashbyhq.com/synthesia/e9c63d3d-13cc-4049-ae0a-5fef402c595b">Synthesia · Principal ML Platform Engineer</a></span></p>
+</blockquote>
+<blockquote class="blockquote">
+<p>Ensuring agent reliability, traceability, and safe behavior in regulated engineering environments.</p>
+<p><span class="quote-src"><a href="https://jobs.smartrecruiters.com/BoschGroup/744000144027727-applied-ai-engineer-f-m-div-">Bosch · Applied AI Engineer (f/m/div.)</a></span></p>
+</blockquote>
+<blockquote class="blockquote">
+<p>Experience working with graph databases (Neo4j, JanusGraph, TigerGraph) is a big plus</p>
+<p><span class="quote-src"><a href="https://job-boards.greenhouse.io/reddit/jobs/7731772">Reddit · Senior Machine Learning Systems Engineer</a></span></p>
+</blockquote>
+</section>
+</section>
+<section id="the-senior-bar" class="level2">
+<h2 class="anchored" data-anchor-id="the-senior-bar">The senior bar</h2>
+<p>What separates a senior answer from a mid-level one in this area.</p>
+<ul>
+<li>Describes a model in production as a system with owners, SLOs, monitoring, a rollback path and a retraining policy, not as an artefact that was deployed once.</li>
+<li>Makes every model reproducible from versioned code, data snapshot, configuration and environment, and can say which of these a given past incident lacked.</li>
+<li>Monitors at four layers (service, data, prediction, outcome) and knows which signals are available before labels arrive.</li>
+<li>Chooses cloud services, storage engines and deployment strategies by workload and cost, with numbers, and knows where the bill comes from.</li>
+<li>Treats training data, model artefacts and credentials as attack surface and applies least privilege, isolation and auditability by default.</li>
+<li>Builds paved paths that other teams adopt voluntarily, and measures the platform by lead time and adoption instead of by features shipped.</li>
+</ul>
+</section>
+<section id="skills-checklists-and-questions" class="level2">
+<h2 class="anchored" data-anchor-id="skills-checklists-and-questions">Skills, checklists and questions</h2>
+<p>Tick an item when you can explain it without notes; ticks are saved in this browser. Open a question to see the answer.</p>
+<section id="production-ml" class="level3">
+<h3 class="anchored" data-anchor-id="production-ml">Shipping ML to production (end-to-end lifecycle) <span class="demand">61% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="mlops.production-ml.0"> Walk through the lifecycle from problem framing to retirement and name the owner and artefact of each stage</li>
+<li><input type="checkbox" class="chk" data-chk="mlops.production-ml.1"> Compare shadow, canary, A/B and blue-green releases for a model and say what each can and cannot detect</li>
+<li><input type="checkbox" class="chk" data-chk="mlops.production-ml.2"> Decide between scheduled and triggered retraining and account for label delay and feedback loops</li>
+<li><input type="checkbox" class="chk" data-chk="mlops.production-ml.3"> Triage an online metric drop into data, model, serving and measurement causes</li>
+<li><input type="checkbox" class="chk" data-chk="mlops.production-ml.4"> Name the forms of hidden technical debt specific to ML systems</li>
+</ul>
+<details class="qa" id="mlops-001">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Walk me through the lifecycle of an ML system in production. What is different from shipping ordinary software?
+</summary>
+<p>The stages, each with an artefact that should exist when it is done:</p>
+<ol type="1">
+<li><strong>Framing</strong>: the decision the model supports, the metric that defines success, a baseline and the cost of each error type.</li>
+<li><strong>Data</strong>: sources, labels, a versioned dataset and its validation checks.</li>
+<li><strong>Training and evaluation</strong>: reproducible runs, offline metrics on a fixed test set and on slices, a comparison with the current production model.</li>
+<li><strong>Packaging</strong>: the model plus its preprocessing, its input and output schema and its environment, registered with lineage.</li>
+<li><strong>Release</strong>: shadow or canary, then an online experiment against the business metric.</li>
+<li><strong>Operation</strong>: monitoring of service health, inputs, predictions and outcomes; on-call ownership; rollback.</li>
+<li><strong>Maintenance</strong>: retraining, re-evaluation as data shifts, cost control.</li>
+<li><strong>Retirement</strong>: migrating consumers and deleting data and artefacts.</li>
+</ol>
+<p>What differs from ordinary software:</p>
+<ul>
+<li>Behaviour is determined by data as well as code, so both must be versioned and tested, and a change in either is a release.</li>
+<li>Correctness is statistical. Tests pass while quality degrades, so monitoring of outcomes replaces part of what unit tests do.</li>
+<li>The system decays without any deploy, because the world drifts away from the training data.</li>
+<li>Offline metrics are only a proxy; the release decision needs an online measurement.</li>
+<li>There are two pipelines to keep consistent, training and serving, and skew between them is a class of bug that ordinary services do not have.</li>
+</ul>
+<p>In an interview, anchor the walk-through in one real system and say which stage was the weakest and what you changed.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Which stage is most often skipped, and what does that cost later?</li>
+<li>Who owns the model after launch?</li>
+</ul>
+</details>
+<details class="qa" id="mlops-002">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Compare shadow deployment, canary release, A/B testing and blue-green deployment for a new model version. What does each one tell you?
+</summary>
+<p>They answer different questions, and a careful release uses several in sequence.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Strategy</th>
+<th>How</th>
+<th>Detects</th>
+<th>Cannot tell you</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Shadow</td>
+<td>New model receives a copy of live traffic; its outputs are logged, not served</td>
+<td>Crashes, latency, resource use, prediction differences against the current model</td>
+<td>User impact, since users never see it; effects that depend on the model’s own actions</td>
+</tr>
+<tr class="even">
+<td>Canary</td>
+<td>A small share (1 to 5%) of real traffic is served by the new version, with automatic rollback on guardrails</td>
+<td>Operational regressions and gross quality failures under real conditions, with small blast radius</td>
+<td>Small effects on business metrics; it is sized for safety, not power</td>
+</tr>
+<tr class="odd">
+<td>A/B test</td>
+<td>Randomised split sized for statistical power, run for days or weeks</td>
+<td>The causal effect on the business metric</td>
+<td>Anything quickly</td>
+</tr>
+<tr class="even">
+<td>Blue-green</td>
+<td>Two full environments; switch all traffic at once and keep the old one warm</td>
+<td>Nothing by itself; it is a fast switch and a fast rollback</td>
+<td>Quality differences</td>
+</tr>
+</tbody>
+</table>
+<p>A typical order: offline evaluation, shadow to validate serving behaviour and compare predictions, canary with guardrail metrics, then an A/B test for the decision.</p>
+<p>Model-specific points. Shadowing doubles inference cost and is impossible when the model’s output changes what happens next (an agent taking actions), unless side effects are stubbed. Canary assignment should be sticky per user so that experiences are consistent and so that state, such as caches and feature logging, is not mixed. Rollback must restore the model, its preprocessing and its feature definitions together.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>What are your automatic rollback criteria for a canary?</li>
+<li>The shadow model disagrees with production on 8% of requests. Is that good or bad?</li>
+</ul>
+</details>
+<details class="qa" id="mlops-003">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">debugging</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Three days after a launch that looked good offline and in the first day of the experiment, the online metric for the new model falls below control. How do you investigate?
+</summary>
+<p>Establish what changed before theorising about the model.</p>
+<ol type="1">
+<li><strong>Is the measurement right?</strong> Check the experiment itself: sample-ratio mismatch, logging loss in one arm, a metric pipeline change, a novelty effect that was always going to fade. Compare day-by-day curves of both arms.</li>
+<li><strong>Did the serving system change?</strong> Deploys, configuration and feature-flag changes, dependency timeouts that trigger fallbacks, cache behaviour, latency. A model that times out more often silently serves defaults.</li>
+<li><strong>Did the inputs change?</strong> Per-feature null rates, ranges and distributions for the treatment arm against training data and against day one. Typical causes are an upstream job that failed or ran late so features went stale, a schema change, or a new client version sending a field differently.</li>
+<li><strong>Is it a slice?</strong> Break the metric down by platform, country, new versus returning users and traffic source. A drop confined to one slice points to data or a client release; a uniform drop points to the model or the serving path.</li>
+<li><strong>Is the model feeding on itself?</strong> If the model influences its own future inputs (recommendations, rankings), three days is about when feedback effects appear: reduced diversity, exhausted inventory, or features computed from its own outputs.</li>
+<li><strong>Was offline evaluation misleading?</strong> Leakage or a train-test split that did not respect time would produce a model that degrades as soon as it meets future data.</li>
+</ol>
+<p>Mitigate first if the loss is material: roll back or reduce exposure, then diagnose on logs. Close with the missing guardrail, such as a freshness alert or a slice monitor.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How would you distinguish a novelty effect from a real regression?</li>
+<li>Which of these checks can be automated as a pre-launch gate?</li>
+</ul>
+</details>
+<details class="qa" id="mlops-004">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> How often should a production model be retrained? Compare scheduled, triggered and continuous training.
+</summary>
+<p>Retrain as often as the world changes relative to what the model learned, and no more, because each retrain is a release with risk and cost.</p>
+<ul>
+<li><strong>Scheduled</strong> (daily, weekly, monthly). Simple and predictable. Choose the period from a backtest: train on data up to time <span class="math inline">\(t\)</span>, evaluate on windows further and further ahead, and read how fast the metric decays. If a month-old model loses nothing, weekly retraining buys nothing.</li>
+<li><strong>Triggered.</strong> Retrain when a monitor fires: input drift past a threshold, the outcome metric dropping, or enough new labelled data. Efficient, but depends on monitors that are neither noisy nor blind, and labels may arrive too late to trigger in time.</li>
+<li><strong>Continuous or online.</strong> Incremental updates from a stream, used where freshness is the product (ads, feeds, fraud). Highest operational burden: any bad data flows into the model within minutes, so it needs strict input validation, automatic rollback and periodic full retrains to reset accumulated error.</li>
+</ul>
+<p>Things that complicate the choice:</p>
+<ul>
+<li><strong>Label delay.</strong> If outcomes arrive after 30 days, the newest month has incomplete labels. Train on matured data or model the delay explicitly.</li>
+<li><strong>Feedback loops.</strong> The model’s decisions shape its next training set; keep some exploration or holdout traffic.</li>
+<li><strong>Stability.</strong> Frequent retrains can churn predictions for the same input. Measure prediction churn between versions and warm-start if it matters.</li>
+<li><strong>Gates.</strong> Every automatic retrain needs the same evaluation gates as a manual release, compared against the current production model on the same fresh data.</li>
+</ul>
+<p>For LLM-based systems the equivalent questions are when to refresh the retrieval index, the prompts and the evaluation set, and when to re-qualify on a new model version.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How would you measure how quickly your model goes stale?</li>
+<li>What is the risk of retraining on data selected by the previous model?</li>
+</ul>
+</details>
+<details class="qa" id="mlops-005">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> What is hidden technical debt in ML systems? Give the forms you have seen and how you contain them.
+</summary>
+<p>ML systems accumulate debt in places that ordinary code review does not see, because behaviour depends on data and on other models. The main forms, following the well-known Google paper on the topic:</p>
+<ul>
+<li><strong>Entanglement.</strong> Changing anything changes everything: adding a feature or altering one input distribution shifts the weights of all others. No change is isolated, so every change needs a full evaluation.</li>
+<li><strong>Hidden feedback loops.</strong> The model influences the data it is later trained on, or two systems influence each other through the world.</li>
+<li><strong>Undeclared consumers.</strong> Other teams read your model’s scores or logs without telling you; a recalibration then breaks their thresholds.</li>
+<li><strong>Unstable data dependencies.</strong> Input signals owned by other teams change meaning over time; unused or weakly useful features stay in the model and remain a liability.</li>
+<li><strong>Pipeline jungles and glue code.</strong> Data preparation grows by accretion into scrapes, joins and intermediate files that nobody can test end to end.</li>
+<li><strong>Configuration debt.</strong> Thresholds, feature lists and learning settings spread across files with no validation or history.</li>
+<li><strong>Dead experimental paths.</strong> Flags for abandoned experiments left in the serving code.</li>
+</ul>
+<p>Containment: version and validate input data with contracts; register consumers and expose a calibrated, versioned output; delete features that do not pay for themselves; keep preprocessing in one library shared by training and serving; treat configuration as code with review; and schedule the removal of experiment branches at launch time. The useful interview move is to name one of these that caused a real incident and what the fix was.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How do you find out who consumes your model’s output?</li>
+<li>Which of these gets worse when models are replaced by calls to a language model?</li>
+</ul>
+</details>
+</section>
+<section id="cloud" class="level3">
+<h3 class="anchored" data-anchor-id="cloud">Cloud platforms (AWS, GCP, Azure) <span class="demand">37% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="mlops.cloud.0"> Map a training and serving system onto compute, storage, network, identity and managed services</li>
+<li><input type="checkbox" class="chk" data-chk="mlops.cloud.1"> Apply least privilege with roles and service accounts and keep data on private networks</li>
+<li><input type="checkbox" class="chk" data-chk="mlops.cloud.2"> Break a cloud bill into compute, storage, network egress and managed-service premiums and name the lever for each</li>
+<li><input type="checkbox" class="chk" data-chk="mlops.cloud.3"> Decide between a managed ML platform and running your own on Kubernetes</li>
+</ul>
+<details class="qa" id="mlops-011">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Map a typical ML system, training plus online inference, onto cloud building blocks. What do you need from each?
+</summary>
+<p>Five groups of services, the same on AWS, GCP and Azure under different names.</p>
+<ul>
+<li><strong>Compute.</strong> Virtual machines and GPU instances for training; an orchestrator for containers (managed Kubernetes, or a managed training and endpoint service) for jobs and serving; serverless functions for glue. Decide per workload between on-demand, reserved or committed capacity, and spot or preemptible capacity.</li>
+<li><strong>Storage.</strong> Object storage (S3, GCS, Blob) for datasets, checkpoints and model artefacts: cheap, durable, high throughput, no in-place edits. Block storage and local NVMe for scratch and data caches. A warehouse or lakehouse for analytical tables. A low-latency key-value store for online features.</li>
+<li><strong>Network.</strong> A virtual private network with private subnets, load balancers in front of serving, private endpoints to storage and managed services, and a gateway or CDN at the edge. Data location matters because cross-zone and cross-region transfer and egress are billed and slow.</li>
+<li><strong>Identity and secrets.</strong> Roles for people and service accounts for workloads, scoped to the buckets and services each needs; a secrets manager and a key-management service; audit logs.</li>
+<li><strong>Managed ML and data services.</strong> Training and endpoint platforms, model APIs, managed streaming, workflow orchestration, monitoring.</li>
+</ul>
+<p>A training job then reads as: an orchestrated container on GPU nodes, with a service account allowed to read one dataset prefix and write one checkpoint prefix, in the same region as the data. Online inference: an autoscaled deployment behind a load balancer, reading features from the online store, pulling the artefact from the registry bucket at start, exporting metrics and logs.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Where does the first unexpected cost usually appear?</li>
+<li>What changes if the data may not leave one country?</li>
+</ul>
+</details>
+<details class="qa" id="mlops-012">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> How do you set up identity, permissions and networking for ML workloads in the cloud so that a compromised notebook or job does limited damage?
+</summary>
+<p>Start from least privilege and from the assumption that any single workload can be compromised, for instance through a malicious package or a poisoned model file.</p>
+<p><strong>Identity.</strong></p>
+<ul>
+<li>Every workload runs as its own service account or role with a narrow policy: this training job may read this dataset prefix and write that checkpoint prefix. No shared “ML team” role with access to everything.</li>
+<li>Short-lived credentials issued by the platform (workload identity, instance roles), never long-lived keys in code, images or notebooks.</li>
+<li>People get access through groups, with elevated access granted temporarily and logged.</li>
+<li>Separate accounts or projects for development, staging and production, so that an experiment cannot touch production data or endpoints.</li>
+</ul>
+<p><strong>Network.</strong></p>
+<ul>
+<li>Workloads in private subnets without public addresses; inbound traffic only through a load balancer or gateway.</li>
+<li>Private endpoints to object storage and managed services, so data does not cross the public internet.</li>
+<li>Egress control: training jobs and notebooks reach only an internal package mirror and approved hosts. Open egress is how data is exfiltrated.</li>
+</ul>
+<p><strong>Data.</strong></p>
+<ul>
+<li>Encryption at rest with managed keys and in transit with TLS.</li>
+<li>Sensitive datasets in separate buckets with their own policies and access logs.</li>
+</ul>
+<p><strong>Detection.</strong> Audit logs on data access and permission changes, with alerts on unusual volume or new principals.</p>
+<p>The trade-off is friction: researchers want broad access and open internet. The answer is a paved path, such as a sandbox project with de-identified data and a package mirror, rather than exceptions.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>A data scientist needs production data to debug a model. What do you offer?</li>
+<li>How do notebooks typically leak credentials?</li>
+</ul>
+</details>
+<details class="qa" id="mlops-013">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Your team’s cloud bill for ML has doubled. Where do you look, and which levers do you pull first?
+</summary>
+<p>First attribute the bill: by service, by team or project tag, and by workload type (training, inference, storage, data transfer). Untagged spend is usually the first finding.</p>
+<p><strong>Compute, usually the largest part.</strong></p>
+<ul>
+<li><em>Idle and oversized resources</em>: notebooks and development GPUs left running, endpoints with a minimum replica count sized for peak, GPU instances at 20% utilisation. Measure utilisation per instance; shut down on idle; right-size.</li>
+<li><em>Pricing model</em>: steady baseline load on committed or reserved capacity; fault-tolerant training and batch inference on spot or preemptible instances, which are much cheaper but can be reclaimed, so they need checkpointing and retries; on-demand only for the remainder.</li>
+<li><em>Efficiency</em>: batching, a smaller or quantised model, mixed precision, caching of repeated requests, moving offline work from online endpoints to batch jobs.</li>
+</ul>
+<p><strong>Storage.</strong> Checkpoints and intermediate datasets kept forever, many copies of the same dataset, everything in the hot tier. Add lifecycle rules, retention for checkpoints (keep the best and the last few) and colder tiers for archives.</p>
+<p><strong>Network.</strong> Egress and cross-region or cross-zone transfer: training in one region on data in another, or chatty services across zones. Co-locate compute and data.</p>
+<p><strong>Managed-service premiums.</strong> Convenience pricing on managed endpoints, logging and monitoring ingestion, and per-token model APIs. Check log volume and sampling.</p>
+<p>Then make it stay fixed: budgets and alerts per team, cost per unit of work on a dashboard (per training run, per thousand predictions), and quotas. Report the result as unit cost, since total spend should grow with usage.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>When is spot capacity a bad idea for training?</li>
+<li>How do you compute the cost per thousand predictions for a GPU endpoint?</li>
+</ul>
+</details>
+<details class="qa" id="mlops-014">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Managed ML platform (SageMaker, Vertex AI, Azure ML) or your own stack on Kubernetes? How do you decide?
+</summary>
+<p>Decide by team size, workload shape and how far your needs are from the platform’s defaults.</p>
+<p><strong>Managed platform.</strong> Training jobs, endpoints, pipelines, a registry and monitoring without running the control plane. Strengths: fast start, security and compliance features built in, autoscaling endpoints, little operations staff needed. Costs: a price premium on compute, quotas and limited instance choice, opinions that are hard to bend (custom schedulers, unusual serving patterns, multi-node training topologies), and coupling of code to one provider’s SDK.</p>
+<p><strong>Own stack on Kubernetes</strong> with open components for scheduling, serving, workflows and tracking. Strengths: full control over scheduling and bin-packing of GPUs, any serving runtime, portability across clouds and on-premises, lower unit cost at scale. Costs: a platform team to build, upgrade and be on call for it; you own security patches, GPU drivers and cluster upgrades.</p>
+<p>Rules of thumb:</p>
+<ul>
+<li>A few engineers and standard workloads: managed, and spend the time on the product.</li>
+<li>Large or unusual GPU workloads, strict cost targets, multi-cloud or on-premises requirements, or dozens of teams needing shared quota and fair scheduling: own platform, when there are people to run it.</li>
+<li>Hybrids are common: managed Kubernetes and managed data services underneath, with your own job and serving layer on top; or model APIs for inference and your own stack for evaluation and data.</li>
+</ul>
+<p>Keep the exit cheap either way: containers as the unit of work, artefacts in open formats in your own bucket, and a thin internal interface in front of provider SDKs.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>At what scale did, or would, the calculation flip for your team?</li>
+<li>What is the hardest thing to migrate off a managed platform?</li>
+</ul>
+</details>
+</section>
+<section id="mlops" class="level3">
+<h3 class="anchored" data-anchor-id="mlops">MLOps and ML CI/CD <span class="demand">34% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="mlops.mlops.0"> List what must be versioned to reproduce a model and how lineage links them</li>
+<li><input type="checkbox" class="chk" data-chk="mlops.mlops.1"> Describe the stages of a model registry and the checks at each promotion</li>
+<li><input type="checkbox" class="chk" data-chk="mlops.mlops.2"> Design monitoring that works before labels arrive, with alert thresholds that do not page on noise</li>
+<li><input type="checkbox" class="chk" data-chk="mlops.mlops.3"> Compute a population stability index and explain its limits</li>
+<li><input type="checkbox" class="chk" data-chk="mlops.mlops.4"> Design an automated retraining pipeline with gates and a safe promotion step</li>
+</ul>
+<details class="qa" id="mlops-006">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> What does a model registry do, and what exactly do you version so that a model can be reproduced and rolled back?
+</summary>
+<p>A registry is the source of truth for which model artefacts exist, where each came from and which one is serving. For every version it stores the artefact and its metadata, and it controls promotion between stages (for example candidate, staging, production, archived) with a record of who or what approved each move.</p>
+<p>To reproduce a model you need all of:</p>
+<ul>
+<li><strong>Code</strong>: the commit of the training code and of the shared preprocessing library.</li>
+<li><strong>Data</strong>: an immutable snapshot or a query pinned to a table version, including the label definition and the split.</li>
+<li><strong>Configuration</strong>: hyperparameters, feature list, random seeds.</li>
+<li><strong>Environment</strong>: container image digest, library versions, hardware type where it affects numerics.</li>
+<li><strong>Outputs</strong>: metrics on the fixed evaluation sets, the evaluation set versions and the training logs.</li>
+</ul>
+<p>Lineage links these: from a serving model you can reach the run, the data and the code, and from a dataset you can list every model trained on it, which is what you need for an incident or a deletion request.</p>
+<p>What is deployed is more than weights: the preprocessing and postprocessing, the input and output schema, thresholds and calibration, and for LLM systems the prompt, the tool definitions and the pinned model identifier. Version them as one unit, because rolling back the weights without the matching feature transformation is a common way to turn a rollback into a second incident.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Two runs from the same commit and data give different metrics. What are the causes?</li>
+<li>How would you support “delete every model trained on this user’s data”?</li>
+</ul>
+</details>
+<details class="qa" id="mlops-007">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">debugging</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> You are asked to reproduce a model trained six months ago, and the retrained model scores noticeably worse. Where do you look?
+</summary>
+<p>Assume nothing was pinned until shown otherwise, and compare the two runs layer by layer.</p>
+<ol type="1">
+<li><strong>Data.</strong> Most often the cause. Was the training set a snapshot or a query against a live table? Rows get backfilled, corrected, deleted for privacy or deduplicated differently. Compare row counts, label rates and feature distributions with whatever statistics the old run logged. Check that the split is the same: a random split with an unpinned seed or a changed user-to-split hash changes the test set itself.</li>
+<li><strong>Labels and features.</strong> Did a label definition or a feature’s computation change upstream, so the same column name now means something else?</li>
+<li><strong>Evaluation.</strong> Is the metric computed by the same code on the same evaluation set? A changed tokenizer, threshold or metric library version moves numbers without any model change.</li>
+<li><strong>Environment.</strong> Library versions change defaults (initialisation, optimiser epsilon, data-loader ordering, mixed-precision behaviour). Use the old container image if it exists.</li>
+<li><strong>Configuration.</strong> Hyperparameters that lived in a notebook or an environment variable and never reached the tracked config; the number of training steps; early stopping on a different validation set.</li>
+<li><strong>Nondeterminism.</strong> Seeds, data order with multiple workers, nondeterministic GPU operations and distributed reduction order give run-to-run variance. Measure it with a few seeds: a gap inside that variance is not a reproduction failure.</li>
+</ol>
+<p>Then fix the process: immutable dataset versions, image digests in the run record, and a periodic “retrain from the registry record” job that proves reproduction still works.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How large a metric difference between seeds would you accept as noise?</li>
+<li>Bitwise reproducibility or statistical reproducibility, and why?</li>
+</ul>
+</details>
+<details class="qa" id="mlops-008">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Design the monitoring for a model whose labels arrive weeks after the prediction. What do you alert on?
+</summary>
+<p>Monitor four layers, from the fastest and least specific signal to the slowest and most meaningful.</p>
+<ol type="1">
+<li><strong>Service.</strong> Latency percentiles, error and timeout rates, saturation, and the share of requests answered by a fallback or default. Alert as for any service.</li>
+<li><strong>Inputs.</strong> Per-feature null rate, range, cardinality and distribution against a training reference; freshness of every upstream table and feature; schema. These catch most real incidents (a broken pipeline) within minutes.</li>
+<li><strong>Predictions.</strong> Score distribution, the rate of each predicted class, the share above the decision threshold, and agreement with the previous model version on shadow traffic. A shift here with stable inputs suggests a serving or version problem.</li>
+<li><strong>Outcomes.</strong> Once labels mature: the metric itself, calibration and performance by slice. Until then use proxies that arrive sooner, such as user corrections, early partial labels, or a small human-labelled sample each day.</li>
+</ol>
+<p>Alert design:</p>
+<ul>
+<li>Page only on signals that are actionable and specific: staleness, null-rate jumps, fallback rate, prediction-rate change beyond a band learned from history. Send drift statistics on individual features to a dashboard, since with hundreds of features some always look significant.</li>
+<li>Compare with the same hour last week to absorb seasonality.</li>
+<li>Monitor by slice; aggregate metrics hide a broken segment.</li>
+<li>Log inputs, model version and prediction for every request with a join key, so that outcomes can be attached later and any incident can be replayed.</li>
+</ul>
+<p>The delayed labels also mean the newest training data is incomplete, which the retraining pipeline must handle.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Which of these would have caught your last incident?</li>
+<li>How do you choose thresholds without paging on every holiday?</li>
+</ul>
+</details>
+<details class="qa" id="mlops-009">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Implement the population stability index for one numeric feature in NumPy. How do you read it, and what are its limits?
+</summary>
+<p>PSI compares the binned distribution of a feature in production (actual, <span class="math inline">\(a_i\)</span>) with a reference such as the training set (expected, <span class="math inline">\(e_i\)</span>):</p>
+<p><span class="math display">\[\mathrm{PSI} = \sum_i (a_i - e_i) \ln \frac{a_i}{e_i}.\]</span></p>
+<p>It is a symmetrised KL divergence over bins, so it is non-negative and zero only when the binned distributions match.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> psi(expected, actual, bins<span class="op">=</span><span class="dv">10</span>, eps<span class="op">=</span><span class="fl">1e-6</span>):</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""PSI of `actual` against the reference sample `expected`."""</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    edges <span class="op">=</span> np.quantile(expected, np.linspace(<span class="dv">0</span>, <span class="dv">1</span>, bins <span class="op">+</span> <span class="dv">1</span>))</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    edges[<span class="dv">0</span>], edges[<span class="op">-</span><span class="dv">1</span>] <span class="op">=</span> <span class="op">-</span>np.inf, np.inf      <span class="co"># catch out-of-range values</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    edges <span class="op">=</span> np.unique(edges)                   <span class="co"># ties collapse bins</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    e <span class="op">=</span> np.histogram(expected, edges)[<span class="dv">0</span>] <span class="op">/</span> <span class="bu">len</span>(expected)</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    a <span class="op">=</span> np.histogram(actual, edges)[<span class="dv">0</span>] <span class="op">/</span> <span class="bu">len</span>(actual)</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    e, a <span class="op">=</span> np.clip(e, eps, <span class="va">None</span>), np.clip(a, eps, <span class="va">None</span>)</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">float</span>(np.<span class="bu">sum</span>((a <span class="op">-</span> e) <span class="op">*</span> np.log(a <span class="op">/</span> e)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Reading it: the usual rule of thumb is below 0.1 stable, 0.1 to 0.25 worth a look, above 0.25 a significant shift. These thresholds are convention, not theory.</p>
+<p>Limits to state:</p>
+<ul>
+<li>Bins come from the reference only; quantile bins give equal expected mass, which keeps the estimate stable.</li>
+<li>It depends on the number of bins and on sample size. Small samples inflate it, so compare windows of similar size or calibrate the threshold by bootstrapping the reference against itself.</li>
+<li>Nulls need their own bin; dropping them hides the most common failure.</li>
+<li>It is univariate. It misses changes in the relationship between features and says nothing about whether the shift hurts the model. Weight alerts by feature importance and confirm with prediction and outcome metrics.</li>
+</ul>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How would you compute it for a categorical feature with new categories?</li>
+<li>Why might you prefer a Kolmogorov-Smirnov statistic, and when does that mislead?</li>
+</ul>
+</details>
+<details class="qa" id="mlops-010">
+<summary>
+<span class="tag tag-staff">staff</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> Design an automated retraining pipeline that promotes models to production without a human in the loop. What makes that safe?
+</summary>
+<p>Automation is safe only if every judgement a careful engineer would make at release time is encoded as a gate, and a failure of any gate leaves the current model serving.</p>
+<p><strong>Pipeline.</strong></p>
+<ol type="1">
+<li><em>Data build</em>: materialise an immutable training snapshot. Gate on data validation: schema, volume against expectation, null rates, label rate, freshness.</li>
+<li><em>Train</em>: pinned code, configuration and image. Gate on training health: loss within a band of previous runs, no NaN, expected duration.</li>
+<li><em>Evaluate</em>: the candidate and the current production model on the same fresh held-out window and on fixed regression sets and slices. Gate on no regression beyond noise overall and on protected slices, calibration within tolerance, and bounded prediction churn against production.</li>
+<li><em>Package and verify</em>: load the artefact in the serving image, replay recorded requests, compare outputs with the training-side predictions (skew test), check latency and memory.</li>
+<li><em>Release</em>: canary with automatic rollback on service and prediction guardrails, then full rollout. Register lineage and the gate results.</li>
+</ol>
+<p><strong>What makes it safe.</strong></p>
+<ul>
+<li>The gates compare with the live model, not with fixed thresholds that go stale.</li>
+<li>A bounded rate of change: at most one promotion per period and a freeze switch.</li>
+<li>Rollback is one action and restores model and preprocessing together.</li>
+<li>The pipeline alerts when it has <em>not</em> produced a model for longer than expected, since silent failure means an ageing model.</li>
+<li>Periodic human review of gate statistics, and a holdout of traffic on an older model to detect slow degradation that step-to-step comparisons cannot see.</li>
+</ul>
+<p>State where you would keep a human: changes to features, labels, architecture or the gates themselves.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Each retrain is slightly worse than the last but passes the gate. How do you catch that?</li>
+<li>What is your prediction-churn metric and why does it matter to consumers?</li>
+</ul>
+</details>
+</section>
+<section id="containers" class="level3">
+<h3 class="anchored" data-anchor-id="containers">Containers and infrastructure as code <span class="demand">29% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="mlops.containers.0"> Write an image for a GPU service that is small, reproducible and runs as non-root</li>
+<li><input type="checkbox" class="chk" data-chk="mlops.containers.1"> Explain how the host driver, the container runtime and the CUDA libraries in the image must match</li>
+<li><input type="checkbox" class="chk" data-chk="mlops.containers.2"> Describe the Kubernetes objects an ML service or training job uses and what requests, limits and probes do</li>
+<li><input type="checkbox" class="chk" data-chk="mlops.containers.3"> Explain what infrastructure as code gives you, including state, plan and drift</li>
+<li><input type="checkbox" class="chk" data-chk="mlops.containers.4"> Diagnose a container that works locally and fails in the cluster</li>
+</ul>
+<details class="qa" id="mlops-015">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Write a Dockerfile for a GPU inference service in Python. What makes an ML image small, reproducible and safe, and how do CUDA versions fit in?
+</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode dockerfile code-with-copy"><code class="sourceCode dockerfile"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># The tag is an example; pin the base by digest in practice.</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="kw">ARG</span> BASE=nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="kw">FROM</span> ${BASE} <span class="kw">AS</span> build</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="kw">RUN</span> <span class="ex">apt-get</span> update <span class="kw">&amp;&amp;</span> <span class="ex">apt-get</span> install <span class="at">-y</span> <span class="at">--no-install-recommends</span> python3 python3-venv <span class="dt">\</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">&amp;&amp;</span> <span class="fu">rm</span> <span class="at">-rf</span> /var/lib/apt/lists/<span class="pp">*</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="kw">RUN</span> <span class="ex">python3</span> <span class="at">-m</span> venv /opt/venv</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="kw">ENV</span> PATH=/opt/venv/bin:$PATH</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="kw">COPY</span> requirements.lock .</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="kw">RUN</span> <span class="ex">pip</span> install <span class="at">--no-cache-dir</span> <span class="at">-r</span> requirements.lock</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="kw">FROM</span> ${BASE}</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="kw">RUN</span> <span class="ex">apt-get</span> update <span class="kw">&amp;&amp;</span> <span class="ex">apt-get</span> install <span class="at">-y</span> <span class="at">--no-install-recommends</span> python3 <span class="dt">\</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    <span class="kw">&amp;&amp;</span> <span class="fu">rm</span> <span class="at">-rf</span> /var/lib/apt/lists/<span class="pp">*</span> <span class="kw">&amp;&amp;</span> <span class="ex">useradd</span> <span class="at">--create-home</span> app</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="kw">COPY</span> <span class="op">--from=build</span> /opt/venv /opt/venv</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="kw">ENV</span> PATH=/opt/venv/bin:$PATH PYTHONUNBUFFERED=1</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="kw">WORKDIR</span> /app</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="kw">COPY</span> src/ ./src/</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a><span class="kw">USER</span> app</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a><span class="kw">EXPOSE</span> 8000</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a><span class="kw">CMD</span> [<span class="st">"python"</span>, <span class="st">"-m"</span>, <span class="st">"src.server"</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>What to explain:</p>
+<ul>
+<li><strong>Layer order.</strong> Dependencies before source code, so a code change rebuilds only the last layer.</li>
+<li><strong>Size.</strong> A <code>runtime</code> base, not <code>devel</code>; no build tools or pip cache in the final stage. Framework wheels with bundled CUDA libraries are several gigabytes, and image size is pull time, which is cold-start time.</li>
+<li><strong>Reproducibility.</strong> A lock file with hashes, a pinned base digest, no <code>latest</code>.</li>
+<li><strong>Safety.</strong> Non-root user, no secrets in layers or build arguments, a <code>.dockerignore</code>.</li>
+<li><strong>Weights.</strong> Usually not baked in: pull them at start from the registry, or mount a volume, so that image and model version independently. Bake them in only when cold-start time dominates.</li>
+<li><strong>CUDA.</strong> The kernel driver lives on the host and is exposed by the NVIDIA container runtime; the image carries the user-space CUDA libraries. The host driver must be at least as new as the image’s CUDA version requires. PyTorch wheels ship their own CUDA libraries, so the image’s system CUDA matters mainly for other runtimes.</li>
+</ul>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>The image is 12 GB and pods take four minutes to start. What do you change?</li>
+<li>How do you pass a private package index credential at build time without leaking it?</li>
+</ul>
+</details>
+<details class="qa" id="mlops-016">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Which Kubernetes objects does an ML inference service use, and what do resource requests, limits and probes do for a GPU workload?
+</summary>
+<p>The objects:</p>
+<ul>
+<li><strong>Pod</strong>: one or more containers scheduled together on a node; the unit that gets a GPU.</li>
+<li><strong>Deployment</strong>: keeps N replicas of a pod template running and performs rolling updates. A <strong>Job</strong> runs a pod to completion (training, batch inference); a <strong>StatefulSet</strong> gives stable identities and volumes.</li>
+<li><strong>Service</strong>: a stable virtual address that load-balances across ready pods. <strong>Ingress</strong> or a gateway exposes it outside the cluster.</li>
+<li><strong>ConfigMap</strong> and <strong>Secret</strong>: configuration and credentials injected at run time.</li>
+<li><strong>HorizontalPodAutoscaler</strong>: changes the replica count from a metric.</li>
+<li><strong>Node pools</strong> with labels and taints: GPU nodes are tainted so that only pods that tolerate the taint and request a GPU land on them.</li>
+</ul>
+<p><strong>Requests and limits.</strong> The scheduler places a pod by its requests. CPU above the limit is throttled; memory above the limit gets the container killed (OOMKilled). GPUs are an extended resource such as <code>nvidia.com/gpu: 1</code>, exposed by a device plugin. They are integers and by default not shared: one pod gets the whole device unless time-slicing or partitioning is configured. Set CPU and memory for the data-loading and tokenisation work too, since a throttled CPU starves the GPU.</p>
+<p><strong>Probes.</strong></p>
+<ul>
+<li><em>Startup</em>: gives slow model loading time before other probes begin.</li>
+<li><em>Readiness</em>: the pod receives traffic only when the model is loaded and warmed up. Without it, a rolling update sends requests to pods that are still loading weights.</li>
+<li><em>Liveness</em>: restarts a hung process. Keep it cheap and separate from readiness, or a busy GPU causes restarts under load.</li>
+</ul>
+<p>Also set a termination grace period and drain in-flight requests on SIGTERM.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>What happens during a rolling update if readiness is missing and the model takes 90 seconds to load?</li>
+<li>How would you let two small models share one GPU?</li>
+</ul>
+</details>
+<details class="qa" id="mlops-017">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> What does infrastructure as code give an ML team, and what are the failure modes of a tool like Terraform?
+</summary>
+<p>Infrastructure as code declares the desired resources (networks, clusters, node pools, buckets, roles, endpoints) in version-controlled files, and a tool makes reality match.</p>
+<p>What it gives:</p>
+<ul>
+<li><strong>Reproducibility.</strong> A new environment or region is a parameter change, and staging can really mirror production.</li>
+<li><strong>Review and history.</strong> Changes to permissions or cluster shape go through pull requests; you can see who changed what and revert it.</li>
+<li><strong>Disaster recovery and audit.</strong> The definition of the infrastructure exists outside the cloud console.</li>
+</ul>
+<p>How Terraform works, in one breath: providers map resource types to cloud APIs; a <strong>state</strong> file records what the tool believes exists; <code>plan</code> diffs configuration against state and reality; <code>apply</code> executes the diff; modules package reusable pieces.</p>
+<p>Failure modes to know:</p>
+<ul>
+<li><strong>State.</strong> It must live in a shared, locked, encrypted backend. Two concurrent applies or a lost state file are serious. State can contain secrets.</li>
+<li><strong>Drift.</strong> Manual console changes diverge from the code; the next apply reverts them or fails. Detect drift with scheduled plans and remove console write access.</li>
+<li><strong>Destructive plans.</strong> Renaming a resource or changing an immutable field becomes destroy-and-recreate, which for a database or bucket is data loss. Read the plan; protect stateful resources against deletion.</li>
+<li><strong>Blast radius.</strong> One giant configuration means every change risks everything. Split by environment and by layer (network, cluster, applications).</li>
+<li><strong>Boundary with the cluster.</strong> Terraform suits long-lived infrastructure; workloads inside Kubernetes are better managed by manifests or a GitOps controller.</li>
+</ul>
+<p>For ML specifically: put GPU node pools, quotas and service accounts in code, since these are what an incident or a new region needs first.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Someone resized a node pool in the console during an incident. What happens next?</li>
+<li>How do you keep secrets out of state and out of the repository?</li>
+</ul>
+</details>
+<details class="qa" id="mlops-018">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">debugging</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> A training container runs fine on your workstation but in the cluster it is killed, hangs or runs several times slower. What are the usual causes?
+</summary>
+<p>Work through what differs between the two environments: resources, devices, storage and network.</p>
+<p><strong>Killed.</strong></p>
+<ul>
+<li><em>OOMKilled</em>: the memory limit is lower than the workstation’s RAM. Data-loader workers multiply memory, and page cache for memory-mapped data counts toward the limit on some configurations. Check the pod’s last state and raise the limit or reduce workers.</li>
+<li><em>Shared memory</em>: PyTorch workers pass tensors through <code>/dev/shm</code>, which defaults to 64 MB in containers. The symptom is a bus error or a hang. Mount a memory-backed volume at <code>/dev/shm</code>.</li>
+<li><em>Preemption or eviction</em>: spot nodes reclaimed, or ephemeral storage exhausted by checkpoints written to the container filesystem.</li>
+</ul>
+<p><strong>Fails at start.</strong></p>
+<ul>
+<li><em>CUDA mismatch</em>: host driver older than the image’s CUDA libraries need, or no GPU requested so none is visible.</li>
+<li><em>Permissions</em>: running as non-root with a read-only filesystem, or a service account without access to the bucket.</li>
+</ul>
+<p><strong>Slow.</strong></p>
+<ul>
+<li><em>CPU throttling</em>: a CPU limit of 2 with 16 data-loader workers. Libraries read the node’s core count, not the container’s limit, and oversubscribe threads. Set the worker and thread counts from the limit.</li>
+<li><em>Storage</em>: reading many small files from network or object storage instead of local NVMe. Look at I/O wait; use sharded archives and a local cache.</li>
+<li><em>Different hardware</em>: another GPU model, or a neighbour sharing the device or the node’s memory bandwidth.</li>
+<li><em>Network</em>: downloading the dataset or the model at every start.</li>
+</ul>
+<p>Method: compare GPU utilisation, CPU throttling counters, I/O wait and memory between the environments before changing the code.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How do you see whether a container is being CPU-throttled?</li>
+<li>Why does the process see 96 cores when its limit is 4, and what breaks because of it?</li>
+</ul>
+</details>
+</section>
+<section id="devex" class="level3">
+<h3 class="anchored" data-anchor-id="devex">Developer tooling and platform ergonomics <span class="demand">26% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="mlops.devex.0"> Design a golden path from a new repository to a deployed model and say what is optional and what is enforced</li>
+<li><input type="checkbox" class="chk" data-chk="mlops.devex.1"> Measure a platform by lead time, adoption and time to recover</li>
+<li><input type="checkbox" class="chk" data-chk="mlops.devex.2"> Migrate teams to a platform without mandating it on day one</li>
+</ul>
+<details class="qa" id="mlops-029">
+<summary>
+<span class="tag tag-staff">staff</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Design the golden path of an internal ML platform, from a new idea to a model in production. What do you standardise and what do you leave open?
+</summary>
+<p>A golden path is the supported, pre-wired way to do the common thing. The aim is that the easiest route is also the correct one, while unusual work remains possible.</p>
+<p><strong>The path.</strong></p>
+<ol type="1">
+<li><em>Start</em>: a project template creates a repository with the training entry point, configuration, tests, a container build, CI and a pipeline definition. First run in under an hour.</li>
+<li><em>Develop</em>: the same container locally and remotely; one command submits a job to the shared cluster; data access through a client that records which dataset version was read.</li>
+<li><em>Track</em>: runs are logged automatically with code version, data version, configuration and metrics. No extra code.</li>
+<li><em>Evaluate</em>: a standard report against the current production model and required slices.</li>
+<li><em>Register and deploy</em>: one command or a merge promotes a registered model to a serving template with autoscaling, logging, monitoring and a canary already wired.</li>
+<li><em>Operate</em>: dashboards and alerts exist by default; ownership and on-call are assigned at registration.</li>
+</ol>
+<p><strong>Standardise</strong> the interfaces and the things that are expensive to get wrong: artefact and metadata formats, lineage, the deployment and rollback mechanism, security defaults, monitoring, cost attribution.</p>
+<p><strong>Leave open</strong> the modelling: frameworks, architectures, training loops. Provide escape hatches at each layer (bring your own container, your own serving code behind the standard contract), so that the 10% of unusual projects do not have to leave the platform entirely.</p>
+<p><strong>Product discipline.</strong> Treat teams as customers: interview them, build for the most common painful workflow first, write documentation as part of the feature, keep backwards compatibility, and publish what is and is not supported. A platform that is mandated but worse than the home-grown scripts will be routed around.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Which part would you build first and why?</li>
+<li>A research team says the platform slows them down. How do you respond?</li>
+</ul>
+</details>
+<details class="qa" id="mlops-030">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> How do you measure whether internal ML tooling or a platform is working?
+</summary>
+<p>Measure outcomes for the teams that use it, not the platform’s own output.</p>
+<p><strong>Flow metrics</strong>, adapted from the DORA set to ML:</p>
+<ul>
+<li><em>Lead time</em>: from a merged change, or a new training run, to a model serving production traffic. Also time from project start to first deployed model.</li>
+<li><em>Deployment frequency</em>: model and pipeline releases per team per month.</li>
+<li><em>Change failure rate</em>: share of model releases that are rolled back or cause an incident.</li>
+<li><em>Time to restore</em>: how long a bad model or broken pipeline takes to detect and roll back.</li>
+</ul>
+<p><strong>Adoption.</strong> Share of production models on the platform; active users; and voluntary adoption, which is the honest signal. Track the escape rate: projects that started on the golden path and left it, with the reason.</p>
+<p><strong>Friction.</strong> Time to first successful run for a new engineer; queue wait time for compute; CI and build duration; number of manual steps and handoffs in a release; support tickets per user and their categories.</p>
+<p><strong>Efficiency.</strong> Cluster utilisation, cost per training run or per thousand predictions, and idle resources.</p>
+<p><strong>Qualitative.</strong> A short regular survey and interviews. Ask what people did the last time they shipped a model and where they waited.</p>
+<p>Cautions: counts such as the number of pipelines or experiments are activity, not value, and are easily inflated. Speed metrics must be read together with failure metrics, or teams ship faster by skipping gates. And attribute carefully: compare the same team before and after, or teams on and off the platform, while acknowledging that early adopters differ.</p>
+<p>The summary for leadership is one sentence per quarter: how long it takes a team to go from idea to a monitored production model, and how that changed.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Which single metric would you report if you could pick only one?</li>
+<li>How would the metrics differ for a platform serving LLM application teams?</li>
+</ul>
+</details>
+<details class="qa" id="mlops-031">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">behavioural</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Tell me about a time you had to get other teams to adopt a tool, platform or standard you built. What did you do when they resisted?
+</summary>
+<p><strong>What the interviewer is testing.</strong> Whether you can create leverage beyond your own code: understanding other teams’ incentives, earning adoption instead of demanding it, and staying with the work through migration, which is the unglamorous part.</p>
+<p><strong>Structure of a strong answer.</strong></p>
+<ol type="1">
+<li><em>The problem in their terms</em>: what the teams were losing without the standard (incidents, weeks per launch, duplicated work), with a number.</li>
+<li><em>Discovery</em>: whom you talked to and what you learned about why the existing way persisted. Resistance usually has a real reason: migration cost, a missing feature, a deadline, or loss of control.</li>
+<li><em>Design for adoption</em>: a first version aimed at one team’s concrete pain, a migration path that is incremental, compatibility with what they already run, documentation and a working example.</li>
+<li><em>The first adopters</em>: how you picked a team that would benefit and be vocal, did part of the migration work for them and published their result.</li>
+<li><em>Handling resistance</em>: what you changed in response to valid objections, what you declined, and when you escalated or accepted that a team would not migrate.</li>
+<li><em>Outcome</em>: adoption, the metric that moved, and what you would do differently.</li>
+</ol>
+<p><strong>Mistakes that sink the answer.</strong></p>
+<ul>
+<li>Presenting a mandate from leadership as the adoption strategy.</li>
+<li>Describing the teams as wrong or slow, with no account of their reasons.</li>
+<li>No measured outcome, or an outcome measured in features shipped.</li>
+<li>Stopping the story at launch, with the old system still running in parallel.</li>
+</ul>
+<p>Use a real example and be specific about one objection you had not anticipated.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>What did you do for the team that had a legitimate reason not to migrate?</li>
+<li>How did you decide when to deprecate the old way?</li>
+</ul>
+</details>
+</section>
+<section id="security-privacy" class="level3">
+<h3 class="anchored" data-anchor-id="security-privacy">Security, privacy and compliance in ML systems <span class="demand">21% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="mlops.security-privacy.0"> Give a threat model for an ML system covering data, model artefacts, the serving path and the supply chain</li>
+<li><input type="checkbox" class="chk" data-chk="mlops.security-privacy.1"> Handle personal data across training sets, logs and derived artefacts, including deletion requests</li>
+<li><input type="checkbox" class="chk" data-chk="mlops.security-privacy.2"> Explain differential privacy and federated learning at the level of what each guarantees and costs</li>
+<li><input type="checkbox" class="chk" data-chk="mlops.security-privacy.3"> Design tenant isolation and audit logging for an ML product sold to enterprises</li>
+</ul>
+<details class="qa" id="mlops-022">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Give me a threat model for an ML system. What can an attacker do that they could not do to an ordinary web service?
+</summary>
+<p>Everything that applies to a web service applies here (authentication, injection, secrets, dependencies). The ML-specific surface is the data, the model artefact and the model’s behaviour.</p>
+<p><strong>Training time.</strong></p>
+<ul>
+<li><em>Data poisoning</em>: an attacker who can influence training data, such as user-submitted content, scraped pages or a feedback signal, inserts examples that degrade the model or plant a backdoor triggered by a specific pattern.</li>
+<li><em>Supply chain</em>: pretrained weights, datasets and packages from public hubs. Pickle-based model files execute arbitrary code when loaded. Prefer weight-only formats such as safetensors, verify hashes, scan and pin dependencies, and load untrusted artefacts in a sandbox.</li>
+</ul>
+<p><strong>Inference time.</strong></p>
+<ul>
+<li><em>Evasion</em>: inputs crafted to be misclassified, which matters most for fraud, abuse and malware detection where the adversary adapts.</li>
+<li><em>Extraction</em>: repeated queries to copy the model’s behaviour or recover its decision boundary. Rate limits and monitoring raise the cost.</li>
+<li><em>Privacy attacks</em>: membership inference (was this record in the training set?) and training-data extraction, to which models that memorise are vulnerable.</li>
+<li><em>Prompt injection and unsafe tool use</em> for LLM systems.</li>
+<li><em>Resource abuse</em>: expensive inputs as denial of service, or stolen API keys used for free inference.</li>
+</ul>
+<p><strong>Infrastructure.</strong> Over-broad access to training data, credentials in notebooks, unauthenticated internal endpoints, and prompt or request logs that contain sensitive data.</p>
+<p>Mitigation follows from asking, for each asset (data, weights, predictions), who can read or influence it and what the worst outcome is. Then apply least privilege, provenance and validation for data and artefacts, rate limiting and abuse monitoring at the endpoint, and a response plan that includes retraining from clean data.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How would you detect that a feedback signal is being manipulated?</li>
+<li>Why is loading a pickle file from a model hub dangerous, concretely?</li>
+</ul>
+</details>
+<details class="qa" id="mlops-023">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Your training data and request logs contain personal data. How do you handle it, and what happens when a user asks for their data to be deleted?
+</summary>
+<p><strong>Minimise first.</strong> Collect and keep only the fields the model needs. Drop or coarsen the rest at ingestion (precise location to region, birth date to age band). Data that was never stored needs no protection.</p>
+<p><strong>Separate identity from content.</strong> Replace direct identifiers with pseudonymous keys and keep the mapping in a separate, tightly controlled store. Pseudonymised data is still personal data, since it can often be re-identified by joining, but the separation limits who can do so.</p>
+<p><strong>Scrub free text.</strong> Logs, prompts and transcripts contain names, emails and account numbers. Run detection and redaction before the text reaches analytics or training stores, and measure the detector’s recall on a labelled sample, because it is not perfect.</p>
+<p><strong>Control and record access.</strong> Role-based access to raw data, de-identified views for most work, access logs, and encryption. Set retention periods per dataset and enforce them with lifecycle rules, not by convention.</p>
+<p><strong>Deletion requests.</strong> Deleting the source row is the easy part. You need lineage to find the derived copies: feature tables, training snapshots, caches, embeddings in a vector index, evaluation sets, backups. Practical design: key everything by the pseudonymous id, run a periodic deletion job across all registered stores, and rebuild derived datasets from sources on a schedule so that deletions propagate.</p>
+<p><strong>Models.</strong> A trained model may have memorised the record. The dependable remedy is retraining without it at the next scheduled cycle; machine unlearning methods exist but are not yet something to rely on for guarantees. How regulators treat already-trained models is not settled everywhere, so this is a decision to take with legal counsel, and the engineering job is to make retraining and lineage cheap.</p>
+<p>Purpose limitation also applies: data collected to provide a service is not automatically usable for training. Record the permitted purposes with the dataset.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How do you find every place a user’s data has been copied to?</li>
+<li>What would you log from an LLM product’s requests, and for how long?</li>
+</ul>
+</details>
+<details class="qa" id="mlops-024">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> Explain differential privacy and federated learning. What does each guarantee, and what does it cost?
+</summary>
+<p><strong>Differential privacy</strong> is a property of an algorithm. A randomised mechanism <span class="math inline">\(M\)</span> is <span class="math inline">\((\varepsilon, \delta)\)</span>-differentially private if for any two datasets <span class="math inline">\(D, D'\)</span> differing in one record and any set of outputs <span class="math inline">\(S\)</span>:</p>
+<p><span class="math display">\[\Pr[M(D) \in S] \le e^{\varepsilon} \Pr[M(D') \in S] + \delta.\]</span></p>
+<p>The output barely depends on any one individual, whatever the attacker already knows. Smaller <span class="math inline">\(\varepsilon\)</span> is stronger. Guarantees compose: every release from the same data spends budget.</p>
+<p>For model training the standard method is <strong>DP-SGD</strong>: compute per-example gradients, clip each to norm <span class="math inline">\(C\)</span>, sum, add Gaussian noise with standard deviation <span class="math inline">\(\sigma C\)</span>, and step. A privacy accountant converts the noise level, sampling rate and number of steps into <span class="math inline">\((\varepsilon, \delta)\)</span>. Costs: lower accuracy, most painful for small datasets and rare subgroups; per-example gradients are slower and use more memory; large batches are needed; and the reported <span class="math inline">\(\varepsilon\)</span> is only meaningful if the unit of privacy (record or user) is chosen correctly.</p>
+<p><strong>Federated learning</strong> is a system architecture. Data stays on devices or in silos; each client computes an update on local data, and a server aggregates the updates (FedAvg averages client weights after several local steps). It reduces central collection of raw data. It is not a privacy guarantee by itself: updates can leak training examples. It is combined with <strong>secure aggregation</strong>, so the server sees only the sum, and with differential privacy on the aggregate.</p>
+<p>Costs of federation: clients have different data distributions, which slows or biases convergence; devices are unreliable and heterogeneous; debugging without seeing the data is hard; and communication is the bottleneck.</p>
+<p>One sentence to remember: differential privacy limits what the <em>output</em> reveals; federated learning limits where the <em>input</em> travels.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Why is clipping per example, and not per batch, necessary for the guarantee?</li>
+<li>What does an epsilon of 8 mean in practice, and how would you explain it to a product manager?</li>
+</ul>
+</details>
+<details class="qa" id="mlops-025">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">AI</span> <span class="tag tag-track">MLE</span> You sell an LLM-based product to enterprises. Design tenant isolation and the controls a security review will ask for.
+</summary>
+<p>A security questionnaire asks, in effect: can another customer see our data, can your staff, where does it go, and can you prove it.</p>
+<p><strong>Tenant isolation.</strong></p>
+<ul>
+<li>Every request carries a tenant identity established at authentication, and every data access is filtered by it in the data layer, not in the prompt. Row-level security or separate schemas, indexes or databases per tenant, chosen by the isolation a customer tier requires.</li>
+<li>Retrieval indexes are per tenant, or filtered by tenant and document permissions at query time, before the model sees anything.</li>
+<li>Caches, conversation memory and logs are keyed by tenant. A shared response cache without the tenant in the key is a classic leak.</li>
+<li>No training or fine-tuning of shared models on a tenant’s data unless the contract allows it; per-tenant adapters stay per tenant.</li>
+</ul>
+<p><strong>Data flow.</strong> Document which sub-processors receive data (model providers, vector stores, monitoring), with data-processing agreements and retention settings. Offer regional processing when data residency is required.</p>
+<p><strong>Access by your own staff.</strong> Production data is inaccessible by default; break-glass access is time-limited, approved and logged. Debugging uses redacted traces.</p>
+<p><strong>Standard controls.</strong> Single sign-on and role-based access for customer users, encryption at rest and in transit, customer-visible audit logs of who asked what and which documents were retrieved, configurable retention and deletion, secrets management, dependency and vulnerability scanning, and an incident response process. Certifications such as SOC 2 or ISO 27001 are evidence that these operate.</p>
+<p><strong>Model-specific.</strong> Treat retrieved documents and tool outputs as untrusted input, limit what tools can do on a user’s behalf to that user’s own permissions, and test for cross-tenant leakage as part of the evaluation suite.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How would you test that tenant A can never retrieve tenant B’s documents?</li>
+<li>A customer asks that their prompts never be stored. What breaks, and what do you offer?</li>
+</ul>
+</details>
+</section>
+<section id="databases" class="level3">
+<h3 class="anchored" data-anchor-id="databases">Databases, caches and queues <span class="demand">20% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="mlops.databases.0"> Match relational, key-value, document, columnar, vector and object stores to the parts of an ML system</li>
+<li><input type="checkbox" class="chk" data-chk="mlops.databases.1"> Design a cache for model outputs with a key that includes everything the output depends on</li>
+<li><input type="checkbox" class="chk" data-chk="mlops.databases.2"> Explain delivery semantics for queues and why consumers must be idempotent</li>
+</ul>
+<details class="qa" id="mlops-019">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Which kind of data store would you use for each part of an ML product: application state, online features, event logs, analytics, embeddings and model artefacts?
+</summary>
+<p>Choose by access pattern (point lookup, range scan, aggregate, similarity), latency, write rate and consistency needs.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Need</th>
+<th>Store</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Application state: users, sessions, conversations, permissions</td>
+<td>Relational (Postgres, MySQL)</td>
+<td>Transactions, constraints, joins, flexible queries. The default until proven insufficient</td>
+</tr>
+<tr class="even">
+<td>Online features and session state at millisecond latency</td>
+<td>Key-value (Redis, DynamoDB, Bigtable)</td>
+<td>Point reads by key at very high rates, TTLs, simple scaling</td>
+</tr>
+<tr class="odd">
+<td>Semi-structured records whose shape varies</td>
+<td>Document store, or a JSON column in a relational database</td>
+<td>Schema flexibility; weaker joins and constraints</td>
+</tr>
+<tr class="even">
+<td>Event streams: impressions, requests, tool calls</td>
+<td>Log or stream (Kafka, Kinesis), landed in object storage</td>
+<td>Append-only, ordered, replayable, decouples producers from consumers</td>
+</tr>
+<tr class="odd">
+<td>Analytics and training sets</td>
+<td>Columnar warehouse or lakehouse (BigQuery, Snowflake, Parquet tables)</td>
+<td>Scans and aggregates over billions of rows; poor at point updates</td>
+</tr>
+<tr class="even">
+<td>Embeddings</td>
+<td>A vector index: an extension of the relational store up to millions of vectors, a dedicated engine beyond that</td>
+<td>Approximate nearest-neighbour search with filters</td>
+</tr>
+<tr class="odd">
+<td>Model artefacts, datasets, checkpoints</td>
+<td>Object storage</td>
+<td>Cheap, durable, large blobs; metadata in a relational registry</td>
+</tr>
+<tr class="even">
+<td>Metrics</td>
+<td>Time-series database</td>
+<td>Compression and rollups over time</td>
+</tr>
+</tbody>
+</table>
+<p>Principles a senior answer adds:</p>
+<ul>
+<li>Start with one relational database plus object storage; add a specialised store when a measured access pattern demands it. Every extra store is another consistency boundary and another thing to operate.</li>
+<li>Keep one source of truth per fact and derive the rest (caches, indexes, feature tables) so that they can be rebuilt.</li>
+<li>Online and offline copies of the same data will diverge unless one pipeline writes both.</li>
+</ul>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>When does a vector extension in your relational database stop being enough?</li>
+<li>Where would you store conversation history for a chat product, and why?</li>
+</ul>
+</details>
+<details class="qa" id="mlops-020">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Design a cache for model predictions or LLM responses. What goes in the key, how do you invalidate, and when is caching the wrong answer?
+</summary>
+<p><strong>Key.</strong> Everything the output depends on, and nothing else: a hash of the normalised input, the model and preprocessing version, the prompt or feature-set version, decoding parameters, and any per-user or per-tenant context that changes the answer. Omitting the version serves old outputs after a deploy; omitting the tenant leaks one customer’s answer to another.</p>
+<p><strong>Value and policy.</strong> Store the output with its creation time and version. Set a TTL from how fast the underlying facts change. Bound the size with LRU or LFU eviction.</p>
+<p><strong>Invalidation.</strong></p>
+<ul>
+<li>Version in the key makes a model or prompt change an automatic miss, with no purge.</li>
+<li>Event-driven deletes when a source document or feature changes.</li>
+<li>TTL as the backstop.</li>
+</ul>
+<p><strong>Operational hazards.</strong></p>
+<ul>
+<li><em>Stampede</em>: a popular key expires and many requests recompute it at once. Use single-flight (one computation per key, others wait), stale-while-revalidate, and jittered TTLs.</li>
+<li><em>Cold start after deploy</em>: a version bump empties the cache exactly when the new version is under most scrutiny. Pre-warm the top keys.</li>
+<li><em>Negative caching</em>: cache failures briefly, or an outage is amplified by retries.</li>
+</ul>
+<p><strong>Variants.</strong> Exact-match caching works when inputs repeat (popular queries, item embeddings, classification of repeated content). Semantic caching returns a stored answer for a similar query by embedding distance; it raises the hit rate and can return a wrong answer for a query that differs in one important word, so it needs a strict threshold and an evaluation. Precomputation is a cache filled ahead of time by a batch job.</p>
+<p><strong>When not to cache.</strong> Personalised or fast-changing outputs, sampled generations where variety is intended, low repetition (measure the hit rate first), and sensitive outputs that should not be stored.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How would you estimate the hit rate before building it?</li>
+<li>What is the failure mode of a semantic cache and how would you measure it?</li>
+</ul>
+</details>
+<details class="qa" id="mlops-021">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> You run long inference jobs through a queue. Explain at-most-once, at-least-once and exactly-once delivery, and what your workers must do as a result.
+</summary>
+<p>A queue decouples producers from workers and absorbs bursts. Its delivery guarantee decides what the worker code must tolerate.</p>
+<ul>
+<li><strong>At-most-once.</strong> The message is acknowledged before processing. A crash loses the job. Acceptable only for work that can be dropped.</li>
+<li><strong>At-least-once.</strong> The message is acknowledged after processing; if the worker dies or the visibility timeout expires first, it is redelivered. Nothing is lost, but a job can run twice, including when the first run actually finished and only the acknowledgement was lost. This is what almost every system provides.</li>
+<li><strong>Exactly-once.</strong> Not achievable as pure delivery over an unreliable network. What systems offer is exactly-once <em>effect</em>: at-least-once delivery plus idempotent or transactional processing.</li>
+</ul>
+<p>So workers must be <strong>idempotent</strong>:</p>
+<ul>
+<li>Give every job an idempotency key. Before doing work, or atomically with writing the result, check whether that key is already complete.</li>
+<li>Write results with an upsert keyed by the job id, never an append.</li>
+<li>For side effects outside your store (sending a message, charging a customer), pass the idempotency key downstream or record intent and completion transactionally.</li>
+</ul>
+<p>Other things to design:</p>
+<ul>
+<li><em>Visibility timeout</em> longer than the worst-case processing time, or a heartbeat that extends it. A GPU job that outlives its timeout is run twice concurrently.</li>
+<li><em>Retries with backoff</em> and a <strong>dead-letter queue</strong> after N attempts, so that a poison message does not block the queue forever.</li>
+<li><em>Ordering</em> only where needed, per key, since global ordering costs throughput.</li>
+<li><em>Backlog age</em> as the main metric for autoscaling and alerting.</li>
+</ul>
+<p>A log such as Kafka differs from a task queue: consumers track an offset in an ordered, replayable partition, which suits event pipelines; per-message acknowledgement and retries suit job processing.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Where exactly does the duplicate come from when a worker finishes just as its timeout expires?</li>
+<li>How do you make “send the user an email with the result” idempotent?</li>
+</ul>
+</details>
+</section>
+<section id="data-quality" class="level3">
+<h3 class="anchored" data-anchor-id="data-quality">Data validation and pipeline quality <span class="demand">9% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="mlops.data-quality.0"> Define a data contract and place validation at ingestion, before training and at serving</li>
+<li><input type="checkbox" class="chk" data-chk="mlops.data-quality.1"> Write checks for schema, nulls, ranges, categories, volume and freshness</li>
+<li><input type="checkbox" class="chk" data-chk="mlops.data-quality.2"> Trace a silent upstream change to the model’s inputs and plan the backfill</li>
+</ul>
+<details class="qa" id="mlops-026">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> What is a data contract, and where do you put data validation in an ML pipeline?
+</summary>
+<p>A data contract is an explicit agreement between the producer of a dataset and its consumers: the schema (names, types, nullability), the semantics and units of each field, allowed values and ranges, freshness and completeness expectations, the owner, and how changes are announced and versioned. Its purpose is to turn a silent upstream change into a failed check on the producer’s side.</p>
+<p>Validation belongs at three points, each catching a different failure:</p>
+<ol type="1">
+<li><strong>At ingestion</strong>, on each batch or stream window. Schema and types, primary-key uniqueness, null rates, value ranges and categories, row counts against expectation, and freshness. Bad data is quarantined before it spreads to derived tables.</li>
+<li><strong>Before training</strong>, on the assembled training set. Label rate and label distribution, feature distributions against the previous snapshot, duplicates, and leakage between splits. Fail the pipeline; do not train.</li>
+<li><strong>At serving</strong>, on each request. Type and range checks, missing features, and unknown categories, with a defined fallback and a counter. Then compare serving distributions with training.</li>
+</ol>
+<p>Kinds of check, from cheap to subtle: schema; volume and freshness; per-column statistics (nulls, min, max, distinct count, quantiles); cross-column rules (end after start); referential integrity; distribution comparison with a reference.</p>
+<p>Practical points: thresholds learned from history with tolerance bands work better than hand-set constants; classify checks into blocking and warning, or people learn to ignore them; every check needs an owner who is paged; and the expectations should be stored with the dataset version so that training and serving validate against the same definition.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Which checks block the pipeline and which only warn, and how do you decide?</li>
+<li>How do you validate a free-text or image column?</li>
+</ul>
+</details>
+<details class="qa" id="mlops-027">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Write a small validation function for a pandas DataFrame that a training pipeline can run as a gate. What would you add for production?
+</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> validate(df: pd.DataFrame, spec: <span class="bu">dict</span>, min_rows: <span class="bu">int</span> <span class="op">=</span> <span class="dv">1</span>) <span class="op">-&gt;</span> <span class="bu">list</span>[<span class="bu">str</span>]:</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""spec: {col: {"dtype": str, "max_null": float, "min": x, "max": x,</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="co">    "values": set, "unique": bool}}. Returns a list of problems; empty means pass."""</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    errs <span class="op">=</span> []</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">len</span>(df) <span class="op">&lt;</span> min_rows:</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>        errs.append(<span class="ss">f"only </span><span class="sc">{</span><span class="bu">len</span>(df)<span class="sc">}</span><span class="ss"> rows, expected at least </span><span class="sc">{</span>min_rows<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> col, rule <span class="kw">in</span> spec.items():</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> col <span class="kw">not</span> <span class="kw">in</span> df.columns:</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>            errs.append(<span class="ss">f"</span><span class="sc">{</span>col<span class="sc">}</span><span class="ss">: missing column"</span>)</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>            <span class="cf">continue</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>        s <span class="op">=</span> df[col]</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="st">"dtype"</span> <span class="kw">in</span> rule <span class="kw">and</span> <span class="bu">str</span>(s.dtype) <span class="op">!=</span> rule[<span class="st">"dtype"</span>]:</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>            errs.append(<span class="ss">f"</span><span class="sc">{</span>col<span class="sc">}</span><span class="ss">: dtype </span><span class="sc">{</span>s<span class="sc">.</span>dtype<span class="sc">}</span><span class="ss">, expected </span><span class="sc">{</span>rule[<span class="st">'dtype'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>        null_rate <span class="op">=</span> s.isna().mean()</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> null_rate <span class="op">&gt;</span> rule.get(<span class="st">"max_null"</span>, <span class="fl">0.0</span>):</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>            errs.append(<span class="ss">f"</span><span class="sc">{</span>col<span class="sc">}</span><span class="ss">: null rate </span><span class="sc">{</span>null_rate<span class="sc">:.3f}</span><span class="ss">"</span>)</span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>        v <span class="op">=</span> s.dropna()</span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="st">"min"</span> <span class="kw">in</span> rule <span class="kw">and</span> (v <span class="op">&lt;</span> rule[<span class="st">"min"</span>]).<span class="bu">any</span>():</span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>            errs.append(<span class="ss">f"</span><span class="sc">{</span>col<span class="sc">}</span><span class="ss">: values below </span><span class="sc">{</span>rule[<span class="st">'min'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="st">"max"</span> <span class="kw">in</span> rule <span class="kw">and</span> (v <span class="op">&gt;</span> rule[<span class="st">"max"</span>]).<span class="bu">any</span>():</span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>            errs.append(<span class="ss">f"</span><span class="sc">{</span>col<span class="sc">}</span><span class="ss">: values above </span><span class="sc">{</span>rule[<span class="st">'max'</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="st">"values"</span> <span class="kw">in</span> rule:</span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>            extra <span class="op">=</span> <span class="bu">set</span>(v.unique()) <span class="op">-</span> rule[<span class="st">"values"</span>]</span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> extra:</span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>                errs.append(<span class="ss">f"</span><span class="sc">{</span>col<span class="sc">}</span><span class="ss">: unexpected values </span><span class="sc">{</span><span class="bu">sorted</span>(extra)[:<span class="dv">5</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> rule.get(<span class="st">"unique"</span>) <span class="kw">and</span> v.duplicated().<span class="bu">any</span>():</span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>            errs.append(<span class="ss">f"</span><span class="sc">{</span>col<span class="sc">}</span><span class="ss">: duplicate values"</span>)</span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> errs</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The pipeline calls it and fails when the list is non-empty, logging every problem, not only the first.</p>
+<p>What production adds:</p>
+<ul>
+<li><strong>Distribution checks</strong> against the previous snapshot (quantiles, category shares, label rate), with tolerance bands learned from history.</li>
+<li><strong>Freshness and volume</strong> relative to the same weekday, not a constant.</li>
+<li><strong>Cross-column and cross-table rules</strong>: timestamps in order, foreign keys present, no overlap between train and test keys.</li>
+<li><strong>Severity levels</strong> and quarantine of bad partitions instead of all-or-nothing.</li>
+<li><strong>Scale</strong>: the same rules compiled to SQL or Spark for data that does not fit in memory. Libraries such as Great Expectations, pandera or TFDV provide this; the logic is what an interviewer wants to see.</li>
+<li>The spec versioned next to the dataset, and reused for serving-time checks.</li>
+</ul>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How would you check that no user appears in both the training and the test split?</li>
+<li>Where do the thresholds come from, and who updates them?</li>
+</ul>
+</details>
+<details class="qa" id="mlops-028">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">debugging</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> A model has been slowly getting worse for two weeks. You find that an upstream team changed how a field is populated, so one feature is now null for a third of rows. What do you do now and what do you change afterwards?
+</summary>
+<p><strong>Contain.</strong> Decide quickly between rolling the upstream change back, patching the feature computation to read the new source, or serving without the feature. If the model degrades gracefully with the feature missing, a temporary imputation matching what training saw may be enough; if the null is being mapped to a default such as zero that means something else to the model, fix that first, since a wrong value is worse than a missing one.</p>
+<p><strong>Assess the damage.</strong> Three places are affected:</p>
+<ol type="1">
+<li><em>Serving</em> for two weeks: quantify the metric loss and who was affected.</li>
+<li><em>Logged features</em>: any training data built from this period contains the broken feature. Mark the range.</li>
+<li><em>Models retrained during the period</em>: they learned from corrupted data and may now depend on the null pattern. Check whether an automatic retrain was promoted.</li>
+</ol>
+<p><strong>Repair the data.</strong> Backfill the feature for the affected dates from the corrected source if it can be recomputed as of each event’s time; otherwise exclude the range or keep it with an explicit missing indicator. Rebuild downstream tables and retrain from clean data. Backfills must be idempotent and must not overwrite point-in-time correctness.</p>
+<p><strong>Prevent.</strong></p>
+<ul>
+<li>A null-rate and distribution check on this feature at ingestion and at serving, with an alert that pages its owner. Two weeks of unnoticed decay means input monitoring was missing or ignored.</li>
+<li>A data contract with the upstream team, with schema and semantics tests in their deployment pipeline and a registered list of consumers.</li>
+<li>A data-validation gate before every retrain.</li>
+<li>A feature-importance-weighted view of input health, so that the features that matter get the strict thresholds.</li>
+</ul>
+<p>In the retrospective, the question is not who changed the field but why the system allowed a silent change to reach a model.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How would you have detected this on day one?</li>
+<li>The backfilled values differ slightly from what was served. Which do you train on?</li>
+</ul>
+</details>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/threeeyelidds\.github\.io\/minimal-ml\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+      window.quartoDecorateExternalLinks = function (root) {
+     var links = (root || window.document).querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+          if (!link.classList.contains('no-external-icon')) {
+          }
+        }
+      }
+      };
+      window.quartoDecorateExternalLinks(window.document);
+    // Esc closes the popup (WCAG 1.4.13) and focus leaving both trigger and
+    // popup closes it (WCAG 2.4.11); tippy handles neither for interactive popups.
+    const hideOnEscAndFocusOut = {
+      name: 'hideOnEscAndFocusOut',
+      defaultValue: true,
+      fn(instance) {
+        const dismiss = () => {
+          // A show scheduled by the trigger delay would otherwise reopen it
+          instance.clearDelayTimeouts();
+          instance.hide();
+        };
+        const onKeyDown = (event) => {
+          if (event.key !== 'Escape') {
+            return;
+          }
+          // Keep Esc from also reaching page handlers (e.g. reveal.js overview),
+          // except an open reveal.js slide menu, which Esc should close too.
+          // The menu handles keys only when its keyboard option is on.
+          const menuHandlesEsc = window.Reveal?.getPlugin?.('menu')?.isOpen() &&
+            window.Reveal.getConfig().menu?.keyboard !== false;
+          if (!menuHandlesEsc) {
+            event.stopPropagation();
+          }
+          if (instance.popper.contains(window.document.activeElement)) {
+            // Disabled while refocusing so the focus trigger does not reopen it
+            instance.disable();
+            instance.reference.focus();
+            instance.enable();
+          }
+          dismiss();
+        };
+        const onFocusOut = (event) => {
+          const target = event.relatedTarget;
+          if (target && !instance.reference.contains(target) &&
+              !instance.popper.contains(target)) {
+            dismiss();
+          }
+        };
+        // On the trigger too: a click trigger (code-annotations: select) has no
+        // blur handling. Attached for the instance's lifetime so leaving the
+        // trigger also cancels a show still pending on the trigger delay.
+        instance.reference.addEventListener('focusout', onFocusOut);
+        return {
+          onShow() {
+            window.document.addEventListener('keydown', onKeyDown, true);
+            instance.popper.addEventListener('focusout', onFocusOut);
+          },
+          onHide() {
+            window.document.removeEventListener('keydown', onKeyDown, true);
+            instance.popper.removeEventListener('focusout', onFocusOut);
+          },
+          onDestroy() {
+            instance.reference.removeEventListener('focusout', onFocusOut);
+          },
+        };
+      },
+    };
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+        plugins: [hideOnEscAndFocusOut],
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          // Each band is positioned against its own containing block, which is
+          // not the offsetParent of the lines, so place it from client rects.
+          const placeBand = (band, firstEl, lastEl, codeBlock) => {
+            const container = band.offsetParent;
+            if (container === null) {
+              return;
+            }
+            const containerRect = container.getBoundingClientRect();
+            // Reveal.js scales slides with a transform, so convert client
+            // pixels back to the CSS pixels of the container.
+            const scale = containerRect.height / container.offsetHeight || 1;
+            const firstRect = firstEl.getBoundingClientRect();
+            const lastRect = lastEl.getBoundingClientRect();
+            const top = (firstRect.top - containerRect.top) / scale - container.clientTop + container.scrollTop;
+            const height = (lastRect.bottom - firstRect.top) / scale;
+            band.style.top = top - 2 + "px";
+            band.style.height = height + 4 + "px";
+            if (codeBlock) {
+              // Without the copy button wrapper, the containing block is wider
+              // than the code block, so span the code block explicitly.
+              const blockRect = codeBlock.getBoundingClientRect();
+              band.style.left = (blockRect.left - containerRect.left) / scale - container.clientLeft + container.scrollLeft + "px";
+              band.style.width = blockRect.width / scale + "px";
+            }
+          };
+          if (lineIds.length > 0) {
+            const el = window.document.getElementById(lineIds[0]);
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const parent = el.parentElement.parentElement;
+            // cook up a div (if necessary) and position it
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            placeBand(div, el, lastEl, parent.closest("div.sourceCode") || parent);
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            placeBand(gutterDiv, el, lastEl);
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+  <script type="application/javascript">
+  window.quartoScrollableRegionsLabels = {"code":"Scrollable code","output":"Scrollable output"};
+  </script>
+</div> <!-- /content -->
+<script>
+/* Site-wide: persistent checklists and review status on the skill pages. */
+(function () {
+  "use strict";
+  function get(k) { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch (e) { return {}; } }
+  function set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* storage blocked: ticks last for this page view */ } }
+
+  var chk = get("prep.chk.v1");
+  document.querySelectorAll("input.chk").forEach(function (el) {
+    el.checked = !!chk[el.dataset.chk];
+    el.addEventListener("change", function () {
+      if (el.checked) chk[el.dataset.chk] = 1; else delete chk[el.dataset.chk];
+      set("prep.chk.v1", chk);
+    });
+  });
+
+  var cards = (get("prep.v1").cards) || {};
+  document.querySelectorAll("details.qa[id]").forEach(function (el) {
+    var r = cards[el.id];
+    if (r) el.classList.add(r.ivl >= 7 ? "st-known" : "st-learning");
+  });
+
+  // open the question a link points at
+  function openTarget() {
+    var id = decodeURIComponent(location.hash.slice(1));
+    var el = id && document.getElementById(id);
+    if (el && el.tagName === "DETAILS") { el.open = true; el.scrollIntoView({ block: "start" }); }
+  }
+  window.addEventListener("hashchange", openTarget);
+  openTarget();
+
+  var mp = document.getElementById("map-progress");
+  if (mp) {
+    var seen = Object.keys(cards).length, known = Object.keys(cards).filter(function (k) { return cards[k].ivl >= 7; }).length;
+    var ticks = Object.keys(chk).length;
+    if (seen || ticks) {
+      mp.className = "tile";
+      mp.style.marginBottom = "1.2rem";
+      mp.textContent = "Your progress in this browser: " + seen + " cards reviewed, " + known + " known, " + ticks + " checklist items ticked.";
+    }
+  }
+})();
+</script>
+
+
+
+
+</body></html>

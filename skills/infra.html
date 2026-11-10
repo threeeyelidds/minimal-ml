@@ -1,0 +1,2343 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.11.9">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Training infrastructure and data systems – Minimal ML</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/scrollable-regions/scrollable-regions.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-447e42e69aaa9833c0ba1b986f430b20.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-980fa6b4eab38a5377f72c7fe6f39b73.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="dark">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<meta name="google-site-verification" content="Ztjr25pGaioeZP-mkoIn_MkNmmsFXWcU6I6W2tEPli0">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../styles.css">
+<link rel="stylesheet" href="../colors.css">
+<link rel="stylesheet" href="../prep.css">
+</head>
+
+<body class="nav-sidebar docked nav-fixed quarto-light"><a id="quarto-skip-link" class="visually-hidden-focusable" href="#quarto-document-content">Skip to main content</a>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark" aria-label="Site">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">Minimal ML</span>
+    </a>
+  </div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../report/index.html"> 
+<span class="menu-text">Report</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link active" href="../skills/index.html" aria-current="page"> 
+<span class="menu-text">Skills</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../review/index.html"> 
+<span class="menu-text">Review</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../plan/index.html"> 
+<span class="menu-text">Plan</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../jobs/index.html"> 
+<span class="menu-text">Open roles</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../notes/index.html"> 
+<span class="menu-text">Notes</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../essays/index.html"> 
+<span class="menu-text">Essays</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+            <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav" aria-label="Toolbar">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="Breadcrumbs"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../skills/infra.html">Systems</a></li><li class="breadcrumb-item"><a href="../skills/infra.html">Training infrastructure and data systems</a></li></ol></nav>
+        <a class="flex-grow-1" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto" aria-label="Section">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Skill map</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/cases.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Design cases</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" aria-controls="quarto-sidebar-section-1" aria-expanded="true">
+ <span class="menu-text" id="quarto-sidebar-section-1-label">The loop</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-1" aria-labelledby="quarto-sidebar-section-1-label" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/swe.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Programming and software engineering</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/mlfund.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">ML fundamentals and statistics</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/dl.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Deep learning</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/eval.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Evaluation and experimentation</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/senior.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Senior-level scope and leadership</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" aria-controls="quarto-sidebar-section-2" aria-expanded="true">
+ <span class="menu-text" id="quarto-sidebar-section-2-label">LLMs and agents</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-2" aria-labelledby="quarto-sidebar-section-2-label" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/llm.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">LLMs and foundation models (training side)</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/llmapp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">LLM application engineering (agents, RAG, prompts)</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/rl.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Reinforcement learning and decision making</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/research.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Research skills</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" aria-controls="quarto-sidebar-section-3" aria-expanded="true">
+ <span class="menu-text" id="quarto-sidebar-section-3-label">Product ML</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-3" aria-labelledby="quarto-sidebar-section-3-label" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/recsys.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Search, recommendation, ads and ranking</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/domain.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Domain specialties</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" aria-controls="quarto-sidebar-section-4" aria-expanded="true">
+ <span class="menu-text" id="quarto-sidebar-section-4-label">Systems</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-4" aria-labelledby="quarto-sidebar-section-4-label" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/infra.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Training infrastructure and data systems</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/serving.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Inference, serving and model optimization</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/mlops.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">MLOps, cloud and production operations</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" aria-labelledby="toc-title" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#what-the-postings-ask-for" id="toc-what-the-postings-ask-for" class="nav-link active" data-scroll-target="#what-the-postings-ask-for">What the postings ask for</a>
+  <ul class="collapse">
+  <li><a href="#in-the-postings-words" id="toc-in-the-postings-words" class="nav-link" data-scroll-target="#in-the-postings-words">In the postings’ words</a></li>
+  </ul></li>
+  <li><a href="#the-senior-bar" id="toc-the-senior-bar" class="nav-link" data-scroll-target="#the-senior-bar">The senior bar</a></li>
+  <li><a href="#skills-checklists-and-questions" id="toc-skills-checklists-and-questions" class="nav-link" data-scroll-target="#skills-checklists-and-questions">Skills, checklists and questions</a>
+  <ul class="collapse">
+  <li><a href="#data-pipelines" id="toc-data-pipelines" class="nav-link" data-scroll-target="#data-pipelines">Data pipelines and ETL (Spark, Beam, Airflow, Flink, Kafka) <span class="demand">39% of postings</span></a></li>
+  <li><a href="#gpu" id="toc-gpu" class="nav-link" data-scroll-target="#gpu">GPU computing and accelerators <span class="demand">28% of postings</span></a></li>
+  <li><a href="#cluster" id="toc-cluster" class="nav-link" data-scroll-target="#cluster">Cluster scheduling and compute orchestration (Kubernetes, Slurm, Ray) <span class="demand">26% of postings</span></a></li>
+  <li><a href="#dist-training" id="toc-dist-training" class="nav-link" data-scroll-target="#dist-training">Distributed / large-scale training <span class="demand">16% of postings</span></a></li>
+  <li><a href="#rl-envs" id="toc-rl-envs" class="nav-link" data-scroll-target="#rl-envs">Simulation, sandboxes and RL environments <span class="demand">16% of postings</span></a></li>
+  <li><a href="#exp-tracking" id="toc-exp-tracking" class="nav-link" data-scroll-target="#exp-tracking">ML platforms and experiment tracking (MLflow, W&amp;B, SageMaker) <span class="demand">16% of postings</span></a></li>
+  <li><a href="#dataloading" id="toc-dataloading" class="nav-link" data-scroll-target="#dataloading">Dataset engineering at scale (loaders, sharding, petabyte data) <span class="demand">12% of postings</span></a></li>
+  <li><a href="#data-lake" id="toc-data-lake" class="nav-link" data-scroll-target="#data-lake">Data lakes, warehouses and storage formats <span class="demand">11% of postings</span></a></li>
+  <li><a href="#hpc" id="toc-hpc" class="nav-link" data-scroll-target="#hpc">HPC, networking and storage for ML <span class="demand">9% of postings</span></a></li>
+  <li><a href="#ml-frameworks" id="toc-ml-frameworks" class="nav-link" data-scroll-target="#ml-frameworks">ML framework internals and compilers <span class="demand">8% of postings</span></a></li>
+  <li><a href="#feature-store" id="toc-feature-store" class="nav-link" data-scroll-target="#feature-store">Feature stores and online/offline consistency <span class="demand">3% of postings</span></a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content" tabindex="-1">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="Breadcrumbs"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../skills/infra.html">Systems</a></li><li class="breadcrumb-item"><a href="../skills/infra.html">Training infrastructure and data systems</a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title">Training infrastructure and data systems</h1>
+<p class="subtitle lead">Named in 78% of 2253 senior postings · 35 review cards</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!-- Generated by tools/build_site.py. Edit bank/*.yml or the script, not this file. -->
+<p>The systems that feed and run training: data pipelines and lake storage, feature stores, dataset engineering and loaders, GPUs and their memory, cluster scheduling, distributed training, high-performance networking and storage, experiment tracking, framework internals, and the simulators and sandboxes that RL and agent work depend on. 78% of postings name something here. Data pipelines lead (39%), followed by GPUs (28%) and cluster orchestration (26%); distributed training is named in 36% of research engineer postings. It is tested in ML system design, in platform and infrastructure deep dives, in debugging scenarios (a job that is slow, runs out of memory or does not scale) and in data-oriented coding.</p>
+<p class="area-meta">
+<span class="chip">ML system design</span><span class="chip">Platform or infrastructure deep dive</span><span class="chip">Debugging and performance scenarios</span><span class="chip">Coding (data processing, loaders, a training loop)</span><span class="chip">Project deep dive</span><a class="btn-review" href="../review/index.html#area=infra">Review these cards →</a>
+</p>
+<section id="what-the-postings-ask-for" class="level2">
+<h2 class="anchored" data-anchor-id="what-the-postings-ask-for">What the postings ask for</h2>
+<p>Share of postings that name each skill, overall and by track.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Skill</th>
+<th style="text-align: left;">All postings</th>
+<th style="text-align: right;">MLE</th>
+<th style="text-align: right;">AI eng</th>
+<th style="text-align: right;">Research eng</th>
+<th style="text-align: right;">Cards</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><a href="#data-pipelines">Data pipelines and ETL (Spark, Beam, Airflow, Flink, Kafka)</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:39%"></span><span class="pct">39%</span></span></td>
+<td style="text-align: right;">44%</td>
+<td style="text-align: right;">37%</td>
+<td style="text-align: right;">30%</td>
+<td style="text-align: right;">5</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="#gpu">GPU computing and accelerators</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:28%"></span><span class="pct">28%</span></span></td>
+<td style="text-align: right;">28%</td>
+<td style="text-align: right;">26%</td>
+<td style="text-align: right;">39%</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="#cluster">Cluster scheduling and compute orchestration (Kubernetes, Slurm, Ray)</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:26%"></span><span class="pct">26%</span></span></td>
+<td style="text-align: right;">22%</td>
+<td style="text-align: right;">31%</td>
+<td style="text-align: right;">20%</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="#dist-training">Distributed / large-scale training</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:16%"></span><span class="pct">16%</span></span></td>
+<td style="text-align: right;">21%</td>
+<td style="text-align: right;">7%</td>
+<td style="text-align: right;">36%</td>
+<td style="text-align: right;">5</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="#rl-envs">Simulation, sandboxes and RL environments</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:16%"></span><span class="pct">16%</span></span></td>
+<td style="text-align: right;">16%</td>
+<td style="text-align: right;">12%</td>
+<td style="text-align: right;">28%</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="#exp-tracking">ML platforms and experiment tracking (MLflow, W&amp;B, SageMaker)</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:16%"></span><span class="pct">16%</span></span></td>
+<td style="text-align: right;">22%</td>
+<td style="text-align: right;">12%</td>
+<td style="text-align: right;">7%</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="#dataloading">Dataset engineering at scale (loaders, sharding, petabyte data)</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:12%"></span><span class="pct">12%</span></span></td>
+<td style="text-align: right;">16%</td>
+<td style="text-align: right;">9%</td>
+<td style="text-align: right;">13%</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="#data-lake">Data lakes, warehouses and storage formats</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:11%"></span><span class="pct">11%</span></span></td>
+<td style="text-align: right;">8%</td>
+<td style="text-align: right;">16%</td>
+<td style="text-align: right;">2%</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="#hpc">HPC, networking and storage for ML</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:9%"></span><span class="pct">9%</span></span></td>
+<td style="text-align: right;">6%</td>
+<td style="text-align: right;">10%</td>
+<td style="text-align: right;">13%</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="#ml-frameworks">ML framework internals and compilers</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:8%"></span><span class="pct">8%</span></span></td>
+<td style="text-align: right;">9%</td>
+<td style="text-align: right;">6%</td>
+<td style="text-align: right;">16%</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="#feature-store">Feature stores and online/offline consistency</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:3%"></span><span class="pct">3%</span></span></td>
+<td style="text-align: right;">6%</td>
+<td style="text-align: right;">2%</td>
+<td style="text-align: right;">0%</td>
+<td style="text-align: right;">2</td>
+</tr>
+</tbody>
+</table>
+<section id="in-the-postings-words" class="level3">
+<h3 class="anchored" data-anchor-id="in-the-postings-words">In the postings’ words</h3>
+<blockquote class="blockquote">
+<p>The successful candidate will help build the next generation of TR’s AI infrastructure, working alongside cloud engineering, data engineering, product teams, and AI Services.</p>
+<p><span class="quote-src"><a href="https://thomsonreuters.wd5.myworkdayjobs.com/External_Career_Site/job/United-States-of-America-Eagan-Minnesota/Senior-Inference-Engineer---AI-I_JREQ199409">Thomson Reuters · Senior Inference Engineer - AI</a></span></p>
+</blockquote>
+<blockquote class="blockquote">
+<p>Nuro has raised over $2B in capital from Uber, NVIDIA, Google, Softbank, Fidelity, T. Rowe Price, and other leading investors.</p>
+<p><span class="quote-src"><a href="https://nuro.ai/careersitem?gh_jid=6516915">Nuro · Senior Software Engineer, Perception, Machine Learning/Computer Vision</a></span></p>
+</blockquote>
+<blockquote class="blockquote">
+<p>Experience working with Kubernetes and cloud-native infrastructure</p>
+<p><span class="quote-src"><a href="https://nvidia.wd5.myworkdayjobs.com/NVIDIAExternalCareerSite/job/US-CA-Santa-Clara/Senior-AI-and-HPC-Observability-Engineer_JR2013994">Nvidia · Senior AI and HPC Observability Engineer</a></span></p>
+</blockquote>
+<blockquote class="blockquote">
+<p>Run and debug training at scale, addressing divergence, reward hacking, and instability.</p>
+<p><span class="quote-src"><a href="https://jobs.ashbyhq.com/harvey/db7a2623-bc3c-4db9-b1e3-500c2622d194">Harvey · Research Engineer / Scientist, Reinforcement Learning</a></span></p>
+</blockquote>
+<blockquote class="blockquote">
+<p>Experience working with simulation environments like Isaac Sim or similar platforms.</p>
+<p><span class="quote-src"><a href="https://nvidia.wd5.myworkdayjobs.com/NVIDIAExternalCareerSite/job/US-CA-Santa-Clara/Senior-ML-Engineer--Metropolis_JR2023124">Nvidia · Senior Machine Learning Engineer, Cosmos Engineering</a></span></p>
+</blockquote>
+<blockquote class="blockquote">
+<p>Experience with experiment tracking / data lineage tools (MLflow, Weights &amp; Biases, OpenLineage, DVC).</p>
+<p><span class="quote-src"><a href="https://job-boards.greenhouse.io/lilasciences/jobs/4286513009">Lila Sciences · Research Engineer, Scientific Data &amp; Workflow Infrastructure</a></span></p>
+</blockquote>
+<blockquote class="blockquote">
+<p>Large-scale data processing with Spark, Flink, or comparable tools, including dataset preparation for ML.</p>
+<p><span class="quote-src"><a href="https://jobs.apple.com/en-us/details/200693307-0836">Apple · Staff Machine Learning Engineer — Commerce &amp; Growth Intelligence</a></span></p>
+</blockquote>
+</section>
+</section>
+<section id="the-senior-bar" class="level2">
+<h2 class="anchored" data-anchor-id="the-senior-bar">The senior bar</h2>
+<p>What separates a senior answer from a mid-level one in this area.</p>
+<ul>
+<li>Accounts for GPU memory and step time with arithmetic (bytes per parameter, activations, bandwidth) and uses it to choose between sharding, accumulation, checkpointing and a bigger machine.</li>
+<li>Knows what each form of parallel training splits and what it communicates, and predicts where scaling stops.</li>
+<li>Designs data pipelines to be idempotent, replayable and correct with respect to time, so that backfills and late data do not corrupt training sets.</li>
+<li>Chooses storage formats and layouts from the read pattern of training, and can explain why small files and random reads are the enemy.</li>
+<li>Treats long runs as failure-prone by default, with checkpointing, preemption handling and resumable data order.</li>
+<li>Makes experiments comparable and reproducible through tracking and lineage, and spends a tuning budget deliberately.</li>
+</ul>
+</section>
+<section id="skills-checklists-and-questions" class="level2">
+<h2 class="anchored" data-anchor-id="skills-checklists-and-questions">Skills, checklists and questions</h2>
+<p>Tick an item when you can explain it without notes; ticks are saved in this browser. Open a question to see the answer.</p>
+<section id="data-pipelines" class="level3">
+<h3 class="anchored" data-anchor-id="data-pipelines">Data pipelines and ETL (Spark, Beam, Airflow, Flink, Kafka) <span class="demand">39% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="infra.data-pipelines.0"> Choose between batch and streaming from a freshness requirement and say what streaming costs</li>
+<li><input type="checkbox" class="chk" data-chk="infra.data-pipelines.1"> Explain a Spark job’s stages, shuffles and the effect of key skew</li>
+<li><input type="checkbox" class="chk" data-chk="infra.data-pipelines.2"> Describe how a stream processor gets exactly-once results with checkpoints and idempotent or transactional sinks</li>
+<li><input type="checkbox" class="chk" data-chk="infra.data-pipelines.3"> Explain event time, watermarks and late data</li>
+<li><input type="checkbox" class="chk" data-chk="infra.data-pipelines.4"> Design orchestrated tasks that are idempotent and can be backfilled by partition</li>
+</ul>
+<details class="qa" id="infra-001">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> When do you build a streaming pipeline instead of a batch one for ML features or training data? What does streaming cost?
+</summary>
+<p>Build streaming only when the value of freshness is demonstrated; batch is the default.</p>
+<p><strong>Batch.</strong> Process bounded data on a schedule (hourly, daily). Simple to reason about, easy to rerun and backfill, cheap, and complete: each run sees all the data for its window. Latency is the schedule period plus the run time.</p>
+<p><strong>Streaming.</strong> Process events as they arrive, with results available in seconds. Needed when a feature loses value quickly: fraud signals from the last minutes, session context for recommendations, counters that gate abuse.</p>
+<p>What streaming costs:</p>
+<ul>
+<li><em>Time semantics.</em> Events arrive late and out of order, so you must define event-time windows, watermarks and what happens to late data.</li>
+<li><em>State.</em> Windowed aggregates and joins hold state that must be checkpointed, restored and bounded.</li>
+<li><em>Operations.</em> A long-running job with upgrades, rescaling and backpressure, on call around the clock.</li>
+<li><em>Two code paths.</em> Training data is usually built in batch from history, while serving features come from the stream. If the logic exists twice, the two drift apart.</li>
+</ul>
+<p>How to decide:</p>
+<ol type="1">
+<li>Measure the benefit: evaluate the model with features delayed by an hour or a day. If the metric does not move, do not stream.</li>
+<li>Consider the middle ground: micro-batches every few minutes, or computing the freshest features at request time from recent raw events.</li>
+<li>If you stream, keep one definition of each feature that runs in both modes, or log the served feature values and train on those.</li>
+</ol>
+<p>Architecturally, the “lambda” pattern runs batch and stream in parallel and merges them; the “kappa” pattern uses one streaming engine and replays the log for backfills. One code path is worth a great deal.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How would you quantify what a fresher feature is worth before building anything?</li>
+<li>What breaks when a backfill is run through a streaming job?</li>
+</ul>
+</details>
+<details class="qa" id="infra-002">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">debugging</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> A Spark job that builds a training set used to take 40 minutes and now takes 6 hours. How do you find out why?
+</summary>
+<p>Recall how Spark executes: transformations are lazy and build a plan; an action runs it as stages separated by <strong>shuffles</strong>; each stage is a set of tasks, one per partition. Slowness is almost always in a shuffle or in a few oversized tasks.</p>
+<p><strong>Look at the UI before the code.</strong></p>
+<ol type="1">
+<li>Which stage takes the time? Compare with a previous run.</li>
+<li>In that stage, compare task durations and shuffle read sizes. A median of seconds with a maximum of hours is <strong>skew</strong>; uniformly slow tasks point to volume, resources or the plan.</li>
+<li>Check spill to disk, garbage-collection time, failed and retried tasks.</li>
+</ol>
+<p><strong>Common causes.</strong></p>
+<ul>
+<li><em>Key skew.</em> One key (a null, a bot account, a default id) holds a large share of the rows, so one task does most of a join or aggregation. Fixes: filter or handle the hot key separately, salt the key, enable adaptive skew handling.</li>
+<li><em>A join that changed strategy.</em> A table grew past the broadcast threshold, so a cheap broadcast join became a shuffle join; or a missing join condition created a partial cross product. Read the physical plan.</li>
+<li><em>Input growth or layout.</em> Many more small files, or partition pruning that stopped working because of a changed filter or a cast on the partition column, so the job scans everything.</li>
+<li><em>Too few or too many partitions.</em> Huge partitions spill and fail; tens of thousands of tiny ones drown in overhead.</li>
+<li><em>Python UDFs</em> row by row, where built-in functions or vectorised UDFs would do.</li>
+<li><em>Recomputation.</em> A DataFrame used several times without caching is recomputed from the source each time.</li>
+<li><em>Cluster.</em> Fewer executors, preempted nodes, a slow storage backend.</li>
+</ul>
+<p><strong>Then prevent it.</strong> Track input sizes and stage times per run, alert on duration, and add a data-quality check on the join keys, since skew usually signals a data problem upstream.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How does salting a key fix a skewed join, and what does it cost?</li>
+<li>What do you look for in the physical plan?</li>
+</ul>
+</details>
+<details class="qa" id="infra-003">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> How does a stream processor such as Flink reading from Kafka produce exactly-once results? Explain event time and watermarks while you are at it.
+</summary>
+<p><strong>Exactly-once.</strong> Messages may be delivered more than once; what can be guaranteed is that each event affects the result exactly once. Three parts make that true.</p>
+<ol type="1">
+<li><em>Replayable source.</em> Kafka keeps an ordered log per partition, and a consumer’s position is an offset. After a failure the job can re-read from a known offset.</li>
+<li><em>Consistent checkpoints.</em> The engine periodically snapshots the state of all operators together with the source offsets that state corresponds to. On failure it restores the snapshot and replays from those offsets. Internal state is then as if each event had been processed once.</li>
+<li><em>Sinks that do not duplicate.</em> Replayed events are emitted again, so the sink must be either idempotent (an upsert by key, so a repeat overwrites with the same value) or transactional (output is committed atomically with the checkpoint, a two-phase commit).</li>
+</ol>
+<p>Without the third part you have exactly-once state and at-least-once output.</p>
+<p><strong>Event time and watermarks.</strong> Events carry the time they happened, which differs from when they are processed: mobile clients buffer, partitions lag. Windows defined on processing time give results that change on replay. Event-time windows are deterministic, but the engine must decide when a window is complete. A <strong>watermark</strong> is the engine’s assertion that no events older than time <span class="math inline">\(t\)</span> are still expected, typically the maximum event time seen minus an allowed lateness. When the watermark passes a window’s end, the window fires.</p>
+<p>The trade-off: a generous watermark waits longer and loses less; a tight one is fast and drops or mishandles more late events. Late events can be discarded, sent to a side output, or used to update an already-emitted result, which downstream consumers must then tolerate.</p>
+<p>For ML, late data means features computed in the stream can differ from what a batch job would compute later over complete data. That is a source of training-serving skew unless training uses the logged served values.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Why is an idempotent sink easier to operate than a transactional one?</li>
+<li>What happens to a windowed feature when a mobile client uploads events a day late?</li>
+</ul>
+</details>
+<details class="qa" id="infra-004">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> What makes a scheduled data pipeline safe to rerun and to backfill? Describe how you would structure tasks in an orchestrator such as Airflow.
+</summary>
+<p>The property to aim for is <strong>idempotence</strong>: running a task again for the same logical period produces the same output and no duplicates. With it, retries, reruns after a bug fix and backfills are routine; without it, each is a risk.</p>
+<p><strong>How to get it.</strong></p>
+<ul>
+<li><em>Parameterise by data interval.</em> A task processes the interval the scheduler hands it, never “now” or “yesterday” computed from the wall clock. Then running it for a date last month does the right thing.</li>
+<li><em>Write by partition, atomically.</em> Output goes to a partition keyed by the interval and is overwritten as a whole: write to a temporary location, then swap. Never append to a shared table from a task that can be retried.</li>
+<li><em>Deterministic inputs.</em> Read input partitions for the same interval, or a pinned snapshot, not whatever the source contains at run time.</li>
+<li><em>No hidden state.</em> Everything a task needs comes from its inputs and parameters.</li>
+</ul>
+<p><strong>Structure.</strong></p>
+<ul>
+<li>A DAG of small tasks with explicit data dependencies, each with one output.</li>
+<li>Sensors or dataset triggers that wait for upstream partitions instead of fixed sleep times.</li>
+<li>Validation tasks between stages that fail the run on bad data, so bad partitions are not consumed.</li>
+<li>Retries with backoff for transient failures, timeouts, and alerts with an owner.</li>
+<li>Heavy computation in the engine (Spark, the warehouse), with the orchestrator only coordinating.</li>
+</ul>
+<p><strong>Backfills.</strong> Rerun a range of intervals after a logic change. Things to plan: the order and parallelism, downstream tasks that must rerun too, load on shared systems, and versioning of the output so that models trained on the old data can still be traced. Late-arriving data needs the same mechanism: reprocess the last few days routinely.</p>
+<p>A useful test: can you delete any output partition and regenerate it with one command?</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>A task appends rows and was retried after a timeout. What is in the table now?</li>
+<li>How do you backfill a year of data without overloading the source system?</li>
+</ul>
+</details>
+<details class="qa" id="infra-005">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> In PySpark, keep only the latest record per user from an event table, then compute daily distinct users and revenue per country. What should the interviewer hear about performance and correctness?
+</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pyspark.sql <span class="im">import</span> functions <span class="im">as</span> F, Window</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Latest record per user, with a deterministic tie-break.</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>w <span class="op">=</span> Window.partitionBy(<span class="st">"user_id"</span>).orderBy(</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    F.col(<span class="st">"updated_at"</span>).desc(), F.col(<span class="st">"ingest_id"</span>).desc())</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>latest <span class="op">=</span> (events</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>          .withColumn(<span class="st">"rn"</span>, F.row_number().over(w))</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>          .<span class="bu">filter</span>(F.col(<span class="st">"rn"</span>) <span class="op">==</span> <span class="dv">1</span>)</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>          .drop(<span class="st">"rn"</span>))</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. Daily aggregates.</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>daily <span class="op">=</span> (events</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>         .withColumn(<span class="st">"day"</span>, F.to_date(<span class="st">"event_ts"</span>))</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>         .groupBy(<span class="st">"day"</span>, <span class="st">"country"</span>)</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>         .agg(F.countDistinct(<span class="st">"user_id"</span>).alias(<span class="st">"users"</span>),</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>              F.<span class="bu">sum</span>(<span class="st">"amount"</span>).alias(<span class="st">"revenue"</span>)))</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>(daily.write.mode(<span class="st">"overwrite"</span>)</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>      .partitionBy(<span class="st">"day"</span>)</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>      .parquet(<span class="st">"s3://bucket/daily_country/"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Correctness points:</p>
+<ul>
+<li><code>dropDuplicates(["user_id"])</code> keeps an arbitrary row per key; use a window with an explicit order when “latest” matters, and add a tie-breaker so reruns give the same answer.</li>
+<li>Decide what happens to null keys and null amounts; <code>sum</code> ignores nulls, and all null user ids land in one group.</li>
+<li>Time zones: <code>to_date</code> uses the session time zone. State which day boundary the business means.</li>
+<li>Duplicated events inflate revenue. Deduplicate on an event id before aggregating.</li>
+</ul>
+<p>Performance points:</p>
+<ul>
+<li>Both steps shuffle by key. A hot key, such as a null or a bot user, creates one huge task.</li>
+<li>Exact distinct counts are expensive; <code>approx_count_distinct</code> is much cheaper when a small error is acceptable.</li>
+<li>Filter to the needed date range first so that partition pruning applies, and select only the columns used.</li>
+<li>Overwriting only the partitions being written needs dynamic partition overwrite mode; the default static mode replaces the whole table. This is what makes the job safe to rerun for one day.</li>
+</ul>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Write the first step in SQL.</li>
+<li>How would you make the daily job incremental instead of recomputing all history?</li>
+</ul>
+</details>
+</section>
+<section id="gpu" class="level3">
+<h3 class="anchored" data-anchor-id="gpu">GPU computing and accelerators <span class="demand">28% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="infra.gpu.0"> Estimate training memory from parameters, gradients, optimizer state and activations</li>
+<li><input type="checkbox" class="chk" data-chk="infra.gpu.1"> Distinguish allocated from reserved memory and diagnose an out-of-memory error that appears late in a run</li>
+<li><input type="checkbox" class="chk" data-chk="infra.gpu.2"> Say which hardware properties matter for a given training or inference workload</li>
+</ul>
+<details class="qa" id="infra-006">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">derivation</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> Estimate the GPU memory needed to train a model with one billion parameters. What are the components and which one usually dominates?
+</summary>
+<p>Four components.</p>
+<p><strong>1. Parameters.</strong> <span class="math inline">\(10^9\)</span> parameters at 4 bytes in 32-bit floats: 4 GB.</p>
+<p><strong>2. Gradients.</strong> One per parameter, same size: 4 GB.</p>
+<p><strong>3. Optimizer state.</strong> Adam and AdamW keep two moment estimates per parameter: 8 GB. SGD with momentum keeps one: 4 GB.</p>
+<p>So the static cost with AdamW is 16 bytes per parameter, 16 GB here, before any data has passed through the model. Mixed precision does not reduce this part: under automatic mixed precision the stored weights and the optimizer state stay in 32-bit floats.</p>
+<p><strong>4. Activations.</strong> Every intermediate tensor needed by the backward pass is kept until it has been used. This scales with batch size, sequence length or resolution, width and depth. For a transformer, each layer keeps several tensors of shape <span class="math inline">\([B, T, d]\)</span> and, unless a fused attention kernel is used, attention maps of shape <span class="math inline">\([B, h, T, T]\)</span>. For large batches or long sequences this component dominates, and it is the part mixed precision halves.</p>
+<p>Also allow for the framework’s allocator cache and fragmentation, library workspaces, and a temporary peak during the optimizer step.</p>
+<p><strong>Levers by component.</strong></p>
+<ul>
+<li>Activations: smaller batch with gradient accumulation; mixed precision; activation (gradient) checkpointing, which recomputes activations in the backward pass at the price of roughly one extra forward pass; shorter sequences; memory-efficient attention.</li>
+<li>Optimizer state and gradients: sharding across GPUs (ZeRO or FSDP); an 8-bit or factored optimizer; training fewer parameters (adapters).</li>
+<li>Parameters: sharding; lower-precision frozen weights when fine-tuning adapters.</li>
+</ul>
+<p>Inference needs only the parameters and one layer’s activations at a time, which is why a model that trains on 40 GB can serve on a fraction of that.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Why does automatic mixed precision not halve the parameter and optimizer memory?</li>
+<li>Doubling the sequence length quadruples memory in one case and doubles it in another. Which is which?</li>
+</ul>
+</details>
+<details class="qa" id="infra-007">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">debugging</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> A training job dies with a CUDA out-of-memory error several hours in, although the first thousands of steps ran fine. How do you debug it?
+</summary>
+<p>An error that appears late is rarely “the model is too big”. Something grows, or a rare input is large.</p>
+<p><strong>1. Read the message and the counters.</strong> It reports allocated and reserved memory. <em>Allocated</em> is memory held by live tensors; <em>reserved</em> is what the framework’s caching allocator has taken from the device. Log both, and the peak, every N steps.</p>
+<ul>
+<li>Allocated memory climbing steadily means a <strong>leak of references</strong>.</li>
+<li>Flat allocated memory with a sudden failure means a <strong>large batch</strong>.</li>
+<li>Reserved far above allocated means <strong>fragmentation</strong>.</li>
+</ul>
+<p><strong>2. Leaks of references.</strong></p>
+<ul>
+<li>Accumulating a tensor that still carries its graph, such as <code>total_loss += loss</code> instead of <code>loss.item()</code>. The whole graph of every step stays alive.</li>
+<li>Appending outputs or activations to a Python list for logging.</li>
+<li>Evaluation without <code>torch.no_grad()</code>, so graphs are built for nothing.</li>
+<li>A caught exception whose traceback keeps tensors alive.</li>
+</ul>
+<p><strong>3. Input-dependent peaks.</strong> With variable-length sequences or image sizes, memory is set by the largest batch, which may first appear hours in. Log the batch shape at failure. Fix with a token budget per batch instead of a fixed batch size, bucketing by length, a hard cap on length, and a test at startup that runs the worst-case batch.</p>
+<p><strong>4. Fragmentation.</strong> Many allocations of varying size leave free memory in pieces too small to use. Mitigate by making shapes more regular (bucketing, padding to a few sizes) and by the allocator’s configuration options; consult the current PyTorch memory-management notes for the exact settings.</p>
+<p><strong>5. Other processes.</strong> A second job or a zombie process on the same device, or an evaluation run that starts while training memory is still held.</p>
+<p><strong>6. Periodic events.</strong> Evaluation, checkpointing or logging hooks every N steps that allocate extra memory.</p>
+<p>Calling the cache-emptying function in a loop rarely fixes anything: it returns cached blocks to the device but does not free live tensors.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>What is the difference between allocated and reserved memory?</li>
+<li>How would you catch the worst-case batch before the run starts?</li>
+</ul>
+</details>
+<details class="qa" id="infra-008">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> You have a fixed budget for training hardware. Which properties of a GPU and of the machine around it matter, and how do you choose between fewer large GPUs and more small ones?
+</summary>
+<p>Match the hardware to what limits the workload.</p>
+<p><strong>Properties of the GPU.</strong></p>
+<ul>
+<li><em>Memory capacity.</em> A hard constraint: it sets the largest model, batch and sequence length without sharding or accumulation, and is the first thing to check.</li>
+<li><em>Compute throughput</em> at the precision you train in, including support for the half-precision formats you plan to use.</li>
+<li><em>Memory bandwidth</em>, which bounds many operations more than raw arithmetic does.</li>
+<li><em>Links between GPUs</em> inside a node, which determine how well multi-GPU training scales.</li>
+</ul>
+<p><strong>Properties of the machine.</strong></p>
+<ul>
+<li>CPU cores and RAM per GPU for data loading and preprocessing. Starving the GPU with too few cores is a common waste.</li>
+<li>Local NVMe for dataset caches and checkpoints.</li>
+<li>Network interconnect between nodes, if a job spans nodes.</li>
+<li>Power and cooling, for on-premises hardware.</li>
+</ul>
+<p><strong>Fewer large or more small?</strong></p>
+<ul>
+<li>If one model does not fit in a small GPU’s memory, large GPUs avoid the engineering and communication cost of sharding. Memory is the deciding factor more often than speed.</li>
+<li>If the workload is many independent jobs (hyperparameter sweeps, evaluation, small fine-tunes), more small GPUs give more parallel experiments per unit of money and less waste from one job occupying a large device.</li>
+<li>For one large job, scaling across many GPUs is sublinear, so eight devices do not give eight times the throughput; within a single node it is usually close, across nodes it depends on the interconnect.</li>
+<li>Availability and price per useful hour (including queue time and preemption) often matter more than list performance.</li>
+</ul>
+<p><strong>Method.</strong> Benchmark your own training step on the candidates and compute cost per unit of work, such as dollars per million training tokens or per epoch, not price per hour. Include utilisation: an expensive GPU that sits idle half the day costs twice its rate.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Which workload would you put on older, cheaper GPUs?</li>
+<li>How do you compare hardware when the available benchmarks are for a different model?</li>
+</ul>
+</details>
+</section>
+<section id="cluster" class="level3">
+<h3 class="anchored" data-anchor-id="cluster">Cluster scheduling and compute orchestration (Kubernetes, Slurm, Ray) <span class="demand">26% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="infra.cluster.0"> Compare Kubernetes, Slurm and Ray for training workloads</li>
+<li><input type="checkbox" class="chk" data-chk="infra.cluster.1"> Explain quotas, priorities, preemption, gang scheduling and fragmentation on a shared GPU cluster</li>
+<li><input type="checkbox" class="chk" data-chk="infra.cluster.2"> Design checkpoint and restart so a preempted job loses minutes, not hours</li>
+</ul>
+<details class="qa" id="infra-009">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Compare Kubernetes, Slurm and Ray for running ML training. When would you choose each?
+</summary>
+<p>They sit at different layers and are often combined.</p>
+<p><strong>Slurm.</strong> A batch scheduler from high-performance computing. You submit a job requesting nodes, GPUs and time; it queues, then runs on bare metal. Strengths: designed for multi-node tightly coupled jobs, with gang scheduling, fair-share priorities, partitions, preemption and job arrays; low overhead; researchers know it. Weaknesses: little support for long-running services, containers are an add-on, and weaker isolation and ecosystem integration.</p>
+<p><strong>Kubernetes.</strong> A container orchestrator built for services. Strengths: one platform for training, serving and data jobs; containers and isolation by default; autoscaling of nodes; a large ecosystem. Weaknesses: the default scheduler places pods one at a time and knows nothing of queues, quotas across teams or all-or-nothing placement for a multi-worker job, so training needs a batch scheduling layer and job operators on top (such as Kueue, Volcano, Kubeflow’s training operators). More layers to operate.</p>
+<p><strong>Ray.</strong> A distributed computing framework for Python, not a cluster manager. It provides tasks, actors and a shared object store, with libraries for data processing, training, tuning and serving. Strengths: one programming model from a laptop to a cluster, good for heterogeneous pipelines, hyperparameter search and RL workloads with many actors. It runs on top of Kubernetes, Slurm or virtual machines, which still do the resource allocation.</p>
+<p>Choosing:</p>
+<ul>
+<li>A research cluster with large multi-node training jobs and users who want to submit scripts: Slurm.</li>
+<li>A company that already runs services on Kubernetes and wants one platform, elastic cloud capacity and tight integration with serving: Kubernetes plus a batch layer.</li>
+<li>Python-centric workloads that mix data processing, training and tuning in one application: Ray on whichever of the two you have.</li>
+</ul>
+<p>What matters more than the choice: queues and quotas per team, preemption with checkpointing, visibility into why a job is waiting, and accounting of GPU hours.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>What is gang scheduling and why does a default Kubernetes scheduler get it wrong?</li>
+<li>How do Ray actors differ from tasks, and where would you use each?</li>
+</ul>
+</details>
+<details class="qa" id="infra-010">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> On a shared GPU cluster, how do quotas, priorities and preemption work, and why can GPUs sit idle while jobs are waiting?
+</summary>
+<p><strong>The policy tools.</strong></p>
+<ul>
+<li><em>Quota.</em> Each team has a guaranteed share of GPUs. Guarantees prevent starvation.</li>
+<li><em>Borrowing.</em> Idle quota is lent to other teams so that capacity is not wasted. Borrowed capacity is reclaimable.</li>
+<li><em>Priority.</em> Classes such as production, interactive, standard and best-effort order the queue and decide who may preempt whom.</li>
+<li><em>Preemption.</em> When a team wants its guaranteed GPUs back, or a higher-priority job arrives, borrowed or lower-priority jobs are stopped. This is acceptable only if jobs checkpoint and resume automatically.</li>
+<li><em>Fair share.</em> Priority decays with recent usage, so a heavy user does not hold the queue indefinitely.</li>
+</ul>
+<p><strong>Why GPUs idle while jobs wait.</strong></p>
+<ul>
+<li><em>Fragmentation.</em> Free GPUs are scattered: 16 free in total, but no node has 8, so an 8-GPU job cannot start. Bin-packing placement (fill nodes before opening new ones) and occasional defragmentation by migrating small jobs reduce this.</li>
+<li><em>Gang scheduling.</em> A distributed job needs all its workers at once. A scheduler that starts workers one by one lets two large jobs each hold half of what they need and deadlock. All-or-nothing admission prevents it.</li>
+<li><em>Head-of-line blocking.</em> A large job at the front waits for resources while small jobs behind it could run. Backfilling runs small jobs in the gaps if they will finish before the large job’s reservation starts, which requires time limits on jobs.</li>
+<li><em>Constraints.</em> Jobs pinned to a GPU type, zone or node pool.</li>
+<li><em>Reserved but unused.</em> Interactive sessions and notebooks holding GPUs at zero utilisation. Idle detection and time limits recover them.</li>
+<li><em>Other resources.</em> Not enough CPU or memory on the node next to the free GPU.</li>
+</ul>
+<p><strong>Measure</strong> allocation rate and utilisation separately. Allocated-but-idle GPUs are a user-behaviour problem; unallocated GPUs with a queue are a scheduler problem. Show users why their job is pending.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How does backfilling work, and why does it need job time limits?</li>
+<li>A team complains its jobs are preempted too often. What do you look at?</li>
+</ul>
+</details>
+<details class="qa" id="infra-011">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> Design checkpointing and restart for long training jobs on preemptible capacity, so that a preemption costs minutes and needs no human.
+</summary>
+<p><strong>What a checkpoint must contain to resume exactly.</strong></p>
+<ul>
+<li>Model parameters.</li>
+<li>Optimizer state (moments), learning-rate scheduler state and the global step.</li>
+<li>Gradient scaler state under mixed precision; EMA weights if used.</li>
+<li>Random number generator states.</li>
+<li>Data position: epoch, shard and offset, or the sampler’s state, so that the resumed run neither repeats nor skips data.</li>
+<li>The configuration and code version, to refuse resuming with a mismatched setup.</li>
+</ul>
+<p>Forgetting the optimizer or scheduler state is the classic bug: the loss jumps after resume and the learning rate restarts its warm-up.</p>
+<p><strong>Writing it safely.</strong></p>
+<ul>
+<li>Write to a temporary name, then rename atomically, so a preemption during a write never leaves a corrupt latest checkpoint. Keep the last few and verify on load.</li>
+<li>Write to local disk first and upload asynchronously if the remote store is slow, so the training loop does not stall.</li>
+<li>For sharded training, each rank writes its shard in parallel.</li>
+<li>Choose the interval from the cost of a checkpoint and the preemption rate: frequent enough that expected lost work is small, rare enough that writing is a few percent of run time. Time-based intervals are more robust than step-based ones.</li>
+</ul>
+<p><strong>Reacting to preemption.</strong></p>
+<ul>
+<li>Handle the termination signal: the platform usually gives a notice of tens of seconds to a couple of minutes. Finish the current step, write a checkpoint, exit with a code that means “retry”.</li>
+<li>If the notice is too short for a full checkpoint, rely on the periodic one.</li>
+</ul>
+<p><strong>Restarting without a human.</strong></p>
+<ul>
+<li>The job is submitted with a retry policy; on start it looks for the latest valid checkpoint under its run id and resumes, otherwise it starts fresh. The same code path handles first start and restart.</li>
+<li>Metrics and logs continue under the same run id, with resumes marked.</li>
+<li>Evaluation and export jobs watch for new checkpoints instead of living in the training process.</li>
+</ul>
+<p><strong>Test it.</strong> Kill the job at random points in CI and compare the resumed loss curve with an uninterrupted run.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>The loss spikes after every resume. What did the checkpoint miss?</li>
+<li>How do you make the data order resumable with a shuffled, sharded dataset?</li>
+</ul>
+</details>
+</section>
+<section id="dist-training" class="level3">
+<h3 class="anchored" data-anchor-id="dist-training">Distributed / large-scale training <span class="demand">16% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="infra.dist-training.0"> Say what data parallelism, tensor and pipeline parallelism and parameter sharding each split and communicate</li>
+<li><input type="checkbox" class="chk" data-chk="infra.dist-training.1"> Write a DDP training loop and list what changes relative to one GPU</li>
+<li><input type="checkbox" class="chk" data-chk="infra.dist-training.2"> Compare synchronous all-reduce training with asynchronous parameter-server training</li>
+<li><input type="checkbox" class="chk" data-chk="infra.dist-training.3"> Pick techniques to fit a model that exceeds one GPU’s memory</li>
+<li><input type="checkbox" class="chk" data-chk="infra.dist-training.4"> Derive a checkpoint interval from checkpoint cost and failure rate</li>
+</ul>
+<details class="qa" id="infra-012">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> What are the ways to parallelise training across GPUs? Say what each one splits and what it has to communicate.
+</summary>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Method</th>
+<th>Splits</th>
+<th>Communicates</th>
+<th>Use when</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Data parallelism (DDP)</td>
+<td>The batch. Every GPU holds a full model replica and processes a different slice</td>
+<td>Gradients, once per step (all-reduce)</td>
+<td>The model fits on one GPU and you want throughput</td>
+</tr>
+<tr class="even">
+<td>Sharded data parallelism (ZeRO, FSDP)</td>
+<td>Also the parameters, gradients and optimizer state, each GPU owning a shard</td>
+<td>Parameters gathered layer by layer for the forward and backward pass; gradients reduced back to their owners</td>
+<td>The model plus optimizer state does not fit on one GPU</td>
+</tr>
+<tr class="odd">
+<td>Tensor parallelism</td>
+<td>Individual weight matrices within a layer, across GPUs</td>
+<td>Activations inside every layer</td>
+<td>Layers too large for one GPU; needs very fast links, so usually within a node</td>
+</tr>
+<tr class="even">
+<td>Pipeline parallelism</td>
+<td>The layers, as consecutive stages on different GPUs</td>
+<td>Activations at stage boundaries, and their gradients</td>
+<td>Very deep models; uses micro-batches to keep all stages busy</td>
+</tr>
+</tbody>
+</table>
+<p>Details worth knowing:</p>
+<ul>
+<li><strong>Data parallelism</strong> averages gradients, so the effective batch is the per-GPU batch times the number of GPUs. The learning rate and warm-up usually need retuning for the larger batch.</li>
+<li><strong>ZeRO</strong> comes in stages: shard the optimizer state, then also the gradients, then also the parameters. Each stage saves more memory and adds communication. FSDP corresponds to the last stage: a layer’s full parameters exist on a GPU only while that layer is computing.</li>
+<li><strong>Pipeline parallelism</strong> leaves stages idle at the start and end of each batch (the “bubble”); more micro-batches shrink it.</li>
+<li><strong>Tensor parallelism</strong> communicates inside every layer, so its cost is dominated by link speed.</li>
+</ul>
+<p>Large runs combine them: tensor parallelism inside a node, pipeline across a few nodes, data parallelism across the rest.</p>
+<p>Scaling stops when communication or the input pipeline, not computation, sets the step time, or when the larger effective batch stops improving optimisation per sample.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Why does FSDP save memory compared with DDP, and what does it pay?</li>
+<li>Which of these would you combine for a model ten times too large for one GPU?</li>
+</ul>
+</details>
+<details class="qa" id="infra-013">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> Write a minimal multi-GPU training loop with PyTorch DistributedDataParallel. What changes compared with single-GPU training?
+</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os, torch, torch.distributed <span class="im">as</span> dist</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> torch.nn.parallel <span class="im">import</span> DistributedDataParallel <span class="im">as</span> DDP</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> torch.utils.data <span class="im">import</span> DataLoader, DistributedSampler</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> main():</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    dist.init_process_group(<span class="st">"nccl"</span>)            <span class="co"># one process per GPU, via torchrun</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    rank <span class="op">=</span> dist.get_rank()</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    local_rank <span class="op">=</span> <span class="bu">int</span>(os.environ[<span class="st">"LOCAL_RANK"</span>])</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    torch.cuda.set_device(local_rank)</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    model <span class="op">=</span> DDP(build_model().cuda(), device_ids<span class="op">=</span>[local_rank])</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    opt <span class="op">=</span> torch.optim.AdamW(model.parameters(), lr<span class="op">=</span>lr)</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    sampler <span class="op">=</span> DistributedSampler(train_set, shuffle<span class="op">=</span><span class="va">True</span>, drop_last<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>    loader <span class="op">=</span> DataLoader(train_set, batch_size<span class="op">=</span>per_gpu_batch, sampler<span class="op">=</span>sampler,</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>                        num_workers<span class="op">=</span><span class="dv">8</span>, pin_memory<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> epoch <span class="kw">in</span> <span class="bu">range</span>(epochs):</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>        sampler.set_epoch(epoch)               <span class="co"># new shuffle each epoch</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> x, y <span class="kw">in</span> loader:</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>            x, y <span class="op">=</span> x.cuda(non_blocking<span class="op">=</span><span class="va">True</span>), y.cuda(non_blocking<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>            loss <span class="op">=</span> loss_fn(model(x), y)</span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>            opt.zero_grad(set_to_none<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>            loss.backward()                    <span class="co"># gradients are averaged across ranks</span></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>            opt.step()</span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> rank <span class="op">==</span> <span class="dv">0</span>:</span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>            torch.save(model.module.state_dict(), <span class="st">"ckpt.pt"</span>)</span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>    dist.destroy_process_group()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>What changes:</p>
+<ul>
+<li><strong>One process per GPU</strong>, each with its own data loader. The sampler gives each rank a disjoint slice; forgetting <code>set_epoch</code> repeats the same order every epoch.</li>
+<li><strong>Effective batch size</strong> is <code>per_gpu_batch</code> times the number of processes, so the learning rate and warm-up need adjusting.</li>
+<li><strong>Gradient synchronisation</strong> happens inside <code>backward()</code>. Every rank must execute the same parameters each step; a parameter used on only some ranks raises an error or hangs.</li>
+<li><strong>Side effects on rank 0 only</strong>: logging, checkpointing, evaluation reports. Save <code>model.module</code>, not the wrapper.</li>
+<li><strong>Batch normalisation</strong> statistics are per process unless converted to synchronised batch norm.</li>
+<li><strong>Evaluation</strong>: a distributed sampler pads the dataset so every rank gets the same count, which duplicates a few examples; gather predictions from all ranks and de-duplicate, or evaluate on one rank.</li>
+<li><strong>Seeds</strong>: the same seed on all ranks gives identical augmentation and dropout streams; offset by rank where independence matters, but initialise the model identically.</li>
+<li><strong>Failure</strong>: if one rank dies, the others hang in the next collective call unless the launcher kills the group.</li>
+</ul>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Validation accuracy differs slightly between a 1-GPU and an 8-GPU evaluation of the same checkpoint. Why?</li>
+<li>How would you add gradient accumulation, and what is the effective batch then?</li>
+</ul>
+</details>
+<details class="qa" id="infra-014">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> Compare synchronous all-reduce training with asynchronous parameter-server training. Why did deep learning mostly settle on the first, and where does the second survive?
+</summary>
+<p><strong>Synchronous all-reduce.</strong> Every worker computes a gradient on its share of the batch; a collective operation sums them across workers; all workers apply the identical update. Mathematically it is single-machine SGD with a larger batch, which makes it reproducible and easy to reason about. An all-reduce over a ring or tree moves about twice the gradient size per worker regardless of the number of workers, so it scales well on fast links.</p>
+<p>Its weakness is that each step waits for the slowest worker. A straggler (a throttled node, a slow disk) slows everyone, and one failed worker stops the job. This is fine on homogeneous, reliable GPU clusters and is why it is the default there.</p>
+<p><strong>Asynchronous parameter server.</strong> Parameters live on server nodes. Workers pull the current parameters, compute a gradient and push it; the server applies updates as they arrive, without waiting. No worker waits for another, so stragglers and failures do not block progress, and it suits heterogeneous or preemptible workers.</p>
+<p>Its weakness is <strong>stale gradients</strong>: a gradient was computed on parameters that have since changed. Staleness adds noise that grows with the number of workers, hurts convergence and final quality, and makes runs irreproducible. The servers also become a bandwidth bottleneck for dense models.</p>
+<p><strong>Why all-reduce won for dense models.</strong> GPUs made each worker fast and clusters homogeneous; networks got fast enough; and optimisation quality at large scale turned out to be sensitive to staleness.</p>
+<p><strong>Where parameter servers survive.</strong> Models dominated by huge sparse embedding tables, as in recommendation and advertising. Each example touches a tiny fraction of the parameters, so workers pull and push only the rows they need, the tables are too large for any one machine, and conflicts between sparse updates are rare. Hybrids keep embeddings on parameter servers and train the dense layers synchronously.</p>
+<p>Middle grounds exist: synchronous training with backup workers that drops the slowest few gradients each step, and local SGD, where workers take several local steps between averaging to cut communication.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Why does gradient staleness hurt more as you add workers?</li>
+<li>Your recommendation model has a 500 GB embedding table. How does training communicate it?</li>
+</ul>
+</details>
+<details class="qa" id="infra-015">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> A model you need to train or fine-tune does not fit in the memory of the GPUs you have. What are your options, cheapest first?
+</summary>
+<p>First find out which component overflows: activations (scales with batch and sequence) or parameters plus optimizer state (fixed). The remedies differ.</p>
+<p><strong>If activations overflow.</strong></p>
+<ol type="1">
+<li><em>Smaller batch with gradient accumulation.</em> Run <span class="math inline">\(k\)</span> small batches, accumulate gradients, step once. Same effective batch, <span class="math inline">\(k\)</span> times less activation memory, no quality cost except with batch-statistics layers. Free.</li>
+<li><em>Mixed precision.</em> Halves activation memory and speeds up the step.</li>
+<li><em>Activation checkpointing.</em> Store only some activations and recompute the rest during the backward pass. Large memory saving for roughly one extra forward pass of compute.</li>
+<li><em>Shorter sequences or lower resolution</em>, or a memory-efficient attention implementation.</li>
+</ol>
+<p><strong>If parameters and optimizer state overflow.</strong></p>
+<ol start="5" type="1">
+<li><em>Train fewer parameters.</em> For fine-tuning, adapters such as LoRA leave the base model frozen, so there are no gradients or optimizer state for it, and the frozen weights can be loaded in lower precision.</li>
+<li><em>A lighter optimizer.</em> SGD or a memory-reduced Adam variant in place of full two-moment state.</li>
+<li><em>Shard across GPUs</em> with FSDP or ZeRO, so each device holds a fraction of parameters, gradients and optimizer state. Costs communication and needs several GPUs.</li>
+<li><em>Offload to CPU memory or disk.</em> Works, and is slow; a last resort for training, acceptable for occasional inference.</li>
+</ol>
+<p><strong>If a single layer’s computation overflows</strong> even alone, you need tensor parallelism or a different architecture.</p>
+<p><strong>Or change the hardware.</strong> Renting a larger-memory GPU for the duration of the job is often cheaper than the engineering time for options 7 and beyond.</p>
+<p>State the trade for each: accumulation costs nothing but wall-clock per update; checkpointing costs compute; adapters change what is learned; sharding costs communication and complexity. Combine the free ones first, measure peak memory after each step, and keep a worst-case batch test in the pipeline.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Does gradient accumulation give exactly the same result as the large batch?</li>
+<li>When is LoRA not an acceptable substitute for full fine-tuning?</li>
+</ul>
+</details>
+<details class="qa" id="infra-016">
+<summary>
+<span class="tag tag-staff">staff</span><span class="tag tag-type">derivation</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> A job runs on 500 nodes. How often should it checkpoint? Derive the interval from the failure rate and the cost of a checkpoint.
+</summary>
+<p><strong>Failure rate of the job.</strong> If each node fails independently with mean time between failures <span class="math inline">\(m\)</span>, a job on <span class="math inline">\(N\)</span> nodes that needs all of them fails with rate <span class="math inline">\(N / m\)</span>, so its mean time between failures is</p>
+<p><span class="math display">\[M = m / N.\]</span></p>
+<p>With <span class="math inline">\(m\)</span> = 5 years per node and <span class="math inline">\(N = 500\)</span>: <span class="math inline">\(M \approx 3.65\)</span> days <span class="math inline">\(\approx 88\)</span> hours. Large jobs fail routinely even on reliable hardware, and preemptions add to the rate.</p>
+<p><strong>The trade-off.</strong> Let <span class="math inline">\(\delta\)</span> be the time to write a checkpoint and <span class="math inline">\(\tau\)</span> the interval between checkpoints.</p>
+<ul>
+<li>Overhead from writing: a fraction <span class="math inline">\(\delta / \tau\)</span> of the run.</li>
+<li>Expected rework after a failure: on average half an interval, <span class="math inline">\(\tau / 2\)</span>, lost once every <span class="math inline">\(M\)</span>, a fraction <span class="math inline">\(\tau / (2M)\)</span>.</li>
+</ul>
+<p>Total waste as a fraction of run time:</p>
+<p><span class="math display">\[w(\tau) \approx \frac{\delta}{\tau} + \frac{\tau}{2M}.\]</span></p>
+<p>Setting the derivative to zero gives Young’s approximation:</p>
+<p><span class="math display">\[\tau^* = \sqrt{2\, \delta\, M}, \qquad w(\tau^*) = \sqrt{2\delta / M}.\]</span></p>
+<p><strong>Numbers.</strong> With <span class="math inline">\(\delta = 2\)</span> minutes and <span class="math inline">\(M = 88\)</span> hours <span class="math inline">\(= 5280\)</span> minutes: <span class="math inline">\(\tau^* = \sqrt{2 \cdot 2 \cdot 5280} \approx 145\)</span> minutes, and the waste is about <span class="math inline">\(\sqrt{4 / 5280} \approx 2.8\%\)</span>. On preemptible capacity with <span class="math inline">\(M = 2\)</span> hours: <span class="math inline">\(\tau^* \approx 22\)</span> minutes and waste about 18%, before restart time.</p>
+<p><strong>What the formula teaches.</strong></p>
+<ul>
+<li>The interval grows with the square root of the checkpoint cost, so making checkpoints cheaper (asynchronous upload, parallel per-rank writes, incremental state) pays twice: lower overhead and shorter intervals.</li>
+<li>Add the restart time (rescheduling, loading, warm-up) to the cost of each failure; when it is large, reducing it matters more than tuning <span class="math inline">\(\tau\)</span>.</li>
+<li>The approximation assumes <span class="math inline">\(\delta \ll \tau \ll M\)</span>. When failures are very frequent, the job spends most of its time recovering, and the remedy is fewer nodes per job, redundancy or more reliable capacity.</li>
+<li>If the platform gives notice before preemption, a checkpoint on notice removes most rework and the periodic interval can be long.</li>
+</ul>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How does the answer change if a failed node can be replaced without restarting the whole job?</li>
+<li>What would you measure in production to set these parameters?</li>
+</ul>
+</details>
+</section>
+<section id="rl-envs" class="level3">
+<h3 class="anchored" data-anchor-id="rl-envs">Simulation, sandboxes and RL environments <span class="demand">16% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="infra.rl-envs.0"> Describe the environment interface, including termination versus truncation and vectorisation</li>
+<li><input type="checkbox" class="chk" data-chk="infra.rl-envs.1"> Design an isolated, resettable sandbox for agents that execute code</li>
+<li><input type="checkbox" class="chk" data-chk="infra.rl-envs.2"> Trade simulator fidelity against speed and explain domain randomisation</li>
+</ul>
+<details class="qa" id="infra-033">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> Describe the standard interface of an RL environment. Which details of it cause bugs in training code?
+</summary>
+<p>The de facto interface (Gymnasium, formerly OpenAI Gym):</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>obs, info <span class="op">=</span> env.reset(seed<span class="op">=</span>seed)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="va">True</span>:</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    action <span class="op">=</span> policy(obs)</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    obs, reward, terminated, truncated, info <span class="op">=</span> env.step(action)</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> terminated <span class="kw">or</span> truncated:</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>        obs, info <span class="op">=</span> env.reset()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>plus declared <strong>observation and action spaces</strong> (shape, type, bounds; discrete or continuous) that the agent’s networks are built from.</p>
+<p>Details that cause bugs:</p>
+<ul>
+<li><strong>Termination versus truncation.</strong> <code>terminated</code> means the episode ended inside the task (goal reached, failure). <code>truncated</code> means it was cut off from outside, usually by a time limit. On termination the value of the next state is zero; on truncation it is not, and the learner should bootstrap from the final observation. Treating a time limit as termination teaches the agent that the world ends at step <span class="math inline">\(T\)</span>.</li>
+<li><strong>Auto-reset in vectorised environments.</strong> When one of <span class="math inline">\(N\)</span> parallel environments finishes, the vector wrapper resets it immediately and returns the first observation of the new episode; the final observation of the old one is delivered separately in <code>info</code>. Bootstrapping from the wrong one is a silent error. The exact convention has changed between library versions, so check the one in use.</li>
+<li><strong>Seeding and determinism.</strong> The environment, the action-space sampler and the policy each have their own random generator. Reproducible runs need all of them seeded, and parallel environments need distinct seeds.</li>
+<li><strong>Spaces.</strong> Actions outside the declared bounds are clipped or rejected depending on the environment; observation scaling and types (bytes versus floats) are a frequent source of a policy that cannot learn.</li>
+<li><strong>Wrappers.</strong> Frame stacking, action repeat, reward clipping and normalisation change the problem. Normalisation statistics are part of the policy and must be saved with it and frozen for evaluation.</li>
+<li><strong>Reward and info.</strong> Evaluation should report the unmodified task reward, not the clipped or shaped one used for training.</li>
+</ul>
+<p><strong>Vectorisation.</strong> Running many environments in parallel, in processes or batched on a GPU, is the main throughput lever; the policy then acts on a batch of observations in one forward pass.</p>
+<p>A unit test worth having: a random policy and a scripted policy run through the full wrapper stack, with checks on shapes, ranges and episode boundaries.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>What is the effect on the learned value function of treating time limits as termination?</li>
+<li>How do you evaluate a policy that was trained with normalised observations?</li>
+</ul>
+</details>
+<details class="qa" id="infra-034">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Design the sandbox infrastructure for running agents that execute code, either to evaluate them on tasks or to collect training episodes. What do isolation, reset and scale require?
+</summary>
+<p>Treat everything the agent runs as untrusted: it may be wrong, destructive or adversarial, and it runs thousands of times in parallel.</p>
+<p><strong>Isolation.</strong></p>
+<ul>
+<li><em>Compute boundary.</em> Ordinary containers share the host kernel, which is a thin wall for untrusted code. Use a stronger boundary for anything exposed to arbitrary commands: a user-space kernel sandbox, a microVM, or a full virtual machine. Choose by threat model and by start-up time.</li>
+<li><em>Resources.</em> Limits on CPU, memory, disk, process count and wall-clock time per command and per episode, so a runaway loop cannot starve neighbours.</li>
+<li><em>Network.</em> Denied by default. Where a task needs packages or an API, allow specific hosts through a proxy, or better, mirror them inside. Open egress enables data exfiltration and makes results depend on the outside world.</li>
+<li><em>Credentials.</em> None inside the sandbox. If a tool needs one, a broker outside performs the call.</li>
+</ul>
+<p><strong>Reproducibility and reset.</strong></p>
+<ul>
+<li>Each task is an immutable image or snapshot with dependencies pinned. Every episode starts from the same state; nothing persists between episodes.</li>
+<li>Sources of nondeterminism (time, random seeds, network) are fixed or recorded.</li>
+<li>Snapshot and restore let search-style methods branch from an intermediate state.</li>
+</ul>
+<p><strong>Scoring.</strong></p>
+<ul>
+<li>The check runs outside the agent’s reach: tests and expected outputs are not present in the sandbox during the episode, or are restored from a trusted copy before scoring, so that the agent cannot pass by editing the tests.</li>
+<li>Validate each task: the reference solution passes, an empty solution fails, and the outcome is stable across repeated runs.</li>
+</ul>
+<p><strong>Scale and throughput.</strong></p>
+<ul>
+<li>A pool of pre-warmed sandboxes, since start-up time otherwise dominates short episodes.</li>
+<li>A scheduler that packs sandboxes onto nodes separately from the GPU fleet running the model; the two scale independently.</li>
+<li>Asynchronous episodes with timeouts and retries for infrastructure failures, which must be distinguished from agent failures in the results.</li>
+</ul>
+<p><strong>Observability.</strong> Full trajectories: commands, outputs, file diffs, timings and resource use. These are both the debugging record and the training data.</p>
+<p>Risks to state: flaky tasks that add noise to every comparison, environment exploits that inflate scores, and leakage of task solutions into training data.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How do you tell an infrastructure failure from an agent failure in aggregate results?</li>
+<li>What stops an agent from passing a task by modifying the tests?</li>
+</ul>
+</details>
+<details class="qa" id="infra-035">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> How do you trade simulator fidelity against speed for training a policy, and how do you get a policy trained in simulation to work in the real system?
+</summary>
+<p><strong>The trade.</strong> RL needs very many samples, so simulator throughput bounds how much the policy can learn; but whatever the simulator gets wrong, the policy will exploit or be surprised by. Higher fidelity (finer physics steps, realistic rendering, accurate contact and sensor models) costs speed.</p>
+<p>Rules for spending fidelity:</p>
+<ul>
+<li>Put it where the policy’s decisions are sensitive: contact and friction for manipulation, actuator delay and dynamics for locomotion, sensor noise for perception. Elsewhere, cheap approximations are fine.</li>
+<li>Prefer many fast, slightly wrong environments with variation over a few accurate ones. Simulators that run thousands of environments in parallel on a GPU changed what is practical.</li>
+<li>Test the choice empirically: does performance in the high-fidelity or real system track performance in the fast simulator across checkpoints?</li>
+</ul>
+<p><strong>Closing the gap between simulation and reality.</strong></p>
+<ul>
+<li><em>Domain randomisation.</em> Randomise the parameters you are unsure of (masses, friction, delays, lighting, textures, noise) during training, so that reality looks like one more sample from the training distribution. Too little fails to cover reality; too much makes the task needlessly hard and the policy overly conservative.</li>
+<li><em>System identification.</em> Measure the real system and fit the simulator’s parameters to it, then randomise around those values.</li>
+<li><em>Model what bites.</em> Latency, actuator limits and sensor noise matter more than visual polish.</li>
+<li><em>Adaptation.</em> Give the policy a history of observations so that it can infer the dynamics it is in, or fine-tune on a small amount of real data.</li>
+<li><em>Residual or hybrid control.</em> Learn a correction on top of a classical controller that already works.</li>
+</ul>
+<p><strong>Evaluation.</strong> Real-world success on a fixed protocol is the metric; simulation metrics are proxies. Evaluate across randomisation ranges to find where the policy breaks, and keep a set of real failure cases that are reproduced in simulation and added to training.</p>
+<p>The same reasoning applies outside robotics: a simulated user or market is a model with a fidelity gap, and a policy optimised against it must be validated online.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How do you choose the ranges for domain randomisation?</li>
+<li>Your policy succeeds in simulation and fails on hardware. What is your first measurement?</li>
+</ul>
+</details>
+</section>
+<section id="exp-tracking" class="level3">
+<h3 class="anchored" data-anchor-id="exp-tracking">ML platforms and experiment tracking (MLflow, W&amp;B, SageMaker) <span class="demand">16% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="infra.exp-tracking.0"> List what a run must record to be comparable and reproducible</li>
+<li><input type="checkbox" class="chk" data-chk="infra.exp-tracking.1"> Choose a hyperparameter search method for a given budget and explain early stopping of trials</li>
+<li><input type="checkbox" class="chk" data-chk="infra.exp-tracking.2"> Design tracking and lineage for a team, from run to deployed model</li>
+</ul>
+<details class="qa" id="infra-024">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> What should be recorded for every training run, and what do tools such as MLflow or Weights and Biases give you beyond a spreadsheet?
+</summary>
+<p><strong>What to record</strong>, automatically and at the start of the run where possible:</p>
+<ul>
+<li><em>Code</em>: commit hash, whether the working tree was dirty, and the diff if it was.</li>
+<li><em>Configuration</em>: the fully resolved hyperparameters after defaults and overrides, not only what was passed on the command line.</li>
+<li><em>Data</em>: dataset name and version or snapshot id, the split definition, preprocessing version.</li>
+<li><em>Environment</em>: container image, key library versions, hardware, number of devices.</li>
+<li><em>Randomness</em>: seeds.</li>
+<li><em>Metrics over time</em>: training and validation loss, learning rate, gradient norm, throughput, memory. Curves, not only final values.</li>
+<li><em>Evaluation</em>: metrics on named, versioned evaluation sets and slices.</li>
+<li><em>Artefacts</em>: checkpoints, the final model, sample predictions, plots.</li>
+<li><em>Lineage and notes</em>: parent run for fine-tunes or resumes, the hypothesis the run was testing, and the conclusion.</li>
+</ul>
+<p><strong>What a tracking tool adds.</strong></p>
+<ul>
+<li>Capture with a few lines of code, so that recording does not depend on discipline.</li>
+<li>A queryable store: filter and sort hundreds of runs, group by a hyperparameter, plot curves on top of each other.</li>
+<li>Artefact storage linked to runs, and a path from a run to a registered model.</li>
+<li>Live monitoring of running jobs, with alerts on divergence.</li>
+<li>Sharing: a link to a comparison instead of a screenshot, and reports that record why a decision was taken.</li>
+</ul>
+<p><strong>What tools do not give you.</strong></p>
+<ul>
+<li><em>Comparability.</em> Two runs are comparable only if they used the same evaluation set and code. Enforce versioned evaluation, and compare against the baseline rerun under the same conditions.</li>
+<li><em>Significance.</em> One run per configuration says little; record seed variance and report differences against it.</li>
+<li><em>Hygiene.</em> Naming, tagging, deleting failed runs and writing the conclusion remain human work.</li>
+</ul>
+<p>Choosing between tools is secondary (hosted or self-hosted, cost, integration with the scheduler and registry). The practice that matters is that no result enters a decision or a paper unless its run record can be opened.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>A colleague reports a 0.5 point gain from a single run. What do you ask for?</li>
+<li>How do you track experiments on prompts and LLM pipelines where there is no training run?</li>
+</ul>
+</details>
+<details class="qa" id="infra-025">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> You have a budget of 200 GPU-days to tune a model’s hyperparameters. How do you spend it? Compare grid search, random search, Bayesian optimisation and early-stopping methods.
+</summary>
+<p><strong>Methods.</strong></p>
+<ul>
+<li><em>Grid search.</em> Exhaustive over a lattice. Wastes trials: if only two of six hyperparameters matter, most grid points repeat the same values of the ones that do. Acceptable for one or two dimensions.</li>
+<li><em>Random search.</em> Sample each hyperparameter independently. Every trial tests a new value of every dimension, so it covers the important ones far better for the same budget. Trivially parallel. The baseline to beat.</li>
+<li><em>Bayesian optimisation.</em> Fit a model of the objective from past trials and choose the next trial to balance exploring and exploiting. More sample-efficient when each trial is expensive and the dimension is modest; inherently sequential, though batched variants exist; less advantage when the objective is noisy.</li>
+<li><em>Early stopping of trials</em> (successive halving, Hyperband, ASHA). Start many configurations with a small budget, keep the best fraction, give them more, repeat. Most compute goes to promising configurations. Usually the largest gain, and it combines with random or Bayesian sampling.</li>
+<li><em>Population-based training.</em> Mutate hyperparameters during training, which yields schedules rather than fixed values.</li>
+</ul>
+<p><strong>Spending the budget.</strong></p>
+<ol type="1">
+<li>Reduce the space first. Fix what is known from prior work; search the few that matter most (learning rate, weight decay, warm-up, batch size, a regularisation strength), on log scales where appropriate.</li>
+<li>Use a cheap proxy where it predicts the full result: a smaller model, a data subset or shorter training. Check the rank correlation on a few configurations first.</li>
+<li>Run random sampling with early stopping across the bulk of the budget.</li>
+<li>Reserve a share (perhaps a quarter) to rerun the top few configurations with several seeds to full length. Search winners are selected partly by luck.</li>
+<li>Report the final result on a test set not used for selection.</li>
+</ol>
+<p><strong>Pitfalls.</strong> Early stopping favours configurations that start fast, such as high learning rates, over those that finish best. Noise between seeds can exceed the differences being optimised. The best configuration at small scale may not transfer to large scale, particularly the learning rate. And a tuned method compared with an untuned baseline is not a fair comparison.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Why does random search beat grid search when only some hyperparameters matter?</li>
+<li>How do you check that a short-training proxy ranks configurations the same way as full training?</li>
+</ul>
+</details>
+<details class="qa" id="infra-026">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> Design experiment tracking and lineage for an organisation of fifty people training models, so that any deployed model can be traced back to its data and code.
+</summary>
+<p><strong>Goal.</strong> From any model in production, answer in minutes: which run produced it, with what code, configuration and data, evaluated on what, approved by whom. And the reverse: which models used this dataset.</p>
+<p><strong>Entities and links.</strong></p>
+<ul>
+<li><em>Dataset version</em>: immutable snapshot id, the query or pipeline run that built it, its validation report.</li>
+<li><em>Run</em>: code commit, resolved configuration, image digest, input dataset versions, parent run if resumed or fine-tuned, metrics, artefacts.</li>
+<li><em>Evaluation result</em>: model artefact, evaluation set version, evaluation code version, metrics by slice.</li>
+<li><em>Registered model version</em>: the artefact, its run, its evaluation results, its stage and approval record.</li>
+<li><em>Deployment</em>: registered version, serving configuration, time and environment.</li>
+</ul>
+<p>Every link is written by tooling, not by people.</p>
+<p><strong>How it is captured.</strong></p>
+<ul>
+<li>The job launcher injects the run id, commit and image; the training library logs configuration and metrics; the data client records which dataset versions were read. A run started from uncommitted code is flagged and cannot be promoted.</li>
+<li>Evaluation is a separate, versioned job that writes results against the artefact, so that all candidates are measured the same way.</li>
+<li>Promotion to the registry requires the links to exist.</li>
+</ul>
+<p><strong>Organisation.</strong></p>
+<ul>
+<li>Projects and tags by team and model family; a naming convention; retention rules that keep registered models and their lineage indefinitely and expire the artefacts of abandoned runs.</li>
+<li>Shared dashboards comparing candidates with the current production model.</li>
+<li>Access control for sensitive datasets carried through to their derived artefacts.</li>
+<li>Cost per run from the scheduler, attached to the run.</li>
+</ul>
+<p><strong>Build or buy.</strong> A hosted tracker or an open-source one covers runs and artefacts; the lineage to datasets and deployments usually needs integration work with your own data platform and deployment system. Start with enforced capture at launch, since retrofits fail on the runs that matter most.</p>
+<p><strong>Check.</strong> Pick a random production model each quarter and reproduce it from its record.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How do you handle exploratory work in notebooks without losing lineage?</li>
+<li>A dataset must be deleted for legal reasons. What does your system tell you?</li>
+</ul>
+</details>
+</section>
+<section id="dataloading" class="level3">
+<h3 class="anchored" data-anchor-id="dataloading">Dataset engineering at scale (loaders, sharding, petabyte data) <span class="demand">12% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="infra.dataloading.0"> Explain why training data is packed into shards and how shuffling works on sequential data</li>
+<li><input type="checkbox" class="chk" data-chk="infra.dataloading.1"> Split shards across distributed ranks and loader workers without duplication</li>
+<li><input type="checkbox" class="chk" data-chk="infra.dataloading.2"> Design a preprocessing pipeline for a very large dataset, including what is done offline</li>
+</ul>
+<details class="qa" id="infra-027">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> Why do large training datasets get packed into shards, and how do you shuffle data that can only be read sequentially?
+</summary>
+<p><strong>Why shards.</strong> Storing each example as its own file fails at scale: millions of small files overload file-system metadata and object-store request limits, and random access to remote storage is slow. Packing examples into shards, large files of perhaps a few hundred megabytes to a few gigabytes that are read front to back, replaces millions of random reads with a few thousand sequential ones. Sequential reads are what disks, networks and object stores do best, and whole shards can be cached, prefetched and assigned to workers. Common containers are tar-based shards, record files and columnar files.</p>
+<p><strong>Shuffling sequential data.</strong> You cannot draw a uniformly random example from the whole dataset without random access. The standard approximation has two levels:</p>
+<ol type="1">
+<li><em>Shuffle the order of shards</em> each epoch.</li>
+<li><em>Shuffle within a buffer</em>: keep a buffer of <span class="math inline">\(k\)</span> examples; emit a random one and replace it with the next example read.</li>
+</ol>
+<p>Reading several shards in parallel and interleaving them mixes further.</p>
+<p><strong>How good is it?</strong> It depends on how the shards were written. If shards were filled from already-shuffled data, each is a random sample and shard-level shuffling is nearly as good as a global shuffle. If shards were written in source order (by date, by class, by crawl domain), consecutive examples are correlated, and a buffer smaller than a shard cannot fix it. The cure is a one-time global shuffle when the shards are created.</p>
+<p>Poor shuffling shows up as a loss curve with periodic structure, or as degraded results with batch-statistics layers.</p>
+<p><strong>Related design points.</strong></p>
+<ul>
+<li>Shard count well above the number of workers times ranks, so the work divides evenly.</li>
+<li>Assign whole shards to distributed ranks and loader workers so no example is read twice.</li>
+<li>“Epoch” becomes approximate; many pipelines define it as a number of steps over an infinite, reshuffled stream.</li>
+<li>Record the shard and offset in checkpoints to resume without repeating data.</li>
+<li>Keep an index (example id to shard and offset) for debugging and for removing examples.</li>
+</ul>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Your shards were written in chronological order. What goes wrong and how do you fix it without rewriting everything?</li>
+<li>How large should the shuffle buffer be?</li>
+</ul>
+</details>
+<details class="qa" id="infra-028">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> Write a PyTorch IterableDataset over a list of shards that works with several data-loader workers and several DDP processes without duplicating examples, and shuffles with a buffer.
+</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> random</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> torch.utils.data <span class="im">import</span> IterableDataset, get_worker_info</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> ShardedDataset(IterableDataset):</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, shards, read_shard, rank<span class="op">=</span><span class="dv">0</span>, world_size<span class="op">=</span><span class="dv">1</span>,</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>                 buffer_size<span class="op">=</span><span class="dv">10_000</span>, seed<span class="op">=</span><span class="dv">0</span>):</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.shards, <span class="va">self</span>.read_shard <span class="op">=</span> <span class="bu">list</span>(shards), read_shard</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.rank, <span class="va">self</span>.world_size <span class="op">=</span> rank, world_size</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.buffer_size, <span class="va">self</span>.seed, <span class="va">self</span>.epoch <span class="op">=</span> buffer_size, seed, <span class="dv">0</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> set_epoch(<span class="va">self</span>, epoch):</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.epoch <span class="op">=</span> epoch</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__iter__</span>(<span class="va">self</span>):</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Same permutation on every rank and worker, new each epoch.</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>        shards <span class="op">=</span> <span class="va">self</span>.shards[:]</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>        random.Random(<span class="va">self</span>.seed <span class="op">+</span> <span class="va">self</span>.epoch).shuffle(shards)</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>        shards <span class="op">=</span> shards[<span class="va">self</span>.rank::<span class="va">self</span>.world_size]        <span class="co"># split across processes</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>        info <span class="op">=</span> get_worker_info()</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>        wid <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> info <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>            wid <span class="op">=</span> info.<span class="bu">id</span></span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>            shards <span class="op">=</span> shards[wid::info.num_workers]         <span class="co"># split across workers</span></span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>        rng <span class="op">=</span> random.Random(<span class="bu">hash</span>((<span class="va">self</span>.seed, <span class="va">self</span>.epoch, <span class="va">self</span>.rank, wid)))</span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>        buf <span class="op">=</span> []</span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> shard <span class="kw">in</span> shards:</span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> sample <span class="kw">in</span> <span class="va">self</span>.read_shard(shard):</span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>                <span class="cf">if</span> <span class="bu">len</span>(buf) <span class="op">&lt;</span> <span class="va">self</span>.buffer_size:</span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>                    buf.append(sample)</span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>                    <span class="cf">continue</span></span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>                i <span class="op">=</span> rng.randrange(<span class="va">self</span>.buffer_size)</span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>                <span class="cf">yield</span> buf[i]</span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>                buf[i] <span class="op">=</span> sample</span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a>        rng.shuffle(buf)</span>
+<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a>        <span class="cf">yield</span> <span class="cf">from</span> buf</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>What an interviewer checks:</p>
+<ul>
+<li><strong>No duplication.</strong> With an iterable dataset every worker gets a copy of the dataset object; without the split by worker id, each worker yields everything and the model sees each example <code>num_workers</code> times. The same applies across DDP ranks.</li>
+<li><strong>Consistent global order.</strong> All ranks and workers must shuffle the shard list with the same seed before slicing, or the slices overlap.</li>
+<li><strong>Different randomness per worker</strong> for the buffer, or all workers emit in the same pattern.</li>
+<li><strong>Uneven lengths.</strong> Ranks receive different numbers of examples when shards differ in size. DDP needs the same number of steps on every rank, so define an epoch as a fixed number of steps and loop the stream, or drop the excess.</li>
+<li><strong>Epoch propagation.</strong> With persistent workers, calling <code>set_epoch</code> in the main process does not reach the worker copies; derive the epoch inside the worker or recreate the loader.</li>
+<li><strong>Shard count</strong> should be much larger than ranks times workers.</li>
+</ul>
+<p>For resumability, also expose the current shard and offset so a checkpoint can record them.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>What happens with 4 shards, 2 ranks and 8 workers per rank?</li>
+<li>How would you make every rank produce exactly the same number of batches?</li>
+</ul>
+</details>
+<details class="qa" id="infra-029">
+<summary>
+<span class="tag tag-staff">staff</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> Design the data preparation and loading system for training on a multimodal dataset of billions of examples. What is computed offline, what online, and how is the dataset versioned?
+</summary>
+<p><strong>Principles.</strong> Do expensive, deterministic work once, offline. Keep the per-step path to sequential reads plus cheap, random transformations. Make every stage rerunnable and every dataset version addressable.</p>
+<p><strong>Offline pipeline</strong>, a distributed batch job per stage with outputs in object storage:</p>
+<ol type="1">
+<li><em>Ingest and normalise.</em> Fetch raw items, validate, convert to a few canonical encodings and sizes. Record source, licence and timestamps as metadata.</li>
+<li><em>Filter.</em> Corrupt files, too small or too long items, unsafe or disallowed content, low-quality pairs by model-based scores. Keep the scores as columns so thresholds can change without recomputation.</li>
+<li><em>Deduplicate.</em> Exact duplicates by content hash; near-duplicates by perceptual hash or embedding similarity. Also remove overlap with evaluation sets.</li>
+<li><em>Precompute what is deterministic and expensive.</em> Tokenisation of text, resizing to a bounded resolution, optional embeddings or latents from a frozen encoder.</li>
+<li><em>Global shuffle and shard.</em> Write shards of roughly equal size with examples in random order, plus a metadata table with one row per example (id, shard, offset, lengths, scores, source).</li>
+</ol>
+<p><strong>Online, in the loader.</strong></p>
+<ul>
+<li>Sequential shard reads with parallel workers, prefetching and a local NVMe cache.</li>
+<li>Decoding and random augmentation, on CPU workers or on the GPU.</li>
+<li>Sampling policy: mixing sources at chosen ratios, and bucketing by length or aspect ratio so batches pad little.</li>
+<li>Batching by a token or pixel budget instead of a fixed count.</li>
+</ul>
+<p><strong>Versioning.</strong> A dataset version is a manifest: the list of shards with checksums, the filter thresholds and the code version of each stage. New versions are new manifests that reuse unchanged shards. Removing examples (a takedown or a discovered bug) is done with a deny-list applied at load time immediately, and by rewriting the affected shards in the next version.</p>
+<p><strong>Operations.</strong></p>
+<ul>
+<li>Throughput target derived from the training step: examples per second per GPU times GPUs, with headroom, tested before the run.</li>
+<li>Per-stage statistics and samples for inspection; data bugs are found by looking.</li>
+<li>Resumable loading: checkpoints record position in the manifest.</li>
+<li>Cost: the offline stages are embarrassingly parallel and suit preemptible capacity.</li>
+</ul>
+<p>The main risks are silent quality problems in filtering, duplicates leaking into evaluation, and a loader that cannot keep the GPUs fed.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Which precomputations would you avoid because they freeze a decision you may want to change?</li>
+<li>How do you remove one million examples from a dataset that a run is currently training on?</li>
+</ul>
+</details>
+</section>
+<section id="data-lake" class="level3">
+<h3 class="anchored" data-anchor-id="data-lake">Data lakes, warehouses and storage formats <span class="demand">11% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="infra.data-lake.0"> Explain how a columnar format enables column pruning and predicate pushdown</li>
+<li><input type="checkbox" class="chk" data-chk="infra.data-lake.1"> Say what a table format adds on top of files in object storage</li>
+<li><input type="checkbox" class="chk" data-chk="infra.data-lake.2"> Choose a partitioning scheme and avoid the small-files problem</li>
+</ul>
+<details class="qa" id="infra-019">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Why are analytical and training tables stored in a columnar format such as Parquet? What does the file layout buy you, and when is it the wrong format?
+</summary>
+<p><strong>Layout.</strong> A Parquet file stores data column by column inside <strong>row groups</strong> (chunks of rows, typically tens to hundreds of megabytes). Each column chunk is divided into pages, encoded and compressed separately, and the file footer records the schema and statistics such as minimum, maximum and null count per column chunk.</p>
+<p><strong>What that buys.</strong></p>
+<ul>
+<li><em>Column pruning.</em> A query that needs 5 of 300 columns reads only those 5. Analytical and feature queries usually touch few columns of wide tables.</li>
+<li><em>Predicate pushdown.</em> A reader skips a row group when the statistics show that no row can match the filter, without decompressing it. It works well when the data is sorted or clustered on the filter column.</li>
+<li><em>Compression.</em> Values in one column are similar, so dictionary and run-length encoding plus a general compressor shrink the data several times more than a row format would.</li>
+<li><em>Vectorised reads.</em> Engines process a column as an array, which is CPU-efficient.</li>
+<li><em>A self-describing, typed schema</em>, readable by every engine.</li>
+</ul>
+<p><strong>When it is the wrong format.</strong></p>
+<ul>
+<li><em>Point lookups and updates of single rows.</em> Files are immutable, and reading one row means decoding a page of each needed column. Use a key-value or relational store.</li>
+<li><em>Row-at-a-time streaming writes.</em> A row-oriented format such as Avro suits logs and message payloads; convert to Parquet in batches.</li>
+<li><em>Large binary objects per row</em>, such as images, audio or long token arrays for training with random access. Sharded archives or formats designed for it serve better; keep metadata in Parquet and the payload elsewhere.</li>
+<li><em>Many tiny files.</em> The per-file overhead of footers and listing destroys the benefit.</li>
+</ul>
+<p><strong>Practical knobs.</strong> Row group size (larger compresses and scans better; smaller skips better), sort order within files, compression codec (fast versus dense), and target file size of a few hundred megabytes to a gigabyte.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>A filter on an unsorted high-cardinality column gets no benefit from pushdown. Why?</li>
+<li>How would you store a dataset of images with labels and metadata?</li>
+</ul>
+</details>
+<details class="qa" id="infra-020">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> What do table formats such as Iceberg, Delta Lake or Hudi add on top of Parquet files in object storage? Why does that matter for ML?
+</summary>
+<p>A directory of Parquet files is not a table. Readers find files by listing, which is slow and can observe a half-finished write; there are no transactions, no safe concurrent writers and no way to change the schema or delete rows cleanly.</p>
+<p>A table format adds a <strong>metadata layer</strong> that states exactly which data files make up the table at each version.</p>
+<ul>
+<li><em>Atomic commits.</em> A write produces new data files and then publishes a new metadata version in one atomic step. Readers see the old snapshot or the new one, never a mix. Concurrent writers are handled by optimistic concurrency: a writer commits only if the table has not changed in a conflicting way, otherwise it retries.</li>
+<li><em>Snapshots and time travel.</em> Every commit is a snapshot that can be queried by id or timestamp until it is expired.</li>
+<li><em>Schema evolution.</em> Add, rename or drop columns without rewriting data, because columns are tracked by id.</li>
+<li><em>Row-level changes.</em> Updates, deletes and merges, implemented by rewriting the affected files (copy-on-write) or by writing delete and delta files merged at read time (merge-on-read). This is what makes deletion requests and late corrections feasible on a lake.</li>
+<li><em>Planning without listing.</em> File lists and per-file column statistics live in metadata, so the engine prunes files before touching storage. Partitioning can be derived from columns and changed over time.</li>
+<li><em>Maintenance.</em> Compaction of small files, expiry of old snapshots, removal of orphan files. These jobs must actually be run.</li>
+</ul>
+<p><strong>Why it matters for ML.</strong></p>
+<ul>
+<li><em>Reproducibility</em>: a training set is a query against a snapshot id, which pins the exact data.</li>
+<li><em>Consistency</em>: a training job never reads a partially written partition.</li>
+<li><em>Backfills and corrections</em> are atomic replacements of partitions.</li>
+<li><em>Incremental processing</em>: read only what changed between two snapshots to update features.</li>
+<li><em>Lineage and audit</em>: who changed what, when.</li>
+</ul>
+<p>The combination of open table formats on object storage with warehouse-style engines is what people mean by a lakehouse.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Copy-on-write or merge-on-read for a table with frequent small updates and heavy scans?</li>
+<li>How long should snapshots be retained if models must be reproducible for a year?</li>
+</ul>
+</details>
+<details class="qa" id="infra-021">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> How do you choose a partitioning scheme for a large table, and what is the small-files problem?
+</summary>
+<p><strong>Purpose.</strong> Partitioning splits a table into directories or file groups by the value of one or more columns, so that a query filtering on those columns reads only the matching parts. It also defines the unit of an idempotent write: overwrite one partition.</p>
+<p><strong>Choosing the key.</strong></p>
+<ul>
+<li>Partition on the columns that almost every query filters on. For event data that is the event date, sometimes with one more low-cardinality column such as region.</li>
+<li>Keep cardinality low enough that each partition holds at least hundreds of megabytes. Partitioning by user id or by hour and country and device creates millions of tiny partitions.</li>
+<li>Match the write pattern: daily jobs write daily partitions.</li>
+<li>For high-cardinality columns that queries filter on, do not partition. Sort or cluster the data on that column within files, or bucket by its hash, so that file statistics prune the read.</li>
+</ul>
+<p><strong>The small-files problem.</strong> Thousands or millions of files of a few kilobytes or megabytes each. Causes: over-partitioning, streaming or micro-batch writers committing often, and jobs with many output tasks each writing a file per partition.</p>
+<p>Why it hurts:</p>
+<ul>
+<li>Listing and opening files dominates query time; object stores charge and throttle per request.</li>
+<li>Each file carries its own footer and metadata, and compression works poorly on small chunks.</li>
+<li>Query planning slows as metadata grows.</li>
+<li>For training, loaders spend their time opening files instead of reading data.</li>
+</ul>
+<p>Fixes: compact small files into target-sized ones (a few hundred megabytes to a gigabyte) with a scheduled job; repartition by the partition key before writing so each partition is written by one task; coarsen the partitioning; batch streaming commits.</p>
+<p><strong>Related choice.</strong> A warehouse manages storage and layout for you and suits business analytics; a lake of open files is cheaper and open to any engine and to training jobs; a lakehouse puts table semantics on the lake to get both.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>A table partitioned by date is always queried by user id. What do you change?</li>
+<li>How do you compact files while other jobs are reading and writing the table?</li>
+</ul>
+</details>
+</section>
+<section id="hpc" class="level3">
+<h3 class="anchored" data-anchor-id="hpc">HPC, networking and storage for ML <span class="demand">9% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="infra.hpc.0"> Explain why multi-node training needs a low-latency, high-bandwidth interconnect</li>
+<li><input type="checkbox" class="chk" data-chk="infra.hpc.1"> Compare object storage, a parallel file system and local NVMe for training data and checkpoints</li>
+</ul>
+<details class="qa" id="infra-017">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> Why does multi-node training need a special network? What do InfiniBand and RDMA give you that ordinary Ethernet with TCP does not?
+</summary>
+<p><strong>The requirement.</strong> Synchronous distributed training exchanges data every step: gradients in data parallelism, parameters in sharded training, activations in tensor parallelism. A model with <span class="math inline">\(10^9\)</span> parameters has 4 GB of 32-bit gradients, and an all-reduce moves about twice that per worker per step. On a 10 Gb/s link (about 1.2 GB per second) that alone takes several seconds, longer than the computation. The step time is then set by the network, and adding nodes adds nothing.</p>
+<p><strong>What a high-performance interconnect provides.</strong></p>
+<ul>
+<li><em>Bandwidth</em>: 100 to 400 Gb/s per link and more, with several links per node.</li>
+<li><em>Low, predictable latency</em>: microseconds, which matters because collective operations consist of many small synchronised exchanges.</li>
+<li><em>RDMA</em> (remote direct memory access): the network card reads and writes application memory directly, bypassing the kernel’s network stack and avoiding copies and context switches. With GPU-aware variants, data moves between GPU memories on different nodes without passing through host memory.</li>
+<li><em>Lossless transport and a suitable topology</em>, such as a fat tree with full bisection bandwidth, so that many simultaneous node pairs do not contend.</li>
+</ul>
+<p>InfiniBand is a network technology designed around these properties. RoCE provides RDMA over Ethernet hardware and needs careful configuration to be lossless.</p>
+<p><strong>Inside a node</strong> there is a similar hierarchy: direct GPU-to-GPU links are faster than going through the PCIe bus, and which GPUs share a switch or a CPU socket affects communication cost. Process placement should respect that topology, including NUMA locality for host memory.</p>
+<p><strong>When it matters less.</strong> Small models, infrequent synchronisation, embarrassingly parallel work such as sweeps and batch inference, and single-node jobs.</p>
+<p><strong>Diagnosing a network-bound job.</strong> Throughput per GPU drops as nodes are added while GPU utilisation falls; a profiler shows time in collective communication; and the same job scales well inside one node.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Estimate the communication time per step for a model you have trained.</li>
+<li>Why can a job scale well to 8 GPUs in one node and badly to 16 across two?</li>
+</ul>
+</details>
+<details class="qa" id="infra-018">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> Where should training data and checkpoints live: object storage, a parallel file system or local NVMe? What are the failure modes of each?
+</summary>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Storage</th>
+<th>Strengths</th>
+<th>Weaknesses</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Object storage (S3, GCS)</td>
+<td>Cheap, durable, effectively unlimited, accessible from anywhere, high aggregate throughput with many parallel readers</td>
+<td>High latency per request (tens of milliseconds), no POSIX semantics, request costs and rate limits; terrible for many small random reads</td>
+</tr>
+<tr class="even">
+<td>Parallel or distributed file system (Lustre, GPFS and similar)</td>
+<td>POSIX interface, high throughput shared by all nodes, good for large files</td>
+<td>Metadata servers choke on millions of small files; shared by all jobs, so one job’s bad pattern hurts everyone; costly to run</td>
+</tr>
+<tr class="odd">
+<td>Local NVMe on the node</td>
+<td>Fastest, lowest latency, no network</td>
+<td>Ephemeral and limited in size; gone when the node is reclaimed; must be filled first</td>
+</tr>
+</tbody>
+</table>
+<p><strong>The pattern that works.</strong></p>
+<ul>
+<li>Source of truth in object storage, as large shards (hundreds of megabytes to a few gigabytes each) read sequentially. Sequential reads of large objects turn the store’s weakness into a non-issue, and many shards read in parallel give high throughput.</li>
+<li>A cache on local NVMe for datasets that fit, filled at job start or lazily on first read. For multi-epoch training the second epoch is then local.</li>
+<li>A parallel file system where a POSIX interface is required or where the organisation already runs one, with data still packed into large files.</li>
+</ul>
+<p><strong>Failure modes to recognise.</strong></p>
+<ul>
+<li>Millions of small files (one image or one JSON per example): metadata operations dominate and listing a directory takes minutes.</li>
+<li>Random access into remote storage from a shuffling loader.</li>
+<li>Throttling by the object store under a burst of requests from hundreds of workers.</li>
+<li>Cross-region reads: slow and billed.</li>
+<li>Every job copying the same dataset to local disk separately, with no shared cache.</li>
+</ul>
+<p><strong>Checkpoints.</strong> Large sequential writes. Write to local disk and upload asynchronously, or write in parallel per rank, so that the training loop does not stall on a slow remote write. Keep retention rules, since checkpoints of large models fill storage quickly. Measure the time to write and to restore, because both enter the fault tolerance calculation.</p>
+<p><strong>Diagnosis.</strong> High I/O wait and idle GPUs point to storage; compare throughput with the dataset on local disk to confirm.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Why are large sequential shards so much better than individual files on every one of these systems?</li>
+<li>How would you share one dataset cache among many jobs on the same nodes?</li>
+</ul>
+</details>
+</section>
+<section id="ml-frameworks" class="level3">
+<h3 class="anchored" data-anchor-id="ml-frameworks">ML framework internals and compilers <span class="demand">8% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="infra.ml-frameworks.0"> Explain reverse-mode automatic differentiation and what the framework stores for the backward pass</li>
+<li><input type="checkbox" class="chk" data-chk="infra.ml-frameworks.1"> Implement a minimal scalar autograd engine</li>
+<li><input type="checkbox" class="chk" data-chk="infra.ml-frameworks.2"> Explain what a graph compiler such as torch.compile or XLA does and what causes recompilation</li>
+</ul>
+<details class="qa" id="infra-030">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> How does reverse-mode automatic differentiation work in a framework like PyTorch? What is stored during the forward pass, and why is reverse mode the right choice for training?
+</summary>
+<p><strong>The idea.</strong> A program computing a loss is a composition of elementary operations whose derivatives are known. Automatic differentiation applies the chain rule to that composition exactly, neither symbolically nor by finite differences.</p>
+<p><strong>Forward pass, recording.</strong> As each operation runs, the framework creates a node that remembers its inputs and whatever is needed to compute its local derivative (often the input or output values). The result is a directed acyclic graph from parameters to the loss. In PyTorch this graph is built dynamically, fresh on every forward pass, which is why ordinary Python control flow works.</p>
+<p><strong>Backward pass.</strong> Starting from <span class="math inline">\(\partial L / \partial L = 1\)</span>, walk the graph in reverse topological order. Each node receives the gradient of the loss with respect to its output and multiplies it by its local Jacobian to produce gradients for its inputs: a <strong>vector-Jacobian product</strong>. The full Jacobian is never formed. Gradients arriving at a tensor along several paths are summed.</p>
+<p><strong>Why reverse mode.</strong> For a function from <span class="math inline">\(n\)</span> inputs to <span class="math inline">\(m\)</span> outputs, forward mode costs one pass per input and reverse mode one pass per output. Training has millions of parameters and one scalar loss, so reverse mode yields all gradients for a small constant multiple of the cost of the forward pass.</p>
+<p><strong>The price is memory.</strong> Every intermediate value needed by a backward function is kept alive until the backward pass uses it. This is the activation memory of training, and it is why inference under a no-gradient context needs so much less.</p>
+<p><strong>Practical consequences.</strong></p>
+<ul>
+<li>The graph is freed after <code>backward()</code> by default; a second backward through it needs it to be retained.</li>
+<li>In-place modification of a tensor that a backward function saved invalidates the gradient; the framework detects it through version counters and raises an error.</li>
+<li>Detaching a tensor cuts the graph: no gradient flows past it.</li>
+<li>Gradients accumulate into <code>.grad</code> across calls, so they are zeroed each step.</li>
+<li>Non-differentiable points get a conventional subgradient; integer and indexing operations pass no gradient to the indices.</li>
+<li>Higher-order derivatives come from differentiating the backward computation itself.</li>
+</ul>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>When would forward-mode differentiation be the better choice?</li>
+<li>Why does an in-place operation sometimes break the backward pass and sometimes not?</li>
+</ul>
+</details>
+<details class="qa" id="infra-031">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> Implement a minimal scalar reverse-mode autodiff engine in Python that supports addition, multiplication and tanh, with a backward method.
+</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> math</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> Value:</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, data, parents<span class="op">=</span>()):</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.data, <span class="va">self</span>.grad <span class="op">=</span> <span class="bu">float</span>(data), <span class="fl">0.0</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>._parents <span class="op">=</span> parents</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>._backward <span class="op">=</span> <span class="kw">lambda</span>: <span class="va">None</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__add__</span>(<span class="va">self</span>, other):</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>        other <span class="op">=</span> other <span class="cf">if</span> <span class="bu">isinstance</span>(other, Value) <span class="cf">else</span> Value(other)</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>        out <span class="op">=</span> Value(<span class="va">self</span>.data <span class="op">+</span> other.data, (<span class="va">self</span>, other))</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>        <span class="kw">def</span> backward():</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>            <span class="va">self</span>.grad <span class="op">+=</span> out.grad</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>            other.grad <span class="op">+=</span> out.grad</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>        out._backward <span class="op">=</span> backward</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> out</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__mul__</span>(<span class="va">self</span>, other):</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>        other <span class="op">=</span> other <span class="cf">if</span> <span class="bu">isinstance</span>(other, Value) <span class="cf">else</span> Value(other)</span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>        out <span class="op">=</span> Value(<span class="va">self</span>.data <span class="op">*</span> other.data, (<span class="va">self</span>, other))</span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>        <span class="kw">def</span> backward():</span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>            <span class="va">self</span>.grad <span class="op">+=</span> other.data <span class="op">*</span> out.grad</span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>            other.grad <span class="op">+=</span> <span class="va">self</span>.data <span class="op">*</span> out.grad</span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>        out._backward <span class="op">=</span> backward</span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> out</span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>    <span class="fu">__radd__</span>, <span class="fu">__rmul__</span> <span class="op">=</span> <span class="fu">__add__</span>, <span class="fu">__mul__</span></span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> tanh(<span class="va">self</span>):</span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>        t <span class="op">=</span> math.tanh(<span class="va">self</span>.data)</span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>        out <span class="op">=</span> Value(t, (<span class="va">self</span>,))</span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>        <span class="kw">def</span> backward():</span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>            <span class="va">self</span>.grad <span class="op">+=</span> (<span class="fl">1.0</span> <span class="op">-</span> t <span class="op">*</span> t) <span class="op">*</span> out.grad</span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>        out._backward <span class="op">=</span> backward</span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> out</span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> backward(<span class="va">self</span>):</span>
+<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a>        order, seen <span class="op">=</span> [], <span class="bu">set</span>()</span>
+<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a>        <span class="kw">def</span> visit(v):</span>
+<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> v <span class="kw">not</span> <span class="kw">in</span> seen:</span>
+<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a>                seen.add(v)</span>
+<span id="cb5-42"><a href="#cb5-42" aria-hidden="true" tabindex="-1"></a>                <span class="cf">for</span> p <span class="kw">in</span> v._parents:</span>
+<span id="cb5-43"><a href="#cb5-43" aria-hidden="true" tabindex="-1"></a>                    visit(p)</span>
+<span id="cb5-44"><a href="#cb5-44" aria-hidden="true" tabindex="-1"></a>                order.append(v)</span>
+<span id="cb5-45"><a href="#cb5-45" aria-hidden="true" tabindex="-1"></a>        visit(<span class="va">self</span>)</span>
+<span id="cb5-46"><a href="#cb5-46" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.grad <span class="op">=</span> <span class="fl">1.0</span></span>
+<span id="cb5-47"><a href="#cb5-47" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> v <span class="kw">in</span> <span class="bu">reversed</span>(order):</span>
+<span id="cb5-48"><a href="#cb5-48" aria-hidden="true" tabindex="-1"></a>            v._backward()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>What the interviewer looks for:</p>
+<ul>
+<li><strong>Accumulate with <code>+=</code>.</strong> A value used twice, as in <code>y = x * x</code>, receives gradient from both uses; assignment would keep only one.</li>
+<li><strong>Topological order.</strong> A node’s gradient must be complete before it is propagated to its parents, so process nodes in reverse topological order, not in a naive recursive walk that could visit a shared node early.</li>
+<li><strong>Closures capture what the local derivative needs</strong>: the other operand for multiplication, the output for tanh. This is the stored state that costs memory in a real framework.</li>
+<li><strong>Seeding</strong> the output’s gradient with 1.</li>
+<li><strong>A check</strong>: compare with a finite difference, <span class="math inline">\((f(x + \epsilon) - f(x - \epsilon)) / 2\epsilon\)</span>, on a small expression.</li>
+</ul>
+<p>Limits to mention: gradients must be zeroed before a second backward call; the recursive sort overflows the stack on very deep graphs, so use an iterative one; and a real engine works on tensors, where each local derivative becomes a vector-Jacobian product with broadcasting to undo.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Add subtraction, division and a power operation using what is already there.</li>
+<li>What changes when values are tensors and addition broadcasts?</li>
+</ul>
+</details>
+<details class="qa" id="infra-032">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> What does a graph compiler such as torch.compile or JAX’s jit do for a model, and what commonly goes wrong when you turn it on?
+</summary>
+<p><strong>Why compile.</strong> Eager execution runs one operation at a time from Python: every operation pays interpreter and dispatch overhead and writes its own intermediate tensor, and the framework never sees more than one operation ahead. A compiler captures a region of the program as a graph and optimises it as a whole.</p>
+<p><strong>What it does.</strong></p>
+<ol type="1">
+<li><em>Capture.</em> <code>torch.compile</code> intercepts Python execution, records tensor operations into a graph and inserts <strong>guards</strong>: conditions on input types, shapes and relevant Python values under which the captured graph is valid. JAX’s <code>jit</code> instead traces the function once with abstract values standing for arrays of a given shape and type.</li>
+<li><em>Optimise.</em> Remove dead code, fold constants, fuse chains of elementwise operations into single kernels, eliminate intermediate tensors, plan memory. With training, the backward computation is captured and optimised too.</li>
+<li><em>Generate code</em> for the target device and cache it. Later calls that satisfy the guards skip Python for that region.</li>
+</ol>
+<p>Gains are largest for models with many small operations and Python overhead, and small for models already dominated by a few large library kernels.</p>
+<p><strong>What goes wrong.</strong></p>
+<ul>
+<li><em>Recompilation.</em> A new input shape, type or guarded Python value fails the guards and triggers a compile. Variable sequence lengths can cause a compile on many steps. Remedies: pad or bucket to a few shapes, or mark dimensions as dynamic.</li>
+<li><em>Compile time.</em> The first call takes seconds to minutes, which hurts short jobs, tests and serving cold starts.</li>
+<li><em>Graph breaks</em> (PyTorch). Unsupported Python constructs, data-dependent control flow, calls into other libraries or printing a tensor split the region; each piece is compiled separately and the benefit shrinks.</li>
+<li><em>Tracing semantics</em> (JAX). Python control flow on array values cannot be traced; it must be expressed with the library’s structured control-flow functions. Side effects run only at trace time. Functions must be pure, with randomness passed explicitly.</li>
+<li><em>Numerical differences.</em> Fusion and reordering change floating-point results slightly.</li>
+<li><em>Debugging.</em> Errors refer to generated code; start by disabling compilation to localise the problem.</li>
+</ul>
+<p><strong>Adopting it.</strong> Measure steady-state step time and compile time separately, log recompilation counts, and keep an eager mode switch. Check the current documentation; this area changes quickly between releases.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Your training loop recompiles every few steps. How do you find the cause?</li>
+<li>Why must a function be pure for JAX to compile it correctly?</li>
+</ul>
+</details>
+</section>
+<section id="feature-store" class="level3">
+<h3 class="anchored" data-anchor-id="feature-store">Feature stores and online/offline consistency <span class="demand">3% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="infra.feature-store.0"> Describe the offline and online stores and how one definition feeds both</li>
+<li><input type="checkbox" class="chk" data-chk="infra.feature-store.1"> Explain point-in-time correctness and write a point-in-time join</li>
+</ul>
+<details class="qa" id="infra-022">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> What problem does a feature store solve? Describe its parts and what point-in-time correctness means.
+</summary>
+<p>A feature store exists to make the features a model sees in training identical to those it sees in serving, and to let teams reuse features instead of rebuilding them.</p>
+<p><strong>Parts.</strong></p>
+<ul>
+<li><em>Feature definitions.</em> One declared transformation per feature, with an entity key (user, item), a timestamp, an owner and a version. The same definition feeds both stores.</li>
+<li><em>Offline store.</em> The full history of feature values with timestamps, in a warehouse or lake. Used to build training sets.</li>
+<li><em>Online store.</em> The latest value per entity in a low-latency key-value store. Used at inference with a budget of a few milliseconds.</li>
+<li><em>Materialisation.</em> Batch and streaming jobs that compute features and write them to both stores.</li>
+<li><em>Serving API and registry.</em> Fetch a feature vector by entity keys; discover features, lineage and consumers.</li>
+<li><em>Monitoring.</em> Freshness, null rates and the distribution of online against offline values.</li>
+</ul>
+<p><strong>Point-in-time correctness.</strong> A training example is an event at time <span class="math inline">\(t\)</span> with a label. Its features must be the values that were available just before <span class="math inline">\(t\)</span>, as serving would have seen them. Joining the latest value of each feature instead leaks the future: a “purchases in the last 30 days” feature computed today includes the very purchase you are predicting. The offline join is therefore an as-of join: for each example, the most recent feature row with a timestamp earlier than the event’s.</p>
+<p>The timestamp that matters is when the value became <em>available</em> to serving, not the event time of the underlying data. A daily batch feature for day <span class="math inline">\(d\)</span> that lands at 6 am on day <span class="math inline">\(d + 1\)</span> must not be used for events before that.</p>
+<p><strong>When you do not need one.</strong> A single team with a few batch features can keep one shared transformation library and log served features for training. Logging the feature vector at prediction time and training on those logs gives consistency by construction; its cost is that a new feature has no history until it has been logged for a while.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Why is the availability time, not the event time, the right timestamp for the join?</li>
+<li>What are the trade-offs of training only on features logged at serving time?</li>
+</ul>
+</details>
+<details class="qa" id="infra-023">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> Write a point-in-time join: for each labelled event, attach the most recent feature value known strictly before the event. Show it in pandas and in SQL.
+</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> point_in_time_join(labels, features, key<span class="op">=</span><span class="st">"user_id"</span>, ts<span class="op">=</span><span class="st">"ts"</span>, max_age<span class="op">=</span><span class="va">None</span>):</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""labels:   [key, ts, label]</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="co">    features: [key, ts, f1, ...], ts = time the value became available.</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="co">    max_age:  optional pd.Timedelta; older feature values are treated as missing."""</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    labels <span class="op">=</span> labels.sort_values(ts)</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    features <span class="op">=</span> features.sort_values(ts)</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pd.merge_asof(</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>        labels, features, on<span class="op">=</span>ts, by<span class="op">=</span>key,</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>        direction<span class="op">=</span><span class="st">"backward"</span>,          <span class="co"># latest feature row at or before the event</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>        allow_exact_matches<span class="op">=</span><span class="va">False</span>,     <span class="co"># strictly before: no same-instant leakage</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>        tolerance<span class="op">=</span>max_age)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The same in SQL, portable across warehouses:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span> <span class="op">*</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="kw">FROM</span> (</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">SELECT</span> l.<span class="op">*</span>, f.f1,</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>         <span class="fu">ROW_NUMBER</span>() <span class="kw">OVER</span> (<span class="kw">PARTITION</span> <span class="kw">BY</span> l.label_id <span class="kw">ORDER</span> <span class="kw">BY</span> f.ts <span class="kw">DESC</span>) <span class="kw">AS</span> rn</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">FROM</span> labels l</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">LEFT</span> <span class="kw">JOIN</span> features f</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">ON</span> f.user_id <span class="op">=</span> l.user_id <span class="kw">AND</span> f.ts <span class="op">&lt;</span> l.ts</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>) t</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a><span class="kw">WHERE</span> rn <span class="op">=</span> <span class="dv">1</span>;</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>What to say:</p>
+<ul>
+<li><code>merge_asof</code> requires both frames sorted by the time column; <code>by</code> restricts matches to the same entity.</li>
+<li><strong>Strict inequality.</strong> A feature row with the same timestamp as the event may already contain the event’s outcome.</li>
+<li><strong>Left join.</strong> Events with no earlier feature row keep a null, which is what serving would have seen for a new user. Dropping them biases the training set.</li>
+<li><strong>Staleness bound.</strong> Serving may expire old values (a TTL in the online store). Apply the same bound offline with <code>tolerance</code>, or training sees values serving would not have.</li>
+<li><strong>Availability time.</strong> If <code>ts</code> is the event time of the source data rather than when the feature landed, add the pipeline delay before joining.</li>
+<li><strong>Cost.</strong> The SQL form joins every label to all earlier feature rows for the entity before filtering, which explodes for long histories. Engines with an as-of join, or a range-bounded join on a window of days, avoid that.</li>
+<li><strong>Test.</strong> Build a tiny fixture where the naive latest-value join gives a different answer, and assert the difference.</li>
+</ul>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How would you verify on real data that a training set has no future leakage?</li>
+<li>How does the join change when features are updated by a stream rather than a daily batch?</li>
+</ul>
+</details>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/threeeyelidds\.github\.io\/minimal-ml\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+      window.quartoDecorateExternalLinks = function (root) {
+     var links = (root || window.document).querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+          if (!link.classList.contains('no-external-icon')) {
+          }
+        }
+      }
+      };
+      window.quartoDecorateExternalLinks(window.document);
+    // Esc closes the popup (WCAG 1.4.13) and focus leaving both trigger and
+    // popup closes it (WCAG 2.4.11); tippy handles neither for interactive popups.
+    const hideOnEscAndFocusOut = {
+      name: 'hideOnEscAndFocusOut',
+      defaultValue: true,
+      fn(instance) {
+        const dismiss = () => {
+          // A show scheduled by the trigger delay would otherwise reopen it
+          instance.clearDelayTimeouts();
+          instance.hide();
+        };
+        const onKeyDown = (event) => {
+          if (event.key !== 'Escape') {
+            return;
+          }
+          // Keep Esc from also reaching page handlers (e.g. reveal.js overview),
+          // except an open reveal.js slide menu, which Esc should close too.
+          // The menu handles keys only when its keyboard option is on.
+          const menuHandlesEsc = window.Reveal?.getPlugin?.('menu')?.isOpen() &&
+            window.Reveal.getConfig().menu?.keyboard !== false;
+          if (!menuHandlesEsc) {
+            event.stopPropagation();
+          }
+          if (instance.popper.contains(window.document.activeElement)) {
+            // Disabled while refocusing so the focus trigger does not reopen it
+            instance.disable();
+            instance.reference.focus();
+            instance.enable();
+          }
+          dismiss();
+        };
+        const onFocusOut = (event) => {
+          const target = event.relatedTarget;
+          if (target && !instance.reference.contains(target) &&
+              !instance.popper.contains(target)) {
+            dismiss();
+          }
+        };
+        // On the trigger too: a click trigger (code-annotations: select) has no
+        // blur handling. Attached for the instance's lifetime so leaving the
+        // trigger also cancels a show still pending on the trigger delay.
+        instance.reference.addEventListener('focusout', onFocusOut);
+        return {
+          onShow() {
+            window.document.addEventListener('keydown', onKeyDown, true);
+            instance.popper.addEventListener('focusout', onFocusOut);
+          },
+          onHide() {
+            window.document.removeEventListener('keydown', onKeyDown, true);
+            instance.popper.removeEventListener('focusout', onFocusOut);
+          },
+          onDestroy() {
+            instance.reference.removeEventListener('focusout', onFocusOut);
+          },
+        };
+      },
+    };
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+        plugins: [hideOnEscAndFocusOut],
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          // Each band is positioned against its own containing block, which is
+          // not the offsetParent of the lines, so place it from client rects.
+          const placeBand = (band, firstEl, lastEl, codeBlock) => {
+            const container = band.offsetParent;
+            if (container === null) {
+              return;
+            }
+            const containerRect = container.getBoundingClientRect();
+            // Reveal.js scales slides with a transform, so convert client
+            // pixels back to the CSS pixels of the container.
+            const scale = containerRect.height / container.offsetHeight || 1;
+            const firstRect = firstEl.getBoundingClientRect();
+            const lastRect = lastEl.getBoundingClientRect();
+            const top = (firstRect.top - containerRect.top) / scale - container.clientTop + container.scrollTop;
+            const height = (lastRect.bottom - firstRect.top) / scale;
+            band.style.top = top - 2 + "px";
+            band.style.height = height + 4 + "px";
+            if (codeBlock) {
+              // Without the copy button wrapper, the containing block is wider
+              // than the code block, so span the code block explicitly.
+              const blockRect = codeBlock.getBoundingClientRect();
+              band.style.left = (blockRect.left - containerRect.left) / scale - container.clientLeft + container.scrollLeft + "px";
+              band.style.width = blockRect.width / scale + "px";
+            }
+          };
+          if (lineIds.length > 0) {
+            const el = window.document.getElementById(lineIds[0]);
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const parent = el.parentElement.parentElement;
+            // cook up a div (if necessary) and position it
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            placeBand(div, el, lastEl, parent.closest("div.sourceCode") || parent);
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            placeBand(gutterDiv, el, lastEl);
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+  <script type="application/javascript">
+  window.quartoScrollableRegionsLabels = {"code":"Scrollable code","output":"Scrollable output"};
+  </script>
+</div> <!-- /content -->
+<script>
+/* Site-wide: persistent checklists and review status on the skill pages. */
+(function () {
+  "use strict";
+  function get(k) { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch (e) { return {}; } }
+  function set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* storage blocked: ticks last for this page view */ } }
+
+  var chk = get("prep.chk.v1");
+  document.querySelectorAll("input.chk").forEach(function (el) {
+    el.checked = !!chk[el.dataset.chk];
+    el.addEventListener("change", function () {
+      if (el.checked) chk[el.dataset.chk] = 1; else delete chk[el.dataset.chk];
+      set("prep.chk.v1", chk);
+    });
+  });
+
+  var cards = (get("prep.v1").cards) || {};
+  document.querySelectorAll("details.qa[id]").forEach(function (el) {
+    var r = cards[el.id];
+    if (r) el.classList.add(r.ivl >= 7 ? "st-known" : "st-learning");
+  });
+
+  // open the question a link points at
+  function openTarget() {
+    var id = decodeURIComponent(location.hash.slice(1));
+    var el = id && document.getElementById(id);
+    if (el && el.tagName === "DETAILS") { el.open = true; el.scrollIntoView({ block: "start" }); }
+  }
+  window.addEventListener("hashchange", openTarget);
+  openTarget();
+
+  var mp = document.getElementById("map-progress");
+  if (mp) {
+    var seen = Object.keys(cards).length, known = Object.keys(cards).filter(function (k) { return cards[k].ivl >= 7; }).length;
+    var ticks = Object.keys(chk).length;
+    if (seen || ticks) {
+      mp.className = "tile";
+      mp.style.marginBottom = "1.2rem";
+      mp.textContent = "Your progress in this browser: " + seen + " cards reviewed, " + known + " known, " + ticks + " checklist items ticked.";
+    }
+  }
+})();
+</script>
+
+
+
+
+</body></html>

@@ -1,0 +1,2491 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.11.9">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>LLM application engineering (agents, RAG, prompts) – Minimal ML</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/scrollable-regions/scrollable-regions.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-447e42e69aaa9833c0ba1b986f430b20.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-980fa6b4eab38a5377f72c7fe6f39b73.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="dark">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<meta name="google-site-verification" content="Ztjr25pGaioeZP-mkoIn_MkNmmsFXWcU6I6W2tEPli0">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../styles.css">
+<link rel="stylesheet" href="../colors.css">
+<link rel="stylesheet" href="../prep.css">
+</head>
+
+<body class="nav-sidebar docked nav-fixed quarto-light"><a id="quarto-skip-link" class="visually-hidden-focusable" href="#quarto-document-content">Skip to main content</a>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark" aria-label="Site">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">Minimal ML</span>
+    </a>
+  </div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../report/index.html"> 
+<span class="menu-text">Report</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link active" href="../skills/index.html" aria-current="page"> 
+<span class="menu-text">Skills</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../review/index.html"> 
+<span class="menu-text">Review</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../plan/index.html"> 
+<span class="menu-text">Plan</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../jobs/index.html"> 
+<span class="menu-text">Open roles</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../notes/index.html"> 
+<span class="menu-text">Notes</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../essays/index.html"> 
+<span class="menu-text">Essays</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+            <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav" aria-label="Toolbar">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="Breadcrumbs"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../skills/llm.html">LLMs and agents</a></li><li class="breadcrumb-item"><a href="../skills/llmapp.html">LLM application engineering (agents, RAG, prompts)</a></li></ol></nav>
+        <a class="flex-grow-1" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto" aria-label="Section">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Skill map</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/cases.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Design cases</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" aria-controls="quarto-sidebar-section-1" aria-expanded="true">
+ <span class="menu-text" id="quarto-sidebar-section-1-label">The loop</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-1" aria-labelledby="quarto-sidebar-section-1-label" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/swe.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Programming and software engineering</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/mlfund.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">ML fundamentals and statistics</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/dl.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Deep learning</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/eval.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Evaluation and experimentation</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/senior.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Senior-level scope and leadership</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" aria-controls="quarto-sidebar-section-2" aria-expanded="true">
+ <span class="menu-text" id="quarto-sidebar-section-2-label">LLMs and agents</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-2" aria-labelledby="quarto-sidebar-section-2-label" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/llm.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">LLMs and foundation models (training side)</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/llmapp.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">LLM application engineering (agents, RAG, prompts)</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/rl.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Reinforcement learning and decision making</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/research.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Research skills</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" aria-controls="quarto-sidebar-section-3" aria-expanded="true">
+ <span class="menu-text" id="quarto-sidebar-section-3-label">Product ML</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-3" aria-labelledby="quarto-sidebar-section-3-label" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/recsys.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Search, recommendation, ads and ranking</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/domain.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Domain specialties</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" aria-controls="quarto-sidebar-section-4" aria-expanded="true">
+ <span class="menu-text" id="quarto-sidebar-section-4-label">Systems</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-4" aria-labelledby="quarto-sidebar-section-4-label" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/infra.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Training infrastructure and data systems</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/serving.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Inference, serving and model optimization</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/mlops.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">MLOps, cloud and production operations</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" aria-labelledby="toc-title" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#what-the-postings-ask-for" id="toc-what-the-postings-ask-for" class="nav-link active" data-scroll-target="#what-the-postings-ask-for">What the postings ask for</a>
+  <ul class="collapse">
+  <li><a href="#in-the-postings-words" id="toc-in-the-postings-words" class="nav-link" data-scroll-target="#in-the-postings-words">In the postings’ words</a></li>
+  </ul></li>
+  <li><a href="#the-senior-bar" id="toc-the-senior-bar" class="nav-link" data-scroll-target="#the-senior-bar">The senior bar</a></li>
+  <li><a href="#skills-checklists-and-questions" id="toc-skills-checklists-and-questions" class="nav-link" data-scroll-target="#skills-checklists-and-questions">Skills, checklists and questions</a>
+  <ul class="collapse">
+  <li><a href="#agents" id="toc-agents" class="nav-link" data-scroll-target="#agents">Agents and agentic systems <span class="demand">57% of postings</span></a></li>
+  <li><a href="#orchestration" id="toc-orchestration" class="nav-link" data-scroll-target="#orchestration">Agent frameworks, harnesses and runtimes (LangGraph, LlamaIndex, agent SDKs) <span class="demand">26% of postings</span></a></li>
+  <li><a href="#llm-apis" id="toc-llm-apis" class="nav-link" data-scroll-target="#llm-apis">Building on model APIs (OpenAI, Anthropic, Gemini, Bedrock) <span class="demand">25% of postings</span></a></li>
+  <li><a href="#prompting" id="toc-prompting" class="nav-link" data-scroll-target="#prompting">Prompt and context engineering <span class="demand">22% of postings</span></a></li>
+  <li><a href="#rag" id="toc-rag" class="nav-link" data-scroll-target="#rag">Retrieval-augmented generation <span class="demand">22% of postings</span></a></li>
+  <li><a href="#tool-use" id="toc-tool-use" class="nav-link" data-scroll-target="#tool-use">Tool use, function calling, MCP <span class="demand">21% of postings</span></a></li>
+  <li><a href="#workflow-automation" id="toc-workflow-automation" class="nav-link" data-scroll-target="#workflow-automation">Workflow automation and enterprise integration <span class="demand">17% of postings</span></a></li>
+  <li><a href="#guardrails" id="toc-guardrails" class="nav-link" data-scroll-target="#guardrails">Guardrails, safety filters, hallucination control <span class="demand">16% of postings</span></a></li>
+  <li><a href="#llm-cost" id="toc-llm-cost" class="nav-link" data-scroll-target="#llm-cost">Cost, latency and model routing for LLM products <span class="demand">14% of postings</span></a></li>
+  <li><a href="#fde" id="toc-fde" class="nav-link" data-scroll-target="#fde">Forward-deployed / customer-embedded delivery <span class="demand">12% of postings</span></a></li>
+  <li><a href="#vector-db" id="toc-vector-db" class="nav-link" data-scroll-target="#vector-db">Vector search and embedding stores <span class="demand">12% of postings</span></a></li>
+  <li><a href="#structured-output" id="toc-structured-output" class="nav-link" data-scroll-target="#structured-output">Structured outputs and reliability of LLM pipelines <span class="demand">8% of postings</span></a></li>
+  <li><a href="#conversational" id="toc-conversational" class="nav-link" data-scroll-target="#conversational">Conversational AI / voice agents <span class="demand">6% of postings</span></a></li>
+  <li><a href="#memory" id="toc-memory" class="nav-link" data-scroll-target="#memory">Agent memory and state <span class="demand">4% of postings</span></a></li>
+  </ul></li>
+  <li><a href="#deep-dives-on-this-site" id="toc-deep-dives-on-this-site" class="nav-link" data-scroll-target="#deep-dives-on-this-site">Deep dives on this site</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content" tabindex="-1">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="Breadcrumbs"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../skills/llm.html">LLMs and agents</a></li><li class="breadcrumb-item"><a href="../skills/llmapp.html">LLM application engineering (agents, RAG, prompts)</a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title">LLM application engineering (agents, RAG, prompts)</h1>
+<p class="subtitle lead">Named in 74% of 2253 senior postings · 45 review cards</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!-- Generated by tools/build_site.py. Edit bank/*.yml or the script, not this file. -->
+<p>Building products on top of model APIs: agent loops and the harnesses around them, tool interfaces and MCP, retrieval-augmented generation, context construction, guardrails, and the cost, latency and reliability work that turns a demo into a production system. About three quarters of postings name something in this area, and 82% of AI-engineer postings name agents. It is tested in system design rounds, in a build-an-agent or build-a-retriever coding round, and in debugging scenarios.</p>
+<p class="area-meta">
+<span class="chip">ML / AI system design</span><span class="chip">Coding (agent loop, retrieval, output parsing)</span><span class="chip">Debugging and incident scenarios</span><span class="chip">Project deep dive</span><span class="chip">Forward-deployed or customer scenario round</span><a class="btn-review" href="../review/index.html#area=llmapp">Review these cards →</a>
+</p>
+<section id="what-the-postings-ask-for" class="level2">
+<h2 class="anchored" data-anchor-id="what-the-postings-ask-for">What the postings ask for</h2>
+<p>Share of postings that name each skill, overall and by track.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Skill</th>
+<th style="text-align: left;">All postings</th>
+<th style="text-align: right;">MLE</th>
+<th style="text-align: right;">AI eng</th>
+<th style="text-align: right;">Research eng</th>
+<th style="text-align: right;">Cards</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><a href="#agents">Agents and agentic systems</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:57%"></span><span class="pct">57%</span></span></td>
+<td style="text-align: right;">37%</td>
+<td style="text-align: right;">75%</td>
+<td style="text-align: right;">51%</td>
+<td style="text-align: right;">7</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="#orchestration">Agent frameworks, harnesses and runtimes (LangGraph, LlamaIndex, agent SDKs)</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:26%"></span><span class="pct">26%</span></span></td>
+<td style="text-align: right;">13%</td>
+<td style="text-align: right;">40%</td>
+<td style="text-align: right;">10%</td>
+<td style="text-align: right;">4</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="#llm-apis">Building on model APIs (OpenAI, Anthropic, Gemini, Bedrock)</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:25%"></span><span class="pct">25%</span></span></td>
+<td style="text-align: right;">16%</td>
+<td style="text-align: right;">32%</td>
+<td style="text-align: right;">24%</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="#prompting">Prompt and context engineering</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:22%"></span><span class="pct">22%</span></span></td>
+<td style="text-align: right;">13%</td>
+<td style="text-align: right;">33%</td>
+<td style="text-align: right;">10%</td>
+<td style="text-align: right;">5</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="#rag">Retrieval-augmented generation</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:22%"></span><span class="pct">22%</span></span></td>
+<td style="text-align: right;">15%</td>
+<td style="text-align: right;">32%</td>
+<td style="text-align: right;">4%</td>
+<td style="text-align: right;">8</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="#tool-use">Tool use, function calling, MCP</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:21%"></span><span class="pct">21%</span></span></td>
+<td style="text-align: right;">11%</td>
+<td style="text-align: right;">31%</td>
+<td style="text-align: right;">12%</td>
+<td style="text-align: right;">5</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="#workflow-automation">Workflow automation and enterprise integration</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:17%"></span><span class="pct">17%</span></span></td>
+<td style="text-align: right;">8%</td>
+<td style="text-align: right;">27%</td>
+<td style="text-align: right;">6%</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="#guardrails">Guardrails, safety filters, hallucination control</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:16%"></span><span class="pct">16%</span></span></td>
+<td style="text-align: right;">11%</td>
+<td style="text-align: right;">23%</td>
+<td style="text-align: right;">4%</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="#llm-cost">Cost, latency and model routing for LLM products</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:14%"></span><span class="pct">14%</span></span></td>
+<td style="text-align: right;">12%</td>
+<td style="text-align: right;">19%</td>
+<td style="text-align: right;">4%</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="#fde">Forward-deployed / customer-embedded delivery</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:12%"></span><span class="pct">12%</span></span></td>
+<td style="text-align: right;">6%</td>
+<td style="text-align: right;">18%</td>
+<td style="text-align: right;">8%</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="#vector-db">Vector search and embedding stores</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:12%"></span><span class="pct">12%</span></span></td>
+<td style="text-align: right;">7%</td>
+<td style="text-align: right;">18%</td>
+<td style="text-align: right;">1%</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="#structured-output">Structured outputs and reliability of LLM pipelines</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:8%"></span><span class="pct">8%</span></span></td>
+<td style="text-align: right;">5%</td>
+<td style="text-align: right;">11%</td>
+<td style="text-align: right;">3%</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="#conversational">Conversational AI / voice agents</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:6%"></span><span class="pct">6%</span></span></td>
+<td style="text-align: right;">5%</td>
+<td style="text-align: right;">7%</td>
+<td style="text-align: right;">5%</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="#memory">Agent memory and state</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:4%"></span><span class="pct">4%</span></span></td>
+<td style="text-align: right;">2%</td>
+<td style="text-align: right;">6%</td>
+<td style="text-align: right;">2%</td>
+<td style="text-align: right;">1</td>
+</tr>
+</tbody>
+</table>
+<section id="in-the-postings-words" class="level3">
+<h3 class="anchored" data-anchor-id="in-the-postings-words">In the postings’ words</h3>
+<blockquote class="blockquote">
+<p>AI application integration patterns, including MCP, gateways, skills, plugins, or agent workflows. Deep ML model development is not required.</p>
+<p><span class="quote-src"><a href="https://zendesk.wd1.myworkdayjobs.com/zendesk/job/Mexico-City-Mexico/Staff-Software-Engineer--AI-Platform---Enablement_R35681">Zendesk · Staff Software Engineer, AI Platform &amp; Enablement</a></span></p>
+</blockquote>
+<blockquote class="blockquote">
+<p>Proficiency in LangChain/LangGraph or other Orchestration and agentic workflow</p>
+<p><span class="quote-src"><a href="https://cisco.wd5.myworkdayjobs.com/Cisco_Careers/job/Bangalore-India/AI-Operations-Engineer_2025714-1">Cisco · AI Operations Engineer</a></span></p>
+</blockquote>
+<blockquote class="blockquote">
+<p>Deep UXC / AI-native UX expertise - has shipped intelligent, AI-driven user experiences (not just consumed an LLM API), with strong intuition for how agent/model output should surface to real users.</p>
+<p><span class="quote-src"><a href="https://jobs.smartrecruiters.com/ServiceNow/744000154360190-principal-software-engineer-ai-native-ux">ServiceNow · Principal Software Engineer - AI Native UX</a></span></p>
+</blockquote>
+<blockquote class="blockquote">
+<p>Python, Java, LangGraph, RAG, prompt and context engineering, GCP Vertex AI, Bigtable, Cloud SQL, vector databases, etc.</p>
+<p><span class="quote-src"><a href="https://wd1.myworkdaysite.com/recruiting/paypal/jobs/job/Central-Singapore-Singapore/Staff-Agentic-AI-Engineer_R0138537">PayPal · Staff Agentic AI Engineer</a></span></p>
+</blockquote>
+<blockquote class="blockquote">
+<p>Proficiency in building and troubleshooting modern agentic systems (prompt tuning, routing, planning, multi-agent, RAG, tool use, memory management, etc.).</p>
+<p><span class="quote-src"><a href="https://jobs.apple.com/en-us/details/200662966">Apple · Machine Learning Engineer - Health AIML</a></span></p>
+</blockquote>
+<blockquote class="blockquote">
+<p>Agentic Safety: Focus on LLM-level safety for autonomous systems, including multi-turn tool-calling, orchestration, and execution risks.</p>
+<p><span class="quote-src"><a href="https://nvidia.wd5.myworkdayjobs.com/NVIDIAExternalCareerSite/job/US-CA-Santa-Clara/Senior-Machine-Learning-Engineer--AI-Safety_JR2024679">Nvidia · Senior Machine Learning Engineer, AI Safety</a></span></p>
+</blockquote>
+<blockquote class="blockquote">
+<p>● Seamlessly integrate Large Language Model (LLM)-driven agent pipelines with core Electronic Design Automation (EDA) suites, custom in-house software tools, and enterprise data repositories.</p>
+<p><span class="quote-src"><a href="https://broadcom.wd1.myworkdayjobs.com/External_Career/job/USA-TX-Austin---River-Place-B7/Infrastructure-AI-ML-Engineer-for-Memory-Design--Characterization--and-Yield-Optimization_R027297">Broadcom · Infrastructure AI/ML Engineer for Memory Design, Characterization, and Yield Optimization</a></span></p>
+</blockquote>
+</section>
+</section>
+<section id="the-senior-bar" class="level2">
+<h2 class="anchored" data-anchor-id="the-senior-bar">The senior bar</h2>
+<p>What separates a senior answer from a mid-level one in this area.</p>
+<ul>
+<li>Picks the least autonomous design that solves the task (single call, workflow, agent) and justifies it with error compounding, cost per task and cost of a wrong action.</li>
+<li>Treats the model as an untrusted proposer, so permissions, argument validation, budgets, idempotency and approvals are enforced in code outside the model and never only in the prompt.</li>
+<li>Reasons about context as a budgeted, cache-sensitive compiled state and can say what goes in, in what order, what is compacted and what is fetched on demand.</li>
+<li>Separates retrieval failures from generation failures in RAG, measures each stage, and knows hybrid retrieval, reranking and permission filtering concretely.</li>
+<li>Changes prompts, tools and models as versioned changes gated by a regression eval, and debugs incidents from traces rather than from guesses.</li>
+<li>Quantifies cost and latency per completed task (input and output tokens, cache hit rate, time to first token, steps per task) and knows which lever moves which number.</li>
+<li>Can scope work with a customer down to one measurable workflow, define acceptance criteria and carry it from demo to production.</li>
+</ul>
+</section>
+<section id="skills-checklists-and-questions" class="level2">
+<h2 class="anchored" data-anchor-id="skills-checklists-and-questions">Skills, checklists and questions</h2>
+<p>Tick an item when you can explain it without notes; ticks are saved in this browser. Open a question to see the answer.</p>
+<section id="agents" class="level3">
+<h3 class="anchored" data-anchor-id="agents">Agents and agentic systems <span class="demand">57% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="llmapp.agents.0"> Draw the agent loop and name the four parts (model, tools, state, stop condition) and which decisions belong to code</li>
+<li><input type="checkbox" class="chk" data-chk="llmapp.agents.1"> Decide between a single call, a fixed workflow and an agent, using error compounding and cost of error</li>
+<li><input type="checkbox" class="chk" data-chk="llmapp.agents.2"> Explain router, prompt chain, parallel fan-out, orchestrator-workers and evaluator-optimizer, with a failure mode for each</li>
+<li><input type="checkbox" class="chk" data-chk="llmapp.agents.3"> Say when sub-agents with isolated context help and what they cost in tokens and lost context</li>
+<li><input type="checkbox" class="chk" data-chk="llmapp.agents.4"> Debug a non-terminating agent from its trace and add the budgets and loop detection that prevent it</li>
+<li><input type="checkbox" class="chk" data-chk="llmapp.agents.5"> Write a minimal tool-calling loop from memory</li>
+</ul>
+<details class="qa" id="llmapp-001">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> What is an agent, concretely? Walk me through the loop and tell me which parts belong to the model and which to your code.
+</summary>
+<p>An agent is a model run in a loop where the model, not the code, picks the next action from what it has observed so far. It has four parts:</p>
+<ul>
+<li><strong>Model</strong>: proposes either a final answer or one or more tool calls.</li>
+<li><strong>Tools</strong>: typed functions the harness can execute (search, read, write, run code).</li>
+<li><strong>State</strong>: the message history plus anything kept outside the window (plan, files, event log).</li>
+<li><strong>Stop condition</strong>: the model answers without a tool call and the completion check passes, or a budget (steps, tokens, wall-clock, money) runs out, or the run needs a human, or a fatal error occurs.</li>
+</ul>
+<p>One iteration: compile context from state, call the model, and if it requested tools then validate the arguments, check permissions, execute, append the bounded result as an observation and repeat.</p>
+<p>The split that matters: the model owns judgment under ambiguity (which hypothesis to test, what is missing, how to read an unfamiliar error). Code owns invariants (step limits, schema validation, timeouts, permission checks, approval for destructive actions). A model proposal is not a side effect until the harness has parsed, authorised and executed it. If the control flow is fixed in code and the model only fills in steps, it is a workflow, not an agent.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Which stop conditions would you enforce in code even if the prompt already states them?</li>
+<li>What does the model see when a tool call fails?</li>
+</ul>
+</details>
+<details class="qa" id="llmapp-002">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> When does a fixed workflow beat an agent, and when is an agent worth it?
+</summary>
+<p>Use the least autonomy that solves the task. A single call for classification, extraction or Q&amp;A; a workflow (code-defined steps, model fills each one) when the steps are known in advance; an agent only when the path depends on what is discovered along the way.</p>
+<p>Why not default to an agent:</p>
+<ul>
+<li><strong>Compounding error.</strong> If each step succeeds independently with probability <span class="math inline">\(p\)</span>, an <span class="math inline">\(n\)</span>-step run succeeds with about <span class="math inline">\(p^n\)</span>: <span class="math inline">\(0.95^{20} \approx 0.36\)</span>, <span class="math inline">\(0.99^{20} \approx 0.82\)</span>. This is a pessimistic bound only when the environment gives feedback the agent can use to recover (tests, error messages); silent errors compound fully.</li>
+<li><strong>Cost and latency.</strong> Every step re-sends the growing history, so uncached input tokens grow roughly quadratically in the number of steps.</li>
+<li><strong>Predictability.</strong> A workflow has enumerable paths that can be tested and audited.</li>
+</ul>
+<p>An agent earns its cost when four things hold: the task is open-ended and hard to specify as steps; the outcome is valuable enough to pay for many calls; the model is actually good at the task; and errors are cheap to detect and undo (tests, review, rollback).</p>
+<p>The common production shape is a hybrid: code fixes the outer stages and the invariants, and the model makes local decisions or runs a bounded loop inside one stage.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Give an example you would build as a workflow that a team wanted to build as an agent.</li>
+<li>How does a verifier change the <span class="math inline">\(p^n\)</span> argument?</li>
+</ul>
+</details>
+<details class="qa" id="llmapp-003">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Single agent or multiple agents? When do sub-agents help and what do they cost?
+</summary>
+<p>Start with one agent. Add sub-agents for a specific reason, not to mirror an org chart.</p>
+<p>What sub-agents buy:</p>
+<ul>
+<li><strong>Context isolation.</strong> A sub-agent can read 100k tokens of search results or files in its own window and return a 1-2k token finding, keeping the lead’s context clean.</li>
+<li><strong>Parallelism.</strong> Independent sub-tasks run concurrently and cut wall-clock time.</li>
+<li><strong>Specialisation.</strong> Different tool sets, prompts or cheaper models per role.</li>
+<li><strong>Independent checking.</strong> A reviewer that has not seen the author’s reasoning is less anchored on it.</li>
+</ul>
+<p>What they cost:</p>
+<ul>
+<li><strong>Tokens.</strong> Each sub-agent pays for its own context; total usage is typically several times a single agent’s.</li>
+<li><strong>Lossy hand-offs.</strong> The sub-agent knows only the brief, and the lead sees only the summary. Errors come back in the same confident tone as findings.</li>
+<li><strong>Coordination.</strong> Parallel agents that make interdependent decisions produce conflicts (two agents editing the same file, incompatible assumptions).</li>
+</ul>
+<p>Good fit: breadth-first, read-heavy, separable work (research across sources, codebase search, per-document extraction). Poor fit: tightly coupled writing where every decision depends on shared context.</p>
+<p>Rules that make it work: give each sub-agent an explicit brief (goal, what is already ruled out, output format, tool and scope limits); have it return compact, checkable results or pointers to artefacts; keep writes single-threaded; cap depth and fan-out.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How would you measure whether a multi-agent version is worth its token cost?</li>
+<li>What goes wrong if the lead forwards its own hypothesis in the brief?</li>
+</ul>
+</details>
+<details class="qa" id="llmapp-004">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Name the common orchestration patterns for LLM systems and say when each fits and how it fails.
+</summary>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Pattern</th>
+<th>Shape</th>
+<th>Fits when</th>
+<th>Typical failure</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Prompt chain</td>
+<td>fixed sequence, each call consumes the previous output, with code checks between</td>
+<td>task decomposes into known steps</td>
+<td>an early error propagates; latency adds up</td>
+</tr>
+<tr class="even">
+<td>Router</td>
+<td>classify the input, dispatch to a specialised prompt, tool set or model</td>
+<td>distinct request types with different handling</td>
+<td>misroutes fail silently; needs per-route evals</td>
+</tr>
+<tr class="odd">
+<td>Parallel fan-out</td>
+<td>split into independent parts, or run the same task several times and vote</td>
+<td>separable sub-tasks, or a need for higher confidence</td>
+<td>merge step loses or duplicates content; cost multiplies</td>
+</tr>
+<tr class="even">
+<td>Orchestrator-workers (planner-executor)</td>
+<td>a lead model decomposes at run time and delegates to workers</td>
+<td>sub-tasks are not known in advance</td>
+<td>bad decomposition; plan not revised when evidence changes</td>
+</tr>
+<tr class="odd">
+<td>Evaluator-optimizer</td>
+<td>a generator proposes, an evaluator critiques against criteria, loop until pass or budget</td>
+<td>clear criteria and measurable gain from revision</td>
+<td>evaluator is too lenient or the loop never converges</td>
+</tr>
+<tr class="even">
+<td>Autonomous loop</td>
+<td>model chooses tools until done</td>
+<td>open-ended tasks with good environment feedback</td>
+<td>wandering, loops, runaway cost</td>
+</tr>
+</tbody>
+</table>
+<p>Two points interviewers look for. First, these compose: a router in front of a chain, with one stage being a bounded agent loop. Second, plans should be mutable: plan, act briefly, observe, replan beats executing a long fixed plan, because later steps depend on observations the planner did not have. An evaluator should check the artefact or the environment (tests, schema, citations), not just ask the same model whether it is happy.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Where would you put deterministic checks in a prompt chain?</li>
+<li>When does voting across samples actually improve accuracy?</li>
+</ul>
+</details>
+<details class="qa" id="llmapp-005">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">debugging</span><span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Your agent sometimes runs until it hits the step limit without finishing. How do you investigate and what do you change?
+</summary>
+<p>Read the traces of the runs that ended on the budget and classify them before changing anything. The usual causes:</p>
+<ol type="1">
+<li><strong>Repeated identical call.</strong> The tool returns an error the model cannot act on (“failed”), or the result never reaches the model (tool result not paired with its call id, or truncated to nothing), so it retries the same thing.</li>
+<li><strong>Oscillation.</strong> Two fixes that undo each other, common when a verifier reports failure without saying what failed.</li>
+<li><strong>No reachable stop.</strong> The definition of done is missing or the completion check can never pass (flaky test, impossible requirement).</li>
+<li><strong>Lost state.</strong> Compaction dropped the fact that an approach was tried and failed.</li>
+<li><strong>Unbounded exploration.</strong> Pagination or search with no convergence criterion.</li>
+</ol>
+<p>Changes, in order:</p>
+<ul>
+<li>Make errors actionable: what failed, why, and what input would be valid.</li>
+<li>Detect loops in code: hash (tool, normalised arguments); after k repeats inject a notice, force a replan, or stop.</li>
+<li>Hard budgets on steps, tokens and wall-clock, with a graceful exit that reports partial progress instead of an exception.</li>
+<li>Give the model an explicit way out: “cannot complete, here is why” or ask the user.</li>
+<li>Keep failed attempts and unresolved errors verbatim through compaction.</li>
+</ul>
+<p>Then monitor the termination-reason histogram and the steps-per-task distribution (p50, p95), and add the looping cases to the regression set.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How do you tell a legitimate long task from a loop?</li>
+<li>The loop detector fires on a polling tool. What do you do?</li>
+</ul>
+</details>
+<details class="qa" id="llmapp-006">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">AI</span> Design a customer-support agent for an e-commerce company that can answer questions and perform actions such as refunds.
+</summary>
+<p><strong>Clarify first.</strong> Channels (chat, email, voice), volume, top intents, which actions are in scope, policy sources, the target (resolution rate at equal or better CSAT) and the cost of a wrong action.</p>
+<p><strong>Architecture.</strong></p>
+<ol type="1">
+<li><em>Intake</em>: authenticate the customer, attach account context, run input checks.</li>
+<li><em>Routing</em>: a small model classifies intent and risk; out-of-scope or sensitive intents go straight to a human.</li>
+<li><em>Knowledge</em>: RAG over help-centre and policy documents, with document versions and effective dates, so policy answers are grounded and cited.</li>
+<li><em>Agent loop with tools</em>: read tools (order status, shipment, account) run freely; write tools (refund, cancel, address change) are gated.</li>
+<li><em>Escalation</em>: hand off with a structured summary (issue, steps taken, customer data gathered) so the human does not start over.</li>
+</ol>
+<p><strong>Controls outside the model.</strong> Tools take the authenticated customer id from the session, never from model arguments, and the backend re-checks ownership. Refunds carry an idempotency key; amounts above a limit, or repeated refunds, require human approval. Policy limits live in code. Customer messages and ticket text are untrusted input. PII is redacted in logs.</p>
+<p><strong>Evaluation.</strong> Offline: a golden set of conversations per intent, simulated multi-turn users, graders for policy adherence, correct tool use and groundedness. Online: resolution rate, reopen rate within 7 days, CSAT, escalation rate and its precision, cost per resolved conversation.</p>
+<p><strong>Rollout.</strong> Shadow mode, then draft-for-human, then autonomous on low-risk intents, then expand intent by intent.</p>
+<p><strong>Failure modes to name.</strong> Inventing policy, premature “resolved” to hit the metric, social-engineering for refunds, loops with frustrated users (cap turns and escalate).</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How do you stop the agent from promising something the policy does not allow?</li>
+<li>Which metric would the team game first, and what counter-metric do you add?</li>
+<li>What changes for the voice channel?</li>
+</ul>
+</details>
+<details class="qa" id="llmapp-007">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Write a minimal agent loop with tool calling against a generic chat-completions-style client. Then tell me what is missing for production.
+</summary>
+<p>Assume <code>client.chat(messages, tools)</code> returns <code>{"content": str | None, "tool_calls": [{"id", "name", "arguments": &lt;JSON string&gt;}], "finish_reason": str}</code>.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> json</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> jsonschema</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> run_agent(client, system, user_msg, tools, max_steps<span class="op">=</span><span class="dv">20</span>):</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""tools: {name: {"description": str, "parameters": &lt;JSON Schema&gt;, "fn": callable}}"""</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    specs <span class="op">=</span> [{<span class="st">"name"</span>: n, <span class="st">"description"</span>: t[<span class="st">"description"</span>], <span class="st">"parameters"</span>: t[<span class="st">"parameters"</span>]}</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>             <span class="cf">for</span> n, t <span class="kw">in</span> <span class="bu">sorted</span>(tools.items())]            <span class="co"># stable order keeps the prefix cacheable</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    messages <span class="op">=</span> [{<span class="st">"role"</span>: <span class="st">"system"</span>, <span class="st">"content"</span>: system},</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>                {<span class="st">"role"</span>: <span class="st">"user"</span>, <span class="st">"content"</span>: user_msg}]</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(max_steps):</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>        reply <span class="op">=</span> client.chat(messages<span class="op">=</span>messages, tools<span class="op">=</span>specs)</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>        messages.append({<span class="st">"role"</span>: <span class="st">"assistant"</span>, <span class="st">"content"</span>: reply[<span class="st">"content"</span>],</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>                         <span class="st">"tool_calls"</span>: reply[<span class="st">"tool_calls"</span>]})</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> reply[<span class="st">"finish_reason"</span>] <span class="op">==</span> <span class="st">"length"</span>:</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>            <span class="cf">raise</span> <span class="pp">RuntimeError</span>(<span class="st">"output truncated; tool arguments may be incomplete"</span>)</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="kw">not</span> reply[<span class="st">"tool_calls"</span>]:</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> reply[<span class="st">"content"</span>]                         <span class="co"># stop: answer without a tool call</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> call <span class="kw">in</span> reply[<span class="st">"tool_calls"</span>]:                    <span class="co"># one result per call, same id</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>            messages.append({<span class="st">"role"</span>: <span class="st">"tool"</span>, <span class="st">"tool_call_id"</span>: call[<span class="st">"id"</span>],</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>                             <span class="st">"content"</span>: execute(tools, call)})</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>    <span class="cf">raise</span> <span class="pp">RuntimeError</span>(<span class="st">"step budget exhausted"</span>)</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> execute(tools, call, max_chars<span class="op">=</span><span class="dv">8000</span>):</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>    <span class="cf">try</span>:</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>        tool <span class="op">=</span> tools[call[<span class="st">"name"</span>]]                          <span class="co"># KeyError: hallucinated tool</span></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>        args <span class="op">=</span> json.loads(call[<span class="st">"arguments"</span>])</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>        jsonschema.validate(args, tool[<span class="st">"parameters"</span>])</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>        out <span class="op">=</span> tool[<span class="st">"fn"</span>](<span class="op">**</span>args)</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>        text <span class="op">=</span> out <span class="cf">if</span> <span class="bu">isinstance</span>(out, <span class="bu">str</span>) <span class="cf">else</span> json.dumps(out, default<span class="op">=</span><span class="bu">str</span>)</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>    <span class="cf">except</span> <span class="pp">Exception</span> <span class="im">as</span> e:                                  <span class="co"># errors are observations</span></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>        text <span class="op">=</span> <span class="ss">f"ERROR </span><span class="sc">{</span><span class="bu">type</span>(e)<span class="sc">.</span><span class="va">__name__</span><span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>e<span class="sc">}</span><span class="ss">"</span></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> text[:max_chars]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Pitfalls an interviewer checks:</p>
+<ul>
+<li>The assistant message with its tool calls must be appended before the results, and every call needs exactly one result with the matching id, or the next request is rejected.</li>
+<li>Tool errors go back to the model as results; only harness faults raise.</li>
+<li>A hard step limit and bounded tool output.</li>
+</ul>
+<p>Missing for production: permission and approval checks before side-effecting tools, per-tool timeouts, retry with backoff on API errors, token and cost budgets, context compaction, concurrency for parallel-safe calls, an event log for resume, tracing, and a completion verifier.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Where would you add human approval, and what is persisted while waiting?</li>
+<li>How would you run the tool calls in parallel safely?</li>
+</ul>
+</details>
+</section>
+<section id="orchestration" class="level3">
+<h3 class="anchored" data-anchor-id="orchestration">Agent frameworks, harnesses and runtimes (LangGraph, LlamaIndex, agent SDKs) <span class="demand">26% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="llmapp.orchestration.0"> Name the components of a harness (context compiler, tool executor, state, controller, verifiers, permissions, observability)</li>
+<li><input type="checkbox" class="chk" data-chk="llmapp.orchestration.1"> Design sandboxing and a permission policy for an agent that can run shell commands</li>
+<li><input type="checkbox" class="chk" data-chk="llmapp.orchestration.2"> Make a long-running agent resumable with an event log, checkpoints and durable human approval</li>
+<li><input type="checkbox" class="chk" data-chk="llmapp.orchestration.3"> Say what LangGraph, LlamaIndex, DSPy and vendor agent SDKs each provide</li>
+<li><input type="checkbox" class="chk" data-chk="llmapp.orchestration.4"> Argue when to write the loop yourself and what you would then have to rebuild</li>
+</ul>
+<details class="qa" id="llmapp-008">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> What is an agent harness, and what are its components?
+</summary>
+<p>The harness is everything around the model that turns a next-token predictor into a closed-loop system: it decides what the model sees, executes what the model proposes, and enforces what the model must not decide. The same model can score very differently under different harnesses, which is why postings ask for it by name.</p>
+<p>Components:</p>
+<ul>
+<li><strong>Context compiler</strong>: assembles rules, task, tool definitions, working state, selected evidence and recent history for each call; handles ordering, truncation and compaction.</li>
+<li><strong>Tool registry and executor</strong>: schemas, argument validation, timeouts, output normalisation, side-effect class, retry semantics.</li>
+<li><strong>State and memory</strong>: append-only event log, working state (plan, budgets), artefacts on disk, long-term memory.</li>
+<li><strong>Controller</strong>: the loop itself, with termination conditions, budgets, retries, escalation, sub-agent and background-job lifecycles, resume after interruption.</li>
+<li><strong>Verifiers</strong>: tests, schema checks, citation checks; they turn “I think I am done” into evidence.</li>
+<li><strong>Permission layer</strong>: least privilege, sandboxing, approval for consequential actions; outside the model’s control.</li>
+<li><strong>Observability</strong>: traces of every decision, call, result, token count and termination reason.</li>
+</ul>
+<p>The design rule: deterministic invariants belong in code. Writing “never call more than 20 tools” in a prompt makes a hard rule probabilistic and wastes context.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Which component would you build first for a new agent, and why?</li>
+<li>What does the harness do that a stronger model will not make unnecessary?</li>
+</ul>
+</details>
+<details class="qa" id="llmapp-009">
+<summary>
+<span class="tag tag-staff">staff</span><span class="tag tag-type">design</span><span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Design the harness for a coding agent that works in a developer’s repository and can run shell commands.
+</summary>
+<p><strong>Tools.</strong> Search (grep, glob), read with line ranges, edit by exact string replacement or patch (cheaper and safer than whole-file rewrites), shell, and a way to run tests. Tool output is bounded; large output goes to a file the agent can page through.</p>
+<p><strong>Sandbox.</strong> Run commands in a container, VM or OS-level sandbox: file writes limited to the workspace, network denied by default with an allowlist (package registries), no ambient credentials in the environment. State which capability sits inside which boundary; an external MCP tool is not covered by the shell sandbox.</p>
+<p><strong>Permissions.</strong> Rules evaluated in code per action: reads allowed; workspace edits allowed or ask-once; shell commands matched against allow, ask and deny patterns; pushing, deploying, deleting outside the workspace and anything touching secrets needs explicit approval. The effective action set is the intersection of sandbox, rules and approval policy.</p>
+<p><strong>Context.</strong> Load a repository instruction file and a compact environment description; never load the repo wholesale, search on demand. Keep the prefix stable for caching (fixed tool order, append-only history). Compact when near the limit, preserving the task, user constraints, files touched, failing tests and attempted fixes.</p>
+<p><strong>Feedback and verification.</strong> Compilers, type checkers, linters and tests are the dense signal that makes coding agents work; run them after edits and before claiming done. Show the diff to the user.</p>
+<p><strong>State.</strong> Append-only event log to replay or resume a session; file snapshots or commits as checkpoints so any step can be rolled back; explicit interrupt semantics (what happens to an in-flight command).</p>
+<p><strong>Extras.</strong> Read-only sub-agents for wide searches; hooks before and after tool calls for policy and formatting; full traces with token and cost accounting.</p>
+<p><strong>Evaluation.</strong> Repository tasks graded by hidden tests in fresh containers, plus tasks from your own codebase; report resolve rate, cost and time per task, and human intervention rate.</p>
+<p><strong>Threats.</strong> Injection via repository files, issue text, web pages and dependency docs; data exfiltration through the network; destructive commands. The sandbox bounds the blast radius when the prompt-level defences fail.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Why edit by string replacement instead of rewriting files?</li>
+<li>How would you let the agent work unattended overnight without widening the risk?</li>
+<li>A post-tool hook finds a secret in the diff. What can it still prevent?</li>
+</ul>
+</details>
+<details class="qa" id="llmapp-010">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">AI</span> What do LangGraph, LlamaIndex, DSPy and vendor agent SDKs actually give you, and when would you write the loop yourself?
+</summary>
+<p>What each provides (APIs change quickly, so treat details as version-specific):</p>
+<ul>
+<li><strong>LangGraph</strong>: a graph or state-machine runtime. Nodes are steps, edges are transitions, a typed shared state flows through; checkpointing gives persistence, resume and human-in-the-loop interrupts.</li>
+<li><strong>LlamaIndex</strong>: a data framework for RAG: loaders, parsers and chunkers, indices, retrievers, rerankers and query engines, plus agent and workflow abstractions on top.</li>
+<li><strong>DSPy</strong>: programs written as typed signatures and modules instead of prompt strings; optimizers search instructions and few-shot demonstrations against a metric and a training set. It needs a metric and data to be useful.</li>
+<li><strong>Vendor agent SDKs</strong> (OpenAI Agents SDK, Claude Agent SDK, Google ADK and similar): a maintained loop with tool definitions, hand-offs or sub-agents, guardrail hooks, sessions and tracing, tuned for that vendor’s models.</li>
+</ul>
+<p>The core loop is about 50 lines. The hard parts are tool design, context assembly, evals and permissions, and no framework does those for you.</p>
+<p>Write it yourself when you need full control of the exact request sent to the model, when the abstraction hides prompts or token usage, or when the control flow is unusual. Use a framework for the commodity runtime you would otherwise rebuild: durable state and resume, streaming, tracing, connectors.</p>
+<p>A practical test: can you print the exact messages and tool definitions for any call, and can you swap one component without rewriting the rest? If not, the framework will cost more in debugging than it saves.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>What breaks first when a prototype built on a framework goes to production?</li>
+<li>How would you evaluate a DSPy-optimised prompt against your hand-written one?</li>
+</ul>
+</details>
+<details class="qa" id="llmapp-011">
+<summary>
+<span class="tag tag-staff">staff</span><span class="tag tag-type">concept</span><span class="tag tag-track">AI</span> An agent run can take hours and includes a step that needs human approval. How do you make it survive crashes, restarts and a two-day wait?
+</summary>
+<p>Model the run as a resumable state machine, not a blocking function call.</p>
+<p><strong>Event log as source of truth.</strong> Append every model response, tool call, tool result, approval and error to durable storage. State is rebuilt by replaying the log; derived UI state is a projection, not a second source of truth.</p>
+<p><strong>Checkpoint boundaries.</strong> Persist the model’s response before executing its tool calls, and each tool result as soon as it returns. On restart, completed steps are read from the log and not re-executed.</p>
+<p><strong>The ambiguous step.</strong> A crash between “tool started” and “result recorded” leaves a side effect in an unknown state. Handle it with an idempotency key derived from (run id, step, call id) that the downstream system deduplicates on, or by querying the target’s state before retrying. Without one of these, at-least-once execution means duplicate refunds.</p>
+<p><strong>Durable approval.</strong> A pending approval is a persisted record, not a waiting process: store the exact proposed action, release compute, resume on an external signal. Bind the approval to a hash of the arguments so any change needs re-approval; give it an expiry and a defined behaviour on timeout and on rejection (the model is told and can replan).</p>
+<p><strong>Interruption.</strong> Define what cancel means for the model stream, the in-flight tool, effects already applied and the next resume. Killing the process is not a design.</p>
+<p><strong>Implementation.</strong> A durable-execution engine (Temporal-style) fits: orchestration code is deterministic and replayable, while model calls and tools are activities whose recorded results are replayed rather than recomputed. LangGraph-style checkpointers give a lighter version of the same idea.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Why can you not simply re-run the model call during replay?</li>
+<li>The context has been compacted since the checkpoint. What do you restore?</li>
+</ul>
+</details>
+</section>
+<section id="llm-apis" class="level3">
+<h3 class="anchored" data-anchor-id="llm-apis">Building on model APIs (OpenAI, Anthropic, Gemini, Bedrock) <span class="demand">25% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="llmapp.llm-apis.0"> Handle rate limits, retries with backoff and jitter, timeouts and streaming errors</li>
+<li><input type="checkbox" class="chk" data-chk="llmapp.llm-apis.1"> Check finish reasons (length, tool call, refusal or content filter) before using a response</li>
+<li><input type="checkbox" class="chk" data-chk="llmapp.llm-apis.2"> Design provider or model fallback and say why prompts are not portable across models</li>
+<li><input type="checkbox" class="chk" data-chk="llmapp.llm-apis.3"> Explain sources of non-determinism and how tests and evals account for it</li>
+<li><input type="checkbox" class="chk" data-chk="llmapp.llm-apis.4"> Plan a model version migration with pinned snapshots and a re-qualification eval</li>
+</ul>
+<details class="qa" id="llmapp-041">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> What does a production-grade client for a hosted model API need to handle?
+</summary>
+<ul>
+<li><strong>Rate limits.</strong> Providers limit requests and tokens per minute, often separately for input and output. Handle 429 with the <code>retry-after</code> header; add a client-side token bucket and a queue with backpressure so bursts wait instead of failing; give interactive traffic priority over batch.</li>
+<li><strong>Retries.</strong> Exponential backoff with jitter for 429, 5xx, timeouts and overload errors, with a cap on attempts and total time. Do not retry 4xx validation errors. A retried request may be billed twice and returns a different sample.</li>
+<li><strong>Timeouts and streaming.</strong> Long generations need streaming to avoid idle-connection timeouts. Handle errors that arrive mid-stream and decide what to do with partial output.</li>
+<li><strong>Finish reasons.</strong> Check why generation stopped before using the output: natural end, token limit (truncated), tool call, or refusal or content filter.</li>
+<li><strong>Fallbacks.</strong> A secondary model, region or provider behind a circuit breaker. Prompts and tool-call behaviour are not portable across models, so the fallback path needs its own prompt tuning and its own eval results.</li>
+<li><strong>Capacity.</strong> Know your quota against peak tokens per minute; consider provisioned throughput for latency-sensitive paths; hedge requests only where tail latency justifies the cost.</li>
+<li><strong>Observability.</strong> Log request id, model version, token counts including cached tokens, latency, finish reason and retries for every call.</li>
+<li><strong>Data terms.</strong> Retention, training use, residency, and what may be sent at all.</li>
+<li><strong>Versioning.</strong> Pin dated model versions and track deprecation dates.</li>
+</ul>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>You are at the token-per-minute limit at peak. What are your options?</li>
+<li>What can go wrong when failing over to another provider mid-conversation?</li>
+</ul>
+</details>
+<details class="qa" id="llmapp-042">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> LLM outputs are non-deterministic and the models behind an API change. How do you build a reliable system on that?
+</summary>
+<p><strong>Where the variance comes from.</strong> Sampling (temperature, top-p). Even at temperature 0, outputs can differ between calls: floating-point results depend on batching and hardware, requests land on different replicas, and providers update serving stacks. Seed parameters are best effort. Some reasoning models do not expose sampling parameters at all.</p>
+<p><strong>Consequences for testing.</strong></p>
+<ul>
+<li>Assert properties, not exact strings: schema validity, required facts present, a grader’s verdict.</li>
+<li>Run each eval case several times and report a pass rate with a confidence interval; a case that passes four times in five is a finding in itself.</li>
+<li>Use record-and-replay of model responses for unit tests of the surrounding code.</li>
+</ul>
+<p><strong>Consequences for design.</strong></p>
+<ul>
+<li>Put anything that must be exact in code: arithmetic, lookups, permission checks.</li>
+<li>Validate outputs and retry within bounds; make downstream actions idempotent.</li>
+<li>Use multiple samples with voting only where the accuracy gain justifies the cost.</li>
+</ul>
+<p><strong>Model changes.</strong></p>
+<ul>
+<li>Pin dated snapshots; moving aliases change behaviour without a deploy on your side.</li>
+<li>Snapshots are deprecated on a schedule, so migration is recurring work. Keep an eval suite that re-qualifies a new model, and expect to re-tune prompts: instructions that compensated for the old model can hurt the new one.</li>
+<li>Roll out with shadow traffic or a canary, comparing quality, latency and cost.</li>
+<li>Keep periodic canary prompts in production to detect upstream drift.</li>
+</ul>
+<p>The goal is system-level reliability from an unreliable component, the same way distributed systems treat networks.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>A test passes locally and fails in CI one time in ten. What do you do?</li>
+<li>How do you decide the number of trials per eval case?</li>
+</ul>
+</details>
+</section>
+<section id="prompting" class="level3">
+<h3 class="anchored" data-anchor-id="prompting">Prompt and context engineering <span class="demand">22% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="llmapp.prompting.0"> List what goes into the context window and order it for both quality and cache reuse</li>
+<li><input type="checkbox" class="chk" data-chk="llmapp.prompting.1"> Describe compaction strategies and what must survive a summary verbatim</li>
+<li><input type="checkbox" class="chk" data-chk="llmapp.prompting.2"> Decide between long-context stuffing, one-shot retrieval and agentic retrieval</li>
+<li><input type="checkbox" class="chk" data-chk="llmapp.prompting.3"> Explain prompt caching as a prefix match and name the common silent invalidators</li>
+<li><input type="checkbox" class="chk" data-chk="llmapp.prompting.4"> Run prompts as versioned artefacts with a regression suite and pinned model versions</li>
+<li><input type="checkbox" class="chk" data-chk="llmapp.prompting.5"> Choose few-shot examples and say when they hurt</li>
+</ul>
+<details class="qa" id="llmapp-017">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> What goes into the context window of a production LLM feature, and how do you order it?
+</summary>
+<p>Context engineering is choosing the smallest set of high-signal tokens that makes the next output correct. The layers:</p>
+<ol type="1">
+<li><strong>Rules</strong>: role, policies, output contract. Stable and authoritative.</li>
+<li><strong>Tool definitions.</strong></li>
+<li><strong>Reference material</strong>: retrieved documents, few-shot examples.</li>
+<li><strong>State</strong>: plan, progress, known constraints, open errors.</li>
+<li><strong>History</strong>: recent turns and tool results.</li>
+<li><strong>The current request.</strong></li>
+</ol>
+<p>Ordering principles:</p>
+<ul>
+<li><em>Stable first, volatile last.</em> Prompt caches match on the prefix, so tools, system prompt and fixed documents go first; timestamps, user-specific data and the question go last.</li>
+<li><em>Long documents before the question</em>, with the instruction restated at the end. Models attend best to the start and end of long inputs (“lost in the middle”), so do not bury the key instruction or the key passage mid-context.</li>
+<li><em>Delimit data from instructions</em> (tags or fenced sections) and label untrusted content as data to be analysed, not obeyed.</li>
+<li><em>Say why, not just what.</em> A short reason for a rule generalises better than emphasis.</li>
+</ul>
+<p>Few-shot examples: three to five, diverse, covering edge cases, in exactly the output format you want. For heterogeneous inputs, select examples per request by similarity. Models copy surface features of examples, so near-identical examples narrow the output.</p>
+<p>Failure modes: contradictory instructions accumulated over time, stale retrieved content, tool outputs that swamp the window, and treating a transcript dump as state.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How would you test whether an instruction in the prompt is still doing anything?</li>
+<li>When do few-shot examples make outputs worse?</li>
+</ul>
+</details>
+<details class="qa" id="llmapp-018">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Your agent’s context fills up on long tasks. What are the compaction strategies and what can go wrong?
+</summary>
+<p>Quality degrades before the hard limit: long, noisy contexts make models miss instructions and reuse stale information. So manage context continuously, not only at overflow.</p>
+<p><strong>Strategies, cheapest first.</strong></p>
+<ol type="1">
+<li><em>Bound tool output at the source</em>: return the relevant slice, store the full output as an artefact with a pointer.</li>
+<li><em>Clear old tool results</em>: keep the record that the call happened, drop the bulky payload that can be re-fetched.</li>
+<li><em>Summarise history into structured state</em>: goal, user constraints, decisions and their reasons, files or entities touched, open errors, failed attempts, next steps.</li>
+<li><em>Externalise</em>: write notes or plans to files or a memory store and re-read on demand.</li>
+<li><em>Isolate</em>: push exploration into a sub-agent that returns only its conclusion.</li>
+</ol>
+<p><strong>What must survive verbatim.</strong> User constraints, the definition of done, unresolved errors, the reasons earlier approaches failed, and source attributions.</p>
+<p><strong>Costs.</strong> Summaries are lossy, and rewriting history invalidates the prompt cache from that point, so compaction trades a one-time cache miss for a smaller context. Trigger at a threshold well below the limit so the summary itself has room.</p>
+<p><strong>Failure modes.</strong> The agent repeats an approach whose failure was summarised away; a user constraint disappears; the summary states a guess as a fact.</p>
+<p><strong>How to test.</strong> Evals that interrupt a run, compact, and resume; compare task success and repeated-action rate with and without compaction.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How do you choose between clearing tool results and summarising?</li>
+<li>What is the compaction analogue of a regression test?</li>
+</ul>
+</details>
+<details class="qa" id="llmapp-019">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Context windows now reach a million tokens. Why still build retrieval, and when would you just put everything in the prompt?
+</summary>
+<p>Put it all in the prompt when the corpus is small enough to fit comfortably, changes rarely, and every user may see all of it. With prompt caching the repeated prefix is cheap on later requests, there is no retrieval miss, and the model can reason across documents. This is the right first version for a knowledge base of tens to a few hundred pages.</p>
+<p>Build retrieval when any of these holds:</p>
+<ul>
+<li><strong>Size</strong>: the corpus exceeds the window, or will.</li>
+<li><strong>Cost and latency</strong>: input cost and time to first token scale with prompt length on every request; at high QPS a long prompt per request dominates the bill even with caching.</li>
+<li><strong>Access control</strong>: different users may see different documents, which breaks a shared cached prefix and makes “put everything in” a leak.</li>
+<li><strong>Freshness</strong>: documents change; re-indexing a changed document is cheaper than invalidating a huge cached prompt.</li>
+<li><strong>Accuracy</strong>: irrelevant material acts as distractors, and recall of a specific fact drops as context grows.</li>
+<li><strong>Attribution</strong>: retrieval gives a natural unit for citations.</li>
+</ul>
+<p>Retrieval’s weakness is that a one-shot miss is unrecoverable: if the passage is not in the top k, the model cannot answer. Global questions (“summarise the themes across all contracts”) also do badly with top-k chunks.</p>
+<p>The middle option is agentic retrieval: give the model search and read tools and let it iterate. It recovers from misses and handles multi-hop questions, at the price of more calls and latency.</p>
+<p>Decide from corpus size against window, update rate, QPS times tokens, permission model, and question types, and confirm with an eval rather than by argument.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How would you measure the distractor effect on your own data?</li>
+<li>What does per-user access control do to your cache hit rate?</li>
+</ul>
+</details>
+<details class="qa" id="llmapp-020">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> How does prompt caching work, and how does it change the way you lay out a prompt?
+</summary>
+<p>The provider stores the model’s computed state for a prompt prefix. A later request whose prompt starts with exactly the same tokens reuses it, so those input tokens are billed at a discount and time to first token drops.</p>
+<p><strong>It is a prefix match.</strong> A change at any position invalidates everything after it. So the layout is: tool definitions, then system prompt, then fixed reference material, then conversation history, then the volatile part (current question, timestamps, per-request data).</p>
+<p><strong>Silent invalidators.</strong></p>
+<ul>
+<li>A timestamp, request id or user name near the top of the system prompt.</li>
+<li>Non-deterministic serialisation: unsorted JSON keys, tools listed in varying order.</li>
+<li>Adding or removing a tool mid-conversation.</li>
+<li>Rewriting earlier history (compaction, trimming, editing a message).</li>
+<li>Switching models; caches are per model.</li>
+</ul>
+<p><strong>Provider differences (check current documentation).</strong> Some cache automatically above a minimum prefix length; others need explicit cache breakpoints. Lifetimes are short, typically minutes, extended on use. Discounts vary: on Anthropic’s API reads cost about a tenth of the base input price and writes carry a premium of about 25%, so a cached prefix pays off from the second request.</p>
+<p><strong>Why it matters most for agents.</strong> Each step re-sends the whole history. With an append-only history, each step pays full price only for the new tokens.</p>
+<p><strong>Operate it.</strong> Log cached versus uncached input tokens per request, track the hit rate, and alert when it falls; a prompt edit that drops the hit rate to zero can multiply cost with no visible behaviour change.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>You need the current date in the prompt. Where do you put it?</li>
+<li>How would you inject a new operator instruction mid-conversation without losing the cache?</li>
+</ul>
+</details>
+<details class="qa" id="llmapp-021">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">AI</span> How do you run prompt engineering as an engineering discipline rather than trial and error?
+</summary>
+<p>Treat prompts, tool descriptions and model settings as code with tests.</p>
+<ul>
+<li><strong>Version control.</strong> Prompts live in the repository as templates, separate from the data interpolated into them. Every production trace records the prompt version and the model version.</li>
+<li><strong>Regression suite.</strong> A golden set of inputs with graders (code checks where possible, validated LLM judges otherwise) runs on every change. The pull request shows per-slice scores and the individual examples that flipped, not only the average.</li>
+<li><strong>Held-out data.</strong> Tune against a development split and confirm on a held-out split. Editing a prompt until five hand-picked examples pass is overfitting.</li>
+<li><strong>Pinned models.</strong> Use dated model snapshots, not moving aliases. A model upgrade is a change like any other: re-run the suite and expect to re-tune, because instructions written to compensate for an older model’s weaknesses can hurt a newer one.</li>
+<li><strong>Staged rollout.</strong> Shadow or canary, then A/B on online metrics.</li>
+<li><strong>Root cause before patching.</strong> When an output is wrong, find out whether it is missing context, a conflicting instruction, a retrieval miss or a tool problem. Appending “IMPORTANT: never do X” for each incident produces a long, contradictory prompt.</li>
+<li><strong>Injection surface.</strong> Keep an inventory of every place where user, document or tool text is interpolated into the prompt; each is an attack surface and needs delimiting and downstream controls.</li>
+</ul>
+<p>Automated prompt optimisation (DSPy-style) fits the same frame: it needs a metric and a dataset, and its output is reviewed and tested like a human-written prompt.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>A prompt change fixes one customer’s issue and lowers the suite score by a point. Ship?</li>
+<li>How large does the golden set need to be to detect a 3-point regression?</li>
+</ul>
+</details>
+</section>
+<section id="rag" class="level3">
+<h3 class="anchored" data-anchor-id="rag">Retrieval-augmented generation <span class="demand">22% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="llmapp.rag.0"> Walk through ingestion, chunking, embedding, hybrid retrieval, reranking, generation and citation</li>
+<li><input type="checkbox" class="chk" data-chk="llmapp.rag.1"> Explain how chunk size trades retrieval precision against context and name three chunking strategies</li>
+<li><input type="checkbox" class="chk" data-chk="llmapp.rag.2"> Implement reciprocal rank fusion and say why hybrid beats dense-only on identifiers and rare terms</li>
+<li><input type="checkbox" class="chk" data-chk="llmapp.rag.3"> Triage a wrong answer into index, retrieval, context assembly or generation failure</li>
+<li><input type="checkbox" class="chk" data-chk="llmapp.rag.4"> Enforce document permissions at retrieval time and explain why post-generation filtering is unsafe</li>
+<li><input type="checkbox" class="chk" data-chk="llmapp.rag.5"> Evaluate retrieval (recall@k, nDCG) separately from generation (faithfulness, correctness, abstention)</li>
+</ul>
+<details class="qa" id="llmapp-022">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Walk me through a RAG system end to end, offline and online, and say where it usually breaks.
+</summary>
+<p><strong>Offline (ingestion).</strong></p>
+<ol type="1">
+<li><em>Parse</em>: PDFs, HTML, slides, tables, scans (OCR). Layout and table extraction quality bounds everything downstream.</li>
+<li><em>Chunk</em>: split into retrievable units, keeping structure (headings, tables, code).</li>
+<li><em>Enrich</em>: metadata per chunk (source, title, section path, date, version, permissions).</li>
+<li><em>Embed and index</em>: a vector index plus a lexical (BM25) index.</li>
+<li><em>Keep fresh</em>: incremental updates from change events, deletions, periodic reconciliation.</li>
+</ol>
+<p><strong>Online (query).</strong></p>
+<ol type="1">
+<li><em>Query processing</em>: rewrite a conversational turn into a standalone query; optionally decompose or expand.</li>
+<li><em>Retrieve</em>: top 50-100 candidates from dense and lexical retrieval, with metadata and permission filters applied in the retriever.</li>
+<li><em>Rerank</em>: a cross-encoder or LLM reranker cuts to the best 5-10.</li>
+<li><em>Assemble</em>: passages with source ids, ordered and deduplicated, within a token budget.</li>
+<li><em>Generate</em>: answer only from the passages, cite ids, abstain if unsupported.</li>
+<li><em>Check</em>: citation and groundedness verification before returning.</li>
+</ol>
+<p><strong>Where it breaks.</strong> Most failures are upstream of the model: a table parsed into noise, a chunk boundary that separates a number from its meaning, a query whose exact identifier dense retrieval misses, a stale version of a document outranking the current one. Fewer are generation failures: the model ignores the passage, blends in prior knowledge, or answers when it should abstain.</p>
+<p>Changing the embedding model means re-embedding the whole corpus, so version the index.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Which stage would you instrument first, and with what metric?</li>
+<li>How do you handle a question the corpus cannot answer?</li>
+</ul>
+</details>
+<details class="qa" id="llmapp-023">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> How do you choose a chunking strategy and chunk size?
+</summary>
+<p>Chunk size trades retrieval precision against context. Small chunks give a focused embedding and precise matches but lose the surrounding meaning (“it increased 12%” with no subject). Large chunks keep context but dilute the embedding across several topics and spend prompt tokens on irrelevant text.</p>
+<p>A reasonable starting point is a few hundred tokens with 10-20% overlap; treat it as a hyperparameter and tune on a retrieval eval.</p>
+<p>Strategies:</p>
+<ul>
+<li><strong>Fixed size with overlap</strong>: simple baseline; splits mid-sentence and mid-table.</li>
+<li><strong>Structure-aware / recursive</strong>: split on headings, then paragraphs, then sentences; keep tables, lists and code blocks whole.</li>
+<li><strong>Semantic</strong>: split where the similarity between adjacent sentences drops.</li>
+<li><strong>Small-to-big (parent-child)</strong>: index small chunks for matching, return the enclosing section to the model.</li>
+<li><strong>Contextual chunks</strong>: prepend the document title and section path, or a short model-written sentence situating the chunk, before embedding. This repairs lost referents.</li>
+</ul>
+<p>Choose by document type: structured manuals and code favour structure-aware splitting; transcripts and prose favour semantic or sliding windows; FAQs are one chunk per question.</p>
+<p>Evaluate with recall@k and nDCG on labelled queries, and end-to-end answer correctness. Looking at a few chunks is not an evaluation.</p>
+<p>Failure modes: answers that span a boundary, split tables, overlap that returns the same text twice, and chunks so short that everything matches weakly.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Recall@10 is fine but answers lack context. What do you change?</li>
+<li>How does the embedding model’s maximum input length constrain your choice?</li>
+</ul>
+</details>
+<details class="qa" id="llmapp-024">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Why use hybrid retrieval and a reranker, and when does query rewriting help?
+</summary>
+<p><strong>Hybrid.</strong> Dense retrieval matches meaning and paraphrase but is weak on exact tokens it did not learn well: product codes, error strings, rare names, new jargon. Lexical retrieval (BM25) is the opposite: exact on tokens, blind to synonyms. Their errors are complementary, so fusing them raises recall. Fuse with reciprocal rank fusion (rank-based, no score calibration needed) or a weighted sum of normalised scores.</p>
+<p><strong>Reranking.</strong> First-stage retrieval encodes query and document separately (a bi-encoder), which is fast but coarse. A cross-encoder reads the query and passage together and scores relevance much more accurately, at one forward pass per candidate. So retrieve 50-200 candidates cheaply and rerank to 5-10. Cost: tens to a few hundred milliseconds, depending on model size and candidate count.</p>
+<p><strong>Query rewriting.</strong></p>
+<ul>
+<li><em>Standalone rewrite</em>: resolve “what about the second one?” into a self-contained query. Close to mandatory for multi-turn chat.</li>
+<li><em>Decomposition</em>: split a multi-hop question into sub-queries.</li>
+<li><em>Expansion</em>: add synonyms or generate several paraphrases and fuse the results.</li>
+<li><em>HyDE</em>: embed a hypothetical answer instead of the question, which moves the query closer to document space.</li>
+</ul>
+<p>Rewriting costs an extra model call and can drift from the user’s intent, so keep the original query in the fusion.</p>
+<p>Add each stage only if it moves recall@k or nDCG on a labelled set; a reranker on top of a retriever that misses the document fixes nothing.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How do you set the candidate depth before reranking?</li>
+<li>When does dense-only retrieval beat hybrid?</li>
+</ul>
+</details>
+<details class="qa" id="llmapp-025">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Implement hybrid retrieval with reciprocal rank fusion.
+</summary>
+<p>RRF scores a document by its ranks across retrievers: <span class="math inline">\(\mathrm{RRF}(d) = \sum_{r} \frac{w_r}{k + \mathrm{rank}_r(d)}\)</span>, with <span class="math inline">\(k = 60\)</span> by convention and ranks starting at 1. A document absent from a list contributes nothing for that list.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> collections <span class="im">import</span> defaultdict</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> rrf(rankings, k<span class="op">=</span><span class="dv">60</span>, weights<span class="op">=</span><span class="va">None</span>):</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""rankings: list of ranked lists of doc ids, best first. Returns [(doc_id, score)]."""</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    weights <span class="op">=</span> weights <span class="kw">or</span> [<span class="fl">1.0</span>] <span class="op">*</span> <span class="bu">len</span>(rankings)</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    scores <span class="op">=</span> defaultdict(<span class="bu">float</span>)</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> w, ranking <span class="kw">in</span> <span class="bu">zip</span>(weights, rankings):</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>        seen <span class="op">=</span> <span class="bu">set</span>()</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> rank, doc_id <span class="kw">in</span> <span class="bu">enumerate</span>(ranking, start<span class="op">=</span><span class="dv">1</span>):</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> doc_id <span class="kw">in</span> seen:                    <span class="co"># count each doc once per list</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>                <span class="cf">continue</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>            seen.add(doc_id)</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>            scores[doc_id] <span class="op">+=</span> w <span class="op">/</span> (k <span class="op">+</span> rank)</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">sorted</span>(scores.items(), key<span class="op">=</span><span class="kw">lambda</span> x: (<span class="op">-</span>x[<span class="dv">1</span>], <span class="bu">str</span>(x[<span class="dv">0</span>])))   <span class="co"># deterministic ties</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> hybrid_search(query, bm25, embed, ann, top_k<span class="op">=</span><span class="dv">10</span>, depth<span class="op">=</span><span class="dv">100</span>, flt<span class="op">=</span><span class="va">None</span>):</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>    lexical <span class="op">=</span> bm25.search(query, depth, <span class="bu">filter</span><span class="op">=</span>flt)           <span class="co"># -&gt; [doc_id, ...]</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>    dense <span class="op">=</span> ann.search(embed(query), depth, <span class="bu">filter</span><span class="op">=</span>flt)       <span class="co"># -&gt; [doc_id, ...]</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> rrf([lexical, dense])[:top_k]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Pitfalls:</p>
+<ul>
+<li>RRF uses ranks only, so it needs no score normalisation but ignores how confident each retriever was. A weighted sum of normalised scores can do better if scores are calibrated.</li>
+<li>Fuse at one granularity. If one retriever returns chunks and the other documents, map both to the same id first.</li>
+<li>Retrieve deeper than <code>top_k</code> from each list, or fusion has nothing to add.</li>
+<li>Apply permission and metadata filters inside each retriever. Filtering after fusion can leave fewer than <code>top_k</code> results, and for permissions it is the wrong place.</li>
+<li><span class="math inline">\(k\)</span> damps the influence of top ranks; small <span class="math inline">\(k\)</span> makes rank 1 dominate.</li>
+<li>Tune weights and depth on a labelled set; follow with a reranker if latency allows.</li>
+</ul>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Why is k around 60 and what happens at k = 0?</li>
+<li>How would you add a third retriever that is much noisier than the other two?</li>
+</ul>
+</details>
+<details class="qa" id="llmapp-026">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Implement semantic chunking: split a document where the topic changes, with size limits.
+</summary>
+<p>Embed sentences, measure the cosine distance between neighbours, and cut at the largest jumps, subject to minimum and maximum chunk sizes.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> re</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> semantic_chunks(text, embed, max_tokens<span class="op">=</span><span class="dv">400</span>, min_tokens<span class="op">=</span><span class="dv">80</span>, pct<span class="op">=</span><span class="dv">90</span>,</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>                    n_tokens<span class="op">=</span><span class="kw">lambda</span> s: <span class="bu">len</span>(s.split())):</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    sents <span class="op">=</span> [s.strip() <span class="cf">for</span> s <span class="kw">in</span> re.split(<span class="vs">r"</span><span class="kw">(</span><span class="fu">?&lt;</span><span class="vs">=</span><span class="pp">[.!?]</span><span class="kw">)</span><span class="dv">\s</span><span class="op">+</span><span class="vs">"</span>, text) <span class="cf">if</span> s.strip()]</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">len</span>(sents) <span class="op">&lt;</span> <span class="dv">2</span>:</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> sents</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    E <span class="op">=</span> np.asarray(embed(sents), dtype<span class="op">=</span>np.float32)                  <span class="co"># (n, d)</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    E <span class="op">/=</span> np.linalg.norm(E, axis<span class="op">=</span><span class="dv">1</span>, keepdims<span class="op">=</span><span class="va">True</span>) <span class="op">+</span> <span class="fl">1e-12</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    dist <span class="op">=</span> <span class="fl">1.0</span> <span class="op">-</span> np.<span class="bu">sum</span>(E[:<span class="op">-</span><span class="dv">1</span>] <span class="op">*</span> E[<span class="dv">1</span>:], axis<span class="op">=</span><span class="dv">1</span>)                     <span class="co"># (n-1,) neighbour distance</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>    thresh <span class="op">=</span> np.percentile(dist, pct)                               <span class="co"># cut at the largest jumps</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>    chunks, cur, cur_len <span class="op">=</span> [], [sents[<span class="dv">0</span>]], n_tokens(sents[<span class="dv">0</span>])</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1</span>, <span class="bu">len</span>(sents)):</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>        n <span class="op">=</span> n_tokens(sents[i])</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>        topic_shift <span class="op">=</span> dist[i <span class="op">-</span> <span class="dv">1</span>] <span class="op">&gt;</span> thresh <span class="kw">and</span> cur_len <span class="op">&gt;=</span> min_tokens</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> topic_shift <span class="kw">or</span> cur_len <span class="op">+</span> n <span class="op">&gt;</span> max_tokens:</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>            chunks.append(<span class="st">" "</span>.join(cur))</span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>            cur, cur_len <span class="op">=</span> [], <span class="dv">0</span></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>        cur.append(sents[i])</span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>        cur_len <span class="op">+=</span> n</span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>    chunks.append(<span class="st">" "</span>.join(cur))</span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> chunks</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Pitfalls:</p>
+<ul>
+<li>Single-sentence embeddings are noisy. Embedding a sliding window of two or three sentences around each position gives steadier boundaries.</li>
+<li>The percentile threshold is relative to the document, so a single-topic document is still cut at its top 10% of jumps; the minimum size limits the damage.</li>
+<li>A single sentence longer than <code>max_tokens</code> still needs a hard split.</li>
+<li>The regex splitter breaks on abbreviations, decimals, code and tables. Split on structure (headings, tables, code blocks) first and apply this within sections.</li>
+<li>Count tokens with the embedding model’s tokenizer, not whitespace.</li>
+<li>Ingestion cost is one embedding per sentence.</li>
+<li>Semantic chunking does not always beat structure-aware fixed-size chunking. Compare recall@k on labelled queries before adopting it.</li>
+</ul>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How would you add overlap or parent-child retrieval to this?</li>
+<li>What is the time complexity, and where is the cost in practice?</li>
+</ul>
+</details>
+<details class="qa" id="llmapp-027">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">debugging</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Users report that your RAG assistant gives confidently wrong answers. How do you find the cause and fix it?
+</summary>
+<p>Take a sample of wrong answers with their traces and assign each to the first stage that failed:</p>
+<ol type="1">
+<li><strong>Not in the index</strong>: the document was never ingested, was parsed badly (tables, scans), or is stale.</li>
+<li><strong>Indexed but not retrieved</strong>: not in the top k. Vocabulary mismatch, an exact identifier dense retrieval missed, a bad chunk boundary, an over-restrictive filter.</li>
+<li><strong>Retrieved but not in the prompt</strong>: dropped by the reranker or the token budget.</li>
+<li><strong>In the prompt but answered wrongly</strong>: the model ignored it, blended in prior knowledge, or picked one of two conflicting or outdated passages.</li>
+<li><strong>Unanswerable</strong>: the corpus has no answer and the model produced one anyway.</li>
+</ol>
+<p>The distribution across buckets tells you where to work. Prompt edits only help buckets 4 and 5.</p>
+<p>Fixes by bucket: better parsing and freshness monitoring (1); hybrid retrieval, query rewriting, chunking changes (2); deeper candidates, reranker tuning, larger budget (3); instructions to answer only from sources, recency and authority metadata, deduplication of versions (4); explicit abstention plus an answerability check (5).</p>
+<p>For the “confidently” part:</p>
+<ul>
+<li>Require a citation per claim and verify after generation that each cited passage supports its claim (entailment model or LLM judge); block or flag unsupported claims.</li>
+<li>Abstain when retrieval scores are low or passages disagree.</li>
+<li>Show sources to the user.</li>
+</ul>
+<p>Then keep it fixed: put the failures into the regression set, and track retrieval recall and groundedness on sampled production traffic.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Two retrieved documents contradict each other. What should the system do?</li>
+<li>How do you measure abstention quality without making the system refuse everything?</li>
+</ul>
+</details>
+<details class="qa" id="llmapp-028">
+<summary>
+<span class="tag tag-staff">staff</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Design enterprise RAG over documents with access controls (SharePoint, Drive, Confluence, Slack) for a company with tens of thousands of employees.
+</summary>
+<p><strong>Requirements to pin down.</strong> Sources and volume, freshness target for content and for permission changes, the non-negotiable (a user never sees content they cannot open at source), citations, audit, tenancy and data residency.</p>
+<p><strong>Ingestion.</strong> One connector per source with incremental sync (change feeds or webhooks) and a periodic full reconcile to catch missed events and deletions. Each document is stored with its ACL: users, groups, inheritance and link-sharing rules. Source principals are mapped to one company identity; group membership is synced separately because it changes without the document changing.</p>
+<p><strong>Enforcing permissions.</strong> Filter at retrieval, before anything reaches the model. Content the user may not see must never enter the context window; a model cannot be trusted to withhold what it has read.</p>
+<ul>
+<li><em>Index-time ACLs</em>: store allowed principals on each chunk and filter by the user’s expanded principal set. Fast, but stale until the next sync.</li>
+<li><em>Query-time check</em>: confirm the top results against the source system. Always current, but slower.</li>
+<li>Use both: filter in the index, then verify the final few results at source.</li>
+</ul>
+<p>Revocation latency is a stated SLO. Response caches and semantic caches are keyed by permission scope or disabled.</p>
+<p><strong>Retrieval and generation.</strong> Structure-aware chunking with title and path context; hybrid retrieval with filter-aware ANN, falling back to exact search when a user’s permitted set is small; reranking; generation with citations that link to the source, which re-checks access.</p>
+<p><strong>Security.</strong> Documents are untrusted input (indirect injection), so the answering model gets no write tools. Per-tenant isolation. Audit log of who queried and which documents were retrieved. PII handling and retention.</p>
+<p><strong>Evaluation.</strong> Per-source retrieval sets; a permission test suite with canary documents that specific test users must never retrieve, run continuously; groundedness and citation accuracy; freshness lag dashboards.</p>
+<p><strong>Scale risks.</strong> Group fan-out for users in thousands of groups, very selective filters degrading ANN recall, and re-embedding the corpus on a model change.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>A user is removed from a group. Walk me through what must happen and how fast.</li>
+<li>Why is filtering the generated answer not sufficient?</li>
+<li>How would you test for a permission leak before launch?</li>
+</ul>
+</details>
+<details class="qa" id="llmapp-029">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> How do you evaluate a RAG system? Be specific about retrieval versus generation.
+</summary>
+<p>Evaluate the stages separately, then end to end, because an end-to-end score cannot tell you which stage to fix.</p>
+<p><strong>Retrieval.</strong> Labelled pairs of query and relevant chunk or document ids.</p>
+<ul>
+<li>recall@k: is the needed passage among the k passed on? This caps answer quality.</li>
+<li>MRR or nDCG@k: is it ranked high enough to survive truncation?</li>
+<li>Report by query type (lookup, multi-hop, identifier, conversational).</li>
+</ul>
+<p><strong>Generation, given the retrieved context.</strong></p>
+<ul>
+<li><em>Faithfulness / groundedness</em>: is every claim supported by the provided passages?</li>
+<li><em>Answer correctness</em> against a reference answer.</li>
+<li><em>Citation precision and recall</em>: do citations support the claims, and are claims cited?</li>
+<li><em>Abstention</em>: on unanswerable questions, does it decline; on answerable ones, does it not?</li>
+</ul>
+<p><strong>Diagnostic matrix.</strong> Cross retrieval hit or miss with answer right or wrong. A hit with a wrong answer is a generation problem; a miss with a right answer means the model used prior knowledge, which is a risk; a miss with a wrong answer is a retrieval problem.</p>
+<p><strong>Building the set.</strong> Sample real queries and have experts label; include unanswerable, multi-hop and ambiguous queries. Synthetic questions generated from chunks are useful for volume but are lexically close to their source and overstate retrieval quality.</p>
+<p><strong>Graders.</strong> Retrieval metrics are computed in code. Faithfulness and correctness usually need an LLM judge, validated against human labels before it is trusted.</p>
+<p><strong>Online.</strong> Citation click-through, reformulation rate, thumbs, escalation to a human, and sampled traces scored by the same graders.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Your labelled set only marks one relevant chunk per query but several exist. What happens to your metrics?</li>
+<li>How would you get retrieval labels cheaply?</li>
+</ul>
+</details>
+</section>
+<section id="tool-use" class="level3">
+<h3 class="anchored" data-anchor-id="tool-use">Tool use, function calling, MCP <span class="demand">21% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="llmapp.tool-use.0"> Explain the function-calling protocol end to end, including how tool results are paired with calls</li>
+<li><input type="checkbox" class="chk" data-chk="llmapp.tool-use.1"> Design a tool schema that is hard to misuse (enums, required fields, non-overlapping tools, compact results)</li>
+<li><input type="checkbox" class="chk" data-chk="llmapp.tool-use.2"> Classify tools by side effect and make retried writes idempotent</li>
+<li><input type="checkbox" class="chk" data-chk="llmapp.tool-use.3"> Decide which parallel tool calls may run concurrently and how partial failures are reported</li>
+<li><input type="checkbox" class="chk" data-chk="llmapp.tool-use.4"> Describe what MCP standardises (tools, resources, prompts, transports, authorization) and its security concerns</li>
+<li><input type="checkbox" class="chk" data-chk="llmapp.tool-use.5"> Say when computer or browser use is justified over an API tool and how to contain it</li>
+</ul>
+<details class="qa" id="llmapp-012">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> How does function calling work, and what makes a tool definition good?
+</summary>
+<p><strong>Mechanism.</strong> You send tool definitions (name, description, JSON Schema for parameters) with the request; they are rendered into the model’s context. The model either answers in text or emits a structured call (tool name plus JSON arguments). The model executes nothing: your code parses the call, runs the function and sends the result back as a tool message tied to the call id, and the model continues. Tool definitions cost input tokens on every request.</p>
+<p><strong>What makes a definition good.</strong></p>
+<ul>
+<li><em>Few, non-overlapping tools.</em> Two tools that could both apply create selection errors. Prefer one task-shaped tool (<code>get_order_status</code>) over thin wrappers around three endpoints.</li>
+<li><em>Descriptions written for a newcomer</em>: what it does, when to use it, when not to, what it returns, with an example for tricky arguments.</li>
+<li><em>Tight schemas</em>: enums instead of free strings, required fields, explicit formats (ISO dates, ids), flat rather than deeply nested. Make invalid states hard to express.</li>
+<li><em>Results designed for the model</em>: compact, stable field names, ids that can be passed to the next call, pagination or truncation with a note that more exists.</li>
+<li><em>Declared side-effect class</em>: read, reversible write, irreversible action.</li>
+</ul>
+<p>Schema-constrained (“strict”) tool calling, where the provider supports it, guarantees arguments parse and match the schema. It does not guarantee they are correct, so validate semantics and authorisation server-side.</p>
+<p>With dozens of tools, selection accuracy drops and definitions crowd the context: namespace them, load definitions on demand through a tool-search step, or route to a subset.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How would you find out that two tool descriptions are confusing the model?</li>
+<li>Why return ids rather than names in tool results?</li>
+</ul>
+</details>
+<details class="qa" id="llmapp-013">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">AI</span> Talk me through error handling, parallel tool calls and idempotency in a tool executor.
+</summary>
+<p><strong>Validation before execution.</strong> Check arguments against the schema, then semantics (ranges, existence) and authorisation (does this user own this resource). The model’s arguments are untrusted input.</p>
+<p><strong>Three error classes.</strong></p>
+<ul>
+<li><em>Transient</em> (timeout, 429, 5xx): the harness retries with backoff; the model need not know unless retries are exhausted.</li>
+<li><em>Model-fixable</em> (bad argument, not found, precondition failed): return as a tool result saying what failed and what a valid call looks like, so the model can correct itself.</li>
+<li><em>Fatal</em> (auth revoked, invariant violated, policy denial): stop or escalate; do not let the model work around it.</li>
+</ul>
+<p><strong>Parallel calls.</strong> Models often emit several calls in one turn. Run them concurrently only when their effects commute: reads in parallel, writes serialised. Whether a tool is parallel-safe is metadata on the tool, decided in code. Return a result for every call, including failures, each tied to its call id.</p>
+<p><strong>Idempotency.</strong> A timed-out write may have succeeded. Retrying a payment, an email or a deploy can duplicate it. Options: an idempotency key per logical action that the downstream system deduplicates on; check-then-act (read current state before retrying); or a two-phase prepare-and-confirm for irreversible actions. Retried model turns can also re-propose the same action, so dedupe at the action level, not only the HTTP level.</p>
+<p><strong>Bounds.</strong> Per-tool timeouts, output size caps, and rate limits per run.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>The downstream API has no idempotency support. What do you do?</li>
+<li>One of four parallel calls fails. What does the model see?</li>
+</ul>
+</details>
+<details class="qa" id="llmapp-014">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">AI</span> What is the Model Context Protocol, what does it standardise, and what are its security concerns?
+</summary>
+<p>MCP is an open protocol, introduced by Anthropic in late 2024 and since adopted by other vendors, for connecting LLM applications to external tools and data. It turns the M x N integration problem (every app times every system) into M + N: a system exposes one MCP server, and any MCP-capable host can use it.</p>
+<p><strong>Architecture.</strong> A host application (IDE, chat app, agent runtime) runs MCP clients, each holding a connection to one server. Messages are JSON-RPC 2.0, with capability negotiation at initialisation.</p>
+<p><strong>Server primitives.</strong></p>
+<ul>
+<li><em>Tools</em>: functions the model can call, with a name, description and JSON Schema input.</li>
+<li><em>Resources</em>: data the application can read into context (files, records), addressed by URI.</li>
+<li><em>Prompts</em>: reusable templates the user can invoke.</li>
+</ul>
+<p>Clients can offer features back to servers, such as sampling (the server asks the host’s model for a completion) and roots (which directories are in scope).</p>
+<p><strong>Transports.</strong> stdio for local servers started as subprocesses, and Streamable HTTP for remote servers (it replaced the earlier HTTP+SSE transport). Remote authorization is based on OAuth 2.1. The specification is still evolving, so check the current revision.</p>
+<p><strong>Security concerns.</strong></p>
+<ul>
+<li>Tool descriptions and tool results are untrusted text that enters the model’s context: a malicious or compromised server can inject instructions (“tool poisoning”).</li>
+<li>A server holds real credentials; over-broad scopes and token pass-through create confused-deputy problems.</li>
+<li>A local stdio server runs with the user’s privileges.</li>
+<li>The host’s sandbox does not automatically cover what an MCP server does.</li>
+</ul>
+<p>Mitigations: allowlist servers, pin versions, least-privilege scopes, per-tool approval for writes, and treat everything returned as data.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How is an MCP tool different from a function you define in the request?</li>
+<li>Fifty MCP servers are connected and tool definitions fill the context. What do you do?</li>
+</ul>
+</details>
+<details class="qa" id="llmapp-015">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">debugging</span><span class="tag tag-track">AI</span> Two percent of your agent’s tool calls are malformed. How do you investigate and fix it?
+</summary>
+<p>Two percent per call is not small: over a 20-call trajectory the chance of at least one malformed call is <span class="math inline">\(1 - 0.98^{20} \approx 33\%\)</span>.</p>
+<p><strong>Classify the failures from logs first.</strong></p>
+<ul>
+<li><em>Invalid JSON</em>: usually truncation (finish reason is <code>length</code>), or unescaped quotes and newlines inside long string arguments such as code or documents.</li>
+<li><em>Schema-invalid</em>: missing required field, wrong type, invented enum value.</li>
+<li><em>Unknown tool name</em>: hallucinated or from a stale tool list.</li>
+<li><em>Client bug</em>: streamed argument deltas concatenated in the wrong order or across calls.</li>
+</ul>
+<p><strong>Look for what the failures correlate with.</strong> One tool, long arguments, long context, parallel calls, a model version, streaming versus non-streaming.</p>
+<p><strong>Fixes, most effective first.</strong></p>
+<ol type="1">
+<li>Turn on schema-constrained (strict) tool calling if the provider offers it; this removes syntax and schema errors, except truncation.</li>
+<li>Raise the output token limit, and treat <code>length</code> as an error rather than parsing a partial call.</li>
+<li>Simplify the schema: flatten nesting, fewer optional fields, enums, and move large payloads out of JSON (write to a file, pass a reference).</li>
+<li>Validate before execution and return the validation error to the model for one bounded repair attempt.</li>
+<li>Fix the streaming accumulator (key deltas by call index).</li>
+<li>Tighten the description, add one example of a correct call.</li>
+</ol>
+<p>Then make the malformed-call rate a tracked metric per tool and per model version, alert on it, and add the failing inputs to the regression suite so a model or prompt change that brings it back is caught.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Constrained decoding is on and you still see failures. What are they?</li>
+<li>Why not just retry the whole request?</li>
+</ul>
+</details>
+<details class="qa" id="llmapp-016">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> When would you give an agent computer or browser use instead of API tools, and how do you contain it?
+</summary>
+<p>Computer use means the model perceives a screen (screenshots, sometimes with a DOM or accessibility tree) and emits mouse and keyboard actions in a perceive-act loop. It is the tool of last resort: use it when the target has no API (legacy desktop software, third-party sites, UI testing).</p>
+<p><strong>Order of preference.</strong> A structured API tool; then browser automation over the DOM or accessibility tree (text is cheaper and more reliable to ground than pixels); then pixel-level control.</p>
+<p><strong>Why it is last.</strong></p>
+<ul>
+<li><em>Slow</em>: every step is a screenshot plus a model call, so seconds per action and minutes per task.</li>
+<li><em>Expensive</em>: image tokens on every step.</li>
+<li><em>Brittle</em>: layout changes, pop-ups, loading states, mis-grounded click coordinates.</li>
+<li><em>Hard to verify</em>: success must be checked from the resulting state, not from the model’s claim.</li>
+<li><em>Large attack surface</em>: any text on any page is a potential injected instruction, and the agent may hold a logged-in session.</li>
+</ul>
+<p><strong>Containment.</strong> Run in an isolated VM or a dedicated browser profile with no ambient credentials; allowlist domains; require human confirmation for logins, purchases, sending messages and anything irreversible; cap steps and time; record the session; verify the end state with an independent check.</p>
+<p><strong>Evaluation.</strong> Task success on sandboxed, resettable sites or VMs, with steps and cost per task; expect high run-to-run variance, so run each task several times.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How do you check that a form was actually submitted?</li>
+<li>What would you do about a page that tells the agent to email its cookies somewhere?</li>
+</ul>
+</details>
+</section>
+<section id="workflow-automation" class="level3">
+<h3 class="anchored" data-anchor-id="workflow-automation">Workflow automation and enterprise integration <span class="demand">17% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="llmapp.workflow-automation.0"> Split a business process into deterministic steps and model steps</li>
+<li><input type="checkbox" class="chk" data-chk="llmapp.workflow-automation.1"> Choose between delegated user credentials and a service account and keep credentials away from the model</li>
+<li><input type="checkbox" class="chk" data-chk="llmapp.workflow-automation.2"> Make writes to systems of record idempotent and auditable</li>
+<li><input type="checkbox" class="chk" data-chk="llmapp.workflow-automation.3"> Place human review using confidence and impact thresholds and feed corrections back into evals</li>
+</ul>
+<details class="qa" id="llmapp-043">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">AI</span> A finance team wants to automate invoice processing into their ERP with an LLM. How do you design the integration?
+</summary>
+<p><strong>Map the process first.</strong> Receive, extract fields, match to purchase order, validate, approve, post to the ERP, handle exceptions. Use the model where judgment or unstructured input is involved (reading the document, classifying exceptions, drafting a query to the vendor). Keep matching rules, tolerances, approval limits and posting in code.</p>
+<p><strong>Architecture.</strong> An event (new email or upload) starts a durable workflow. Each model step returns schema-constrained output with supporting quotes; code validates it (totals add up, vendor exists, PO matches within tolerance). Passing items post through the ERP API; failing or low-confidence items go to a review queue with the evidence shown.</p>
+<p><strong>Auth and permissions.</strong> The workflow, not the model, holds credentials. Use delegated user tokens (OAuth, least scopes) when acting for a person, or a service account with narrowly scoped rights for back-office automation. The ERP still enforces its own authorisation; the model never sees secrets.</p>
+<p><strong>Idempotency.</strong> Every write carries a key derived from the business object (invoice id plus action), with a dedupe check, so retries and replays cannot double-post. Multi-step updates need compensation steps.</p>
+<p><strong>Audit.</strong> Record for each item: inputs, extracted values and quotes, model and prompt versions, validation results, who approved, and what was written. Auditors must be able to reconstruct why an invoice was paid.</p>
+<p><strong>Human review.</strong> Thresholds on confidence and amount; reviewer corrections are captured as labelled data for evals and prompt improvement.</p>
+<p><strong>Integration realities.</strong> API rate limits, pagination, schema changes, duplicate documents, and documents in formats the parser has not seen.</p>
+<p><strong>Rollout and metrics.</strong> Shadow mode against human decisions, then auto-post the high-confidence segment. Track straight-through rate, error rate from sampled audits, cycle time and cost per invoice.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How do you set the confidence threshold for auto-posting?</li>
+<li>The ERP API times out after you send a post request. What happens next?</li>
+</ul>
+</details>
+</section>
+<section id="guardrails" class="level3">
+<h3 class="anchored" data-anchor-id="guardrails">Guardrails, safety filters, hallucination control <span class="demand">16% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="llmapp.guardrails.0"> Define direct and indirect prompt injection and explain why prompting alone cannot prevent it</li>
+<li><input type="checkbox" class="chk" data-chk="llmapp.guardrails.1"> State the combination of capabilities that makes exfiltration possible and how to break it</li>
+<li><input type="checkbox" class="chk" data-chk="llmapp.guardrails.2"> Lay out input, tool-boundary, output and system-level controls and the latency each adds</li>
+<li><input type="checkbox" class="chk" data-chk="llmapp.guardrails.3"> Describe hallucination controls (grounding, citations, abstention, verification)</li>
+<li><input type="checkbox" class="chk" data-chk="llmapp.guardrails.4"> Measure a guardrail with both attack success rate and false positive rate on benign traffic</li>
+</ul>
+<details class="qa" id="llmapp-033">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> What is prompt injection, what is indirect prompt injection, and why can you not fix it with a better system prompt?
+</summary>
+<p>A language model receives instructions and data in one token stream and has no reliable way to tell them apart. Prompt injection exploits this.</p>
+<ul>
+<li><strong>Direct injection</strong>: the user writes text that overrides the application’s instructions (“ignore the above and…”). A <em>jailbreak</em> is the related attack on the model’s own safety policy rather than the application’s instructions.</li>
+<li><strong>Indirect injection</strong>: the instructions are planted in content the system reads on the user’s behalf: a web page, email, document, code comment, tool result or tool description. The user is the victim, not the attacker.</li>
+</ul>
+<p>A stronger system prompt or delimiters around untrusted text lowers the success rate but does not make it zero, and an attacker can retry. So assume some injections succeed and limit what a successful one can do.</p>
+<p>The dangerous combination is an agent that has all three of: access to private data, exposure to untrusted content, and a way to send data out (web requests, email, rendering a URL or image). Remove one and exfiltration is blocked.</p>
+<p>Defence in depth:</p>
+<ul>
+<li>Least-privilege tools; read-only where possible.</li>
+<li>Human approval for consequential or outbound actions.</li>
+<li>Egress control: allowlisted domains, no auto-rendering of model-produced links or images.</li>
+<li>Isolation: a quarantined model reads untrusted content and returns constrained data to a privileged one that never sees the raw text.</li>
+<li>Taint tracking: once untrusted content is in context, restrict the tools available.</li>
+<li>Injection classifiers on inputs and tool results, as one layer.</li>
+<li>Logging and a red-team suite that measures attack success rate.</li>
+</ul>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Your agent summarises a web page and can send email. What is the attack and what do you remove?</li>
+<li>Why does markdown image rendering matter?</li>
+</ul>
+</details>
+<details class="qa" id="llmapp-034">
+<summary>
+<span class="tag tag-staff">staff</span><span class="tag tag-type">design</span><span class="tag tag-track">AI</span> Design the guardrails for an LLM assistant that answers from company data and can take actions. What are the layers and how do you know they work?
+</summary>
+<p>No single filter is sufficient; each layer covers failures the others miss.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Layer</th>
+<th>Controls</th>
+<th>Catches</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Input</td>
+<td>abuse and rate limits, moderation classifier, PII detection, injection classifier</td>
+<td>abusive or policy-violating requests, bulk probing</td>
+</tr>
+<tr class="even">
+<td>Model</td>
+<td>system policy, a model version with tested refusal behaviour</td>
+<td>most ordinary misuse</td>
+</tr>
+<tr class="odd">
+<td>Data and tool boundary</td>
+<td>permission-filtered retrieval, tool allowlists, argument validation, sandbox, approval for writes</td>
+<td>injection consequences, data leaks, wrong actions</td>
+</tr>
+<tr class="even">
+<td>Output</td>
+<td>schema validation, groundedness check against sources, PII and secret scan, moderation</td>
+<td>hallucinated claims, leaked data, harmful text</td>
+</tr>
+<tr class="odd">
+<td>System</td>
+<td>audit log, monitoring, kill switch, incident process</td>
+<td>what slipped through</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Hallucination control</strong> sits mainly at the output and data layers: answer only from retrieved sources with citations, abstain when support is missing, verify claims against their cited passages, choose from enumerated values instead of free text, and compute numbers in code.</p>
+<p><strong>PII.</strong> Redact in logs and traces by default, minimise what is sent to the model, and respect retention and residency terms.</p>
+<p><strong>Latency and UX trade-offs.</strong> Run input checks in parallel with generation and cancel on a hit. Output checks conflict with streaming: check per sentence or buffer, or accept a delayed first token on sensitive routes. Every block is a possible false positive, and over-blocking drives users away.</p>
+<p><strong>Knowing they work.</strong></p>
+<ul>
+<li>A red-team suite per threat (injection, jailbreak, exfiltration, policy violations) reporting attack success rate, re-run on every model, prompt or tool change.</li>
+<li>A benign set to measure the false positive rate of each filter.</li>
+<li>Online: block rate, user override or appeal rate, sampled human review of both blocked and allowed traffic.</li>
+<li>Test the code-level controls directly: can the tool layer be made to act outside permissions regardless of what the model says?</li>
+</ul>
+<p>The principle: prompts and classifiers reduce frequency; permissions, validation and approvals in code bound the damage.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Which layer would you cut first under a latency budget, and what risk do you accept?</li>
+<li>How do you run an output check on a streamed answer?</li>
+</ul>
+</details>
+</section>
+<section id="llm-cost" class="level3">
+<h3 class="anchored" data-anchor-id="llm-cost">Cost, latency and model routing for LLM products <span class="demand">14% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="llmapp.llm-cost.0"> Write the cost and latency formulas in terms of input, cached and output tokens</li>
+<li><input type="checkbox" class="chk" data-chk="llmapp.llm-cost.1"> Rank cost levers (caching, context trimming, output limits, smaller models, batch, response caching)</li>
+<li><input type="checkbox" class="chk" data-chk="llmapp.llm-cost.2"> Design a model router or cascade and state when it loses money or quality</li>
+<li><input type="checkbox" class="chk" data-chk="llmapp.llm-cost.3"> Diagnose a cost regression by decomposing it into tokens, cache hit rate, steps and model mix</li>
+<li><input type="checkbox" class="chk" data-chk="llmapp.llm-cost.4"> Explain time to first token versus total latency and what streaming does and does not fix</li>
+</ul>
+<details class="qa" id="llmapp-038">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> What determines the cost and latency of an LLM feature, and which levers do you pull first?
+</summary>
+<p><strong>Cost per request</strong> is <span class="math inline">\(\text{uncached input} \times p_{in} + \text{cached input} \times p_{cache} + \text{output} \times p_{out}\)</span>. Output tokens (including reasoning tokens) are priced several times higher than input tokens on most APIs. An agent multiplies this by the number of steps, and each step re-sends the history.</p>
+<p><strong>Latency</strong> is roughly time to first token plus output tokens divided by generation speed. Time to first token grows with queueing and with uncached prompt length; total latency is dominated by output length.</p>
+<p>Levers, in the order I would try them:</p>
+<ol type="1">
+<li><strong>Prompt caching</strong>: stable prefix, check the hit rate. No quality cost.</li>
+<li><strong>Trim input</strong>: fewer and shorter retrieved passages, bounded tool outputs, compaction.</li>
+<li><strong>Trim output</strong>: concise formats, no restating of the input, appropriate token limit, lower reasoning effort where it does not change results.</li>
+<li><strong>Smaller model</strong> for easy steps (routing, extraction), kept honest by an eval.</li>
+<li><strong>Batch API</strong> for offline work: asynchronous, typically about half price.</li>
+<li><strong>Response caching</strong> for repeated queries: exact-match is safe; semantic caching risks wrong hits, staleness and leaking across users.</li>
+<li><strong>Parallelise</strong> independent calls; <strong>stream</strong> to improve perceived latency (it does not shorten total time).</li>
+</ol>
+<p>Measure cost per completed task, not per call. A cheaper model that needs more steps or more retries can cost more per task. Track tokens in and out, cached fraction, steps per task and latency percentiles per route.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Streaming is on and users still complain it is slow. What do you look at?</li>
+<li>When is a semantic cache a bad idea?</li>
+</ul>
+</details>
+<details class="qa" id="llmapp-039">
+<summary>
+<span class="tag tag-staff">staff</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Design model routing for an LLM product. When does a router or a cascade save money, and when does it backfire?
+</summary>
+<p><strong>Two designs.</strong></p>
+<ul>
+<li><em>Router</em>: a cheap classifier (or small LLM) predicts difficulty or intent and picks a model up front. One model call per request.</li>
+<li><em>Cascade</em>: call the small model first, and escalate to the large one when a check fails (schema or business validation, a verifier, low self-consistency, a learned confidence score).</li>
+</ul>
+<p><strong>Economics.</strong> With escalation rate <span class="math inline">\(e\)</span>, expected cascade cost is <span class="math inline">\(c_s + e \cdot c_l\)</span> against <span class="math inline">\(c_l\)</span> for always-large. It saves money only if <span class="math inline">\(c_s + e \cdot c_l &lt; c_l\)</span>, that is <span class="math inline">\(e &lt; 1 - c_s / c_l\)</span>, and the escalated requests pay both latencies. A router avoids the double call but its mistakes are silent: a hard query sent to the small model simply gets a worse answer.</p>
+<p><strong>How to set it up.</strong> Label a traffic sample with both models’ outputs and quality grades. Sweep the threshold and plot quality against cost; choose the operating point, and check quality per slice, not only on average, because routing errors concentrate in the hard tail that matters most.</p>
+<p><strong>Where it backfires.</strong></p>
+<ul>
+<li>LLM self-reported confidence is poorly calibrated; prefer external checks.</li>
+<li>Two models means two prompts, two eval suites and two cache namespaces.</li>
+<li>A provider upgrade to either model shifts the optimal threshold.</li>
+<li>On multi-step agent tasks, a weaker model that takes more steps can cost more per task.</li>
+</ul>
+<p><strong>Alternatives to test first.</strong> The large model at lower reasoning effort; prompt caching; a fine-tuned or distilled small model for one narrow, high-volume task with a fallback to the large model on validation failure.</p>
+<p>Monitor the route mix, escalation rate, per-route quality and cost per completed task.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How would you train the router, and what is its label?</li>
+<li>The escalation rate doubles overnight. What happened?</li>
+</ul>
+</details>
+<details class="qa" id="llmapp-040">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">debugging</span><span class="tag tag-track">AI</span> Your LLM bill tripled the week after a prompt change, with flat traffic. How do you find the cause?
+</summary>
+<p>Decompose spend from usage logs, before and after, per route and model:</p>
+<p><span class="math display">\[
+\text{cost} = \text{tasks} \times \text{calls per task} \times
+(\text{uncached in} \cdot p_{in} + \text{cached in} \cdot p_{cache} + \text{out} \cdot p_{out})
+\]</span></p>
+<p>Then check each factor.</p>
+<ol type="1">
+<li><strong>Cache hit rate collapsed.</strong> The most likely cause of a step change with a small edit: the change put something dynamic (date, user name, request id) near the top of the prompt, or reordered tools, so every request misses the cache. Compare cached-token fractions; diff the rendered prompt of two consecutive requests.</li>
+<li><strong>Input grew.</strong> New examples or documents in the prompt, multiplied by every step of every agent run.</li>
+<li><strong>Output grew.</strong> The new instruction elicits longer answers, more reasoning tokens, or restated context.</li>
+<li><strong>More calls per task.</strong> The change causes more tool calls, validation failures and retries, or loops. Compare the steps-per-task distribution and the retry rate.</li>
+<li><strong>Model mix changed.</strong> A routing or fallback rule now sends more traffic to the expensive model.</li>
+<li><strong>Not the prompt at all.</strong> A retry storm from rate limits, a batch job, or a new caller, coinciding with the change.</li>
+</ol>
+<p>Fix the specific cause, then prevent recurrence: report tokens, cache hit rate, steps and cost per task in the regression suite next to quality, alert on cost per task, and set budget caps per run.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How would you detect a cache-breaking change in CI?</li>
+<li>Quality improved with the new prompt. How do you decide whether to keep it?</li>
+</ul>
+</details>
+</section>
+<section id="fde" class="level3">
+<h3 class="anchored" data-anchor-id="fde">Forward-deployed / customer-embedded delivery <span class="demand">12% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="llmapp.fde.0"> Run a scoping conversation that ends in one workflow, a success metric and acceptance criteria</li>
+<li><input type="checkbox" class="chk" data-chk="llmapp.fde.1"> List what separates a demo from production for an LLM system</li>
+<li><input type="checkbox" class="chk" data-chk="llmapp.fde.2"> Measure delivered value against a baseline and track adoption</li>
+<li><input type="checkbox" class="chk" data-chk="llmapp.fde.3"> Handle a customer request that is technically wrong or out of scope</li>
+</ul>
+<details class="qa" id="llmapp-044">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">behavioural</span><span class="tag tag-track">AI</span> A customer says “we want an AI agent for our operations team”. How do you scope the engagement?
+</summary>
+<p><strong>What the interviewer is testing.</strong> Whether you can turn a vague ask into a deliverable with a measurable outcome, push back constructively, and avoid building a demo nobody uses.</p>
+<p><strong>Structure of a strong answer.</strong></p>
+<ol type="1">
+<li><em>Find the workflow, not the technology.</em> Ask who does what today, how often, how long it takes, where errors and delays are, and what a mistake costs. Watch someone do the task if possible.</li>
+<li><em>Pick one narrow, high-volume, measurable workflow</em> where errors are detectable and recoverable. Decline the “do everything” agent for the first phase and say why.</li>
+<li><em>Define success with the customer.</em> A baseline, a target metric (handle time, error rate, throughput), and acceptance criteria on a test set they help label. Agree who signs off.</li>
+<li><em>Check feasibility early.</em> Data access, APIs and permissions, security and compliance review, the human fallback path, and who owns the system after hand-off.</li>
+<li><em>Plan in thin slices.</em> A working end-to-end version on real data in the first weeks, then widen. Write down what is out of scope.</li>
+<li><em>Communicate in their terms.</em> Risks, cost per task and expected accuracy with examples of failures, not architecture diagrams.</li>
+</ol>
+<p><strong>Mistakes that sink the answer.</strong> Starting with model or framework choices; accepting the customer’s proposed solution without understanding the problem; no baseline, so value cannot be shown; promising accuracy before seeing data; ignoring the people whose work changes; treating security review as a late step.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>The executive sponsor wants full autonomy on day one. What do you say?</li>
+<li>How do you handle a request you believe will not work?</li>
+</ul>
+</details>
+<details class="qa" id="llmapp-045">
+<summary>
+<span class="tag tag-staff">staff</span><span class="tag tag-type">design</span><span class="tag tag-track">AI</span> Your demo impressed the customer’s executives. What stands between that demo and production, and how will you prove the system delivers value?
+</summary>
+<p>A demo shows that the system can work on chosen inputs. Production requires that it works on their inputs, inside their systems, with known failure behaviour.</p>
+<p><strong>The gaps.</strong></p>
+<ul>
+<li><em>Distribution.</em> Real inputs are messier than demo inputs. Build an eval set from their data, with their experts defining what correct means, and report results by slice. This is usually the largest piece of work and the one that reveals whether the project is viable.</li>
+<li><em>Integration.</em> Their identity provider, permissions, data sources, rate limits and network constraints.</li>
+<li><em>Reliability.</em> Retries, timeouts, idempotent writes, a fallback path to a human, and defined behaviour when the model is unavailable or wrong.</li>
+<li><em>Security and compliance.</em> Data residency, retention, PII handling, vendor review, audit logs. Start this early; it sets the timeline.</li>
+<li><em>Cost and latency at their volume</em>, not at demo volume.</li>
+<li><em>Operations.</em> Monitoring, alerting, a feedback channel, a process for prompt and model updates, and a named owner after hand-off.</li>
+<li><em>Adoption.</em> Training, changes to how people work, and trust built through visible sources and easy correction.</li>
+</ul>
+<p><strong>Proving value.</strong></p>
+<ol type="1">
+<li>Agree the primary metric and measure the baseline before launch.</li>
+<li>Pilot with a comparison: randomised by user or team if possible; otherwise a staggered rollout, with before-and-after as the weakest option because other things change too.</li>
+<li>Track adoption and acceptance: usage, how often outputs are accepted, edited or overridden. A tool that is not used delivers nothing.</li>
+<li>Report cost per task next to the outcome metric, and audit a sample for errors the metric does not capture.</li>
+</ol>
+<p><strong>Risks to name.</strong> The last 20% of cases taking most of the effort, undefined success criteria, scope growth, and a pilot group that is not representative.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>The pilot shows no improvement in handle time but users like it. What do you conclude?</li>
+<li>Which gap would you close first if you had two weeks?</li>
+</ul>
+</details>
+</section>
+<section id="vector-db" class="level3">
+<h3 class="anchored" data-anchor-id="vector-db">Vector search and embedding stores <span class="demand">12% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="llmapp.vector-db.0"> Explain HNSW, IVF and product quantization and the knob each exposes for recall versus latency</li>
+<li><input type="checkbox" class="chk" data-chk="llmapp.vector-db.1"> Compute the memory footprint of N vectors of dimension d with and without PQ</li>
+<li><input type="checkbox" class="chk" data-chk="llmapp.vector-db.2"> Compare pre-filtering, post-filtering and filter-aware graph search under selective filters</li>
+<li><input type="checkbox" class="chk" data-chk="llmapp.vector-db.3"> Say when brute force or pgvector is enough and when a dedicated vector store is needed</li>
+<li><input type="checkbox" class="chk" data-chk="llmapp.vector-db.4"> Measure ANN recall against exact search and plan a re-embedding migration</li>
+</ul>
+<details class="qa" id="llmapp-030">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Explain HNSW, IVF and product quantization, and the recall-latency-memory trade-off each one exposes.
+</summary>
+<p>Exact nearest-neighbour search is <span class="math inline">\(O(Nd)\)</span> per query. Below roughly <span class="math inline">\(10^5\)</span> vectors that is a few milliseconds and brute force is the right answer. Beyond that, approximate indexes trade recall for speed and memory.</p>
+<p><strong>HNSW</strong> (graph). A multi-layer proximity graph; search starts at the sparse top layer and greedily descends. Parameters: <code>M</code> (links per node, typically 16-64), <code>efConstruction</code> (build quality), <code>efSearch</code> (query-time beam: higher means better recall and slower). High recall at low latency, roughly logarithmic query scaling in practice. Costs: full vectors plus links in RAM, slow builds, deletes handled by tombstones.</p>
+<p><strong>IVF</strong> (partitioning). k-means splits the space into <code>nlist</code> cells (on the order of <span class="math inline">\(\sqrt{N}\)</span>); a query scans the <code>nprobe</code> closest cells. <code>nprobe</code> is the recall-latency knob. Less memory overhead than a graph, needs training, and degrades when the data drifts from the trained centroids.</p>
+<p><strong>Product quantization</strong> (compression). Split each vector into <span class="math inline">\(m\)</span> sub-vectors and replace each with the id of its nearest of 256 centroids: <span class="math inline">\(m\)</span> bytes per vector. A 768-dimension float32 vector is 3,072 bytes; with <span class="math inline">\(m = 96\)</span> it is 96 bytes, 32 times smaller. Distances come from lookup tables. It is lossy, so re-score the top candidates with full vectors.</p>
+<p><strong>Typical combinations.</strong> HNSW when the data fits in RAM; IVF-PQ at the billion scale; disk-based graphs (DiskANN-style) when RAM is the constraint. Scalar or binary quantization with re-scoring is a simpler alternative to PQ.</p>
+<p><strong>Always measure.</strong> Compute recall@k against exact search on a query sample and plot it against latency; ANN recall is a property of your data and parameters, not of the library.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How much RAM do 100 million 1,024-dimension vectors need in HNSW, roughly?</li>
+<li>What happens to an IVF index as new data arrives over months?</li>
+</ul>
+</details>
+<details class="qa" id="llmapp-031">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> How does metadata filtering interact with ANN search, and when is pgvector enough versus a dedicated vector database?
+</summary>
+<p><strong>Filtering.</strong> Three approaches:</p>
+<ul>
+<li><em>Post-filter</em>: run ANN, then drop non-matching results. With a selective filter (1% of rows match) a top-100 search returns about one usable result.</li>
+<li><em>Pre-filter</em>: select matching rows, then search exactly within them. Exact and cheap when the subset is small, linear in subset size when it is not.</li>
+<li><em>Filter-aware index traversal</em>: skip non-matching nodes during graph search. Good at moderate selectivity; at very low selectivity the graph of matching nodes is disconnected and recall collapses unless the engine falls back to brute force.</li>
+</ul>
+<p>Good engines choose by estimated selectivity. If the filter is always a tenant id, use a partition or namespace per tenant instead of a filter.</p>
+<p><strong>pgvector is enough when</strong> the corpus is in the millions to low tens of millions of vectors, the index fits in memory, QPS is moderate, and you benefit from one system: joins with relational data, transactions, row-level security for permissions, existing backups and operations. These thresholds are rules of thumb and depend on dimension and hardware. Filtered ANN behaviour in pgvector is version-dependent, so test it with your real filters.</p>
+<p><strong>A dedicated store earns its place</strong> at hundreds of millions of vectors or more, with strict p99 latency at high QPS, heavy filtered or hybrid search, many tenants, or a need for built-in quantization, disk-based indexes and sharding.</p>
+<p>Either way, plan for the operational events: a new embedding model means re-embedding everything and a dual-index migration; shorter dimensions (Matryoshka-style embeddings) and quantization cut memory at some recall cost.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Your filter matches 0.1% of rows. Which strategy and why?</li>
+<li>How would you migrate to a new embedding model with no downtime?</li>
+</ul>
+</details>
+</section>
+<section id="structured-output" class="level3">
+<h3 class="anchored" data-anchor-id="structured-output">Structured outputs and reliability of LLM pipelines <span class="demand">8% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="llmapp.structured-output.0"> Distinguish prompt-only JSON, JSON mode and schema-constrained decoding and what each guarantees</li>
+<li><input type="checkbox" class="chk" data-chk="llmapp.structured-output.1"> Design a schema that does not force the model to invent values (nullable fields, enums, reasoning before answer)</li>
+<li><input type="checkbox" class="chk" data-chk="llmapp.structured-output.2"> Implement a bounded retry loop that feeds validation errors back to the model</li>
+<li><input type="checkbox" class="chk" data-chk="llmapp.structured-output.3"> Explain why valid JSON can still be truncated or semantically wrong and how to catch it</li>
+</ul>
+<details class="qa" id="llmapp-035">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> How do you get reliable structured output from an LLM? What do JSON mode and schema-constrained decoding guarantee, and what do they not?
+</summary>
+<p>Three levels of guarantee:</p>
+<ol type="1">
+<li><strong>Prompt only</strong> (“reply in JSON with these fields”). Works most of the time; failures include prose around the JSON, trailing commas, missing fields.</li>
+<li><strong>JSON mode.</strong> The output is syntactically valid JSON, with no guarantee about fields or types.</li>
+<li><strong>Schema-constrained decoding</strong> (structured outputs, strict tool calling). The schema is compiled to a grammar, and at each step tokens that would violate it are masked. Output that completes always parses and matches the schema.</li>
+</ol>
+<p>What constrained decoding does not guarantee:</p>
+<ul>
+<li><strong>Completion.</strong> Hitting the output token limit leaves truncated JSON; check the finish reason.</li>
+<li><strong>Correct values.</strong> A date field holds a valid date, not necessarily the right one.</li>
+<li><strong>Full JSON Schema.</strong> Providers support a subset (limits on recursion, numeric and string constraints, optional fields); check the documentation.</li>
+<li><strong>No refusal.</strong> The model may still decline.</li>
+</ul>
+<p>Schema design matters as much as the mechanism:</p>
+<ul>
+<li>Generation is left to right, so put reasoning or evidence fields before the verdict; forcing the answer first removes the model’s chance to think.</li>
+<li>Allow null or “unknown” so the model is not forced to invent a value.</li>
+<li>Use enums for categories; keep nesting shallow; describe each field.</li>
+<li>For extraction, ask for the supporting quote alongside the value so it can be verified.</li>
+</ul>
+<p>Then validate anyway (types with Pydantic or JSON Schema, plus business rules such as totals that must add up), and retry with the validation error on failure.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Why can constraining the output format reduce answer quality?</li>
+<li>How would you extract fields from a scanned invoice and know which ones to trust?</li>
+</ul>
+</details>
+<details class="qa" id="llmapp-036">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Write a retry-with-validation wrapper for structured output from an LLM.
+</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pydantic <span class="im">import</span> BaseModel, ValidationError</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> extract_json(text: <span class="bu">str</span>) <span class="op">-&gt;</span> <span class="bu">str</span>:</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    start, end <span class="op">=</span> text.find(<span class="st">"{"</span>), text.rfind(<span class="st">"}"</span>)</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> start <span class="op">==</span> <span class="op">-</span><span class="dv">1</span> <span class="kw">or</span> end <span class="op">&lt;=</span> start:</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="st">"no JSON object found in output"</span>)</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> text[start:end <span class="op">+</span> <span class="dv">1</span>]</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> structured_call(llm, messages, schema: <span class="bu">type</span>[BaseModel], max_attempts<span class="op">=</span><span class="dv">3</span>, check<span class="op">=</span><span class="va">None</span>):</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""llm(messages) -&gt; str. Returns a validated `schema` instance or raises."""</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    msgs, last_err <span class="op">=</span> <span class="bu">list</span>(messages), <span class="va">None</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> attempt <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1</span>, max_attempts <span class="op">+</span> <span class="dv">1</span>):</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>        raw <span class="op">=</span> llm(msgs)</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>        <span class="cf">try</span>:</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>            obj <span class="op">=</span> schema.model_validate_json(extract_json(raw))</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> check <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>                check(obj)                       <span class="co"># business rules; raises ValueError</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> obj</span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>        <span class="cf">except</span> (ValidationError, <span class="pp">ValueError</span>) <span class="im">as</span> e:</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>            last_err <span class="op">=</span> e</span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>            msgs <span class="op">=</span> <span class="bu">list</span>(messages) <span class="op">+</span> [            <span class="co"># keep only the latest failed attempt</span></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>                {<span class="st">"role"</span>: <span class="st">"assistant"</span>, <span class="st">"content"</span>: raw},</span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>                {<span class="st">"role"</span>: <span class="st">"user"</span>, <span class="st">"content"</span>:</span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>                    <span class="ss">f"That output was invalid:</span><span class="ch">\n</span><span class="sc">{</span>e<span class="sc">}</span><span class="ch">\n</span><span class="ss">"</span></span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>                    <span class="st">"Return only a corrected JSON object that matches the schema."</span>},</span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>            ]</span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>    <span class="cf">raise</span> <span class="pp">RuntimeError</span>(<span class="ss">f"no valid output after </span><span class="sc">{</span>max_attempts<span class="sc">}</span><span class="ss"> attempts: </span><span class="sc">{</span>last_err<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Pitfalls an interviewer checks:</p>
+<ul>
+<li><strong>Bounded attempts.</strong> Each retry is a full paid call; two or three is the usual cap.</li>
+<li><strong>Feed back the specific error</strong>, not “try again”. The validator’s message tells the model which field to fix.</li>
+<li><strong>Do not accumulate every failed attempt</strong> in the history; it grows cost and anchors the model on its mistakes.</li>
+<li><strong>Separate transport errors</strong> (429, 5xx, timeouts) from validation errors; they need backoff, not a repair prompt.</li>
+<li><strong>Semantic checks</strong> belong in <code>check</code>: cross-field consistency, values present in the source text.</li>
+<li><strong>No side effects before validation succeeds.</strong></li>
+<li><strong>Log the attempt count.</strong> A rising retry rate is an early signal of a prompt or model regression.</li>
+<li>With schema-constrained decoding the wrapper is still needed for truncation, refusals and business rules.</li>
+</ul>
+<p>Extensions: escalate to a stronger model on the last attempt; return a typed failure instead of raising so the caller can route to human review.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How would you handle a response truncated by the token limit?</li>
+<li>What would you alert on in production?</li>
+</ul>
+</details>
+</section>
+<section id="conversational" class="level3">
+<h3 class="anchored" data-anchor-id="conversational">Conversational AI / voice agents <span class="demand">6% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="llmapp.conversational.0"> Break a voice-to-voice latency budget into endpointing, ASR, LLM time to first token and TTS</li>
+<li><input type="checkbox" class="chk" data-chk="llmapp.conversational.1"> Explain turn detection and barge-in, including truncating history to what was actually spoken</li>
+<li><input type="checkbox" class="chk" data-chk="llmapp.conversational.2"> Compare a cascaded ASR-LLM-TTS pipeline with a speech-to-speech model</li>
+<li><input type="checkbox" class="chk" data-chk="llmapp.conversational.3"> Design escalation to a human with a usable handoff summary</li>
+</ul>
+<details class="qa" id="llmapp-037">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Design a real-time voice agent. Where does the latency go, and how do you handle turn-taking and interruptions?
+</summary>
+<p><strong>Pipeline.</strong> The cascaded design is voice activity and turn detection, streaming speech recognition, the LLM, then streaming text-to-speech. The alternative is a speech-to-speech model that consumes and emits audio directly.</p>
+<p><strong>Latency budget.</strong> People expect a reply within a few hundred milliseconds of finishing; beyond about a second the conversation feels broken. Typical contributions (approximate, system-dependent): end-of-turn detection 200-500 ms, final transcript 100-300 ms with streaming ASR, LLM time to first token 200-500 ms, TTS time to first audio 100-300 ms, plus network. What matters is time to first audio, not total generation time.</p>
+<p><strong>Reducing it.</strong> Stream every stage; start TTS on the first clause rather than the full reply; use a fast model and a short, cached prompt; co-locate services; replace a fixed silence timeout with a turn-detection model that uses what was said; speak a short acknowledgement before slow tool calls.</p>
+<p><strong>Turn-taking and barge-in.</strong> When the user starts speaking during playback: stop audio immediately, cancel the in-flight LLM and TTS, and truncate the stored assistant turn to what was actually spoken (this needs TTS timing information), otherwise the model believes it said things the user never heard. Echo cancellation stops the agent from interrupting itself. Short back-channels (“mm-hm”) should not count as interruptions.</p>
+<p><strong>Cascaded versus speech-to-speech.</strong> Cascaded gives text at every stage, so guardrails, tool calling, logging and model choice are straightforward, but it loses prosody and adds latency. Speech-to-speech is faster and more natural, and harder to inspect and control.</p>
+<p><strong>Evaluation.</strong> p50 and p95 voice-to-voice latency, word error rate on names, numbers and domain terms, interruption handling, task completion, and escalation rate.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>The user gives a 16-digit number. What goes wrong and how do you make it robust?</li>
+<li>How would you test barge-in automatically?</li>
+</ul>
+</details>
+</section>
+<section id="memory" class="level3">
+<h3 class="anchored" data-anchor-id="memory">Agent memory and state <span class="demand">4% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="llmapp.memory.0"> Distinguish working context, session state and long-term memory (semantic, episodic, procedural)</li>
+<li><input type="checkbox" class="chk" data-chk="llmapp.memory.1"> Design the write path (what, when, dedupe, conflict resolution, expiry) and the read path (always loaded versus retrieved)</li>
+<li><input type="checkbox" class="chk" data-chk="llmapp.memory.2"> Explain memory poisoning and stale-memory failure modes and their mitigations</li>
+<li><input type="checkbox" class="chk" data-chk="llmapp.memory.3"> Scope memory by user and tenant and support inspection and deletion</li>
+</ul>
+<details class="qa" id="llmapp-032">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> How would you design memory for an agent that works with the same user across many sessions?
+</summary>
+<p>Separate three things:</p>
+<ul>
+<li><strong>Working context</strong>: what is in the window now.</li>
+<li><strong>Session state</strong>: the conversation, plan, scratchpad and checkpoints for one task.</li>
+<li><strong>Long-term memory</strong>: what persists across sessions. Useful sub-types are <em>semantic</em> (facts and preferences), <em>episodic</em> (what happened in past sessions) and <em>procedural</em> (instructions and learned ways of working).</li>
+</ul>
+<p><strong>Write path.</strong> Decide who writes (the agent through an explicit tool, or a background extraction job after the session), what is written (distilled statements with a timestamp and provenance, not raw transcripts), and how conflicts resolve (a new fact supersedes or updates the old one rather than accumulating). Add expiry for things that go stale.</p>
+<p><strong>Read path.</strong> A small, always-loaded profile for things that matter every time; everything else retrieved on demand by search, or kept as files the agent lists and reads. Always-loaded memory costs tokens on every request and can break prompt caching if it changes often.</p>
+<p><strong>Failure modes.</strong></p>
+<ul>
+<li><em>Stale or wrong memory</em>: an error written once is replayed forever. Keep provenance, let the agent verify against the current state, and prefer current observations over memory.</li>
+<li><em>Poisoning</em>: injected content written to memory persists across sessions and survives the end of the attack. Do not write memory from untrusted content without review.</li>
+<li><em>Bloat</em>: retrieval returns marginally relevant memories that distract.</li>
+<li><em>Privacy</em>: scope strictly by user and tenant; let users inspect and delete.</li>
+</ul>
+<p><strong>Evaluate</strong> with multi-session tasks where the answer depends on an earlier session, and measure both recall of needed memories and the rate of wrong-memory use.</p>
+<p>Start simple: a structured profile plus notes files beats a vector store until volume demands one.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>The user says “I moved to Berlin” and memory says Paris. What happens on write and on read?</li>
+<li>When is memory better implemented as fine-tuning? When is it worse?</li>
+</ul>
+</details>
+</section>
+</section>
+<section id="deep-dives-on-this-site" class="level2">
+<h2 class="anchored" data-anchor-id="deep-dives-on-this-site">Deep dives on this site</h2>
+<ul>
+<li><a href="../notes/applied_ml/harness.html">Agent Harness</a></li>
+<li><a href="../notes/applied_ml/agentic_search.html">Agentic Search</a></li>
+<li><a href="../notes/applied_ml/codex.html">Codex: Anatomy of an Open-Source Coding Agent</a></li>
+</ul>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/threeeyelidds\.github\.io\/minimal-ml\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+      window.quartoDecorateExternalLinks = function (root) {
+     var links = (root || window.document).querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+          if (!link.classList.contains('no-external-icon')) {
+          }
+        }
+      }
+      };
+      window.quartoDecorateExternalLinks(window.document);
+    // Esc closes the popup (WCAG 1.4.13) and focus leaving both trigger and
+    // popup closes it (WCAG 2.4.11); tippy handles neither for interactive popups.
+    const hideOnEscAndFocusOut = {
+      name: 'hideOnEscAndFocusOut',
+      defaultValue: true,
+      fn(instance) {
+        const dismiss = () => {
+          // A show scheduled by the trigger delay would otherwise reopen it
+          instance.clearDelayTimeouts();
+          instance.hide();
+        };
+        const onKeyDown = (event) => {
+          if (event.key !== 'Escape') {
+            return;
+          }
+          // Keep Esc from also reaching page handlers (e.g. reveal.js overview),
+          // except an open reveal.js slide menu, which Esc should close too.
+          // The menu handles keys only when its keyboard option is on.
+          const menuHandlesEsc = window.Reveal?.getPlugin?.('menu')?.isOpen() &&
+            window.Reveal.getConfig().menu?.keyboard !== false;
+          if (!menuHandlesEsc) {
+            event.stopPropagation();
+          }
+          if (instance.popper.contains(window.document.activeElement)) {
+            // Disabled while refocusing so the focus trigger does not reopen it
+            instance.disable();
+            instance.reference.focus();
+            instance.enable();
+          }
+          dismiss();
+        };
+        const onFocusOut = (event) => {
+          const target = event.relatedTarget;
+          if (target && !instance.reference.contains(target) &&
+              !instance.popper.contains(target)) {
+            dismiss();
+          }
+        };
+        // On the trigger too: a click trigger (code-annotations: select) has no
+        // blur handling. Attached for the instance's lifetime so leaving the
+        // trigger also cancels a show still pending on the trigger delay.
+        instance.reference.addEventListener('focusout', onFocusOut);
+        return {
+          onShow() {
+            window.document.addEventListener('keydown', onKeyDown, true);
+            instance.popper.addEventListener('focusout', onFocusOut);
+          },
+          onHide() {
+            window.document.removeEventListener('keydown', onKeyDown, true);
+            instance.popper.removeEventListener('focusout', onFocusOut);
+          },
+          onDestroy() {
+            instance.reference.removeEventListener('focusout', onFocusOut);
+          },
+        };
+      },
+    };
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+        plugins: [hideOnEscAndFocusOut],
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          // Each band is positioned against its own containing block, which is
+          // not the offsetParent of the lines, so place it from client rects.
+          const placeBand = (band, firstEl, lastEl, codeBlock) => {
+            const container = band.offsetParent;
+            if (container === null) {
+              return;
+            }
+            const containerRect = container.getBoundingClientRect();
+            // Reveal.js scales slides with a transform, so convert client
+            // pixels back to the CSS pixels of the container.
+            const scale = containerRect.height / container.offsetHeight || 1;
+            const firstRect = firstEl.getBoundingClientRect();
+            const lastRect = lastEl.getBoundingClientRect();
+            const top = (firstRect.top - containerRect.top) / scale - container.clientTop + container.scrollTop;
+            const height = (lastRect.bottom - firstRect.top) / scale;
+            band.style.top = top - 2 + "px";
+            band.style.height = height + 4 + "px";
+            if (codeBlock) {
+              // Without the copy button wrapper, the containing block is wider
+              // than the code block, so span the code block explicitly.
+              const blockRect = codeBlock.getBoundingClientRect();
+              band.style.left = (blockRect.left - containerRect.left) / scale - container.clientLeft + container.scrollLeft + "px";
+              band.style.width = blockRect.width / scale + "px";
+            }
+          };
+          if (lineIds.length > 0) {
+            const el = window.document.getElementById(lineIds[0]);
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const parent = el.parentElement.parentElement;
+            // cook up a div (if necessary) and position it
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            placeBand(div, el, lastEl, parent.closest("div.sourceCode") || parent);
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            placeBand(gutterDiv, el, lastEl);
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+  <script type="application/javascript">
+  window.quartoScrollableRegionsLabels = {"code":"Scrollable code","output":"Scrollable output"};
+  </script>
+</div> <!-- /content -->
+<script>
+/* Site-wide: persistent checklists and review status on the skill pages. */
+(function () {
+  "use strict";
+  function get(k) { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch (e) { return {}; } }
+  function set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* storage blocked: ticks last for this page view */ } }
+
+  var chk = get("prep.chk.v1");
+  document.querySelectorAll("input.chk").forEach(function (el) {
+    el.checked = !!chk[el.dataset.chk];
+    el.addEventListener("change", function () {
+      if (el.checked) chk[el.dataset.chk] = 1; else delete chk[el.dataset.chk];
+      set("prep.chk.v1", chk);
+    });
+  });
+
+  var cards = (get("prep.v1").cards) || {};
+  document.querySelectorAll("details.qa[id]").forEach(function (el) {
+    var r = cards[el.id];
+    if (r) el.classList.add(r.ivl >= 7 ? "st-known" : "st-learning");
+  });
+
+  // open the question a link points at
+  function openTarget() {
+    var id = decodeURIComponent(location.hash.slice(1));
+    var el = id && document.getElementById(id);
+    if (el && el.tagName === "DETAILS") { el.open = true; el.scrollIntoView({ block: "start" }); }
+  }
+  window.addEventListener("hashchange", openTarget);
+  openTarget();
+
+  var mp = document.getElementById("map-progress");
+  if (mp) {
+    var seen = Object.keys(cards).length, known = Object.keys(cards).filter(function (k) { return cards[k].ivl >= 7; }).length;
+    var ticks = Object.keys(chk).length;
+    if (seen || ticks) {
+      mp.className = "tile";
+      mp.style.marginBottom = "1.2rem";
+      mp.textContent = "Your progress in this browser: " + seen + " cards reviewed, " + known + " known, " + ticks + " checklist items ticked.";
+    }
+  }
+})();
+</script>
+
+
+
+
+</body></html>

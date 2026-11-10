@@ -81,7 +81,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../../site_libs/quarto-html/quarto-syntax-highlighting-dark-447e42e69aaa9833c0ba1b986f430b20.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../../site_libs/bootstrap/bootstrap-bb4e448514b610e090e2765a04a7f37d.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="dark">
+<link href="../../site_libs/bootstrap/bootstrap-980fa6b4eab38a5377f72c7fe6f39b73.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="dark">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -143,6 +143,7 @@ window.Quarto = {
 
 <link rel="stylesheet" href="../../styles.css">
 <link rel="stylesheet" href="../../colors.css">
+<link rel="stylesheet" href="../../prep.css">
 </head>
 
 <body class="nav-fixed quarto-light"><a id="quarto-skip-link" class="visually-hidden-focusable" href="#quarto-document-content">Skip to main content</a>
@@ -164,6 +165,26 @@ window.Quarto = {
   <li class="nav-item">
     <a class="nav-link" href="../../index.html"> 
 <span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../report/index.html"> 
+<span class="menu-text">Report</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../skills/index.html"> 
+<span class="menu-text">Skills</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../review/index.html"> 
+<span class="menu-text">Review</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../plan/index.html"> 
+<span class="menu-text">Plan</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../jobs/index.html"> 
+<span class="menu-text">Open roles</span></a>
   </li>  
   <li class="nav-item">
     <a class="nav-link" href="../../notes/index.html"> 
@@ -460,7 +481,7 @@ W_o\left[
 <li>Clamping bounds unusually large intermediate values, which is helpful for stable low-precision expert computation.</li>
 <li>The shift <span class="math inline">\(b+1\)</span> leaves a gate-dependent signal even when the learned content branch is near zero.</li>
 </ul>
-<div id="a4a42e82" class="cell" data-execution_count="1">
+<div id="09ab8d3a" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -775,7 +796,7 @@ p_i(\delta_{ij}-p_j).
 </section>
 <section id="minimal-pytorch-implementations" class="level2">
 <h2 class="anchored" data-anchor-id="minimal-pytorch-implementations">Minimal PyTorch Implementations</h2>
-<div id="770bcd33" class="cell" data-execution_count="3">
+<div id="7150b863" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> math</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -803,7 +824,7 @@ p_i(\delta_{ij}-p_j).
 </div>
 <section id="inspect-the-gradients" class="level3">
 <h3 class="anchored" data-anchor-id="inspect-the-gradients">Inspect the gradients</h3>
-<div id="516a514e" class="cell" data-execution_count="4">
+<div id="edaad074" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>inputs <span class="op">=</span> torch.tensor([<span class="op">-</span><span class="fl">10.0</span>, <span class="op">-</span><span class="fl">1.0</span>, <span class="fl">0.0</span>, <span class="fl">1.0</span>, <span class="fl">10.0</span>], requires_grad<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -828,7 +849,7 @@ gelu values: tensor([-0.0000, -0.1587,  0.0000,  0.8413, 10.0000]) gradients: te
 silu values: tensor([-4.5398e-04, -2.6894e-01,  0.0000e+00,  7.3106e-01,  9.9995e+00]) gradients: tensor([-4.0856e-04,  7.2329e-02,  5.0000e-01,  9.2767e-01,  1.0004e+00])</code></pre>
 </div>
 </div>
-<p>For stable output-activation and objective pairings, continue to <a href="../../notes/foundations/losses.html#logits-probabilities-and-numerical-stability">Loss Functions</a>.</p>
+<p>For stable output-activation and objective pairings, continue to <a href="../../notes/foundations/prediction_decision_losses.html#numerical-stability-and-reduction">Prediction and decision losses</a>.</p>
 </section>
 </section>
 <section id="initialization-interaction" class="level2">
@@ -992,7 +1013,7 @@ x_{\ell+1}=x_\ell+F_\ell(\operatorname{Norm}(x_\ell)).
 </tbody>
 </table>
 <p>This minimal helper shows conventional PyTorch starting points. It is an educational default, not a reproduction of any particular LLM recipe.</p>
-<div id="ab81e5a8" class="cell" data-execution_count="5">
+<div id="f10afeca" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> math</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch.nn <span class="im">as</span> nn</span>
@@ -1540,6 +1561,49 @@ x_{\ell+1}=x_\ell+F_\ell(\operatorname{Norm}(x_\ell)).
   window.quartoScrollableRegionsLabels = {"code":"Scrollable code","output":"Scrollable output"};
   </script>
 </div> <!-- /content -->
+<script>
+/* Site-wide: persistent checklists and review status on the skill pages. */
+(function () {
+  "use strict";
+  function get(k) { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch (e) { return {}; } }
+  function set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* storage blocked: ticks last for this page view */ } }
+
+  var chk = get("prep.chk.v1");
+  document.querySelectorAll("input.chk").forEach(function (el) {
+    el.checked = !!chk[el.dataset.chk];
+    el.addEventListener("change", function () {
+      if (el.checked) chk[el.dataset.chk] = 1; else delete chk[el.dataset.chk];
+      set("prep.chk.v1", chk);
+    });
+  });
+
+  var cards = (get("prep.v1").cards) || {};
+  document.querySelectorAll("details.qa[id]").forEach(function (el) {
+    var r = cards[el.id];
+    if (r) el.classList.add(r.ivl >= 7 ? "st-known" : "st-learning");
+  });
+
+  // open the question a link points at
+  function openTarget() {
+    var id = decodeURIComponent(location.hash.slice(1));
+    var el = id && document.getElementById(id);
+    if (el && el.tagName === "DETAILS") { el.open = true; el.scrollIntoView({ block: "start" }); }
+  }
+  window.addEventListener("hashchange", openTarget);
+  openTarget();
+
+  var mp = document.getElementById("map-progress");
+  if (mp) {
+    var seen = Object.keys(cards).length, known = Object.keys(cards).filter(function (k) { return cards[k].ivl >= 7; }).length;
+    var ticks = Object.keys(chk).length;
+    if (seen || ticks) {
+      mp.className = "tile";
+      mp.style.marginBottom = "1.2rem";
+      mp.textContent = "Your progress in this browser: " + seen + " cards reviewed, " + known + " known, " + ticks + " checklist items ticked.";
+    }
+  }
+})();
+</script>
 
 
 

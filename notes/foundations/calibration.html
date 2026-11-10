@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.11.9">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Model Calibration: From CTR/CVR to Calibrated Decisions – Minimal ML</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/scrollable-regions/scrollable-regions.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-dark-447e42e69aaa9833c0ba1b986f430b20.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-980fa6b4eab38a5377f72c7fe6f39b73.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="dark">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<meta name="google-site-verification" content="Ztjr25pGaioeZP-mkoIn_MkNmmsFXWcU6I6W2tEPli0">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../../styles.css">
+<link rel="stylesheet" href="../../colors.css">
+<link rel="stylesheet" href="../../prep.css">
+</head>
+
+<body class="nav-fixed quarto-light"><a id="quarto-skip-link" class="visually-hidden-focusable" href="#quarto-document-content">Skip to main content</a>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark" aria-label="Site">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">Minimal ML</span>
+    </a>
+  </div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../report/index.html"> 
+<span class="menu-text">Report</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../skills/index.html"> 
+<span class="menu-text">Skills</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../review/index.html"> 
+<span class="menu-text">Review</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../plan/index.html"> 
+<span class="menu-text">Plan</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../jobs/index.html"> 
+<span class="menu-text">Open roles</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../notes/index.html"> 
+<span class="menu-text">Notes</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../essays/index.html"> 
+<span class="menu-text">Essays</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+            <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" aria-labelledby="toc-title" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#define-the-probability-before-calibrating-it" id="toc-define-the-probability-before-calibrating-it" class="nav-link active" data-scroll-target="#define-the-probability-before-calibrating-it">Define the Probability Before Calibrating It</a></li>
+  <li><a href="#proper-scoring-rules-why-ce-and-brier-are-natural-baselines" id="toc-proper-scoring-rules-why-ce-and-brier-are-natural-baselines" class="nav-link" data-scroll-target="#proper-scoring-rules-why-ce-and-brier-are-natural-baselines">Proper Scoring Rules: Why CE and Brier Are Natural Baselines</a></li>
+  <li><a href="#classical-post-hoc-methods" id="toc-classical-post-hoc-methods" class="nav-link" data-scroll-target="#classical-post-hoc-methods">Classical Post-Hoc Methods</a></li>
+  <li><a href="#ctrcvr-correct-the-data-generating-problem-first" id="toc-ctrcvr-correct-the-data-generating-problem-first" class="nav-link" data-scroll-target="#ctrcvr-correct-the-data-generating-problem-first">CTR/CVR: Correct the Data-Generating Problem First</a>
+  <ul class="collapse">
+  <li><a href="#negative-downsampling-and-weighted-bce" id="toc-negative-downsampling-and-weighted-bce" class="nav-link" data-scroll-target="#negative-downsampling-and-weighted-bce">Negative downsampling and weighted BCE</a></li>
+  <li><a href="#delayed-conversions-and-label-maturity" id="toc-delayed-conversions-and-label-maturity" class="nav-link" data-scroll-target="#delayed-conversions-and-label-maturity">Delayed conversions and label maturity</a></li>
+  <li><a href="#cvr-selection-and-the-probability-product" id="toc-cvr-selection-and-the-probability-product" class="nav-link" data-scroll-target="#cvr-selection-and-the-probability-product">CVR selection and the probability product</a></li>
+  <li><a href="#field-aware-calibration" id="toc-field-aware-calibration" class="nav-link" data-scroll-target="#field-aware-calibration">Field-aware calibration</a></li>
+  </ul></li>
+  <li><a href="#evaluation-and-a-practical-fitting-workflow" id="toc-evaluation-and-a-practical-fitting-workflow" class="nav-link" data-scroll-target="#evaluation-and-a-practical-fitting-workflow">Evaluation and a Practical Fitting Workflow</a></li>
+  <li><a href="#language-models-what-exactly-is-being-calibrated" id="toc-language-models-what-exactly-is-being-calibrated" class="nav-link" data-scroll-target="#language-models-what-exactly-is-being-calibrated">Language Models: What Exactly Is Being Calibrated?</a></li>
+  <li><a href="#jev-and-rlcd-public-objective-versus-disclosed-methods" id="toc-jev-and-rlcd-public-objective-versus-disclosed-methods" class="nav-link" data-scroll-target="#jev-and-rlcd-public-objective-versus-disclosed-methods">Jev and RLCD: Public Objective Versus Disclosed Methods</a>
+  <ul class="collapse">
+  <li><a href="#rewarding-doubt-a-proper-score-for-reported-confidence" id="toc-rewarding-doubt-a-proper-score-for-reported-confidence" class="nav-link" data-scroll-target="#rewarding-doubt-a-proper-score-for-reported-confidence">Rewarding Doubt: a proper score for reported confidence</a></li>
+  <li><a href="#rlcr-reward-correctness-and-calibration-together" id="toc-rlcr-reward-correctness-and-calibration-together" class="nav-link" data-scroll-target="#rlcr-reward-correctness-and-calibration-together">RLCR: reward correctness and calibration together</a></li>
+  <li><a href="#recent-related-work-and-evidence-limits" id="toc-recent-related-work-and-evidence-limits" class="nav-link" data-scroll-target="#recent-related-work-and-evidence-limits">Recent related work and evidence limits</a></li>
+  </ul></li>
+  <li><a href="#when-is-rl-actually-needed" id="toc-when-is-rl-actually-needed" class="nav-link" data-scroll-target="#when-is-rl-actually-needed">When Is RL Actually Needed?</a></li>
+  <li><a href="#interview-questions-and-exercises" id="toc-interview-questions-and-exercises" class="nav-link" data-scroll-target="#interview-questions-and-exercises">Interview Questions and Exercises</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content" tabindex="-1">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Model Calibration: From CTR/CVR to Calibrated Decisions</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>Calibration asks whether predicted probabilities agree with observed frequencies. A model assigning 0.02 to many ad impressions should see clicks on about 2% of them. A model reporting 0.8 probability that its answer is correct should be right on about 80% of comparable predictions.</p>
+<p>This note covers post-hoc calibration, advertising-specific data problems, and calibration-oriented language-model training. The recent-work discussion was checked on <strong>October 5, 2026</strong>. Jev’s RLCD is treated as a publicly stated objective; its undisclosed implementation is not reconstructed from related papers.</p>
+<section id="define-the-probability-before-calibrating-it" class="level2">
+<h2 class="anchored" data-anchor-id="define-the-probability-before-calibrating-it">Define the Probability Before Calibrating It</h2>
+<p>For a binary outcome <span class="math inline">\(Y\)</span> and prediction <span class="math inline">\(p(X)\)</span>, population calibration means</p>
+<p><span class="math display">\[
+\mathbb E[Y\mid p(X)=s]=s.
+\]</span></p>
+<p>In finite data, estimate this using groups of nearby predictions. Calibration is a property of a predictor <strong>on a distribution</strong>, not a certificate that an individual prediction is correct.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Setting</th>
+<th>Probability being estimated</th>
+<th>Relevant evaluation population</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>CTR</td>
+<td><span class="math inline">\(P(C=1\mid X)\)</span></td>
+<td>Served impressions</td>
+</tr>
+<tr class="even">
+<td>Post-click CVR</td>
+<td><span class="math inline">\(P(V_H=1\mid C=1,X)\)</span></td>
+<td>Clicked impressions, with conversion horizon <span class="math inline">\(H\)</span></td>
+</tr>
+<tr class="odd">
+<td>Click-through conversion rate</td>
+<td><span class="math inline">\(P(C=1,V_H=1\mid X)\)</span></td>
+<td>Served impressions</td>
+</tr>
+<tr class="even">
+<td>Multiclass prediction</td>
+<td><span class="math inline">\(P(Y=k\mid X)\)</span> for each class</td>
+<td>Labeled examples from the target population</td>
+</tr>
+<tr class="odd">
+<td>Answer confidence</td>
+<td><span class="math inline">\(P(\text{answer is correct}\mid X,\text{answer},\text{available evidence})\)</span></td>
+<td>Answers generated by the deployed model and decoding procedure</td>
+</tr>
+</tbody>
+</table>
+<p>A constant predictor equal to the population base rate can be calibrated but useless for ranking. Conversely, a strictly increasing transformation can preserve ranking while damaging probabilities. Calibration, discrimination, and decision quality therefore need separate evaluation.</p>
+<p>For multiclass models, <strong>top-label calibration</strong> checks confidence in the selected class. <strong>Classwise calibration</strong> checks each class probability. Neither should be silently substituted for calibration of the entire probability vector.</p>
+</section>
+<section id="proper-scoring-rules-why-ce-and-brier-are-natural-baselines" class="level2">
+<h2 class="anchored" data-anchor-id="proper-scoring-rules-why-ce-and-brier-are-natural-baselines">Proper Scoring Rules: Why CE and Brier Are Natural Baselines</h2>
+<p>A loss is strictly proper if its expected value is uniquely minimized by the true outcome distribution. Two binary examples are</p>
+<p><span class="math display">\[
+\ell_{\log}(p,y)=-y\log p-(1-y)\log(1-p),
+\qquad
+\ell_{\mathrm{Brier}}(p,y)=(p-y)^2.
+\]</span></p>
+<p>If <span class="math inline">\(Y\sim\operatorname{Bernoulli}(q)\)</span>, then</p>
+<p><span class="math display">\[
+\mathbb E[(p-Y)^2]=(p-q)^2+q(1-q),
+\]</span></p>
+<p>so the optimum is <span class="math inline">\(p=q\)</span>. For log loss, the excess expected loss above the optimum is <span class="math inline">\(\operatorname{KL}(\operatorname{Bern}(q)\|\operatorname{Bern}(p))\)</span>. This connects calibration to <a href="../../notes/foundations/distillation.html">cross-entropy and distillation</a>. See <a href="https://sites.stat.washington.edu/people/raftery/Research/PDF/Gneiting2007jasa.pdf">Gneiting and Raftery (2007), Strictly Proper Scoring Rules</a>.</p>
+<p>Training with CE already has the right population target. Finite data, restricted model capacity, regularization, optimization, and train/serve mismatch can still produce miscalibration. A proper objective is an incentive, not a finite-sample guarantee. Brier and NLL also measure predictive quality beyond calibration, so neither is a pure calibration-error metric.</p>
+</section>
+<section id="classical-post-hoc-methods" class="level2">
+<h2 class="anchored" data-anchor-id="classical-post-hoc-methods">Classical Post-Hoc Methods</h2>
+<p>Freeze the base predictor. Fit a small mapping on a <strong>separate calibration set</strong>, then evaluate it on untouched test data. Here <span class="math inline">\(z\)</span> is a raw binary score or logit, <span class="math inline">\(p\)</span> is an existing probability, and <span class="math inline">\(\sigma\)</span> is the sigmoid.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Method</th>
+<th>Mapping or fit</th>
+<th>Useful regime and limitation</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Intercept correction</td>
+<td><span class="math inline">\(\sigma(z+b)\)</span></td>
+<td>Correct a probability-level offset under an appropriate shift model; cannot fix arbitrary shape errors</td>
+</tr>
+<tr class="even">
+<td>Platt/logistic scaling</td>
+<td><span class="math inline">\(\sigma(az+b)\)</span></td>
+<td>Low-variance baseline; <span class="math inline">\(a&gt;0\)</span> preserves ranking, but a sigmoid may be too restrictive</td>
+</tr>
+<tr class="odd">
+<td>Temperature scaling</td>
+<td><span class="math inline">\(\operatorname{softmax}(z/T)\)</span>, <span class="math inline">\(T&gt;0\)</span></td>
+<td>One parameter for multiclass logits; preserves the selected class, cannot correct class-specific biases</td>
+</tr>
+<tr class="even">
+<td>Histogram binning</td>
+<td>Replace each bin by its empirical positive rate</td>
+<td>Simple diagnostic and baseline; sensitive to bins and sparse counts, not necessarily monotone</td>
+</tr>
+<tr class="odd">
+<td>Isotonic regression</td>
+<td>Fit a nondecreasing map minimizing squared error</td>
+<td>Flexible scalar correction; needs sufficient data and introduces ties</td>
+</tr>
+<tr class="even">
+<td>Beta calibration</td>
+<td><span class="math inline">\(\sigma(a\log p-b\log(1-p)+c)\)</span></td>
+<td>Flexible correction for asymmetric probability distortion; <span class="math inline">\(a,b\geq0\)</span> ensure monotonicity</td>
+</tr>
+</tbody>
+</table>
+<p>Platt scaling and isotonic regression are compared in <a href="https://icml.cc/Conferences/2005/proceedings/papers/079_GoodProbabilities_NiculescuMizilCaruana.pdf">Niculescu-Mizil and Caruana (ICML 2005)</a>. Fit their parameters using held-out predictions, not the predictions on which the base model was trained.</p>
+<p><a href="https://proceedings.mlr.press/v70/guo17a.html">Guo et al.&nbsp;(ICML 2017)</a> find temperature scaling effective on their neural-network benchmarks. It fits <span class="math inline">\(T\)</span> by minimizing calibration-set NLL. For a binary logit this becomes <span class="math inline">\(\sigma(z/T)\)</span>; the missing intercept matters when the problem is a changed base rate rather than excessive sharpness.</p>
+<p><a href="https://proceedings.mlr.press/v54/kull17a.html">Beta calibration (AISTATS 2017)</a> includes the identity mapping at <span class="math inline">\(a=b=1,c=0\)</span>. This distinguishes it from fitting <span class="math inline">\(\sigma(ap+b)\)</span> directly to probabilities. Clip inputs away from 0 and 1 for numerical stability. A multiclass extension is <a href="https://arxiv.org/abs/1910.12656">Dirichlet calibration (NeurIPS 2019)</a>, which transforms log probabilities with a learned linear map followed by softmax; its extra parameters require regularization and more calibration data.</p>
+</section>
+<section id="ctrcvr-correct-the-data-generating-problem-first" class="level2">
+<h2 class="anchored" data-anchor-id="ctrcvr-correct-the-data-generating-problem-first">CTR/CVR: Correct the Data-Generating Problem First</h2>
+<section id="negative-downsampling-and-weighted-bce" class="level3">
+<h3 class="anchored" data-anchor-id="negative-downsampling-and-weighted-bce">Negative downsampling and weighted BCE</h3>
+<p>Suppose all positive examples are kept, while negatives are retained with probability <span class="math inline">\(s\)</span>. Let <span class="math inline">\(p_s\)</span> be the posterior in the sampled population. Bayes’ rule gives the production posterior</p>
+<p><span class="math display">\[
+p=\frac{s p_s}{1-p_s+s p_s},
+\qquad
+\operatorname{logit}(p)=\operatorname{logit}(p_s)+\log s.
+\]</span></p>
+<p>For <span class="math inline">\(s=0.1\)</span> and <span class="math inline">\(p_s=0.2\)</span>, the corrected probability is about <span class="math inline">\(0.0244\)</span>, not <span class="math inline">\(0.02\)</span>: multiplying by <span class="math inline">\(s\)</span> is only a small-probability approximation. <a href="https://www.quinonero.net/Publications/predicting-clicks-facebook.pdf">He et al., Practical Lessons from Predicting Clicks on Ads at Facebook (ADKDD 2014), §6.3</a> describes this recalibration after negative downsampling.</p>
+<p>The formula assumes class-dependent sampling with the stated retention rates and an accurate sampled posterior. Feature-dependent sampling requires the corresponding conditional rates. Do not apply the correction twice if loss weights or an existing calibrator already restore the target population.</p>
+<p>A related derivation: weighted BCE with positive and negative weights <span class="math inline">\(w_1,w_0\)</span> has pointwise optimum</p>
+<p><span class="math display">\[
+p_w=\frac{w_1q}{w_1q+w_0(1-q)},
+\qquad
+\operatorname{logit}(q)=\operatorname{logit}(p_w)-\log\frac{w_1}{w_0}.
+\]</span></p>
+<p>Thus class weighting changes what the raw output estimates. Record sampling and weighting choices before interpreting a score as CTR or CVR.</p>
+</section>
+<section id="delayed-conversions-and-label-maturity" class="level3">
+<h3 class="anchored" data-anchor-id="delayed-conversions-and-label-maturity">Delayed conversions and label maturity</h3>
+<p>Define conversion within a particular horizon <span class="math inline">\(H\)</span>. A click from one hour ago with no conversion is not yet a known negative for seven-day conversion. Fitting a calibrator on such provisional zeros calibrates toward the wrong observed target.</p>
+<p>Use fully matured labels for the chosen horizon, or explicitly model delay and censoring when freshness requires partially observed data. <a href="https://wnzhang.net/share/rtb-papers/delayed-feedback.pdf">Chapelle, Modeling Delayed Feedback in Display Advertising (KDD 2014)</a> models both conversion probability and conversion delay. A downstream sigmoid cannot by itself repair incorrect labels.</p>
+</section>
+<section id="cvr-selection-and-the-probability-product" class="level3">
+<h3 class="anchored" data-anchor-id="cvr-selection-and-the-probability-product">CVR selection and the probability product</h3>
+<p>For click-attributed conversions,</p>
+<p><span class="math display">\[
+P(C=1,V_H=1\mid X)
+=P(C=1\mid X)P(V_H=1\mid C=1,X).
+\]</span></p>
+<p><a href="https://arxiv.org/abs/1804.07931">ESMM (SIGIR 2018)</a> uses this structure to jointly learn CTR and click-through conversion on the impression space, addressing clicked-only training and sparse conversion data. It is a modeling approach, not a post-hoc calibration guarantee.</p>
+<p>Evaluate CVR on the relevant clicked population and the joint probability on impressions. Even if two component scores each pass marginal reliability checks, their product need not be calibrated: those checks do not establish that both scores equal the required conditional probabilities. Avoid treating logged CVR as a causal conversion probability under an arbitrary new serving policy.</p>
+</section>
+<section id="field-aware-calibration" class="level3">
+<h3 class="anchored" data-anchor-id="field-aware-calibration">Field-aware calibration</h3>
+<p>Overall bias can hide opposite errors across campaigns, placements, devices, or countries. For a slice <span class="math inline">\(g\)</span>, a useful aggregate diagnostic is</p>
+<p><span class="math display">\[
+\mathrm{P/O}_g=\frac{\sum_{i\in g}p_i}{\sum_{i\in g}y_i}.
+\]</span></p>
+<p>Here values above one mean overprediction. This ratio is undefined with no observed positives and unstable with very few; report counts and uncertainty. A ratio near one does not imply calibration within the slice’s score bins.</p>
+<p><a href="https://arxiv.org/abs/1905.10713">Pan et al., Field-aware Calibration (WWW 2020)</a> introduces field-level calibration metrics and a neural calibrator of the form</p>
+<p><span class="math display">\[
+p_{\mathrm{cal}}(x)=\sigma\big(\eta(z(x))+g(x)\big),
+\]</span></p>
+<p>combining a scalar logit transformation with a feature-dependent correction, fitted by log loss on development data. Because features affect the mapping, it can change ranking across examples. Check both ranking and calibration; regularize sparse fields instead of fitting an unconstrained map per tiny segment.</p>
+</section>
+</section>
+<section id="evaluation-and-a-practical-fitting-workflow" class="level2">
+<h2 class="anchored" data-anchor-id="evaluation-and-a-practical-fitting-workflow">Evaluation and a Practical Fitting Workflow</h2>
+<p>For bins <span class="math inline">\(B_b\)</span>, binary expected calibration error is commonly estimated as</p>
+<p><span class="math display">\[
+\widehat{\mathrm{ECE}}
+=\sum_b\frac{|B_b|}{n}\left|
+\frac{1}{|B_b|}\sum_{i\in B_b}p_i
+-\frac{1}{|B_b|}\sum_{i\in B_b}y_i
+\right|.
+\]</span></p>
+<p>For top-label ECE, replace <span class="math inline">\(p_i\)</span> with maximum class probability and <span class="math inline">\(y_i\)</span> with the indicator that the selected class is correct. State which definition you use. Bin choices and whether all classes are evaluated can change conclusions; see <a href="https://arxiv.org/abs/1904.01685">Nixon et al., Measuring Calibration in Deep Learning (2019)</a>.</p>
+<p>Report reliability plots with bin counts, NLL, Brier score, ranking quality, and domain-specific aggregate bias together. For rare events, a small absolute ECE can conceal a large relative error; inspect the low-probability region and important slices. Bootstrap by the relevant independent unit, such as user or time block, when observations are correlated.</p>
+<p>A recommended workflow, synthesizing the methods above:</p>
+<ol type="1">
+<li>Define the event, horizon, population, and any selection or weighting.</li>
+<li>Train the predictor; collect predictions on a later calibration window with mature labels. Reserve a still-later test window. Keep tuning separate from final evaluation, using additional splits or cross-validation.</li>
+<li>Compare uncalibrated outputs with a simple logistic/temperature baseline, then isotonic or beta calibration. Add feature-aware calibration only when slice-level evidence and sample size justify it.</li>
+<li>Select using probability quality and the downstream decision objective, not one ECE number. Check rare slices and distribution shifts.</li>
+<li>Version the predictor and calibrator together. Monitor fresh outcomes and refit when their relationship changes; a calibrator fitted before a model update need not remain valid afterwards.</li>
+</ol>
+<p>For binary actions with false-positive cost <span class="math inline">\(c_{FP}\)</span> and false-negative cost <span class="math inline">\(c_{FN}\)</span>, and zero cost for correct decisions, expected-cost minimization acts positive when</p>
+<p><span class="math display">\[
+p&gt;\frac{c_{FP}}{c_{FP}+c_{FN}}.
+\]</span></p>
+<p>This explains why calibrated probabilities matter beyond AUC. For selective answering, also measure <strong>risk–coverage</strong>: error rate among accepted answers versus fraction accepted. Choose an acceptance threshold on validation data, then report test performance at that fixed threshold. Finding the best threshold after observing test labels is not a deployment guarantee.</p>
+</section>
+<section id="language-models-what-exactly-is-being-calibrated" class="level2">
+<h2 class="anchored" data-anchor-id="language-models-what-exactly-is-being-calibrated">Language Models: What Exactly Is Being Calibrated?</h2>
+<p>Token likelihood is the probability of a particular string under the language model. It is not automatically the probability that the string’s claim is true. Multiple equivalent answers, prompt format, length, and decoding all complicate that interpretation.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Approach</th>
+<th>Confidence signal</th>
+<th>Relevant work</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Train explicit confidence expression</td>
+<td>A generated numeric or verbal estimate</td>
+<td><a href="https://arxiv.org/abs/2205.14334">Lin, Hilton, and Evans (2022)</a> show supervised learning of verbalized uncertainty</td>
+</tr>
+<tr class="even">
+<td>Ask the model to assess an answer</td>
+<td>Probability of a correctness judgment, such as <span class="math inline">\(P(\mathrm{True})\)</span></td>
+<td><a href="https://arxiv.org/abs/2207.05221">Kadavath et al.&nbsp;(2022)</a> study self-evaluation and knowledge prediction</td>
+</tr>
+<tr class="odd">
+<td>Calibrate a fixed score</td>
+<td>Map an answer score to empirical correctness</td>
+<td>Apply held-out logistic/isotonic calibration to the deployed answer-generation pipeline</td>
+</tr>
+<tr class="even">
+<td>Change training incentives</td>
+<td>Reward both answering and honest probability reporting</td>
+<td>Rewarding Doubt, RLCR, and newer methods below</td>
+</tr>
+</tbody>
+</table>
+<p>Keep the answer generator, prompt, tools, and sampling procedure fixed when fitting a post-hoc confidence model. Otherwise the correctness event being predicted changes. A monotone binary calibrator adjusts the numeric scale; it cannot turn an uninformative ordering of confidence into a useful ranking of correct versus incorrect answers.</p>
+</section>
+<section id="jev-and-rlcd-public-objective-versus-disclosed-methods" class="level2">
+<h2 class="anchored" data-anchor-id="jev-and-rlcd-public-objective-versus-disclosed-methods">Jev and RLCD: Public Objective Versus Disclosed Methods</h2>
+<p>TypeSafe introduced <strong>Reinforcement Learning for Calibrated Decisions (RLCD)</strong> as the training approach behind Jev in its <a href="https://typesafe.ai/blog/introducing-system-one-models-and-jev">September 15, 2026 launch post</a>. The public material describes typed probabilistic decisions but does not provide a reproducible reward, optimizer, or complete training recipe. Its workflow comparisons use reference-model probabilities; agreement with those references is different from calibration against observed outcomes.</p>
+<p>The product’s <code>confidence</code> field also deserves care: <a href="https://docs.typesafe.ai/confidence">TypeSafe’s documentation</a> defines it as a statistic derived from the returned distribution, with zero at a uniform distribution and one at complete concentration. It is not itself automatically the probability that the chosen answer is correct. Evaluate the relevant returned probabilities against labels, and validate any routing threshold on your own target tasks.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Do not infer Jev’s algorithm from its name
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The proper-score objectives below are published related methods, not a claim about Jev’s internal implementation. Also, the earlier <a href="https://arxiv.org/abs/2307.12950">RLCD: Reinforcement Learning from Contrastive Distillation (2023)</a> is a different method with the same acronym.</p>
+</div>
+</div>
+<section id="rewarding-doubt-a-proper-score-for-reported-confidence" class="level3">
+<h3 class="anchored" data-anchor-id="rewarding-doubt-a-proper-score-for-reported-confidence">Rewarding Doubt: a proper score for reported confidence</h3>
+<p><a href="https://arxiv.org/html/2503.02623v2">Rewarding Doubt (2025)</a> trains a model to express confidence alongside its answer using a logarithmic reward. Let <span class="math inline">\(Z\in\{0,1\}\)</span> indicate whether that answer is correct and let <span class="math inline">\(c\)</span> be the reported probability:</p>
+<p><span class="math display">\[
+R_{\log}(c,Z)=Z\log c+(1-Z)\log(1-c).
+\]</span></p>
+<p>For a fixed answer whose correctness probability is <span class="math inline">\(q\)</span>, expected reward is maximized at <span class="math inline">\(c=q\)</span>. This supplies a direct incentive for honest confidence. It does not imply that arbitrary joint optimization of answers and confidence will also maximize accuracy: changing the answer changes the event being scored. Population optimality and empirical calibration must be distinguished.</p>
+</section>
+<section id="rlcr-reward-correctness-and-calibration-together" class="level3">
+<h3 class="anchored" data-anchor-id="rlcr-reward-correctness-and-calibration-together">RLCR: reward correctness and calibration together</h3>
+<p><a href="https://arxiv.org/html/2507.16806v2">Beyond Binary Rewards: Training LMs to Reason about Their Uncertainty (2025; ICLR 2026)</a> proposes RLCR, with</p>
+<p><span class="math display">\[
+R_{\mathrm{RLCR}}(c,Z)=Z-(c-Z)^2.
+\]</span></p>
+<p>The first term rewards a correct answer, while the second scores its reported confidence. Under the paper’s idealized model, for an answer with success probability <span class="math inline">\(q\)</span>,</p>
+<p><span class="math display">\[
+\mathbb E[R]=q-(c-q)^2-q(1-q).
+\]</span></p>
+<p>The best report is <span class="math inline">\(c=q\)</span>, and the resulting reward is <span class="math inline">\(q^2\)</span>, increasing with answer quality. This makes the two incentives explicit. The theorem concerns ideal optima; finite-capacity RL with imperfect correctness judgments still needs held-out evaluation. The reported scalar confidence is different from a full categorical distribution over all possible answers.</p>
+</section>
+<section id="recent-related-work-and-evidence-limits" class="level3">
+<h3 class="anchored" data-anchor-id="recent-related-work-and-evidence-limits">Recent related work and evidence limits</h3>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Work</th>
+<th>Contribution relevant to calibration</th>
+<th>How to interpret the evidence</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="https://arxiv.org/abs/2605.15588">Calibrating LLMs with Semantic-level Reward (May 2026)</a></td>
+<td>CSR scores semantic answer distributions rather than requiring verbalized confidence</td>
+<td>A research preprint; semantic grouping and correctness evaluation are part of the measurement pipeline</td>
+</tr>
+<tr class="even">
+<td><a href="https://arxiv.org/abs/2607.01612">Scaling with Confidence (July 2026)</a></td>
+<td>C3RL combines correctness, confidence calibration, and reference-accuracy rewards; uses confidence for adaptive test-time compute</td>
+<td>A proposed alternative reward design, not evidence of Jev’s recipe</td>
+</tr>
+<tr class="odd">
+<td><a href="https://arxiv.org/html/2609.38850v1">OpenJev-RLCD (September 30, 2026)</a></td>
+<td>Independent implementation: calibrate the answer distribution after a sampled rationale, then reinforce reasoning with a proper-score reward and a KL anchor</td>
+<td>Qwen3-1.7B experiments on two reasoning tasks plus an annotator-disagreement setting; a very recent preprint, not an official Jev reproduction</td>
+</tr>
+</tbody>
+</table>
+<p>OpenJev-RLCD separates scoring each rationale’s answer distribution from scoring an average across rationales. For negative Brier score, averaging distributions adds a variance term relative to averaging their scores, so the objectives differ. Its reported selective-prediction improvements are limited to the studied setup; they do not establish universal superiority over supervised CE plus calibration. See <a href="https://arxiv.org/html/2609.38850v1">OpenJev-RLCD, §§3–5</a>.</p>
+<p>Independent studies such as <a href="https://arxiv.org/abs/2609.29429">Just Ask Jev (September 2026)</a> and <a href="https://arxiv.org/abs/2609.31142">JevAdvBench (September 2026)</a> evaluate Jev’s behavior and robustness. They are useful application evidence, not disclosures of its training algorithm or guarantees of target-domain calibration.</p>
+</section>
+</section>
+<section id="when-is-rl-actually-needed" class="level2">
+<h2 class="anchored" data-anchor-id="when-is-rl-actually-needed">When Is RL Actually Needed?</h2>
+<p>For a fixed labeled classification problem with a differentiable probability head, CE or Brier can be optimized directly. Calling negative Brier a reward does not make policy-gradient training necessary. The classical calibration baselines should remain part of the comparison.</p>
+<p>RL becomes relevant when training must change <strong>sampled reasoning, tool use, or sequential decisions</strong> that influence the eventual prediction or observed outcome. Proper scores can supply a calibration incentive, but the choice of what is scored matters: a full outcome distribution, the correctness of a selected answer, and success after taking an action are different targets.</p>
+<p>For action-dependent outcomes, specify the action and policy in the target probability. Passive labels collected under an old policy may not identify success under a new one. For annotator disagreement, decide whether to predict a majority label or the distribution of judgments; additional reasoning cannot be assumed to remove disagreement inherent in that target.</p>
+</section>
+<section id="interview-questions-and-exercises" class="level2">
+<h2 class="anchored" data-anchor-id="interview-questions-and-exercises">Interview Questions and Exercises</h2>
+<ul>
+<li>Why can a base-rate predictor be calibrated but unhelpful?</li>
+<li>Derive negative-downsampling correction and the weighted-BCE optimum.</li>
+<li>Why might temperature scaling fail to correct a shifted CTR base rate?</li>
+<li>Why do calibrated CTR and CVR scores not guarantee a calibrated product?</li>
+<li>How do you evaluate seven-day CVR without treating pending events as negatives?</li>
+<li>Why does a proper score incentivize honest probabilities? What assumptions separate that statement from a production guarantee?</li>
+<li>Derive the optimal confidence and answer-quality incentive under RLCR.</li>
+<li>Compare event probability, answer correctness, token likelihood, and Jev’s distribution-derived confidence statistic.</li>
+<li>Fit logistic, isotonic, and beta calibrators on a chronological split; compare NLL, Brier, reliability plots, P/O, and slice-level results.</li>
+<li>Compare CE plus post-hoc calibration with a calibration-reward method using the same data and a reported compute budget; evaluate fixed-threshold risk–coverage on untouched tasks.</li>
+</ul>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/threeeyelidds\.github\.io\/minimal-ml\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+      window.quartoDecorateExternalLinks = function (root) {
+     var links = (root || window.document).querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+          if (!link.classList.contains('no-external-icon')) {
+          }
+        }
+      }
+      };
+      window.quartoDecorateExternalLinks(window.document);
+    // Esc closes the popup (WCAG 1.4.13) and focus leaving both trigger and
+    // popup closes it (WCAG 2.4.11); tippy handles neither for interactive popups.
+    const hideOnEscAndFocusOut = {
+      name: 'hideOnEscAndFocusOut',
+      defaultValue: true,
+      fn(instance) {
+        const dismiss = () => {
+          // A show scheduled by the trigger delay would otherwise reopen it
+          instance.clearDelayTimeouts();
+          instance.hide();
+        };
+        const onKeyDown = (event) => {
+          if (event.key !== 'Escape') {
+            return;
+          }
+          // Keep Esc from also reaching page handlers (e.g. reveal.js overview),
+          // except an open reveal.js slide menu, which Esc should close too.
+          // The menu handles keys only when its keyboard option is on.
+          const menuHandlesEsc = window.Reveal?.getPlugin?.('menu')?.isOpen() &&
+            window.Reveal.getConfig().menu?.keyboard !== false;
+          if (!menuHandlesEsc) {
+            event.stopPropagation();
+          }
+          if (instance.popper.contains(window.document.activeElement)) {
+            // Disabled while refocusing so the focus trigger does not reopen it
+            instance.disable();
+            instance.reference.focus();
+            instance.enable();
+          }
+          dismiss();
+        };
+        const onFocusOut = (event) => {
+          const target = event.relatedTarget;
+          if (target && !instance.reference.contains(target) &&
+              !instance.popper.contains(target)) {
+            dismiss();
+          }
+        };
+        // On the trigger too: a click trigger (code-annotations: select) has no
+        // blur handling. Attached for the instance's lifetime so leaving the
+        // trigger also cancels a show still pending on the trigger delay.
+        instance.reference.addEventListener('focusout', onFocusOut);
+        return {
+          onShow() {
+            window.document.addEventListener('keydown', onKeyDown, true);
+            instance.popper.addEventListener('focusout', onFocusOut);
+          },
+          onHide() {
+            window.document.removeEventListener('keydown', onKeyDown, true);
+            instance.popper.removeEventListener('focusout', onFocusOut);
+          },
+          onDestroy() {
+            instance.reference.removeEventListener('focusout', onFocusOut);
+          },
+        };
+      },
+    };
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+        plugins: [hideOnEscAndFocusOut],
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          // Each band is positioned against its own containing block, which is
+          // not the offsetParent of the lines, so place it from client rects.
+          const placeBand = (band, firstEl, lastEl, codeBlock) => {
+            const container = band.offsetParent;
+            if (container === null) {
+              return;
+            }
+            const containerRect = container.getBoundingClientRect();
+            // Reveal.js scales slides with a transform, so convert client
+            // pixels back to the CSS pixels of the container.
+            const scale = containerRect.height / container.offsetHeight || 1;
+            const firstRect = firstEl.getBoundingClientRect();
+            const lastRect = lastEl.getBoundingClientRect();
+            const top = (firstRect.top - containerRect.top) / scale - container.clientTop + container.scrollTop;
+            const height = (lastRect.bottom - firstRect.top) / scale;
+            band.style.top = top - 2 + "px";
+            band.style.height = height + 4 + "px";
+            if (codeBlock) {
+              // Without the copy button wrapper, the containing block is wider
+              // than the code block, so span the code block explicitly.
+              const blockRect = codeBlock.getBoundingClientRect();
+              band.style.left = (blockRect.left - containerRect.left) / scale - container.clientLeft + container.scrollLeft + "px";
+              band.style.width = blockRect.width / scale + "px";
+            }
+          };
+          if (lineIds.length > 0) {
+            const el = window.document.getElementById(lineIds[0]);
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const parent = el.parentElement.parentElement;
+            // cook up a div (if necessary) and position it
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            placeBand(div, el, lastEl, parent.closest("div.sourceCode") || parent);
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            placeBand(gutterDiv, el, lastEl);
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+  <script type="application/javascript">
+  window.quartoScrollableRegionsLabels = {"code":"Scrollable code","output":"Scrollable output"};
+  </script>
+</div> <!-- /content -->
+<script>
+/* Site-wide: persistent checklists and review status on the skill pages. */
+(function () {
+  "use strict";
+  function get(k) { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch (e) { return {}; } }
+  function set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* storage blocked: ticks last for this page view */ } }
+
+  var chk = get("prep.chk.v1");
+  document.querySelectorAll("input.chk").forEach(function (el) {
+    el.checked = !!chk[el.dataset.chk];
+    el.addEventListener("change", function () {
+      if (el.checked) chk[el.dataset.chk] = 1; else delete chk[el.dataset.chk];
+      set("prep.chk.v1", chk);
+    });
+  });
+
+  var cards = (get("prep.v1").cards) || {};
+  document.querySelectorAll("details.qa[id]").forEach(function (el) {
+    var r = cards[el.id];
+    if (r) el.classList.add(r.ivl >= 7 ? "st-known" : "st-learning");
+  });
+
+  // open the question a link points at
+  function openTarget() {
+    var id = decodeURIComponent(location.hash.slice(1));
+    var el = id && document.getElementById(id);
+    if (el && el.tagName === "DETAILS") { el.open = true; el.scrollIntoView({ block: "start" }); }
+  }
+  window.addEventListener("hashchange", openTarget);
+  openTarget();
+
+  var mp = document.getElementById("map-progress");
+  if (mp) {
+    var seen = Object.keys(cards).length, known = Object.keys(cards).filter(function (k) { return cards[k].ivl >= 7; }).length;
+    var ticks = Object.keys(chk).length;
+    if (seen || ticks) {
+      mp.className = "tile";
+      mp.style.marginBottom = "1.2rem";
+      mp.textContent = "Your progress in this browser: " + seen + " cards reviewed, " + known + " known, " + ticks + " checklist items ticked.";
+    }
+  }
+})();
+</script>
+
+
+
+
+</body></html>

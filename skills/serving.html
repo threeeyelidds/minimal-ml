@@ -1,0 +1,2077 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.11.9">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Inference, serving and model optimization – Minimal ML</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/scrollable-regions/scrollable-regions.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-447e42e69aaa9833c0ba1b986f430b20.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-980fa6b4eab38a5377f72c7fe6f39b73.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="dark">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<meta name="google-site-verification" content="Ztjr25pGaioeZP-mkoIn_MkNmmsFXWcU6I6W2tEPli0">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../styles.css">
+<link rel="stylesheet" href="../colors.css">
+<link rel="stylesheet" href="../prep.css">
+</head>
+
+<body class="nav-sidebar docked nav-fixed quarto-light"><a id="quarto-skip-link" class="visually-hidden-focusable" href="#quarto-document-content">Skip to main content</a>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark" aria-label="Site">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">Minimal ML</span>
+    </a>
+  </div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../report/index.html"> 
+<span class="menu-text">Report</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link active" href="../skills/index.html" aria-current="page"> 
+<span class="menu-text">Skills</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../review/index.html"> 
+<span class="menu-text">Review</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../plan/index.html"> 
+<span class="menu-text">Plan</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../jobs/index.html"> 
+<span class="menu-text">Open roles</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../notes/index.html"> 
+<span class="menu-text">Notes</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../essays/index.html"> 
+<span class="menu-text">Essays</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+            <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav" aria-label="Toolbar">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="Breadcrumbs"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../skills/infra.html">Systems</a></li><li class="breadcrumb-item"><a href="../skills/serving.html">Inference, serving and model optimization</a></li></ol></nav>
+        <a class="flex-grow-1" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto" aria-label="Section">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Skill map</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/cases.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Design cases</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" aria-controls="quarto-sidebar-section-1" aria-expanded="true">
+ <span class="menu-text" id="quarto-sidebar-section-1-label">The loop</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-1" aria-labelledby="quarto-sidebar-section-1-label" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/swe.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Programming and software engineering</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/mlfund.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">ML fundamentals and statistics</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/dl.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Deep learning</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/eval.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Evaluation and experimentation</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/senior.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Senior-level scope and leadership</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" aria-controls="quarto-sidebar-section-2" aria-expanded="true">
+ <span class="menu-text" id="quarto-sidebar-section-2-label">LLMs and agents</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-2" aria-labelledby="quarto-sidebar-section-2-label" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/llm.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">LLMs and foundation models (training side)</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/llmapp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">LLM application engineering (agents, RAG, prompts)</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/rl.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Reinforcement learning and decision making</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/research.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Research skills</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" aria-controls="quarto-sidebar-section-3" aria-expanded="true">
+ <span class="menu-text" id="quarto-sidebar-section-3-label">Product ML</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-3" aria-labelledby="quarto-sidebar-section-3-label" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/recsys.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Search, recommendation, ads and ranking</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/domain.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Domain specialties</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" aria-controls="quarto-sidebar-section-4" aria-expanded="true">
+ <span class="menu-text" id="quarto-sidebar-section-4-label">Systems</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-4" aria-labelledby="quarto-sidebar-section-4-label" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/infra.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Training infrastructure and data systems</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/serving.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Inference, serving and model optimization</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/mlops.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">MLOps, cloud and production operations</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" aria-labelledby="toc-title" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#what-the-postings-ask-for" id="toc-what-the-postings-ask-for" class="nav-link active" data-scroll-target="#what-the-postings-ask-for">What the postings ask for</a>
+  <ul class="collapse">
+  <li><a href="#in-the-postings-words" id="toc-in-the-postings-words" class="nav-link" data-scroll-target="#in-the-postings-words">In the postings’ words</a></li>
+  </ul></li>
+  <li><a href="#the-senior-bar" id="toc-the-senior-bar" class="nav-link" data-scroll-target="#the-senior-bar">The senior bar</a></li>
+  <li><a href="#skills-checklists-and-questions" id="toc-skills-checklists-and-questions" class="nav-link" data-scroll-target="#skills-checklists-and-questions">Skills, checklists and questions</a>
+  <ul class="collapse">
+  <li><a href="#reliability" id="toc-reliability" class="nav-link" data-scroll-target="#reliability">Reliability, SLOs and on-call for ML systems <span class="demand">52% of postings</span></a></li>
+  <li><a href="#latency" id="toc-latency" class="nav-link" data-scroll-target="#latency">Latency, throughput and performance engineering <span class="demand">48% of postings</span></a></li>
+  <li><a href="#model-serving" id="toc-model-serving" class="nav-link" data-scroll-target="#model-serving">Model serving systems <span class="demand">20% of postings</span></a></li>
+  <li><a href="#autoscaling" id="toc-autoscaling" class="nav-link" data-scroll-target="#autoscaling">Capacity, autoscaling and GPU cost efficiency <span class="demand">14% of postings</span></a></li>
+  <li><a href="#on-device" id="toc-on-device" class="nav-link" data-scroll-target="#on-device">On-device / edge / embedded ML <span class="demand">12% of postings</span></a></li>
+  <li><a href="#gpu-programming" id="toc-gpu-programming" class="nav-link" data-scroll-target="#gpu-programming">GPU programming and kernel-level optimization <span class="demand">12% of postings</span></a></li>
+  <li><a href="#llm-inference" id="toc-llm-inference" class="nav-link" data-scroll-target="#llm-inference">LLM inference engines (vLLM, TGI, TensorRT-LLM, llama.cpp) <span class="demand">11% of postings</span></a></li>
+  <li><a href="#quantization" id="toc-quantization" class="nav-link" data-scroll-target="#quantization">Quantization and efficient inference <span class="demand">10% of postings</span></a></li>
+  <li><a href="#runtimes" id="toc-runtimes" class="nav-link" data-scroll-target="#runtimes">Inference runtimes and compilers (ONNX, TensorRT, CoreML) <span class="demand">6% of postings</span></a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content" tabindex="-1">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="Breadcrumbs"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../skills/infra.html">Systems</a></li><li class="breadcrumb-item"><a href="../skills/serving.html">Inference, serving and model optimization</a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title">Inference, serving and model optimization</h1>
+<p class="subtitle lead">Named in 79% of 2253 senior postings · 31 review cards</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!-- Generated by tools/build_site.py. Edit bank/*.yml or the script, not this file. -->
+<p>Running models for users: serving systems and batching, LLM inference engines, latency and throughput engineering, quantization and compiled runtimes, on-device deployment, capacity and GPU cost, and the reliability practice around all of it. Four in five postings name something here, led by reliability (52%) and latency or performance (48%), which appear in AI engineer postings as often as in ML engineer ones. It is tested in system design rounds (a latency budget, a capacity estimate), in debugging scenarios (a slow or flaky endpoint) and in deep dives for inference and platform roles.</p>
+<p class="area-meta">
+<span class="chip">ML system design</span><span class="chip">Debugging and performance scenarios</span><span class="chip">Inference or platform deep dive</span><span class="chip">Coding (batcher, rate limiter, quantizer)</span><span class="chip">Project deep dive</span><a class="btn-review" href="../review/index.html#area=serving">Review these cards →</a>
+</p>
+<section id="what-the-postings-ask-for" class="level2">
+<h2 class="anchored" data-anchor-id="what-the-postings-ask-for">What the postings ask for</h2>
+<p>Share of postings that name each skill, overall and by track.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Skill</th>
+<th style="text-align: left;">All postings</th>
+<th style="text-align: right;">MLE</th>
+<th style="text-align: right;">AI eng</th>
+<th style="text-align: right;">Research eng</th>
+<th style="text-align: right;">Cards</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><a href="#reliability">Reliability, SLOs and on-call for ML systems</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:52%"></span><span class="pct">52%</span></span></td>
+<td style="text-align: right;">41%</td>
+<td style="text-align: right;">64%</td>
+<td style="text-align: right;">33%</td>
+<td style="text-align: right;">4</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="#latency">Latency, throughput and performance engineering</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:48%"></span><span class="pct">48%</span></span></td>
+<td style="text-align: right;">49%</td>
+<td style="text-align: right;">49%</td>
+<td style="text-align: right;">40%</td>
+<td style="text-align: right;">5</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="#model-serving">Model serving systems</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:20%"></span><span class="pct">20%</span></span></td>
+<td style="text-align: right;">25%</td>
+<td style="text-align: right;">16%</td>
+<td style="text-align: right;">20%</td>
+<td style="text-align: right;">4</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="#autoscaling">Capacity, autoscaling and GPU cost efficiency</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:14%"></span><span class="pct">14%</span></span></td>
+<td style="text-align: right;">14%</td>
+<td style="text-align: right;">16%</td>
+<td style="text-align: right;">7%</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="#on-device">On-device / edge / embedded ML</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:12%"></span><span class="pct">12%</span></span></td>
+<td style="text-align: right;">17%</td>
+<td style="text-align: right;">10%</td>
+<td style="text-align: right;">6%</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="#gpu-programming">GPU programming and kernel-level optimization</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:12%"></span><span class="pct">12%</span></span></td>
+<td style="text-align: right;">12%</td>
+<td style="text-align: right;">11%</td>
+<td style="text-align: right;">18%</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="#llm-inference">LLM inference engines (vLLM, TGI, TensorRT-LLM, llama.cpp)</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:11%"></span><span class="pct">11%</span></span></td>
+<td style="text-align: right;">11%</td>
+<td style="text-align: right;">11%</td>
+<td style="text-align: right;">12%</td>
+<td style="text-align: right;">4</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="#quantization">Quantization and efficient inference</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:10%"></span><span class="pct">10%</span></span></td>
+<td style="text-align: right;">14%</td>
+<td style="text-align: right;">6%</td>
+<td style="text-align: right;">14%</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="#runtimes">Inference runtimes and compilers (ONNX, TensorRT, CoreML)</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:6%"></span><span class="pct">6%</span></span></td>
+<td style="text-align: right;">8%</td>
+<td style="text-align: right;">5%</td>
+<td style="text-align: right;">5%</td>
+<td style="text-align: right;">2</td>
+</tr>
+</tbody>
+</table>
+<section id="in-the-postings-words" class="level3">
+<h3 class="anchored" data-anchor-id="in-the-postings-words">In the postings’ words</h3>
+<blockquote class="blockquote">
+<p>Establish strong ML production practices spanning offline and online evaluation, experimentation, observability, safe rollout and rollback, model-quality regressions, and incident response.</p>
+<p><span class="quote-src"><a href="https://www.atlassian.com/company/careers/details/27089">Atlassian · Senior Principal Machine Learning Systems Engineer, Search Platform</a></span></p>
+</blockquote>
+<blockquote class="blockquote">
+<p>Build robust, low-latency, and compliant integration points with core Cloud and Alphabet systems (Salesforce, SAP, Vertex AI, Gemini Enterprise).</p>
+<p><span class="quote-src"><a href="https://www.google.com/about/careers/applications/jobs/results/102835535357059782-staff-software-engineer-ai-agent-architecture-for-google-cloud-business-platforms">Google · Staff Software Engineer, AI Agent Architecture for Google Cloud Business Platforms</a></span></p>
+</blockquote>
+<blockquote class="blockquote">
+<p>Familiarity with vector databases, model serving, and inference optimization is a plus</p>
+<p><span class="quote-src"><a href="https://jpmc.fa.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1001/job/210786474">JPMorgan Chase · Senior Applied AI ML Engineer</a></span></p>
+</blockquote>
+<blockquote class="blockquote">
+<p>Experience deploying and scaling open-source or fine-tuned LLMs in production, including GPU capacity planning, batching, caching, quantization and inference optimization.</p>
+<p><span class="quote-src"><a href="https://crowdstrike.wd5.myworkdayjobs.com/crowdstrikecareers/job/Romania---Bucharest/Sr-Software-Engineer---Charlotte-AI--Hybrid--ROU-_R30255">CrowdStrike · Sr.&nbsp;Software Engineer - Charlotte AI (Hybrid, ROU)</a></span></p>
+</blockquote>
+<blockquote class="blockquote">
+<p>Experience with on-device ML, model optimization (knowledge distillation, quantization, pruning), or production-grade ML pipelines.</p>
+<p><span class="quote-src"><a href="https://jobs.apple.com/en-us/details/200692644">Apple · Machine Learning Research Engineer</a></span></p>
+</blockquote>
+<blockquote class="blockquote">
+<p>Experience leading architecture for highly available and performance-critical systems.</p>
+<p><span class="quote-src"><a href="https://eeho.fa.us2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_45001/job/336795">Oracle · Senior Principal Engineer - AI Networking</a></span></p>
+</blockquote>
+<blockquote class="blockquote">
+<p>Proficiency in PyTorch/JAX, distributed training, and inference optimization (e.g., quantization, model compression)</p>
+<p><span class="quote-src"><a href="https://lifeattiktok.com/search/7523036477492627719">TikTok · Research Engineer - Foundation Models, Ads Integrity</a></span></p>
+</blockquote>
+</section>
+</section>
+<section id="the-senior-bar" class="level2">
+<h2 class="anchored" data-anchor-id="the-senior-bar">The senior bar</h2>
+<p>What separates a senior answer from a mid-level one in this area.</p>
+<ul>
+<li>Starts from the SLO and the traffic shape, then derives batch size, replica count and cost with arithmetic instead of adjectives.</li>
+<li>Explains where latency goes in a request (queueing, preprocessing, model, postprocessing, network) and measures each part before optimising any.</li>
+<li>Knows what an LLM engine does to raise throughput (continuous batching, cache management, prefill and decode scheduling) and what each technique costs in tail latency or memory.</li>
+<li>Treats quantization, compilation and distillation as changes that need an accuracy evaluation on the real task, not as free speedups.</li>
+<li>Scales GPU services on load signals that lead, plans for cold starts, and states cost per request.</li>
+<li>Designs for failure with timeouts, fallbacks and load shedding, and counts model quality as part of reliability.</li>
+</ul>
+</section>
+<section id="skills-checklists-and-questions" class="level2">
+<h2 class="anchored" data-anchor-id="skills-checklists-and-questions">Skills, checklists and questions</h2>
+<p>Tick an item when you can explain it without notes; ticks are saved in this browser. Open a question to see the answer.</p>
+<section id="reliability" class="level3">
+<h3 class="anchored" data-anchor-id="reliability">Reliability, SLOs and on-call for ML systems <span class="demand">52% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="serving.reliability.0"> Define SLIs and SLOs for an ML service, including quality, and compute an error budget</li>
+<li><input type="checkbox" class="chk" data-chk="serving.reliability.1"> Design fallbacks and graceful degradation for a model dependency</li>
+<li><input type="checkbox" class="chk" data-chk="serving.reliability.2"> Set timeouts, retries and hedging without causing a retry storm</li>
+<li><input type="checkbox" class="chk" data-chk="serving.reliability.3"> Run an incident caused by a bad model release from detection to postmortem</li>
+</ul>
+<details class="qa" id="serving-028">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Define SLI, SLO and error budget, and propose SLOs for a service whose core is a model.
+</summary>
+<ul>
+<li><strong>SLI</strong> (service level indicator): a measured ratio of good events to valid events, such as the share of requests answered successfully in under 300 ms.</li>
+<li><strong>SLO</strong> (objective): a target for an SLI over a window, such as 99.9% over 30 days.</li>
+<li><strong>Error budget</strong>: what the SLO allows to go wrong, <span class="math inline">\(1 - \text{SLO}\)</span>. At 99.9% over 30 days that is 0.1% of requests, or about 43 minutes of full outage. The budget is spent on incidents and on risky changes; when it is exhausted, releases slow down and reliability work takes priority. It turns “how reliable” into a shared decision between product and engineering.</li>
+<li>An <strong>SLA</strong> is a contract with consequences; it should be looser than the internal SLO.</li>
+</ul>
+<p><strong>SLOs for a model-backed service.</strong></p>
+<ul>
+<li><em>Availability</em>: share of valid requests that get a non-error response.</li>
+<li><em>Latency</em>: share of requests under a threshold, at two thresholds if needed. For streaming LLM responses, separate objectives for time to first token and for inter-token or total time.</li>
+<li><em>Quality of the answer path</em>: a request served by a fallback, a default or a truncated context is “up” but degraded. Track the share served by the full path.</li>
+<li><em>Freshness</em>: age of the model, the features and the index against a limit.</li>
+<li><em>Correctness proxies</em>: rate of malformed outputs, guardrail triggers, or a sampled quality score against a floor. These are noisier, so use them as SLOs only where the measurement is trustworthy.</li>
+</ul>
+<p><strong>Alerting.</strong> Page on the rate at which the budget burns, not on raw thresholds: a fast burn (for example 2% of the monthly budget in an hour, a burn rate of 14.4) pages immediately, and a slow burn opens a ticket. This removes most noisy alerts.</p>
+<p>Choose targets from what users need and what dependencies allow; a service cannot be more available than a hard dependency unless it has a fallback.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Your model API depends on a provider with 99.5% availability. Can you offer 99.9%?</li>
+<li>How would you write a quality SLO for an LLM feature?</li>
+</ul>
+</details>
+<details class="qa" id="serving-029">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> The model your product depends on is slow or unavailable. Design the fallbacks and the degradation path.
+</summary>
+<p>Decide in advance what the product does at each level of impairment, so that an incident executes a plan.</p>
+<p><strong>Detect quickly and per request.</strong></p>
+<ul>
+<li>A timeout on every model call, set from the latency budget, not a library default.</li>
+<li>A deadline propagated from the edge, so that work on already-abandoned requests stops.</li>
+<li>A circuit breaker per dependency: after a failure-rate threshold, stop calling for a cool-down period and go straight to the fallback, which protects both sides and removes the timeout wait from every request.</li>
+</ul>
+<p><strong>A ladder of fallbacks, best first.</strong></p>
+<ol type="1">
+<li>Another replica, zone or region of the same model.</li>
+<li>A secondary model: a smaller or older version, or another provider. Its prompts and thresholds must be qualified in advance, since behaviour differs.</li>
+<li>A cached or precomputed result: the last good answer, a batch-scored prediction.</li>
+<li>A heuristic or rule: popularity ranking, a default decision that is safe (for fraud, which direction is safe is a business choice made beforehand).</li>
+<li>A clear failure: tell the user and offer retry, or queue the work for later.</li>
+</ol>
+<p><strong>Degrade before failing.</strong> Under load, reduce the work per request: fewer candidates, shorter context or output, no reranking step, lower-priority traffic shed first. Prioritise by request class, such as paying users, interactive over batch.</p>
+<p><strong>Make fallbacks real.</strong></p>
+<ul>
+<li>Size them: the fallback path receives full traffic at the worst moment.</li>
+<li>Exercise them regularly with fault injection; an untested fallback fails when needed.</li>
+<li>Mark every response with the path that served it, measure the fallback rate and alert on it, because a silent fallback is a quality incident that looks healthy.</li>
+<li>Avoid amplification: no retries on top of retries, and bounded queues.</li>
+</ul>
+<p><strong>Recovery.</strong> Close the breaker gradually, and beware of a thundering herd refilling caches.</p>
+<p>For agents and multi-step pipelines, also decide what to do with partially completed work: checkpoint and resume, or roll back side effects.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Which direction is the safe default when a fraud model times out?</li>
+<li>How do you keep a fallback model’s quality from being discovered during the incident?</li>
+</ul>
+</details>
+<details class="qa" id="serving-030">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> How do you set timeouts and retries for calls to a model service without making an outage worse? Where do hedged requests fit?
+</summary>
+<p><strong>Timeouts.</strong> Every call needs one, derived from the caller’s remaining deadline. Too long, and threads pile up behind a dead dependency; too short, and normal tail requests fail and are retried, adding load. Set it a little above the dependency’s healthy p99 and pass the remaining budget downstream, so that a retry never exceeds what the user is still waiting for.</p>
+<p><strong>Retries.</strong> Retry only failures that are likely transient (connection errors, 429, 503, timeouts) and only operations that are idempotent or carry an idempotency key.</p>
+<ul>
+<li>Exponential backoff with jitter, so that clients do not retry in synchrony.</li>
+<li>Honour a retry-after hint from the server.</li>
+<li>A small maximum number of attempts.</li>
+<li>A <strong>retry budget</strong>: cap retries at a fraction (say 10%) of request volume per client. Without it, a dependency that slows down receives two or three times its normal load exactly when it is weakest. That feedback loop is a retry storm.</li>
+<li>Retry at one layer only. Three layers each retrying three times multiply into 27 attempts.</li>
+</ul>
+<p>For GPU inference a retry is expensive, and a timed-out request may still be running on the server. Cancel the work on the server when the client gives up, or the retried request competes with its own abandoned predecessor.</p>
+<p><strong>Hedged requests.</strong> To cut tail latency, send a second copy of a request to another replica if the first has not answered within, say, the p95 latency, take whichever returns first and cancel the other. This trims the tail at the cost of a few percent extra load, because only slow requests are duplicated. Conditions: idempotent requests, independent replicas (a hedge to an equally overloaded replica helps nothing), and a cap on the hedge rate so that it switches itself off under overload. For streamed LLM output, hedging on time to first token is the practical form.</p>
+<p><strong>Server side.</strong> Shed load early with a clear, fast error, which is cheaper for everyone than a slow timeout.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Explain how retries can turn a brief slowdown into a sustained outage.</li>
+<li>Why must hedging be disabled or capped when the service is overloaded?</li>
+</ul>
+</details>
+<details class="qa" id="serving-031">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">debugging</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> You are on call. A model version deployed an hour ago is returning degraded outputs, but every health check and latency dashboard is green. Walk me through the incident.
+</summary>
+<p><strong>1. Confirm and size it.</strong> What is the evidence: user reports, a drop in a quality or business metric, a spike in fallback or guardrail rates, a change in the prediction distribution? Which share of traffic and which segments? Correlate the start time with the deploy.</p>
+<p><strong>2. Declare and assign roles.</strong> If users are affected, open an incident, name an incident lead and a communicator, and start a timeline. Do not debug alone in silence.</p>
+<p><strong>3. Mitigate before diagnosing.</strong> A change went out an hour ago and quality fell: roll back. Roll back the whole unit (model, preprocessing, prompt, feature definitions, configuration) to the last known good version, and verify that the symptom clears. If rollback is not possible, shift traffic to the previous version, switch to the fallback path or disable the feature. Minutes matter more than understanding at this stage.</p>
+<p><strong>4. Check for lasting damage.</strong> Did the bad model write anything: stored predictions, cached responses, messages sent to users, training logs that will feed the next retrain? Purge caches and mark the affected data range.</p>
+<p><strong>5. Diagnose on logs, not on production.</strong> Replay logged requests through both versions and compare. Typical causes: a preprocessing or tokenizer mismatch between training and serving, a wrong artefact or configuration promoted, a feature missing online and silently defaulted, a quantised or exported variant that was never evaluated, or an evaluation set that did not represent production traffic.</p>
+<p><strong>6. Communicate.</strong> Status updates at regular intervals to stakeholders, in plain terms: impact, mitigation, next update.</p>
+<p><strong>7. Postmortem, blameless.</strong> The key questions here are why health checks were green and why the release gate passed. Actions usually include an output-quality canary metric with automatic rollback, a shadow comparison against the previous version before rollout, a skew test in the release pipeline, and an alert on prediction-distribution change.</p>
+<p>The lesson to state: availability and latency checks do not observe correctness; a model service needs a quality signal in its release and alerting path.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Rollback is impossible because the feature schema changed. What do you do?</li>
+<li>What would an automatic rollback criterion for output quality look like?</li>
+</ul>
+</details>
+</section>
+<section id="latency" class="level3">
+<h3 class="anchored" data-anchor-id="latency">Latency, throughput and performance engineering <span class="demand">48% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="serving.latency.0"> Explain why p99 matters more than the mean and where tail latency comes from</li>
+<li><input type="checkbox" class="chk" data-chk="serving.latency.1"> Write a latency budget for a request and say how each part is measured</li>
+<li><input type="checkbox" class="chk" data-chk="serving.latency.2"> Relate utilisation to queueing delay and batch size to throughput</li>
+<li><input type="checkbox" class="chk" data-chk="serving.latency.3"> Run a load test with an open-loop generator and realistic inputs, and find the knee</li>
+<li><input type="checkbox" class="chk" data-chk="serving.latency.4"> Diagnose a GPU service that is slow while the GPU is mostly idle</li>
+</ul>
+<details class="qa" id="serving-009">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Why do we set latency targets on p99 instead of the average, and where does tail latency come from?
+</summary>
+<p><strong>Why percentiles.</strong> Latency distributions are skewed: most requests are fast and a few are very slow, so the mean describes almost no real request. Users experience the tail more often than “1%” suggests:</p>
+<ul>
+<li>A session makes many requests. With 20 requests per page view, the chance that at least one exceeds the p99 is <span class="math inline">\(1 - 0.99^{20} \approx 18\%\)</span>.</li>
+<li>A request fans out. If it waits for 100 backends and each is slow 1% of the time, <span class="math inline">\(1 - 0.99^{100} \approx 63\%\)</span> of requests are slow.</li>
+<li>The slowest requests often belong to the heaviest and most valuable users.</li>
+</ul>
+<p><strong>Where the tail comes from.</strong></p>
+<ul>
+<li><em>Queueing</em>: bursts arrive while the server is busy. This is the largest source, and it grows sharply with utilisation.</li>
+<li><em>Input size</em>: long sequences, large images, many candidates. Model time is a function of input size.</li>
+<li><em>Batching</em>: waiting to fill a batch, or sharing a batch with a long input.</li>
+<li><em>Runtime pauses</em>: garbage collection, memory allocation, page faults, a Python thread holding the interpreter lock.</li>
+<li><em>Cold paths</em>: cache misses, first request after a deploy, lazy initialisation, model loading, autoscaling lag.</li>
+<li><em>Shared resources</em>: noisy neighbours, CPU throttling, network retransmits.</li>
+<li><em>Dependencies</em>: a slow feature store or downstream model, plus retries.</li>
+</ul>
+<p><strong>Practice.</strong> Measure at the client as well as the server, since queueing in front of the server is invisible to it. Keep histograms, not averages, and never average percentiles across hosts. Look at the slowest traces, which usually share one cause. State targets as “99% of requests under X ms over a window”, and consider p99.9 for high-fan-out systems.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Why is averaging the p99 of ten servers wrong?</li>
+<li>What is the difference between latency measured at the server and at the client?</li>
+</ul>
+</details>
+<details class="qa" id="serving-010">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> You are given a 200 ms p99 budget for an endpoint that calls a model. How do you break it down, and how do you make sure each part is measured?
+</summary>
+<p>Write the request path as stages and give each a budget that sums to less than the total, leaving slack for variance.</p>
+<p>A typical breakdown:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Stage</th>
+<th>Example budget</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Network and TLS, client to edge and edge to service</td>
+<td>20 ms</td>
+</tr>
+<tr class="even">
+<td>Authentication, routing, request parsing</td>
+<td>5 ms</td>
+</tr>
+<tr class="odd">
+<td>Feature or context retrieval (parallel calls)</td>
+<td>30 ms</td>
+</tr>
+<tr class="even">
+<td>Preprocessing or tokenisation</td>
+<td>5 ms</td>
+</tr>
+<tr class="odd">
+<td>Queue and batch wait</td>
+<td>10 ms</td>
+</tr>
+<tr class="even">
+<td>Model forward pass</td>
+<td>80 ms</td>
+</tr>
+<tr class="odd">
+<td>Postprocessing, business rules, serialisation</td>
+<td>10 ms</td>
+</tr>
+<tr class="even">
+<td>Slack</td>
+<td>40 ms</td>
+</tr>
+</tbody>
+</table>
+<p>Principles:</p>
+<ul>
+<li>Budgets are for the tail. Stage p99s do not add up to the end-to-end p99, but assigning each stage a p99 budget and requiring the sum to fit is a safe engineering rule.</li>
+<li>Parallelise independent calls so the stage costs the maximum, not the sum, and give each a timeout with a default so one slow dependency cannot consume the budget.</li>
+<li>Propagate a deadline with the request, so that downstream stages stop working on a request that has already timed out.</li>
+<li>The model’s share is set by input size. Cap sequence length or candidate count so that worst-case inputs fit.</li>
+</ul>
+<p>Measurement:</p>
+<ul>
+<li>Distributed tracing with a span per stage, including time spent in queues, which is the part most often missing.</li>
+<li>Histograms per stage, broken down by input size and model version.</li>
+<li>Client-side measurement for the true end-to-end number.</li>
+<li>A continuous synthetic probe and a load-test regression in CI, so that a change which spends another stage’s budget is caught before production.</li>
+</ul>
+<p>When the budget does not close, the options are a smaller or distilled model, quantization or compilation, caching or precomputation, reducing work (fewer candidates, shorter context), or renegotiating the budget with evidence.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>The model stage is within budget but end-to-end p99 is 400 ms. Where do you look first?</li>
+<li>How would this breakdown change for a streaming LLM response?</li>
+</ul>
+</details>
+<details class="qa" id="serving-011">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">derivation</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Why does latency explode as a server approaches full utilisation? Give the queueing argument and say what it implies for capacity planning.
+</summary>
+<p>Model one server with random arrivals at rate <span class="math inline">\(\lambda\)</span> and service rate <span class="math inline">\(\mu\)</span> (an M/M/1 queue). Utilisation is <span class="math inline">\(\rho = \lambda / \mu\)</span>, and the mean time in the system is</p>
+<p><span class="math display">\[W = \frac{1}{\mu - \lambda} = \frac{1/\mu}{1 - \rho}.\]</span></p>
+<p>Time in system is the service time divided by <span class="math inline">\(1 - \rho\)</span>: twice the service time at 50% utilisation, 5 times at 80%, 10 times at 90%, 100 times at 99%. The tail is worse than the mean, because the waiting time is itself widely spread.</p>
+<p><strong>Why.</strong> Arrivals are bursty and capacity that sat idle during a gap cannot be saved for the next burst. As <span class="math inline">\(\rho \to 1\)</span> the queue takes longer and longer to drain after each burst.</p>
+<p><strong>What changes the curve.</strong></p>
+<ul>
+<li><em>Variance.</em> More variable service times make waiting worse (for a general service distribution the wait scales with <span class="math inline">\(1 + c_s^2\)</span>, where <span class="math inline">\(c_s\)</span> is the coefficient of variation). Mixed short and long inputs are expensive; separating them into pools helps.</li>
+<li><em>Pooling.</em> <span class="math inline">\(c\)</span> servers behind one queue behave much better than <span class="math inline">\(c\)</span> separate queues at the same utilisation, which is why least-loaded or shared-queue routing beats random assignment.</li>
+<li><em>Batching.</em> A GPU serves a batch at a time, so it tolerates higher utilisation than the simple model suggests, but the same knee exists.</li>
+</ul>
+<p><strong>Implications.</strong></p>
+<ul>
+<li>Plan to a target utilisation well below 100% at peak; 50 to 70% is common for latency-sensitive services, higher for batch.</li>
+<li>The latency SLO, not the average throughput, determines capacity.</li>
+<li>Past the knee no tuning helps; you need more capacity or load shedding. A bounded queue with rejection keeps latency of accepted requests finite.</li>
+<li>Autoscaling must react before the knee, since queues grow faster than replicas start.</li>
+</ul>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Two pools at 60% utilisation each or one pool of twice the size at 60%. Which has lower latency and why?</li>
+<li>How does a bounded queue change what happens above capacity?</li>
+</ul>
+</details>
+<details class="qa" id="serving-012">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> How do you load test an inference service so that the result predicts production behaviour?
+</summary>
+<p><strong>Use an open-loop generator.</strong> A closed-loop tool keeps a fixed number of virtual users, each waiting for its response before sending the next request. When the server slows down, the tool sends less, so it never observes the queue that real, independent users would create, and it under-reports the tail. This is coordinated omission. An open-loop generator sends at a fixed arrival rate regardless of responses, and measures latency from the intended send time.</p>
+<p><strong>Use realistic inputs.</strong> Model latency depends on input size. Replay sampled production requests, or match the distribution of sequence lengths, image sizes, candidate counts and, for LLMs, both prompt and output lengths. A test with one short prompt overstates capacity several times. Include the cache hit rate you expect, not 100%.</p>
+<p><strong>Find the curve, not a number.</strong> Step the arrival rate up and record throughput, p50, p99 and error rate at each step, holding each level long enough for steady state. The knee where p99 leaves the SLO is the capacity of one replica.</p>
+<p><strong>Test what breaks.</strong></p>
+<ul>
+<li>Bursts and ramps at the speed real traffic changes, to test autoscaling and cold start.</li>
+<li>Overload beyond capacity: does the service shed load and recover, or collapse?</li>
+<li>A slow or failing dependency.</li>
+<li>A long soak run for memory growth and fragmentation.</li>
+</ul>
+<p><strong>Conditions.</strong> Same hardware, model version, batching configuration and replica count logic as production; warm up before measuring; generate load from enough machines that the generator is not the bottleneck; measure on the client side.</p>
+<p><strong>Use the result.</strong> Per-replica capacity at the SLO feeds the replica calculation and the autoscaling target; rerun it in CI on a schedule so that a regression in a dependency or a model change is caught as a capacity change.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Your closed-loop test showed p99 of 80 ms and production shows 600 ms at the same request rate. Explain.</li>
+<li>How do you load test an endpoint whose outputs are streamed tokens?</li>
+</ul>
+</details>
+<details class="qa" id="serving-013">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">debugging</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> An inference service on a GPU is slower than expected, and monitoring shows GPU utilisation around 30%. What is going on and how do you find it?
+</summary>
+<p>Low utilisation with high latency means the GPU is waiting for work. The bottleneck is somewhere on the way to it or around it.</p>
+<p><strong>Likely causes.</strong></p>
+<ul>
+<li><em>CPU-side preprocessing.</em> Tokenisation, image decoding and resizing, feature assembly in Python. Often single-threaded and holding the interpreter lock.</li>
+<li><em>Batch size of one.</em> No batching, or a batcher whose wait is too short at this traffic level, so each pass uses a small part of the device.</li>
+<li><em>Many small operations.</em> A model made of small layers or Python-level loops pays launch overhead per operation; the GPU idles between them.</li>
+<li><em>Host-device transfers and synchronisation points.</em> Moving tensors back to the CPU in the middle of the forward pass (<code>.item()</code>, <code>.cpu()</code>, printing, Python control flow on tensor values) forces a wait each time.</li>
+<li><em>I/O per request.</em> Reading features, loading an adapter, or logging synchronously.</li>
+<li><em>Too few serving threads or processes</em>, so requests queue in front of an idle GPU.</li>
+<li><em>Memory allocation.</em> Varying input shapes cause repeated allocation and cache misses in the allocator or, with a compiling runtime, recompilation for each new shape.</li>
+</ul>
+<p><strong>How to find it.</strong></p>
+<ol type="1">
+<li>Trace one request with spans for queue, preprocess, transfer, forward and postprocess.</li>
+<li>Run a profiler that shows CPU and GPU timelines together. Gaps on the GPU timeline aligned with CPU activity name the culprit.</li>
+<li>Time the forward pass alone on a prepared batch, with proper synchronisation, to get the model’s floor. If the floor is fine, the model is not the problem.</li>
+<li>Look at CPU utilisation per core and at throttling: one core pinned at 100% is the signature of a Python bottleneck.</li>
+</ol>
+<p><strong>Fixes in the usual order.</strong> Batch; move preprocessing out of the request thread or onto the GPU; use a fast tokenizer and multiple workers; remove synchronisation points; compile or fuse the model to cut per-operation overhead; fix shapes or bucket them.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How do you time a forward pass correctly on a GPU?</li>
+<li>Utilisation reads 100% but throughput is still poor. What does utilisation actually measure?</li>
+</ul>
+</details>
+</section>
+<section id="model-serving" class="level3">
+<h3 class="anchored" data-anchor-id="model-serving">Model serving systems <span class="demand">20% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="serving.model-serving.0"> Choose among online, batch, streaming and asynchronous inference for a use case</li>
+<li><input type="checkbox" class="chk" data-chk="serving.model-serving.1"> Trace a request through a model server and say where it can queue</li>
+<li><input type="checkbox" class="chk" data-chk="serving.model-serving.2"> Explain dynamic batching and tune maximum batch size and maximum wait against an SLO</li>
+<li><input type="checkbox" class="chk" data-chk="serving.model-serving.3"> Design serving for many models on few GPUs, including loading, routing and isolation</li>
+</ul>
+<details class="qa" id="serving-001">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Online, batch, streaming or asynchronous inference: how do you choose for a given feature?
+</summary>
+<p>Choose by when the input is known and how soon the output is needed.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Mode</th>
+<th>How</th>
+<th>Fits</th>
+<th>Costs</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Batch (offline)</td>
+<td>Score a whole table on a schedule and store the results</td>
+<td>Inputs known in advance and slowly changing: nightly recommendations, churn scores, embeddings for a catalogue</td>
+<td>Stale by up to one period; computes predictions nobody reads; cannot use request-time context</td>
+</tr>
+<tr class="even">
+<td>Online (synchronous)</td>
+<td>Model called inside the request</td>
+<td>Output depends on request-time input: search ranking, fraud at checkout, chat</td>
+<td>Latency SLO, provisioning for peak, online feature availability</td>
+</tr>
+<tr class="odd">
+<td>Streaming</td>
+<td>Triggered by events on a stream; results written to a store or topic</td>
+<td>Freshness in seconds without a user waiting: fraud features, alerting, session updates</td>
+<td>Stream infrastructure, ordering and exactly-once concerns</td>
+</tr>
+<tr class="even">
+<td>Asynchronous</td>
+<td>Request is queued; client polls or receives a callback</td>
+<td>Slow jobs of seconds to minutes: document processing, image or video generation, long agent runs</td>
+<td>Job state, retries and idempotency; a UX that tolerates waiting</td>
+</tr>
+</tbody>
+</table>
+<p>Decision questions:</p>
+<ul>
+<li>Is the input space enumerable and small enough to precompute? Then batch is cheapest and its serving is a key-value lookup.</li>
+<li>What is the value of freshness? Measure how the metric decays with staleness.</li>
+<li>What latency does the product tolerate? Under about 100 ms end to end rules out large models unless results are precomputed or cached.</li>
+<li>How bursty is traffic? Batch and async smooth the load and can use cheaper capacity.</li>
+</ul>
+<p>Hybrids are the norm: precompute what you can (item embeddings, candidate sets) and do only the request-dependent part online; fall back to the batch result when the online path times out.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Your nightly batch scores cover users who never log in. How would you cut that waste?</li>
+<li>What changes when a batch feature moves online?</li>
+</ul>
+</details>
+<details class="qa" id="serving-002">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> What is dynamic batching in a model server, why does it help on a GPU, and how do you set its parameters?
+</summary>
+<p>A model server receives single requests but a GPU is most efficient on batches. Dynamic batching holds incoming requests briefly, groups them into one tensor, runs one forward pass and splits the results.</p>
+<p><strong>Why it helps.</strong> A forward pass costs roughly <span class="math inline">\(t(b) = t_0 + t_1 b\)</span>: a fixed overhead (kernel launches, memory traffic for the weights) plus a per-item part that stays small until the GPU saturates. Throughput <span class="math inline">\(b / t(b)\)</span> rises with <span class="math inline">\(b\)</span> toward <span class="math inline">\(1/t_1\)</span>. At batch 1 a large GPU is mostly idle.</p>
+<p><strong>The two knobs.</strong></p>
+<ul>
+<li><em>Maximum batch size</em>: bounded by memory and by the point where <span class="math inline">\(t(b)\)</span> itself exceeds the latency budget.</li>
+<li><em>Maximum wait</em> (queue delay): how long the first request in a batch may wait for company.</li>
+</ul>
+<p>Added latency per request is the wait to fill plus the longer batched pass. Under high load, batches fill immediately and the wait is not paid; under low load every request pays the full wait for nothing. So set the maximum wait to a small fraction of the SLO (often 1 to 10 ms) and let the batch size float.</p>
+<p><strong>Tuning.</strong> Measure <span class="math inline">\(t(b)\)</span> for a range of batch sizes, then pick the largest <span class="math inline">\(b\)</span> such that wait plus <span class="math inline">\(t(b)\)</span> fits the p99 budget with headroom. Verify under a realistic load test, since arrival patterns determine actual batch sizes.</p>
+<p><strong>Complications.</strong> Variable-length inputs must be padded to the longest in the batch, so bucket by length or one long request slows the rest. Requests with different options cannot share a batch. For autoregressive generation, request-level batching is replaced by continuous batching at the token step.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>At low traffic, dynamic batching makes latency worse. What do you do?</li>
+<li>How does padding waste change your choice of batch composition?</li>
+</ul>
+</details>
+<details class="qa" id="serving-003">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Implement a dynamic batcher with asyncio: requests are awaited individually, and the model is called on batches of up to N items or after at most T milliseconds.
+</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> asyncio</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> DynamicBatcher:</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, infer_fn, max_batch<span class="op">=</span><span class="dv">32</span>, max_wait_ms<span class="op">=</span><span class="dv">5</span>, max_queue<span class="op">=</span><span class="dv">1024</span>):</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.infer_fn <span class="op">=</span> infer_fn                  <span class="co"># list[x] -&gt; list[y], blocking</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.max_batch <span class="op">=</span> max_batch</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.max_wait <span class="op">=</span> max_wait_ms <span class="op">/</span> <span class="dv">1000</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.queue <span class="op">=</span> asyncio.Queue(maxsize<span class="op">=</span>max_queue)</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">async</span> <span class="kw">def</span> submit(<span class="va">self</span>, x):</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>        fut <span class="op">=</span> asyncio.get_running_loop().create_future()</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>        <span class="cf">try</span>:</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>            <span class="va">self</span>.queue.put_nowait((x, fut))       <span class="co"># shed load when full</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>        <span class="cf">except</span> asyncio.QueueFull:</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>            <span class="cf">raise</span> <span class="pp">RuntimeError</span>(<span class="st">"overloaded"</span>)</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="cf">await</span> fut</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">async</span> <span class="kw">def</span> run(<span class="va">self</span>):</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>        loop <span class="op">=</span> asyncio.get_running_loop()</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>        <span class="cf">while</span> <span class="va">True</span>:</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>            items <span class="op">=</span> [<span class="cf">await</span> <span class="va">self</span>.queue.get()]</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>            deadline <span class="op">=</span> loop.time() <span class="op">+</span> <span class="va">self</span>.max_wait</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>            <span class="cf">while</span> <span class="bu">len</span>(items) <span class="op">&lt;</span> <span class="va">self</span>.max_batch:</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>                timeout <span class="op">=</span> deadline <span class="op">-</span> loop.time()</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>                <span class="cf">if</span> timeout <span class="op">&lt;=</span> <span class="dv">0</span>:</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>                    <span class="cf">break</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>                <span class="cf">try</span>:</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>                    items.append(<span class="cf">await</span> asyncio.wait_for(<span class="va">self</span>.queue.get(), timeout))</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>                <span class="cf">except</span> asyncio.<span class="pp">TimeoutError</span>:</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>                    <span class="cf">break</span></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>            xs, futs <span class="op">=</span> <span class="bu">zip</span>(<span class="op">*</span>items)</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>            <span class="cf">try</span>:</span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>                ys <span class="op">=</span> <span class="cf">await</span> loop.run_in_executor(<span class="va">None</span>, <span class="va">self</span>.infer_fn, <span class="bu">list</span>(xs))</span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>                <span class="cf">for</span> f, y <span class="kw">in</span> <span class="bu">zip</span>(futs, ys):</span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>                    <span class="cf">if</span> <span class="kw">not</span> f.cancelled():</span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>                        f.set_result(y)</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>            <span class="cf">except</span> <span class="pp">Exception</span> <span class="im">as</span> e:</span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>                <span class="cf">for</span> f <span class="kw">in</span> futs:</span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>                    <span class="cf">if</span> <span class="kw">not</span> f.cancelled():</span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>                        f.set_exception(e)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Points an interviewer checks:</p>
+<ul>
+<li>The wait clock starts at the <strong>first</strong> request of the batch, so no request waits more than <code>max_wait</code> in the batcher.</li>
+<li>The blocking model call runs in an executor; calling it directly would freeze the event loop and stop new requests from being queued.</li>
+<li>One failed batch must fail only its own futures, and the loop must keep running.</li>
+<li>A bounded queue with rejection gives backpressure; an unbounded one turns overload into unbounded latency.</li>
+<li>A caller that timed out leaves a cancelled future; skip it instead of raising.</li>
+</ul>
+<p>Extensions worth naming: bucketing by input length, per-request deadlines that drop expired items before inference, several worker loops for several GPUs, and metrics for batch size and queue time.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How would you drop requests whose client has already given up?</li>
+<li>What happens to latency if <code>infer_fn</code> is called on the event loop thread?</li>
+</ul>
+</details>
+<details class="qa" id="serving-004">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Design a serving platform for several hundred models, most of them rarely called, on a limited pool of GPUs.
+</summary>
+<p>One GPU per model is unaffordable when most models are idle, so the design is about sharing memory and absorbing cold starts.</p>
+<p><strong>Classify the models.</strong> A few hot models get dedicated, autoscaled replicas. The long tail shares a pool. If many models are fine-tunes of one base, serve them as adapters on a shared base model: the base stays in GPU memory and a small adapter is selected per request, which turns hundreds of models into one deployment.</p>
+<p><strong>Placement and loading for the tail.</strong></p>
+<ul>
+<li>Each pool replica holds several models in GPU memory, bounded by a memory budget, with least-recently-used eviction.</li>
+<li>A router maps model id to the replicas that currently have it loaded and prefers those (affinity). On a miss it picks a replica with room, triggers a load and either queues the request or returns a retry-after.</li>
+<li>Make loads fast: weights on local NVMe or a memory-mapped cache, a weight-only format, models kept warm in host RAM when evicted from the GPU.</li>
+</ul>
+<p><strong>Isolation.</strong> A slow or heavy model must not starve its neighbours: per-model concurrency limits and queues, per-tenant rate limits, and memory accounting that includes peak activation memory, not only weights.</p>
+<p><strong>Control plane.</strong> A registry with each model’s version, resource profile and SLO class; rolling updates per model; per-model metrics for latency, load time, eviction count and cost attribution.</p>
+<p><strong>SLO classes.</strong> Promise low latency only for models that pay for reserved capacity; tail models get an explicit cold-start SLO. Predictive pre-loading from usage patterns (a customer’s working hours) removes most cold starts cheaply.</p>
+<p>Risks to name: thrashing when the working set exceeds memory, fragmentation, and a popular new model evicting many small ones.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How do you detect and stop thrashing?</li>
+<li>What changes if the models are adapters over one shared base model?</li>
+</ul>
+</details>
+</section>
+<section id="autoscaling" class="level3">
+<h3 class="anchored" data-anchor-id="autoscaling">Capacity, autoscaling and GPU cost efficiency <span class="demand">14% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="serving.autoscaling.0"> Choose a scaling signal for GPU inference and explain why CPU and GPU utilisation mislead</li>
+<li><input type="checkbox" class="chk" data-chk="serving.autoscaling.1"> Break down a cold start and name a mitigation for each part</li>
+<li><input type="checkbox" class="chk" data-chk="serving.autoscaling.2"> Compute replicas needed for a peak load, an SLO and a redundancy requirement</li>
+<li><input type="checkbox" class="chk" data-chk="serving.autoscaling.3"> Compare time-slicing, process-level sharing and hardware partitioning of a GPU</li>
+</ul>
+<details class="qa" id="serving-022">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> How do you autoscale a GPU inference service? Which signal do you scale on, and what makes it harder than scaling a stateless web service?
+</summary>
+<p><strong>Signals.</strong></p>
+<ul>
+<li><em>CPU utilisation</em>, the default for web services, says little when the GPU is the bottleneck.</li>
+<li><em>GPU utilisation</em> is tempting and misleading: it reports the share of time any kernel was running, so it reads near 100% with a single stream and does not show how much headroom batching still offers.</li>
+<li><em>Concurrency or in-flight requests per replica</em> against a target derived from a load test is the most direct signal.</li>
+<li><em>Queue depth or queue wait time</em> leads latency and is the natural signal for asynchronous workloads.</li>
+<li>For LLM serving: running plus waiting sequences, or tokens in flight, relative to the KV cache capacity.</li>
+<li>Latency itself is a lagging signal and noisy; use it as an alarm, not as the control input.</li>
+</ul>
+<p><strong>Why it is harder.</strong></p>
+<ul>
+<li><em>Cold start is minutes, not seconds</em>: provisioning a GPU node, pulling a multi-gigabyte image, loading weights into memory, warming up. By the time capacity arrives the burst may be over, or the queue long.</li>
+<li><em>Capacity is lumpy and scarce</em>: GPUs come in whole units, cost a lot when idle, and may not be available on demand.</li>
+<li><em>Scale-down is risky</em>: long-running streams must drain first.</li>
+</ul>
+<p><strong>Mitigations.</strong></p>
+<ul>
+<li>Keep a minimum number of warm replicas and headroom sized to the fastest realistic ramp.</li>
+<li>Shorten the cold start: pre-pulled or lazily loaded images, weights on local disk or a shared cache, a pool of warm nodes.</li>
+<li>Scale up fast and down slowly, with a stabilisation window to avoid flapping.</li>
+<li>Predictive or scheduled scaling for daily patterns.</li>
+<li>Absorb bursts with a bounded queue, and shed or degrade (smaller model, shorter output) beyond it.</li>
+<li>Scale to zero only for workloads that tolerate a cold start.</li>
+</ul>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Traffic doubles in 30 seconds and a new replica takes 4 minutes. What happens, and what do you design for it?</li>
+<li>Why is GPU utilisation at 100% not a reason to scale up?</li>
+</ul>
+</details>
+<details class="qa" id="serving-023">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">derivation</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Peak traffic is 1 500 requests per second with a p99 latency SLO. How many GPU replicas do you provision? Show the calculation.
+</summary>
+<p><strong>1. Per-replica capacity at the SLO.</strong> From a load test with realistic inputs, find the highest arrival rate at which one replica still meets the p99 target. Say 200 requests per second. This is not the maximum throughput: at maximum throughput the queue, and so the latency, is unbounded.</p>
+<p><strong>2. Target utilisation.</strong> Run below that capacity to absorb bursts and the lag of autoscaling. With a 70% target, plan for <span class="math inline">\(0.7 \times 200 = 140\)</span> requests per second per replica.</p>
+<p><strong>3. Replicas for peak.</strong></p>
+<p><span class="math display">\[N = \left\lceil \frac{1500}{140} \right\rceil = 11.\]</span></p>
+<p><strong>4. Redundancy.</strong> Add capacity so that losing a replica, or a whole zone if the service spans zones, still leaves enough. With N+1: 12 replicas. Across three zones with tolerance for losing one: each zone must hold half the required capacity, so <span class="math inline">\(3 \times \lceil 11 / 2 \rceil = 18\)</span>.</p>
+<p><strong>5. Rollouts.</strong> During a rolling update some replicas are unavailable or warming; either surge extra replicas or include the reduction in the plan.</p>
+<p><strong>6. Cost.</strong> Multiply by the hourly price to get the peak cost, then apply autoscaling to follow the daily curve. Average utilisation over the day, not peak sizing, drives the bill. Cost per thousand requests is hourly price times replicas divided by requests served in the hour.</p>
+<p><strong>Sanity checks.</strong></p>
+<ul>
+<li>Is the peak a measured peak (the busiest minute, not the daily mean), with growth included?</li>
+<li>Does per-replica capacity hold when several replicas share upstream dependencies?</li>
+<li>What is the largest input the system admits, and was it in the load test?</li>
+<li>What happens above the plan: is there load shedding, or does latency for everyone degrade?</li>
+</ul>
+<p>An interviewer wants the structure (capacity at SLO, headroom, redundancy) more than the numbers.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Why not plan to 100% of the measured capacity?</li>
+<li>How does the answer change if requests vary by a factor of 50 in cost?</li>
+</ul>
+</details>
+<details class="qa" id="serving-024">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Your GPU inference fleet averages 25% utilisation. What are the ways to raise it, and what does each cost?
+</summary>
+<p>Low average utilisation has three sources: peak-sized capacity sitting idle off-peak, requests that use little of each GPU, and many small services each holding a whole device.</p>
+<p><strong>Follow the load.</strong></p>
+<ul>
+<li>Autoscale on concurrency or queue depth, with faster cold starts so that less headroom is needed.</li>
+<li>Fill the troughs: run batch and offline inference, evaluation and embedding jobs on the idle serving fleet at low priority, preempted when online traffic returns.</li>
+</ul>
+<p><strong>Use more of each GPU.</strong></p>
+<ul>
+<li>Batching (dynamic or continuous) and higher concurrency per replica, up to the latency knee.</li>
+<li>Right-size the hardware: a smaller or older GPU model for small models; a large-memory device only where the model needs it.</li>
+<li>Make the model cheaper: quantization, compilation, distillation or a cascade in which a small model handles easy requests.</li>
+</ul>
+<p><strong>Share devices among services.</strong></p>
+<ul>
+<li><em>Time-slicing</em>: several processes take turns. Simple; no memory or fault isolation, and latency interference.</li>
+<li><em>Process-level sharing</em> (such as NVIDIA MPS): processes run concurrently on one device with better throughput than time-slicing; limited isolation.</li>
+<li><em>Hardware partitioning</em> (such as NVIDIA MIG on supported devices): fixed slices with dedicated memory and compute. Strong isolation; coarse, static sizes.</li>
+<li><em>One multi-model server per GPU</em>: an application-level scheduler loads several models and batches across them. Most efficient, most engineering.</li>
+</ul>
+<p><strong>Buy capacity differently.</strong> Committed capacity for the baseline, on-demand for peaks, spot for preemptible batch work.</p>
+<p>Costs to state: every sharing technique trades isolation and tail latency for utilisation; consolidation increases blast radius; and aggressive scale-down raises cold-start risk. Set the target by SLO class. Report cost per request, since utilisation is only a means.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Which sharing mechanism would you use for two latency-sensitive models from different teams?</li>
+<li>What is the risk of running batch jobs on the serving fleet?</li>
+</ul>
+</details>
+</section>
+<section id="on-device" class="level3">
+<h3 class="anchored" data-anchor-id="on-device">On-device / edge / embedded ML <span class="demand">12% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="serving.on-device.0"> List the constraints of phones and embedded devices and what each does to model design</li>
+<li><input type="checkbox" class="chk" data-chk="serving.on-device.1"> Decide what runs on the device and what in the cloud, and design the fallback between them</li>
+<li><input type="checkbox" class="chk" data-chk="serving.on-device.2"> Pick a compression strategy to meet a size and latency target</li>
+</ul>
+<details class="qa" id="serving-019">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> What changes when a model has to run on a phone or an embedded device instead of a server?
+</summary>
+<p>The constraints are harder and you do not control the hardware.</p>
+<ul>
+<li><strong>Memory.</strong> The model shares RAM with the operating system and other apps; exceeding a budget gets the app killed. Budgets of tens to a few hundred megabytes are normal for phones, kilobytes to megabytes for microcontrollers.</li>
+<li><strong>Storage and download size.</strong> The model ships in the app or is downloaded on first use. Size affects install rates and update cost.</li>
+<li><strong>Compute heterogeneity.</strong> CPUs, GPUs and neural accelerators differ by device and vendor. An operator that the accelerator does not support falls back to the CPU and can erase the speedup. You must test on a matrix of real devices, including old ones.</li>
+<li><strong>Power and heat.</strong> Sustained inference drains the battery and triggers thermal throttling, so performance after a minute is lower than in a short benchmark.</li>
+<li><strong>Latency without a network.</strong> No round trip, which is a benefit; but also no elastic capacity.</li>
+<li><strong>Updates.</strong> A model update is an app release or a managed download; old versions stay in the field for months. You cannot roll back instantly.</li>
+<li><strong>Observability.</strong> Little telemetry, constrained by privacy and bandwidth.</li>
+</ul>
+<p>What you gain: privacy, since data stays on the device; offline operation; no per-request serving cost; and low, predictable latency.</p>
+<p>Consequences for design:</p>
+<ul>
+<li>Architectures chosen for the target’s supported operators, not only for accuracy.</li>
+<li>Quantization (usually 8-bit integer) as the default, with distillation or pruning to reach the size.</li>
+<li>The whole pipeline on the device, including preprocessing, in the same framework (Core ML, LiteRT, ExecuTorch, ONNX Runtime Mobile).</li>
+<li>Tiered models selected by device capability, and a cloud fallback where the product allows.</li>
+<li>Evaluation on device: accuracy after conversion, latency percentiles, peak memory, energy per inference.</li>
+</ul>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Why does one unsupported operator matter so much on a neural accelerator?</li>
+<li>How would you roll out a new model to devices safely?</li>
+</ul>
+</details>
+<details class="qa" id="serving-020">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Design a feature that runs a model on the phone when it can and in the cloud when it must. How do you split the work and keep the two consistent?
+</summary>
+<p><strong>Decide what runs where.</strong> Put on the device what must be fast, private or offline and fits the budget: wake-word or trigger detection, classification, small-vocabulary speech recognition, embedding, a small language model for short tasks. Use the cloud for what needs a large model, fresh or global data, or heavy retrieval.</p>
+<p><strong>Common split patterns.</strong></p>
+<ul>
+<li><em>Cascade</em>: a small on-device model handles easy cases and estimates its own confidence; uncertain or complex requests go to the cloud. Cost and latency fall with the share handled locally.</li>
+<li><em>Split pipeline</em>: the device does perception and feature extraction and sends compact features, not raw audio or images, which helps privacy and bandwidth.</li>
+<li><em>Cloud with local fallback</em>: best quality when online, a degraded local answer when offline or slow.</li>
+</ul>
+<p><strong>Routing policy.</strong> Decide per request from confidence, input complexity, connectivity, battery and thermal state, and user privacy settings. Make the policy remotely configurable so thresholds can be tuned without an app release.</p>
+<p><strong>Consistency.</strong> Users notice when the same request gives different answers by network state.</p>
+<ul>
+<li>Share preprocessing and postprocessing code between device and server.</li>
+<li>Train the small model by distillation from the large one, and measure their agreement as a metric.</li>
+<li>Version the pair; a server model update can break the cascade’s thresholds.</li>
+</ul>
+<p><strong>Delivery and fleet management.</strong> Models delivered as downloadable assets, versioned and selected by device tier; staged rollout with on-device health metrics (latency, crashes, fallback rate); the ability to disable the local path remotely.</p>
+<p><strong>Privacy and security.</strong> State what leaves the device and obtain consent. Model files on a device can be extracted, so do not put secrets in them.</p>
+<p><strong>Evaluation.</strong> Quality per tier and per path, share of requests served locally, latency and energy on a device matrix, and an end-to-end metric across the routing policy.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How does the small model know when it is wrong?</li>
+<li>What telemetry would you collect without sending user content?</li>
+</ul>
+</details>
+<details class="qa" id="serving-021">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> You must make a model four times smaller and three times faster for an edge target with at most a one-point accuracy loss. Which compression techniques do you combine, and in what order?
+</summary>
+<p>The techniques are complementary, and the order matters because each changes what the next can do.</p>
+<ol type="1">
+<li><p><strong>Measure the starting point on the target.</strong> Latency by layer, peak memory and which operators run on the accelerator. Often a few layers or an unsupported operator dominate, and fixing that is cheaper than compressing everything.</p></li>
+<li><p><strong>Change the architecture first.</strong> A smaller or more efficient architecture (fewer layers or channels, lower input resolution, efficient blocks that the target’s accelerator supports) trained by <strong>distillation</strong> from the original model. This gives the largest and most reliable gain in both size and speed, because it reduces the actual operations, and distillation recovers much of the accuracy a small model would lose if trained from scratch.</p></li>
+<li><p><strong>Quantise.</strong> 8-bit integer quantization gives about 4 times smaller weights and a substantial speedup on hardware with integer kernels. Try post-training quantization with calibration; if the loss is too large, fine-tune with quantization-aware training, ideally with the distillation loss still on.</p></li>
+<li><p><strong>Prune only if it pays on this hardware.</strong> Unstructured pruning makes weights sparse, which shrinks the compressed file but does not speed up dense kernels. Structured pruning (removing channels, heads or layers) gives real speedups and is closer to choosing a smaller architecture.</p></li>
+<li><p><strong>Compile for the target</strong> with the vendor runtime, and re-measure.</p></li>
+</ol>
+<p>Why this order: architecture decisions determine operator support and the baseline; quantization is applied last because it is hardware-specific and any later weight change would undo it.</p>
+<p>Accounting: the 4 times size target is met by 8-bit quantization alone if the model was 32-bit; the 3 times latency target usually needs architecture change plus quantization. Track accuracy after every step on the task metric and on the slices that matter, since compression errors concentrate on rare classes.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Why does unstructured sparsity rarely make inference faster?</li>
+<li>How would you set up distillation and quantization-aware training together?</li>
+</ul>
+</details>
+</section>
+<section id="gpu-programming" class="level3">
+<h3 class="anchored" data-anchor-id="gpu-programming">GPU programming and kernel-level optimization <span class="demand">12% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="serving.gpu-programming.0"> Explain how work reaches a GPU and why many small operations are slow</li>
+<li><input type="checkbox" class="chk" data-chk="serving.gpu-programming.1"> Time GPU code correctly and read a profiler trace</li>
+<li><input type="checkbox" class="chk" data-chk="serving.gpu-programming.2"> Say when a custom kernel is justified and what to try before writing one</li>
+</ul>
+<details class="qa" id="serving-025">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> Explain how a deep learning framework’s operations actually execute on a GPU, and why a model made of many small operations is slow even though each one is trivial.
+</summary>
+<p><strong>The execution model.</strong> A GPU runs <em>kernels</em>: one function executed by thousands of lightweight threads in parallel, each handling some elements of the data. The CPU is the conductor. For every tensor operation the framework, on the CPU, checks types and shapes, picks a kernel, allocates the output and enqueues the launch. The call returns immediately; the GPU executes queued kernels asynchronously, in order. The CPU blocks only when it needs a value back, for example to print it or branch on it.</p>
+<p><strong>Memory.</strong> The device has its own high-bandwidth memory, with small fast memories near the compute units. Host memory is reached over a much slower bus, so host-device copies are expensive, and page-locked host memory makes them faster and asynchronous.</p>
+<p><strong>Why small operations are slow.</strong></p>
+<ul>
+<li><em>Per-operation overhead.</em> Framework dispatch plus kernel launch costs on the order of microseconds to tens of microseconds on the CPU, regardless of tensor size. A model doing thousands of tiny operations per step is limited by the CPU, and the GPU idles.</li>
+<li><em>Memory traffic.</em> Each elementwise operation reads its inputs from device memory and writes its output back. A chain of five operations makes five passes over memory where one fused kernel would make one. Most simple operations are limited by memory bandwidth, not arithmetic.</li>
+<li><em>Poor parallelism.</em> A small tensor cannot occupy thousands of threads.</li>
+</ul>
+<p><strong>What follows.</strong></p>
+<ul>
+<li>Batch, so that each launch does more work.</li>
+<li>Vectorise: replace Python loops over elements with one operation on a larger tensor.</li>
+<li>Fuse: graph compilers combine adjacent operations into one kernel and remove intermediate tensors.</li>
+<li>Avoid round trips to the host inside the hot path.</li>
+<li>Use the library’s composite operations (attention, normalisation, convolution), which are implemented as single optimised kernels.</li>
+</ul>
+<p>The mental model: the CPU issues instructions, the GPU moves and transforms large blocks of memory, and performance comes from fewer, larger, fused passes.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>What does calling <code>.item()</code> in a training loop do to this pipeline?</li>
+<li>Why can a model be CPU-bound while running on a GPU?</li>
+</ul>
+</details>
+<details class="qa" id="serving-026">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">debugging</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> How do you correctly measure and profile the GPU part of an inference or training step? What mistakes make the numbers wrong?
+</summary>
+<p><strong>The basic mistake: timing asynchronous code.</strong> GPU calls return before the work is done, so wall-clock timing around a forward pass measures only the time to enqueue it. The cost then appears at whichever later line forces a wait, often a <code>.cpu()</code> or a print, and that line gets blamed. Synchronise before reading the clock:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> time, torch</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> timed(fn, <span class="op">*</span>args, warmup<span class="op">=</span><span class="dv">10</span>, iters<span class="op">=</span><span class="dv">50</span>):</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(warmup):</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>        fn(<span class="op">*</span>args)</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    torch.cuda.synchronize()</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    t0 <span class="op">=</span> time.perf_counter()</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(iters):</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>        fn(<span class="op">*</span>args)</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    torch.cuda.synchronize()</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> (time.perf_counter() <span class="op">-</span> t0) <span class="op">/</span> iters</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Other mistakes.</strong></p>
+<ul>
+<li>No warm-up: the first calls include memory-pool growth, lazy initialisation, kernel selection and, with a compiler, compilation.</li>
+<li>Measuring one shape when production shapes vary.</li>
+<li>Including data loading or host-device transfer without meaning to, or excluding it when it is the real bottleneck.</li>
+<li>Benchmarking with gradients enabled for inference, or in training mode.</li>
+<li>Comparing runs on a GPU shared with other jobs, or one that is thermally throttled.</li>
+</ul>
+<p><strong>Profiling.</strong></p>
+<ol type="1">
+<li>Start with a framework profiler that records CPU and GPU activity together (<code>torch.profiler</code>), and look at the table sorted by GPU time and by CPU time, and at the timeline.</li>
+<li>Read the timeline for gaps. GPU idle while the CPU is busy means the CPU side (dispatch, data loading, Python) is the bottleneck. A solid GPU timeline means the kernels themselves are.</li>
+<li>Look for many short kernels (overhead-bound), for copies between host and device, and for synchronisation points.</li>
+<li>Check memory: peak allocated against reserved, and allocation events inside the loop.</li>
+<li>Only if one kernel dominates, go deeper with vendor tools that show per-kernel hardware behaviour.</li>
+</ol>
+<p>Report results with the batch size, shapes, precision, hardware and software versions, as mean and percentiles over many iterations.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>The profiler says <code>.cpu()</code> takes 80% of the step. What is really happening?</li>
+<li>How would you tell an overhead-bound model from a bandwidth-bound one?</li>
+</ul>
+</details>
+<details class="qa" id="serving-027">
+<summary>
+<span class="tag tag-staff">staff</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> When is it justified to write a custom GPU kernel or operator for a model, and what do you try first?
+</summary>
+<p>Rarely, and only after measurement shows that one operation dominates and that nothing existing serves it. A custom kernel is code with a high maintenance cost: it is tied to hardware and library versions, needs its own correctness and numerical tests, and must be kept working through every upgrade.</p>
+<p><strong>Try first, in order of cost.</strong></p>
+<ol type="1">
+<li><em>Do less work.</em> Shorter sequences, smaller batch padding, caching, removing redundant computation. Algorithmic savings beat low-level tuning.</li>
+<li><em>Use the library’s optimised composite operations</em> instead of hand-assembling them from primitives. Fused attention, normalisation and convolution kernels already exist.</li>
+<li><em>Reduce precision and fix memory layout</em>: mixed precision, a channel layout the kernels prefer, contiguous tensors.</li>
+<li><em>Let a compiler fuse.</em> Graph compilation (<code>torch.compile</code>, XLA, a vendor runtime) removes dispatch overhead and fuses elementwise chains. This captures much of what a hand-written fused kernel would give.</li>
+<li><em>Vectorise</em> remaining Python-level loops.</li>
+</ol>
+<p><strong>When a custom kernel is justified.</strong></p>
+<ul>
+<li>Profiling shows one operation taking a large share of the step after the steps above.</li>
+<li>The operation is not expressible efficiently with existing ones: a new attention variant, a sparse or irregular access pattern, a custom sampling or decoding step.</li>
+<li>The gain is multiplied by scale: a hot path in a large training run or a high-traffic service, where even a modest percentage pays for the engineering.</li>
+</ul>
+<p><strong>How, with increasing cost.</strong> A kernel-level domain-specific language embedded in Python that compiles to GPU code; then a native extension written against the vendor toolkit. Whichever route: test against a slow reference implementation over many shapes and data types, check gradients numerically if it is differentiable, benchmark against the baseline on real shapes, and keep the reference as a fallback.</p>
+<p>In an interview the point to make is the decision process and the cost, not the code. Be honest about how much of this you have done yourself.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How do you test a custom differentiable operator for correctness?</li>
+<li>Your kernel is twice as fast on one GPU model and slower on another. What now?</li>
+</ul>
+</details>
+</section>
+<section id="llm-inference" class="level3">
+<h3 class="anchored" data-anchor-id="llm-inference">LLM inference engines (vLLM, TGI, TensorRT-LLM, llama.cpp) <span class="demand">11% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="serving.llm-inference.0"> Explain prefill versus decode and why time to first token and tokens per second are separate metrics</li>
+<li><input type="checkbox" class="chk" data-chk="serving.llm-inference.1"> Describe continuous batching and block-based KV cache management</li>
+<li><input type="checkbox" class="chk" data-chk="serving.llm-inference.2"> Estimate how many concurrent sequences fit on a GPU from weights and KV cache memory</li>
+<li><input type="checkbox" class="chk" data-chk="serving.llm-inference.3"> Explain speculative decoding and when it helps or hurts</li>
+<li><input type="checkbox" class="chk" data-chk="serving.llm-inference.4"> Compare the main open inference engines and a hosted API for a given workload</li>
+</ul>
+<details class="qa" id="serving-005">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> How does an LLM inference engine serve many concurrent requests efficiently? Explain prefill and decode, continuous batching and how the KV cache is managed.
+</summary>
+<p><strong>Two phases.</strong> <em>Prefill</em> processes the whole prompt in one parallel pass and fills the KV cache; its time grows with prompt length and determines time to first token (TTFT). <em>Decode</em> then produces one token per forward pass per sequence, reading the cache; it is limited mostly by memory bandwidth and determines tokens per second.</p>
+<p><strong>Continuous batching.</strong> With request-level batching a batch runs until its longest sequence finishes, so short answers wait and new requests queue. Continuous (iteration level) batching re-forms the batch at every decode step: finished sequences leave, and waiting requests join after their prefill. GPU slots are never held by finished sequences, which raises throughput several times on mixed-length traffic.</p>
+<p><strong>Scheduling prefill against decode.</strong> A long prompt’s prefill can stall every running stream for hundreds of milliseconds. Engines split prefill into chunks interleaved with decode steps, trading a little TTFT for smooth streaming.</p>
+<p><strong>KV cache management.</strong> Each sequence’s cache grows by one token per step and its final length is unknown. Reserving the maximum per sequence wastes most of the memory. Engines allocate the cache in fixed-size blocks on demand, in the manner of virtual-memory pages, which removes fragmentation and lets sequences with a common prefix share blocks. That sharing is also what makes prefix caching of a common system prompt cheap.</p>
+<p><strong>What limits concurrency.</strong> After the weights, the remaining GPU memory is KV cache, so the number of concurrent tokens is fixed. Admission control must queue or reject beyond that, or the engine preempts sequences and recomputes them.</p>
+<p><strong>Metrics.</strong> TTFT, inter-token latency, end-to-end latency, output tokens per second per GPU, and queue time, each at p50 and p99 and as a function of load.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Why is decode bound by memory bandwidth and prefill by compute?</li>
+<li>Throughput is high but streaming stutters. Which scheduling decision is responsible?</li>
+</ul>
+</details>
+<details class="qa" id="serving-006">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">derivation</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Estimate how many concurrent requests one GPU can serve for an open-weights LLM. Walk through the memory arithmetic.
+</summary>
+<p>GPU memory is spent on weights, KV cache and working memory. Concurrency is what the KV cache budget allows.</p>
+<p><strong>Weights.</strong> Parameters times bytes per parameter. A model with <span class="math inline">\(8 \times 10^9\)</span> parameters takes 16 GB in 16-bit floats, 8 GB at 8 bits, about 4 to 5 GB at 4 bits.</p>
+<p><strong>KV cache per token.</strong> Each layer stores a key and a value vector per token:</p>
+<p><span class="math display">\[\text{bytes per token} = 2 \cdot L \cdot n_{\text{kv}} \cdot d_{\text{head}} \cdot b,\]</span></p>
+<p>with <span class="math inline">\(L\)</span> layers, <span class="math inline">\(n_{\text{kv}}\)</span> key-value heads, head dimension <span class="math inline">\(d_{\text{head}}\)</span> and <span class="math inline">\(b\)</span> bytes per number. For <span class="math inline">\(L = 32\)</span>, <span class="math inline">\(n_{\text{kv}} d_{\text{head}} = 4096\)</span> and 16-bit floats: <span class="math inline">\(2 \cdot 32 \cdot 4096 \cdot 2 \approx 0.5\)</span> MB per token. With grouped-query attention using 8 KV heads of dimension 128 it is <span class="math inline">\(2 \cdot 32 \cdot 1024 \cdot 2 \approx 0.13\)</span> MB.</p>
+<p><strong>Budget.</strong> On a 24 GB card with 16 GB of weights and about 1 GB reserved for activations and fragmentation, roughly 7 GB remains. At 0.13 MB per token that is about 54 000 cached tokens in total.</p>
+<p><strong>Concurrency.</strong> Divide by the average tokens a live sequence holds (prompt plus output so far). At 2 000 tokens per sequence: about 27 concurrent sequences. At 16 000 tokens: about 3. Context length, not request count, is what consumes capacity.</p>
+<p><strong>From concurrency to throughput.</strong> If each sequence decodes at <span class="math inline">\(r\)</span> tokens per second in a batch of that size, the GPU yields <span class="math inline">\(27 r\)</span> output tokens per second; divide by output tokens per request for requests per second. Measure <span class="math inline">\(r\)</span>, since it falls as the batch grows.</p>
+<p>Levers, in order: quantise the weights to free memory for cache, share common prefixes, cap context length, use a larger-memory GPU. Check the arithmetic against the engine’s reported cache capacity.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>What happens when a burst of long-context requests arrives?</li>
+<li>How does prefix sharing change the estimate when every request has the same 3 000-token system prompt?</li>
+</ul>
+</details>
+<details class="qa" id="serving-007">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> What is speculative decoding? Why does it not change the output distribution, and when does it fail to help?
+</summary>
+<p>Decoding is slow because each token needs a full pass through a large model, and the passes are sequential. Speculative decoding uses a small, fast <strong>draft</strong> model to guess several tokens ahead and the large <strong>target</strong> model to check all of them in one parallel pass.</p>
+<p><strong>Procedure.</strong></p>
+<ol type="1">
+<li>The draft model <span class="math inline">\(q\)</span> generates <span class="math inline">\(\gamma\)</span> tokens autoregressively.</li>
+<li>The target model <span class="math inline">\(p\)</span> scores the prefix plus those <span class="math inline">\(\gamma\)</span> tokens in a single forward pass, which yields <span class="math inline">\(p\)</span>’s distribution at every position.</li>
+<li>Accept each drafted token <span class="math inline">\(x\)</span> in order with probability <span class="math inline">\(\min(1, p(x) / q(x))\)</span>. At the first rejection, resample that position from the normalised residual <span class="math inline">\(\max(0, p - q)\)</span> and discard the rest.</li>
+<li>If all are accepted, sample one extra token from <span class="math inline">\(p\)</span> for free.</li>
+</ol>
+<p><strong>Why the distribution is unchanged.</strong> The accept-or-resample rule is a rejection sampling scheme whose output at each position is distributed exactly as <span class="math inline">\(p\)</span>. With greedy decoding it reduces to “accept while the draft’s token equals the target’s argmax”.</p>
+<p><strong>Speedup.</strong> If each token is accepted with probability <span class="math inline">\(\alpha\)</span>, the expected number of tokens produced per target pass is <span class="math inline">\((1 - \alpha^{\gamma + 1}) / (1 - \alpha)\)</span>. The gain depends on <span class="math inline">\(\alpha\)</span> and on how cheap the draft is relative to the target.</p>
+<p><strong>When it does not help.</strong></p>
+<ul>
+<li>Low acceptance: the draft is too weak for the domain, or sampling temperature is high.</li>
+<li>The draft is not much cheaper than the target.</li>
+<li>A throughput-bound server: verification passes do extra work for rejected tokens, so under heavy batching total tokens per second can fall even though single-request latency improves. It is a latency technique.</li>
+<li>Extra memory for the draft model and its cache.</li>
+</ul>
+<p>Variants replace the draft model with early-exit heads, n-gram or retrieval lookups (useful when the output copies the input, as in code edits), or multiple candidates.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Why does a higher sampling temperature lower the acceptance rate?</li>
+<li>How would you choose the number of drafted tokens?</li>
+</ul>
+</details>
+<details class="qa" id="serving-008">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> You need to serve an open-weights LLM. How do you choose between a hosted API, a general-purpose engine such as vLLM, a compiled engine such as TensorRT-LLM, and llama.cpp?
+</summary>
+<p>Start from the workload: traffic volume and burstiness, latency target, model customisation, data constraints and who will operate it.</p>
+<p><strong>Hosted API or managed endpoint.</strong> No operations, pay per token or per hour, scale handled for you. Right for low or unpredictable volume and for standard models. Limits: per-token cost at high steady volume, less control over versions, quantization and latency, and data leaves your environment.</p>
+<p><strong>General-purpose GPU engine</strong> (vLLM, SGLang, Hugging Face TGI and similar). Continuous batching, block-based KV cache, prefix caching, an OpenAI-compatible server, broad and fast model support, adapters and structured-output features. The default for self-hosting on GPUs: good throughput with little build effort.</p>
+<p><strong>Compiled, vendor-specific engine</strong> (TensorRT-LLM, usually behind Triton). The model is compiled into an engine for a specific GPU type and settings. Can give the best latency and throughput on that hardware, at the price of a build step per model and GPU, slower support for new architectures and a harder debugging story. Worth it at large scale for a stable model.</p>
+<p><strong>CPU and edge runtime</strong> (llama.cpp and wrappers, with GGUF quantised weights). Runs on CPUs, laptops and Apple silicon with small memory. Designed for one or a few users, not for high-concurrency serving.</p>
+<p>How to decide in practice:</p>
+<ul>
+<li>Benchmark candidates on your own prompt and output length distribution at your target concurrency; published numbers rarely transfer.</li>
+<li>Compare cost per million output tokens at the latency SLO, including idle capacity.</li>
+<li>Weigh operational features: metrics, graceful reload, adapter loading, structured output, version pinning.</li>
+</ul>
+<p>This field moves quickly and project status changes, so check current documentation before committing.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>At what volume does self-hosting beat a per-token API?</li>
+<li>What would make you move from a general engine to a compiled one?</li>
+</ul>
+</details>
+</section>
+<section id="quantization" class="level3">
+<h3 class="anchored" data-anchor-id="quantization">Quantization and efficient inference <span class="demand">10% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="serving.quantization.0"> Write the affine quantization mapping and compute scale and zero point</li>
+<li><input type="checkbox" class="chk" data-chk="serving.quantization.1"> Compare dynamic and static post-training quantization with quantization-aware training</li>
+<li><input type="checkbox" class="chk" data-chk="serving.quantization.2"> Explain per-channel quantization and activation calibration</li>
+<li><input type="checkbox" class="chk" data-chk="serving.quantization.3"> Say what 8-bit and 4-bit weight quantization do to an LLM and how to check the damage</li>
+</ul>
+<details class="qa" id="serving-014">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Explain quantization for inference. What is the mapping, and how do post-training quantization and quantization-aware training differ?
+</summary>
+<p>Quantization stores and computes with low-precision integers instead of 32-bit floats. The affine mapping from a real value <span class="math inline">\(x\)</span> to an integer <span class="math inline">\(q\)</span> in <span class="math inline">\([q_{\min}, q_{\max}]\)</span>:</p>
+<p><span class="math display">\[q = \operatorname{clip}\big(\operatorname{round}(x / s) + z,\ q_{\min}, q_{\max}\big), \qquad
+\hat x = s\,(q - z),\]</span></p>
+<p>with scale <span class="math inline">\(s = (x_{\max} - x_{\min}) / (q_{\max} - q_{\min})\)</span> and zero point <span class="math inline">\(z\)</span>, the integer that represents real zero. Inside the range the rounding error is at most <span class="math inline">\(s/2\)</span>; outside it, values are clipped. Weights usually use the symmetric form (<span class="math inline">\(z = 0\)</span>) with a separate scale per output channel, because channels differ widely in range.</p>
+<p><strong>Why it helps.</strong> 8-bit integers are 4 times smaller than 32-bit floats, which cuts memory, download size and memory traffic, and integer arithmetic is faster on hardware with kernels for it.</p>
+<p><strong>Post-training quantization (PTQ).</strong> No retraining.</p>
+<ul>
+<li><em>Dynamic</em>: weights are quantised ahead of time; activation ranges are computed at run time. Simple, good for linear and recurrent layers on CPU.</li>
+<li><em>Static</em>: activation ranges are fixed in advance from a <strong>calibration</strong> set of a few hundred representative inputs, using min-max, a percentile, or the range that minimises error. Fully integer inference.</li>
+</ul>
+<p><strong>Quantization-aware training (QAT).</strong> Insert fake-quantization operations in the forward pass during fine-tuning, so the weights adapt to rounding; gradients pass through the rounding with the straight-through estimator. It recovers most of the accuracy PTQ loses, at the cost of a training run.</p>
+<p><strong>Choosing.</strong> Try PTQ first and measure on the real task. Use QAT when PTQ loses too much: small or already compact models, low bit widths, or layers with wide activation ranges. Keep sensitive layers (often the first and last) at higher precision.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Why must the zero point be an exact integer?</li>
+<li>Your calibration set does not cover a rare input type. What happens at inference?</li>
+</ul>
+</details>
+<details class="qa" id="serving-015">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> Implement uniform affine quantization and dequantization of a tensor in NumPy, for both the asymmetric and the symmetric case.
+</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> quant_params(x, bits<span class="op">=</span><span class="dv">8</span>, symmetric<span class="op">=</span><span class="va">False</span>):</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> symmetric:                                   <span class="co"># signed, zero point 0</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>        qmin, qmax <span class="op">=</span> <span class="op">-</span>(<span class="dv">2</span> <span class="op">**</span> (bits <span class="op">-</span> <span class="dv">1</span>) <span class="op">-</span> <span class="dv">1</span>), <span class="dv">2</span> <span class="op">**</span> (bits <span class="op">-</span> <span class="dv">1</span>) <span class="op">-</span> <span class="dv">1</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>        scale <span class="op">=</span> <span class="bu">float</span>(np.<span class="bu">abs</span>(x).<span class="bu">max</span>()) <span class="op">/</span> qmax</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>        zero <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span>:                                           <span class="co"># unsigned, range includes 0</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>        qmin, qmax <span class="op">=</span> <span class="dv">0</span>, <span class="dv">2</span> <span class="op">**</span> bits <span class="op">-</span> <span class="dv">1</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>        lo, hi <span class="op">=</span> <span class="bu">min</span>(<span class="bu">float</span>(x.<span class="bu">min</span>()), <span class="fl">0.0</span>), <span class="bu">max</span>(<span class="bu">float</span>(x.<span class="bu">max</span>()), <span class="fl">0.0</span>)</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>        scale <span class="op">=</span> (hi <span class="op">-</span> lo) <span class="op">/</span> (qmax <span class="op">-</span> qmin)</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>        zero <span class="op">=</span> <span class="bu">int</span>(<span class="bu">round</span>(qmin <span class="op">-</span> lo <span class="op">/</span> scale)) <span class="cf">if</span> scale <span class="op">&gt;</span> <span class="dv">0</span> <span class="cf">else</span> <span class="dv">0</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> (scale <span class="cf">if</span> scale <span class="op">&gt;</span> <span class="dv">0</span> <span class="cf">else</span> <span class="fl">1.0</span>), zero, qmin, qmax</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> quantize(x, scale, zero, qmin, qmax):</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.clip(np.<span class="bu">round</span>(x <span class="op">/</span> scale) <span class="op">+</span> zero, qmin, qmax).astype(np.int32)</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> dequantize(q, scale, zero):</span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> scale <span class="op">*</span> (q.astype(np.float32) <span class="op">-</span> zero)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Checks to state:</p>
+<ul>
+<li>Round trip error: <code>np.abs(x - dequantize(quantize(x, ...), ...)).max()</code> is at most <code>scale / 2</code> for values inside the range.</li>
+<li>The asymmetric range is widened to include 0, so that zero (padding, ReLU outputs) is represented exactly.</li>
+<li>The symmetric range drops the most negative code so that it is symmetric about zero.</li>
+<li>A constant tensor gives scale 0; guard against the division.</li>
+</ul>
+<p>Follow-ups an interviewer may ask for:</p>
+<ul>
+<li><strong>Per-channel</strong> scales for a weight of shape <code>[out, in]</code>: compute the maximum over <code>axis=1</code> and broadcast, which removes most of the error when rows differ in magnitude.</li>
+<li><strong>Clipping the range</strong> to a percentile instead of min and max: outliers otherwise stretch the scale and waste resolution on values that rarely occur. This trades clipping error for rounding error.</li>
+<li><strong>Integer-only inference</strong>: the product of two quantised tensors has scale <span class="math inline">\(s_1 s_2\)</span>, and the rescaling to the output scale is done with a fixed-point multiplier and a shift.</li>
+</ul>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Why does one outlier weight hurt min-max quantization so much?</li>
+<li>How many distinct values can a 4-bit symmetric quantizer represent, and what does that imply for the scale?</li>
+</ul>
+</details>
+<details class="qa" id="serving-016">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">trade-off</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> What does quantizing a large language model to 8 or 4 bits buy and cost? How would you decide which precision to deploy?
+</summary>
+<p><strong>What it buys.</strong> LLM quantization is mostly weight-only: weights are stored in few bits and activations stay in 16-bit floats. The gains are memory (16-bit to 4-bit is about a 4 times smaller model, so it fits on a smaller GPU or leaves room for more KV cache and concurrency) and, because decoding is limited by memory bandwidth, often speed. The speed gain depends on the engine having efficient kernels for the format; without them a low-bit model can be slower than the 16-bit one.</p>
+<p><strong>What it costs.</strong> Quality loss that is uneven:</p>
+<ul>
+<li>8-bit is close to lossless for most models.</li>
+<li>4-bit with a calibration-based method is usually a small loss; naive rounding to 4 bits is noticeably worse.</li>
+<li>Below 4 bits quality falls quickly.</li>
+<li>Smaller models tolerate less than larger ones, so a larger model at 4 bits often beats a smaller one at 16 bits for the same memory.</li>
+<li>Damage concentrates in harder behaviours: long reasoning chains, exact numbers, rare languages, structured output. Perplexity can look fine while these regress.</li>
+</ul>
+<p><strong>Methods, by idea.</strong> Round-to-nearest with per-channel or per-group scales is the baseline. Calibration-based methods use a few hundred samples to reduce the layer’s output error instead of the weight error: GPTQ adjusts the remaining weights to compensate for each rounding, and AWQ rescales channels by activation magnitude before rounding. Mixed precision keeps sensitive layers at more bits.</p>
+<p><strong>Deciding.</strong></p>
+<ol type="1">
+<li>Fix the hardware and the memory you need for cache at target concurrency.</li>
+<li>Produce candidates (16-bit, 8-bit, 4-bit, and a smaller model) and run your task evaluation and a regression set, not only perplexity.</li>
+<li>Benchmark latency and throughput in the engine you will deploy.</li>
+<li>Pick the cheapest candidate that passes the quality gate, and re-qualify on every model update.</li>
+</ol>
+<p>Treat a quantised model as a new model version in the registry.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Perplexity is unchanged after quantization but users report worse answers. Where do you look?</li>
+<li>Why are activations and the KV cache usually left at higher precision?</li>
+</ul>
+</details>
+</section>
+<section id="runtimes" class="level3">
+<h3 class="anchored" data-anchor-id="runtimes">Inference runtimes and compilers (ONNX, TensorRT, CoreML) <span class="demand">6% of postings</span></h3>
+<ul>
+<li><input type="checkbox" class="chk" data-chk="serving.runtimes.0"> Describe what exporting to ONNX captures and what tracing loses</li>
+<li><input type="checkbox" class="chk" data-chk="serving.runtimes.1"> Explain what an optimising runtime such as TensorRT does to a graph and why the result is not portable</li>
+<li><input type="checkbox" class="chk" data-chk="serving.runtimes.2"> Verify an exported model numerically and handle unsupported operators and dynamic shapes</li>
+</ul>
+<details class="qa" id="serving-017">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> What happens when you export a PyTorch model to ONNX and run it with an optimising runtime such as TensorRT? What are the usual pitfalls?
+</summary>
+<p><strong>Export.</strong> The model’s computation is captured as a static graph of standard operators (an ONNX opset). Capture is done by tracing a run with example inputs or by a compiler front end that analyses the program. Tracing records the operations that happened for that input, so data-dependent Python control flow is frozen to the branch taken, and shapes become constants unless declared dynamic.</p>
+<p><strong>Optimising runtime.</strong> A runtime such as ONNX Runtime, TensorRT, OpenVINO or Core ML takes the graph and</p>
+<ul>
+<li>folds constants and removes dead nodes,</li>
+<li>fuses adjacent operations (convolution, normalisation and activation into one kernel),</li>
+<li>chooses precision per layer (32-bit, 16-bit, 8-bit with calibration),</li>
+<li>selects the fastest kernel implementation for the target hardware, and plans memory.</li>
+</ul>
+<p>TensorRT does this at build time for a specific GPU model, TensorRT version and input shape profile, and the resulting engine is not portable across them.</p>
+<p><strong>Pitfalls.</strong></p>
+<ul>
+<li><em>Unsupported operators</em>: newer or custom operations have no ONNX or runtime equivalent. Options: rewrite with supported operations, raise the opset, write a plugin, or let the runtime fall back to another provider for that subgraph, which costs transfers.</li>
+<li><em>Dynamic shapes</em>: batch and sequence dimensions must be declared; each shape profile constrains optimisation, and shapes outside the profile fail.</li>
+<li><em>Frozen control flow</em>: loops and branches traced for one input.</li>
+<li><em>Numerical differences</em>: 16-bit overflow in normalisation or attention, different operator semantics (resize modes, integer division, padding).</li>
+<li><em>Pre- and postprocessing left behind</em> in Python, which reintroduces skew and a CPU bottleneck.</li>
+<li><em>Build time and versioning</em>: engines must be rebuilt for each GPU type and runtime upgrade, which belongs in CI.</li>
+</ul>
+<p><strong>Always verify.</strong> Compare outputs with the original model on real inputs, within a tolerance, and rerun the task evaluation. Then benchmark; a compiled graph is not automatically faster than a well-configured framework runtime for transformer models.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Your model has an if statement that depends on the input’s content. What does the exported graph do?</li>
+<li>When would you not bother with ONNX at all?</li>
+</ul>
+</details>
+<details class="qa" id="serving-018">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">debugging</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> After exporting a model to a compiled runtime, accuracy on your evaluation set drops by two points. How do you find the cause?
+</summary>
+<p>Treat it as a differential debugging problem: same inputs through both paths, and find the first place they diverge.</p>
+<ol type="1">
+<li><strong>Reproduce on a handful of inputs.</strong> Pick examples whose predictions changed. Feed the <em>same tensors</em> to both models to separate model differences from preprocessing differences.</li>
+<li><strong>Check preprocessing parity first.</strong> Most “export” regressions live outside the graph: a different image resize or interpolation mode, colour channel order, normalisation constants, tokenizer version or truncation, padding side. Compare the input tensors of both pipelines numerically.</li>
+<li><strong>Compare at full precision.</strong> Build the engine in 32-bit floats. If the outputs now match, the cause is reduced precision.
+<ul>
+<li>16-bit: overflow or loss of small values in normalisation, softmax or large activations. Keep the offending layers at 32 bits.</li>
+<li>8-bit: unrepresentative calibration data, a layer with a wide range, or activation outliers. Recalibrate with representative data, use per-channel scales, or exclude sensitive layers.</li>
+</ul></li>
+<li><strong>If full precision also differs, bisect the graph.</strong> Expose intermediate outputs in both models and find the first layer where the difference exceeds tolerance. Usual suspects: an operator with different semantics (resize, rounding, integer division), a traced branch frozen to the wrong path, dynamic shapes handled differently, or dropout and normalisation layers exported in training mode.</li>
+<li><strong>Check evaluation conditions.</strong> Same batch size and padding, since batch-dependent behaviour changes results, and the same postprocessing and thresholds.</li>
+</ol>
+<p>Prevent recurrence with an export test in CI: a fixed set of inputs, a maximum output difference, and a task-metric gate, run for every model and runtime version.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Outputs match within 1e-3 on random inputs but the metric still drops. Why might that be?</li>
+<li>Which layers would you keep at higher precision first?</li>
+</ul>
+</details>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/threeeyelidds\.github\.io\/minimal-ml\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+      window.quartoDecorateExternalLinks = function (root) {
+     var links = (root || window.document).querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+          if (!link.classList.contains('no-external-icon')) {
+          }
+        }
+      }
+      };
+      window.quartoDecorateExternalLinks(window.document);
+    // Esc closes the popup (WCAG 1.4.13) and focus leaving both trigger and
+    // popup closes it (WCAG 2.4.11); tippy handles neither for interactive popups.
+    const hideOnEscAndFocusOut = {
+      name: 'hideOnEscAndFocusOut',
+      defaultValue: true,
+      fn(instance) {
+        const dismiss = () => {
+          // A show scheduled by the trigger delay would otherwise reopen it
+          instance.clearDelayTimeouts();
+          instance.hide();
+        };
+        const onKeyDown = (event) => {
+          if (event.key !== 'Escape') {
+            return;
+          }
+          // Keep Esc from also reaching page handlers (e.g. reveal.js overview),
+          // except an open reveal.js slide menu, which Esc should close too.
+          // The menu handles keys only when its keyboard option is on.
+          const menuHandlesEsc = window.Reveal?.getPlugin?.('menu')?.isOpen() &&
+            window.Reveal.getConfig().menu?.keyboard !== false;
+          if (!menuHandlesEsc) {
+            event.stopPropagation();
+          }
+          if (instance.popper.contains(window.document.activeElement)) {
+            // Disabled while refocusing so the focus trigger does not reopen it
+            instance.disable();
+            instance.reference.focus();
+            instance.enable();
+          }
+          dismiss();
+        };
+        const onFocusOut = (event) => {
+          const target = event.relatedTarget;
+          if (target && !instance.reference.contains(target) &&
+              !instance.popper.contains(target)) {
+            dismiss();
+          }
+        };
+        // On the trigger too: a click trigger (code-annotations: select) has no
+        // blur handling. Attached for the instance's lifetime so leaving the
+        // trigger also cancels a show still pending on the trigger delay.
+        instance.reference.addEventListener('focusout', onFocusOut);
+        return {
+          onShow() {
+            window.document.addEventListener('keydown', onKeyDown, true);
+            instance.popper.addEventListener('focusout', onFocusOut);
+          },
+          onHide() {
+            window.document.removeEventListener('keydown', onKeyDown, true);
+            instance.popper.removeEventListener('focusout', onFocusOut);
+          },
+          onDestroy() {
+            instance.reference.removeEventListener('focusout', onFocusOut);
+          },
+        };
+      },
+    };
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+        plugins: [hideOnEscAndFocusOut],
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          // Each band is positioned against its own containing block, which is
+          // not the offsetParent of the lines, so place it from client rects.
+          const placeBand = (band, firstEl, lastEl, codeBlock) => {
+            const container = band.offsetParent;
+            if (container === null) {
+              return;
+            }
+            const containerRect = container.getBoundingClientRect();
+            // Reveal.js scales slides with a transform, so convert client
+            // pixels back to the CSS pixels of the container.
+            const scale = containerRect.height / container.offsetHeight || 1;
+            const firstRect = firstEl.getBoundingClientRect();
+            const lastRect = lastEl.getBoundingClientRect();
+            const top = (firstRect.top - containerRect.top) / scale - container.clientTop + container.scrollTop;
+            const height = (lastRect.bottom - firstRect.top) / scale;
+            band.style.top = top - 2 + "px";
+            band.style.height = height + 4 + "px";
+            if (codeBlock) {
+              // Without the copy button wrapper, the containing block is wider
+              // than the code block, so span the code block explicitly.
+              const blockRect = codeBlock.getBoundingClientRect();
+              band.style.left = (blockRect.left - containerRect.left) / scale - container.clientLeft + container.scrollLeft + "px";
+              band.style.width = blockRect.width / scale + "px";
+            }
+          };
+          if (lineIds.length > 0) {
+            const el = window.document.getElementById(lineIds[0]);
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const parent = el.parentElement.parentElement;
+            // cook up a div (if necessary) and position it
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            placeBand(div, el, lastEl, parent.closest("div.sourceCode") || parent);
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            placeBand(gutterDiv, el, lastEl);
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+  <script type="application/javascript">
+  window.quartoScrollableRegionsLabels = {"code":"Scrollable code","output":"Scrollable output"};
+  </script>
+</div> <!-- /content -->
+<script>
+/* Site-wide: persistent checklists and review status on the skill pages. */
+(function () {
+  "use strict";
+  function get(k) { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch (e) { return {}; } }
+  function set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* storage blocked: ticks last for this page view */ } }
+
+  var chk = get("prep.chk.v1");
+  document.querySelectorAll("input.chk").forEach(function (el) {
+    el.checked = !!chk[el.dataset.chk];
+    el.addEventListener("change", function () {
+      if (el.checked) chk[el.dataset.chk] = 1; else delete chk[el.dataset.chk];
+      set("prep.chk.v1", chk);
+    });
+  });
+
+  var cards = (get("prep.v1").cards) || {};
+  document.querySelectorAll("details.qa[id]").forEach(function (el) {
+    var r = cards[el.id];
+    if (r) el.classList.add(r.ivl >= 7 ? "st-known" : "st-learning");
+  });
+
+  // open the question a link points at
+  function openTarget() {
+    var id = decodeURIComponent(location.hash.slice(1));
+    var el = id && document.getElementById(id);
+    if (el && el.tagName === "DETAILS") { el.open = true; el.scrollIntoView({ block: "start" }); }
+  }
+  window.addEventListener("hashchange", openTarget);
+  openTarget();
+
+  var mp = document.getElementById("map-progress");
+  if (mp) {
+    var seen = Object.keys(cards).length, known = Object.keys(cards).filter(function (k) { return cards[k].ivl >= 7; }).length;
+    var ticks = Object.keys(chk).length;
+    if (seen || ticks) {
+      mp.className = "tile";
+      mp.style.marginBottom = "1.2rem";
+      mp.textContent = "Your progress in this browser: " + seen + " cards reviewed, " + known + " known, " + ticks + " checklist items ticked.";
+    }
+  }
+})();
+</script>
+
+
+
+
+</body></html>

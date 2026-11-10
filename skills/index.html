@@ -1,0 +1,2230 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.11.9">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Skill map – Minimal ML</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/scrollable-regions/scrollable-regions.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-447e42e69aaa9833c0ba1b986f430b20.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-980fa6b4eab38a5377f72c7fe6f39b73.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="dark">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<meta name="google-site-verification" content="Ztjr25pGaioeZP-mkoIn_MkNmmsFXWcU6I6W2tEPli0">
+
+
+<link rel="stylesheet" href="../styles.css">
+<link rel="stylesheet" href="../colors.css">
+<link rel="stylesheet" href="../prep.css">
+</head>
+
+<body class="nav-sidebar docked nav-fixed quarto-light"><a id="quarto-skip-link" class="visually-hidden-focusable" href="#quarto-document-content">Skip to main content</a>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark" aria-label="Site">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">Minimal ML</span>
+    </a>
+  </div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../report/index.html"> 
+<span class="menu-text">Report</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link active" href="../skills/index.html" aria-current="page"> 
+<span class="menu-text">Skills</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../review/index.html"> 
+<span class="menu-text">Review</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../plan/index.html"> 
+<span class="menu-text">Plan</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../jobs/index.html"> 
+<span class="menu-text">Open roles</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../notes/index.html"> 
+<span class="menu-text">Notes</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../essays/index.html"> 
+<span class="menu-text">Essays</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+            <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav" aria-label="Toolbar">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="Breadcrumbs"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../skills/index.html">Skill map</a></li></ol></nav>
+        <a class="flex-grow-1" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto" aria-label="Section">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/index.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Skill map</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/cases.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Design cases</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" aria-controls="quarto-sidebar-section-1" aria-expanded="true">
+ <span class="menu-text" id="quarto-sidebar-section-1-label">The loop</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-1" aria-labelledby="quarto-sidebar-section-1-label" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/swe.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Programming and software engineering</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/mlfund.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">ML fundamentals and statistics</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/dl.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Deep learning</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/eval.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Evaluation and experimentation</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/senior.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Senior-level scope and leadership</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" aria-controls="quarto-sidebar-section-2" aria-expanded="true">
+ <span class="menu-text" id="quarto-sidebar-section-2-label">LLMs and agents</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-2" aria-labelledby="quarto-sidebar-section-2-label" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/llm.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">LLMs and foundation models (training side)</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/llmapp.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">LLM application engineering (agents, RAG, prompts)</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/rl.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Reinforcement learning and decision making</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/research.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Research skills</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" aria-controls="quarto-sidebar-section-3" aria-expanded="true">
+ <span class="menu-text" id="quarto-sidebar-section-3-label">Product ML</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-3" aria-labelledby="quarto-sidebar-section-3-label" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/recsys.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Search, recommendation, ads and ranking</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/domain.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Domain specialties</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <button type="button" class="sidebar-item-text sidebar-item-toggle sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" aria-controls="quarto-sidebar-section-4" aria-expanded="true">
+ <span class="menu-text" id="quarto-sidebar-section-4-label">Systems</span><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+      </div>
+      <ul id="quarto-sidebar-section-4" aria-labelledby="quarto-sidebar-section-4-label" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/infra.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Training infrastructure and data systems</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/serving.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Inference, serving and model optimization</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../skills/mlops.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">MLOps, cloud and production operations</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" aria-labelledby="toc-title" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul class="collapse">
+  <li><a href="#swe" id="toc-swe" class="nav-link active" data-scroll-target="#swe">Programming and software engineering</a></li>
+  <li><a href="#mlfund" id="toc-mlfund" class="nav-link" data-scroll-target="#mlfund">ML fundamentals and statistics</a></li>
+  <li><a href="#dl" id="toc-dl" class="nav-link" data-scroll-target="#dl">Deep learning</a></li>
+  <li><a href="#llm" id="toc-llm" class="nav-link" data-scroll-target="#llm">LLMs and foundation models (training side)</a></li>
+  <li><a href="#llmapp" id="toc-llmapp" class="nav-link" data-scroll-target="#llmapp">LLM application engineering (agents, RAG, prompts)</a></li>
+  <li><a href="#eval" id="toc-eval" class="nav-link" data-scroll-target="#eval">Evaluation and experimentation</a></li>
+  <li><a href="#recsys" id="toc-recsys" class="nav-link" data-scroll-target="#recsys">Search, recommendation, ads and ranking</a></li>
+  <li><a href="#infra" id="toc-infra" class="nav-link" data-scroll-target="#infra">Training infrastructure and data systems</a></li>
+  <li><a href="#serving" id="toc-serving" class="nav-link" data-scroll-target="#serving">Inference, serving and model optimization</a></li>
+  <li><a href="#mlops" id="toc-mlops" class="nav-link" data-scroll-target="#mlops">MLOps, cloud and production operations</a></li>
+  <li><a href="#rl" id="toc-rl" class="nav-link" data-scroll-target="#rl">Reinforcement learning and decision making</a></li>
+  <li><a href="#domain" id="toc-domain" class="nav-link" data-scroll-target="#domain">Domain specialties</a></li>
+  <li><a href="#research" id="toc-research" class="nav-link" data-scroll-target="#research">Research skills</a></li>
+  <li><a href="#senior" id="toc-senior" class="nav-link" data-scroll-target="#senior">Senior-level scope and leadership</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content" tabindex="-1">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Skill map</h1>
+<p class="subtitle lead">Every skill named in 2253 senior MLE, AI engineer and research engineer postings</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!-- Generated by tools/build_site.py. Edit bank/*.yml or the script, not this file. -->
+<p>14 areas, ordered as an interview loop meets them. Each bar is the share of postings that name the skill. Each area page has the demand table, the senior bar, a checklist and the questions; the <a href="../review/index.html">review app</a> drills the same cards with spaced repetition.</p>
+<div id="map-progress">
+
+</div>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Area</th>
+<th style="text-align: left;">Postings naming it</th>
+<th style="text-align: right;">Skills</th>
+<th style="text-align: right;">Cards</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/swe.html">Programming and software engineering</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:97%"></span><span class="pct">97%</span></span></td>
+<td style="text-align: right;">17</td>
+<td style="text-align: right;">39</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/mlfund.html">ML fundamentals and statistics</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:52%"></span><span class="pct">52%</span></span></td>
+<td style="text-align: right;">11</td>
+<td style="text-align: right;">40</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/dl.html">Deep learning</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:52%"></span><span class="pct">52%</span></span></td>
+<td style="text-align: right;">11</td>
+<td style="text-align: right;">43</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/llm.html">LLMs and foundation models (training side)</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:79%"></span><span class="pct">79%</span></span></td>
+<td style="text-align: right;">13</td>
+<td style="text-align: right;">43</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/llmapp.html">LLM application engineering (agents, RAG, prompts)</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:74%"></span><span class="pct">74%</span></span></td>
+<td style="text-align: right;">14</td>
+<td style="text-align: right;">45</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/eval.html">Evaluation and experimentation</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:86%"></span><span class="pct">86%</span></span></td>
+<td style="text-align: right;">9</td>
+<td style="text-align: right;">36</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/recsys.html">Search, recommendation, ads and ranking</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:55%"></span><span class="pct">55%</span></span></td>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">46</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/infra.html">Training infrastructure and data systems</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:78%"></span><span class="pct">78%</span></span></td>
+<td style="text-align: right;">11</td>
+<td style="text-align: right;">35</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/serving.html">Inference, serving and model optimization</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:79%"></span><span class="pct">79%</span></span></td>
+<td style="text-align: right;">9</td>
+<td style="text-align: right;">31</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/mlops.html">MLOps, cloud and production operations</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:87%"></span><span class="pct">87%</span></span></td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">31</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/rl.html">Reinforcement learning and decision making</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:20%"></span><span class="pct">20%</span></span></td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">26</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/domain.html">Domain specialties</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:54%"></span><span class="pct">54%</span></span></td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">30</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/research.html">Research skills</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:68%"></span><span class="pct">68%</span></span></td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">34</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/senior.html">Senior-level scope and leadership</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:98%"></span><span class="pct">98%</span></span></td>
+<td style="text-align: right;">9</td>
+<td style="text-align: right;">30</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/cases.html">ML and AI system design cases</a></td>
+<td style="text-align: left;"><span class="muted">the design round in every loop</span></td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;">17</td>
+</tr>
+</tbody>
+</table>
+<section id="swe" class="level2">
+<h2 class="anchored" data-anchor-id="swe">Programming and software engineering</h2>
+<p><a href="../skills/swe.html">Open the area page</a></p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Skill</th>
+<th style="text-align: left;">All</th>
+<th style="text-align: right;">MLE</th>
+<th style="text-align: right;">AI eng</th>
+<th style="text-align: right;">Research eng</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/swe.html#python">Python</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:66%"></span><span class="pct">66%</span></span></td>
+<td style="text-align: right;">70%</td>
+<td style="text-align: right;">65%</td>
+<td style="text-align: right;">56%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/swe.html#swe-practice">Engineering practices (testing, review, CI)</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:53%"></span><span class="pct">53%</span></span></td>
+<td style="text-align: right;">50%</td>
+<td style="text-align: right;">61%</td>
+<td style="text-align: right;">34%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/swe.html#sysdesign">System design and architecture</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:45%"></span><span class="pct">45%</span></span></td>
+<td style="text-align: right;">42%</td>
+<td style="text-align: right;">54%</td>
+<td style="text-align: right;">16%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/swe.html#debug-perf">Debugging and performance profiling</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:42%"></span><span class="pct">42%</span></span></td>
+<td style="text-align: right;">39%</td>
+<td style="text-align: right;">44%</td>
+<td style="text-align: right;">41%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/swe.html#distsys">Distributed systems</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:35%"></span><span class="pct">35%</span></span></td>
+<td style="text-align: right;">31%</td>
+<td style="text-align: right;">40%</td>
+<td style="text-align: right;">31%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/swe.html#ai-coding-tools">Working with AI coding agents</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:27%"></span><span class="pct">27%</span></span></td>
+<td style="text-align: right;">14%</td>
+<td style="text-align: right;">40%</td>
+<td style="text-align: right;">16%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/swe.html#backend">Backend services and APIs</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:27%"></span><span class="pct">27%</span></span></td>
+<td style="text-align: right;">14%</td>
+<td style="text-align: right;">41%</td>
+<td style="text-align: right;">8%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/swe.html#cpp">C++</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:26%"></span><span class="pct">26%</span></span></td>
+<td style="text-align: right;">33%</td>
+<td style="text-align: right;">21%</td>
+<td style="text-align: right;">21%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/swe.html#frontend">Frontend / full-stack (React)</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:22%"></span><span class="pct">22%</span></span></td>
+<td style="text-align: right;">17%</td>
+<td style="text-align: right;">28%</td>
+<td style="text-align: right;">13%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/swe.html#linux">Linux / operating systems / networking</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:20%"></span><span class="pct">20%</span></span></td>
+<td style="text-align: right;">22%</td>
+<td style="text-align: right;">21%</td>
+<td style="text-align: right;">12%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/swe.html#jvm">Java / Scala / Kotlin</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:19%"></span><span class="pct">19%</span></span></td>
+<td style="text-align: right;">17%</td>
+<td style="text-align: right;">25%</td>
+<td style="text-align: right;">3%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/swe.html#sql">SQL and relational data</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:16%"></span><span class="pct">16%</span></span></td>
+<td style="text-align: right;">13%</td>
+<td style="text-align: right;">22%</td>
+<td style="text-align: right;">4%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/swe.html#go">Go</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:15%"></span><span class="pct">15%</span></span></td>
+<td style="text-align: right;">12%</td>
+<td style="text-align: right;">21%</td>
+<td style="text-align: right;">4%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/swe.html#concurrency">Concurrency, async, systems programming</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:15%"></span><span class="pct">15%</span></span></td>
+<td style="text-align: right;">11%</td>
+<td style="text-align: right;">19%</td>
+<td style="text-align: right;">14%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/swe.html#typescript">TypeScript / JavaScript</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:13%"></span><span class="pct">13%</span></span></td>
+<td style="text-align: right;">4%</td>
+<td style="text-align: right;">24%</td>
+<td style="text-align: right;">2%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/swe.html#dsa">Data structures and algorithms</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:13%"></span><span class="pct">13%</span></span></td>
+<td style="text-align: right;">18%</td>
+<td style="text-align: right;">9%</td>
+<td style="text-align: right;">10%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/swe.html#rust">Rust</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:6%"></span><span class="pct">6%</span></span></td>
+<td style="text-align: right;">3%</td>
+<td style="text-align: right;">6%</td>
+<td style="text-align: right;">11%</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="mlfund" class="level2">
+<h2 class="anchored" data-anchor-id="mlfund">ML fundamentals and statistics</h2>
+<p><a href="../skills/mlfund.html">Open the area page</a></p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Skill</th>
+<th style="text-align: left;">All</th>
+<th style="text-align: right;">MLE</th>
+<th style="text-align: right;">AI eng</th>
+<th style="text-align: right;">Research eng</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/mlfund.html#ml-fundamentals">Machine learning fundamentals</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:16%"></span><span class="pct">16%</span></span></td>
+<td style="text-align: right;">28%</td>
+<td style="text-align: right;">8%</td>
+<td style="text-align: right;">16%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/mlfund.html#statistics">Statistics and probability</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:13%"></span><span class="pct">13%</span></span></td>
+<td style="text-align: right;">20%</td>
+<td style="text-align: right;">8%</td>
+<td style="text-align: right;">14%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/mlfund.html#labeling">Data labeling, curation and quality</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:13%"></span><span class="pct">13%</span></span></td>
+<td style="text-align: right;">16%</td>
+<td style="text-align: right;">10%</td>
+<td style="text-align: right;">20%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/mlfund.html#classical-ml">Classical models (GBDT, linear, trees)</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:12%"></span><span class="pct">12%</span></span></td>
+<td style="text-align: right;">16%</td>
+<td style="text-align: right;">11%</td>
+<td style="text-align: right;">3%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/mlfund.html#anomaly">Anomaly, fraud and risk detection</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:8%"></span><span class="pct">8%</span></span></td>
+<td style="text-align: right;">11%</td>
+<td style="text-align: right;">7%</td>
+<td style="text-align: right;">6%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/mlfund.html#data-analysis">Data analysis (pandas, numpy, notebooks)</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:8%"></span><span class="pct">8%</span></span></td>
+<td style="text-align: right;">10%</td>
+<td style="text-align: right;">6%</td>
+<td style="text-align: right;">7%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/mlfund.html#feature-eng">Feature engineering</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:7%"></span><span class="pct">7%</span></span></td>
+<td style="text-align: right;">14%</td>
+<td style="text-align: right;">3%</td>
+<td style="text-align: right;">2%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/mlfund.html#math">Linear algebra, calculus, optimization math</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:5%"></span><span class="pct">5%</span></span></td>
+<td style="text-align: right;">6%</td>
+<td style="text-align: right;">4%</td>
+<td style="text-align: right;">6%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/mlfund.html#timeseries">Time series and forecasting</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:5%"></span><span class="pct">5%</span></span></td>
+<td style="text-align: right;">5%</td>
+<td style="text-align: right;">4%</td>
+<td style="text-align: right;">5%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/mlfund.html#bayesian">Bayesian and probabilistic modeling</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:4%"></span><span class="pct">4%</span></span></td>
+<td style="text-align: right;">6%</td>
+<td style="text-align: right;">2%</td>
+<td style="text-align: right;">7%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/mlfund.html#causal">Causal inference</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:3%"></span><span class="pct">3%</span></span></td>
+<td style="text-align: right;">5%</td>
+<td style="text-align: right;">1%</td>
+<td style="text-align: right;">2%</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="dl" class="level2">
+<h2 class="anchored" data-anchor-id="dl">Deep learning</h2>
+<p><a href="../skills/dl.html">Open the area page</a></p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Skill</th>
+<th style="text-align: left;">All</th>
+<th style="text-align: right;">MLE</th>
+<th style="text-align: right;">AI eng</th>
+<th style="text-align: right;">Research eng</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/dl.html#pytorch">PyTorch</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:30%"></span><span class="pct">30%</span></span></td>
+<td style="text-align: right;">46%</td>
+<td style="text-align: right;">14%</td>
+<td style="text-align: right;">42%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/dl.html#dl-fundamentals">Deep learning fundamentals</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:22%"></span><span class="pct">22%</span></span></td>
+<td style="text-align: right;">36%</td>
+<td style="text-align: right;">10%</td>
+<td style="text-align: right;">27%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/dl.html#tensorflow">TensorFlow / Keras</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:16%"></span><span class="pct">16%</span></span></td>
+<td style="text-align: right;">28%</td>
+<td style="text-align: right;">7%</td>
+<td style="text-align: right;">13%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/dl.html#representation">Representation learning and embeddings</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:13%"></span><span class="pct">13%</span></span></td>
+<td style="text-align: right;">15%</td>
+<td style="text-align: right;">14%</td>
+<td style="text-align: right;">6%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/dl.html#jax">JAX / Flax</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:9%"></span><span class="pct">9%</span></span></td>
+<td style="text-align: right;">12%</td>
+<td style="text-align: right;">2%</td>
+<td style="text-align: right;">25%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/dl.html#transformers">Transformer architectures and attention</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:9%"></span><span class="pct">9%</span></span></td>
+<td style="text-align: right;">14%</td>
+<td style="text-align: right;">4%</td>
+<td style="text-align: right;">12%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/dl.html#training-dynamics">Training large models (optimization, stability, debugging)</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:9%"></span><span class="pct">9%</span></span></td>
+<td style="text-align: right;">11%</td>
+<td style="text-align: right;">3%</td>
+<td style="text-align: right;">24%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/dl.html#generative">Generative models (diffusion, flow, GAN, VAE)</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:6%"></span><span class="pct">6%</span></span></td>
+<td style="text-align: right;">9%</td>
+<td style="text-align: right;">2%</td>
+<td style="text-align: right;">13%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/dl.html#gnn">Graph neural networks / graph ML</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:5%"></span><span class="pct">5%</span></span></td>
+<td style="text-align: right;">5%</td>
+<td style="text-align: right;">4%</td>
+<td style="text-align: right;">3%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/dl.html#hf">Hugging Face ecosystem</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:4%"></span><span class="pct">4%</span></span></td>
+<td style="text-align: right;">5%</td>
+<td style="text-align: right;">4%</td>
+<td style="text-align: right;">2%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/dl.html#sequence-models">Sequence models (RNN, LSTM, state space)</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:2%"></span><span class="pct">2%</span></span></td>
+<td style="text-align: right;">4%</td>
+<td style="text-align: right;">1%</td>
+<td style="text-align: right;">2%</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="llm" class="level2">
+<h2 class="anchored" data-anchor-id="llm">LLMs and foundation models (training side)</h2>
+<p><a href="../skills/llm.html">Open the area page</a></p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Skill</th>
+<th style="text-align: left;">All</th>
+<th style="text-align: right;">MLE</th>
+<th style="text-align: right;">AI eng</th>
+<th style="text-align: right;">Research eng</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/llm.html#llm-general">LLMs / foundation models (general)</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:68%"></span><span class="pct">68%</span></span></td>
+<td style="text-align: right;">62%</td>
+<td style="text-align: right;">73%</td>
+<td style="text-align: right;">74%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/llm.html#finetuning">Fine-tuning (SFT, LoRA, PEFT)</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:19%"></span><span class="pct">19%</span></span></td>
+<td style="text-align: right;">24%</td>
+<td style="text-align: right;">13%</td>
+<td style="text-align: right;">25%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/llm.html#multimodal">Multimodal / vision-language models</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:18%"></span><span class="pct">18%</span></span></td>
+<td style="text-align: right;">24%</td>
+<td style="text-align: right;">9%</td>
+<td style="text-align: right;">33%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/llm.html#post-training">Post-training (RLHF, preference tuning, RL fine-tuning)</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:12%"></span><span class="pct">12%</span></span></td>
+<td style="text-align: right;">12%</td>
+<td style="text-align: right;">8%</td>
+<td style="text-align: right;">29%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/llm.html#model-arch-research">Model architecture and scaling research</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:12%"></span><span class="pct">12%</span></span></td>
+<td style="text-align: right;">13%</td>
+<td style="text-align: right;">6%</td>
+<td style="text-align: right;">30%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/llm.html#distillation">Distillation and model compression</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:6%"></span><span class="pct">6%</span></span></td>
+<td style="text-align: right;">9%</td>
+<td style="text-align: right;">4%</td>
+<td style="text-align: right;">9%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/llm.html#interp">Interpretability and explainability</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:6%"></span><span class="pct">6%</span></span></td>
+<td style="text-align: right;">6%</td>
+<td style="text-align: right;">4%</td>
+<td style="text-align: right;">12%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/llm.html#synthetic-data">Synthetic data and data generation pipelines</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:5%"></span><span class="pct">5%</span></span></td>
+<td style="text-align: right;">6%</td>
+<td style="text-align: right;">2%</td>
+<td style="text-align: right;">13%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/llm.html#pretraining">Pretraining at scale</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:5%"></span><span class="pct">5%</span></span></td>
+<td style="text-align: right;">5%</td>
+<td style="text-align: right;">3%</td>
+<td style="text-align: right;">14%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/llm.html#reasoning">Reasoning, planning and long-horizon behaviour of models</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:4%"></span><span class="pct">4%</span></span></td>
+<td style="text-align: right;">3%</td>
+<td style="text-align: right;">2%</td>
+<td style="text-align: right;">14%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/llm.html#code-models">Code generation models</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:4%"></span><span class="pct">4%</span></span></td>
+<td style="text-align: right;">2%</td>
+<td style="text-align: right;">5%</td>
+<td style="text-align: right;">4%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/llm.html#continual">Continual learning, memory and personalization of models</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:2%"></span><span class="pct">2%</span></span></td>
+<td style="text-align: right;">2%</td>
+<td style="text-align: right;">1%</td>
+<td style="text-align: right;">2%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/llm.html#tokenization">Tokenization and data preprocessing for LMs</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:1%"></span><span class="pct">1%</span></span></td>
+<td style="text-align: right;">1%</td>
+<td style="text-align: right;">0%</td>
+<td style="text-align: right;">2%</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="llmapp" class="level2">
+<h2 class="anchored" data-anchor-id="llmapp">LLM application engineering (agents, RAG, prompts)</h2>
+<p><a href="../skills/llmapp.html">Open the area page</a></p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Skill</th>
+<th style="text-align: left;">All</th>
+<th style="text-align: right;">MLE</th>
+<th style="text-align: right;">AI eng</th>
+<th style="text-align: right;">Research eng</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/llmapp.html#agents">Agents and agentic systems</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:57%"></span><span class="pct">57%</span></span></td>
+<td style="text-align: right;">37%</td>
+<td style="text-align: right;">75%</td>
+<td style="text-align: right;">51%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/llmapp.html#orchestration">Agent frameworks, harnesses and runtimes (LangGraph, LlamaIndex, agent SDKs)</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:26%"></span><span class="pct">26%</span></span></td>
+<td style="text-align: right;">13%</td>
+<td style="text-align: right;">40%</td>
+<td style="text-align: right;">10%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/llmapp.html#llm-apis">Building on model APIs (OpenAI, Anthropic, Gemini, Bedrock)</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:25%"></span><span class="pct">25%</span></span></td>
+<td style="text-align: right;">16%</td>
+<td style="text-align: right;">32%</td>
+<td style="text-align: right;">24%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/llmapp.html#prompting">Prompt and context engineering</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:22%"></span><span class="pct">22%</span></span></td>
+<td style="text-align: right;">13%</td>
+<td style="text-align: right;">33%</td>
+<td style="text-align: right;">10%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/llmapp.html#rag">Retrieval-augmented generation</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:22%"></span><span class="pct">22%</span></span></td>
+<td style="text-align: right;">15%</td>
+<td style="text-align: right;">32%</td>
+<td style="text-align: right;">4%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/llmapp.html#tool-use">Tool use, function calling, MCP</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:21%"></span><span class="pct">21%</span></span></td>
+<td style="text-align: right;">11%</td>
+<td style="text-align: right;">31%</td>
+<td style="text-align: right;">12%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/llmapp.html#workflow-automation">Workflow automation and enterprise integration</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:17%"></span><span class="pct">17%</span></span></td>
+<td style="text-align: right;">8%</td>
+<td style="text-align: right;">27%</td>
+<td style="text-align: right;">6%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/llmapp.html#guardrails">Guardrails, safety filters, hallucination control</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:16%"></span><span class="pct">16%</span></span></td>
+<td style="text-align: right;">11%</td>
+<td style="text-align: right;">23%</td>
+<td style="text-align: right;">4%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/llmapp.html#llm-cost">Cost, latency and model routing for LLM products</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:14%"></span><span class="pct">14%</span></span></td>
+<td style="text-align: right;">12%</td>
+<td style="text-align: right;">19%</td>
+<td style="text-align: right;">4%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/llmapp.html#fde">Forward-deployed / customer-embedded delivery</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:12%"></span><span class="pct">12%</span></span></td>
+<td style="text-align: right;">6%</td>
+<td style="text-align: right;">18%</td>
+<td style="text-align: right;">8%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/llmapp.html#vector-db">Vector search and embedding stores</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:12%"></span><span class="pct">12%</span></span></td>
+<td style="text-align: right;">7%</td>
+<td style="text-align: right;">18%</td>
+<td style="text-align: right;">1%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/llmapp.html#structured-output">Structured outputs and reliability of LLM pipelines</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:8%"></span><span class="pct">8%</span></span></td>
+<td style="text-align: right;">5%</td>
+<td style="text-align: right;">11%</td>
+<td style="text-align: right;">3%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/llmapp.html#conversational">Conversational AI / voice agents</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:6%"></span><span class="pct">6%</span></span></td>
+<td style="text-align: right;">5%</td>
+<td style="text-align: right;">7%</td>
+<td style="text-align: right;">5%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/llmapp.html#memory">Agent memory and state</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:4%"></span><span class="pct">4%</span></span></td>
+<td style="text-align: right;">2%</td>
+<td style="text-align: right;">6%</td>
+<td style="text-align: right;">2%</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="eval" class="level2">
+<h2 class="anchored" data-anchor-id="eval">Evaluation and experimentation</h2>
+<p><a href="../skills/eval.html">Open the area page</a></p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Skill</th>
+<th style="text-align: left;">All</th>
+<th style="text-align: right;">MLE</th>
+<th style="text-align: right;">AI eng</th>
+<th style="text-align: right;">Research eng</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/eval.html#evals">Model evaluation and benchmarks</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:58%"></span><span class="pct">58%</span></span></td>
+<td style="text-align: right;">57%</td>
+<td style="text-align: right;">59%</td>
+<td style="text-align: right;">62%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/eval.html#ml-observability">Monitoring, drift and observability</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:45%"></span><span class="pct">45%</span></span></td>
+<td style="text-align: right;">36%</td>
+<td style="text-align: right;">57%</td>
+<td style="text-align: right;">26%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/eval.html#experimentation">Experiment design, ablations and rigor</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:36%"></span><span class="pct">36%</span></span></td>
+<td style="text-align: right;">40%</td>
+<td style="text-align: right;">27%</td>
+<td style="text-align: right;">60%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/eval.html#llm-evals">LLM / agent evals (harnesses, judges, graders)</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:31%"></span><span class="pct">31%</span></span></td>
+<td style="text-align: right;">31%</td>
+<td style="text-align: right;">32%</td>
+<td style="text-align: right;">26%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/eval.html#metrics">Metric design (offline/online, business metrics)</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:29%"></span><span class="pct">29%</span></span></td>
+<td style="text-align: right;">34%</td>
+<td style="text-align: right;">27%</td>
+<td style="text-align: right;">17%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/eval.html#error-analysis">Error analysis and failure-mode investigation</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:25%"></span><span class="pct">25%</span></span></td>
+<td style="text-align: right;">19%</td>
+<td style="text-align: right;">31%</td>
+<td style="text-align: right;">20%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/eval.html#human-eval">Human evaluation and feedback loops</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:12%"></span><span class="pct">12%</span></span></td>
+<td style="text-align: right;">10%</td>
+<td style="text-align: right;">14%</td>
+<td style="text-align: right;">8%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/eval.html#red-team">Red teaming and adversarial testing</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:8%"></span><span class="pct">8%</span></span></td>
+<td style="text-align: right;">8%</td>
+<td style="text-align: right;">6%</td>
+<td style="text-align: right;">19%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/eval.html#ab-testing">A/B testing and online experimentation</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:8%"></span><span class="pct">8%</span></span></td>
+<td style="text-align: right;">13%</td>
+<td style="text-align: right;">5%</td>
+<td style="text-align: right;">4%</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="recsys" class="level2">
+<h2 class="anchored" data-anchor-id="recsys">Search, recommendation, ads and ranking</h2>
+<p><a href="../skills/recsys.html">Open the area page</a></p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Skill</th>
+<th style="text-align: left;">All</th>
+<th style="text-align: right;">MLE</th>
+<th style="text-align: right;">AI eng</th>
+<th style="text-align: right;">Research eng</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/recsys.html#retrieval">Retrieval systems (embedding-based, hybrid, candidate generation)</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:29%"></span><span class="pct">29%</span></span></td>
+<td style="text-align: right;">30%</td>
+<td style="text-align: right;">32%</td>
+<td style="text-align: right;">10%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/recsys.html#search-ir">Search and information retrieval</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:20%"></span><span class="pct">20%</span></span></td>
+<td style="text-align: right;">26%</td>
+<td style="text-align: right;">18%</td>
+<td style="text-align: right;">6%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/recsys.html#nlp">NLP and content understanding</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:18%"></span><span class="pct">18%</span></span></td>
+<td style="text-align: right;">29%</td>
+<td style="text-align: right;">9%</td>
+<td style="text-align: right;">14%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/recsys.html#personalization">Personalization and user modeling</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:17%"></span><span class="pct">17%</span></span></td>
+<td style="text-align: right;">21%</td>
+<td style="text-align: right;">16%</td>
+<td style="text-align: right;">11%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/recsys.html#recsys">Recommender systems</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:16%"></span><span class="pct">16%</span></span></td>
+<td style="text-align: right;">27%</td>
+<td style="text-align: right;">11%</td>
+<td style="text-align: right;">5%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/recsys.html#ranking">Ranking and learning to rank</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:11%"></span><span class="pct">11%</span></span></td>
+<td style="text-align: right;">20%</td>
+<td style="text-align: right;">5%</td>
+<td style="text-align: right;">4%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/recsys.html#ads">Ads, auctions, bidding and marketplace ML</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:10%"></span><span class="pct">10%</span></span></td>
+<td style="text-align: right;">17%</td>
+<td style="text-align: right;">5%</td>
+<td style="text-align: right;">5%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/recsys.html#trust-safety">Trust and safety / integrity ML</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:4%"></span><span class="pct">4%</span></span></td>
+<td style="text-align: right;">5%</td>
+<td style="text-align: right;">3%</td>
+<td style="text-align: right;">3%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/recsys.html#multi-objective">Multi-objective optimization, exploration, bandits</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:3%"></span><span class="pct">3%</span></span></td>
+<td style="text-align: right;">6%</td>
+<td style="text-align: right;">1%</td>
+<td style="text-align: right;">1%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/recsys.html#genrec">LLMs for search and recommendation (generative retrieval)</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:2%"></span><span class="pct">2%</span></span></td>
+<td style="text-align: right;">3%</td>
+<td style="text-align: right;">2%</td>
+<td style="text-align: right;">3%</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="infra" class="level2">
+<h2 class="anchored" data-anchor-id="infra">Training infrastructure and data systems</h2>
+<p><a href="../skills/infra.html">Open the area page</a></p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Skill</th>
+<th style="text-align: left;">All</th>
+<th style="text-align: right;">MLE</th>
+<th style="text-align: right;">AI eng</th>
+<th style="text-align: right;">Research eng</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/infra.html#data-pipelines">Data pipelines and ETL (Spark, Beam, Airflow, Flink, Kafka)</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:39%"></span><span class="pct">39%</span></span></td>
+<td style="text-align: right;">44%</td>
+<td style="text-align: right;">37%</td>
+<td style="text-align: right;">30%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/infra.html#gpu">GPU computing and accelerators</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:28%"></span><span class="pct">28%</span></span></td>
+<td style="text-align: right;">28%</td>
+<td style="text-align: right;">26%</td>
+<td style="text-align: right;">39%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/infra.html#cluster">Cluster scheduling and compute orchestration (Kubernetes, Slurm, Ray)</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:26%"></span><span class="pct">26%</span></span></td>
+<td style="text-align: right;">22%</td>
+<td style="text-align: right;">31%</td>
+<td style="text-align: right;">20%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/infra.html#dist-training">Distributed / large-scale training</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:16%"></span><span class="pct">16%</span></span></td>
+<td style="text-align: right;">21%</td>
+<td style="text-align: right;">7%</td>
+<td style="text-align: right;">36%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/infra.html#rl-envs">Simulation, sandboxes and RL environments</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:16%"></span><span class="pct">16%</span></span></td>
+<td style="text-align: right;">16%</td>
+<td style="text-align: right;">12%</td>
+<td style="text-align: right;">28%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/infra.html#exp-tracking">ML platforms and experiment tracking (MLflow, W&amp;B, SageMaker)</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:16%"></span><span class="pct">16%</span></span></td>
+<td style="text-align: right;">22%</td>
+<td style="text-align: right;">12%</td>
+<td style="text-align: right;">7%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/infra.html#dataloading">Dataset engineering at scale (loaders, sharding, petabyte data)</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:12%"></span><span class="pct">12%</span></span></td>
+<td style="text-align: right;">16%</td>
+<td style="text-align: right;">9%</td>
+<td style="text-align: right;">13%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/infra.html#data-lake">Data lakes, warehouses and storage formats</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:11%"></span><span class="pct">11%</span></span></td>
+<td style="text-align: right;">8%</td>
+<td style="text-align: right;">16%</td>
+<td style="text-align: right;">2%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/infra.html#hpc">HPC, networking and storage for ML</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:9%"></span><span class="pct">9%</span></span></td>
+<td style="text-align: right;">6%</td>
+<td style="text-align: right;">10%</td>
+<td style="text-align: right;">13%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/infra.html#ml-frameworks">ML framework internals and compilers</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:8%"></span><span class="pct">8%</span></span></td>
+<td style="text-align: right;">9%</td>
+<td style="text-align: right;">6%</td>
+<td style="text-align: right;">16%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/infra.html#feature-store">Feature stores and online/offline consistency</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:3%"></span><span class="pct">3%</span></span></td>
+<td style="text-align: right;">6%</td>
+<td style="text-align: right;">2%</td>
+<td style="text-align: right;">0%</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="serving" class="level2">
+<h2 class="anchored" data-anchor-id="serving">Inference, serving and model optimization</h2>
+<p><a href="../skills/serving.html">Open the area page</a></p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Skill</th>
+<th style="text-align: left;">All</th>
+<th style="text-align: right;">MLE</th>
+<th style="text-align: right;">AI eng</th>
+<th style="text-align: right;">Research eng</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/serving.html#reliability">Reliability, SLOs and on-call for ML systems</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:52%"></span><span class="pct">52%</span></span></td>
+<td style="text-align: right;">41%</td>
+<td style="text-align: right;">64%</td>
+<td style="text-align: right;">33%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/serving.html#latency">Latency, throughput and performance engineering</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:48%"></span><span class="pct">48%</span></span></td>
+<td style="text-align: right;">49%</td>
+<td style="text-align: right;">49%</td>
+<td style="text-align: right;">40%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/serving.html#model-serving">Model serving systems</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:20%"></span><span class="pct">20%</span></span></td>
+<td style="text-align: right;">25%</td>
+<td style="text-align: right;">16%</td>
+<td style="text-align: right;">20%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/serving.html#autoscaling">Capacity, autoscaling and GPU cost efficiency</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:14%"></span><span class="pct">14%</span></span></td>
+<td style="text-align: right;">14%</td>
+<td style="text-align: right;">16%</td>
+<td style="text-align: right;">7%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/serving.html#on-device">On-device / edge / embedded ML</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:12%"></span><span class="pct">12%</span></span></td>
+<td style="text-align: right;">17%</td>
+<td style="text-align: right;">10%</td>
+<td style="text-align: right;">6%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/serving.html#gpu-programming">GPU programming and kernel-level optimization</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:12%"></span><span class="pct">12%</span></span></td>
+<td style="text-align: right;">12%</td>
+<td style="text-align: right;">11%</td>
+<td style="text-align: right;">18%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/serving.html#llm-inference">LLM inference engines (vLLM, TGI, TensorRT-LLM, llama.cpp)</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:11%"></span><span class="pct">11%</span></span></td>
+<td style="text-align: right;">11%</td>
+<td style="text-align: right;">11%</td>
+<td style="text-align: right;">12%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/serving.html#quantization">Quantization and efficient inference</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:10%"></span><span class="pct">10%</span></span></td>
+<td style="text-align: right;">14%</td>
+<td style="text-align: right;">6%</td>
+<td style="text-align: right;">14%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/serving.html#runtimes">Inference runtimes and compilers (ONNX, TensorRT, CoreML)</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:6%"></span><span class="pct">6%</span></span></td>
+<td style="text-align: right;">8%</td>
+<td style="text-align: right;">5%</td>
+<td style="text-align: right;">5%</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="mlops" class="level2">
+<h2 class="anchored" data-anchor-id="mlops">MLOps, cloud and production operations</h2>
+<p><a href="../skills/mlops.html">Open the area page</a></p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Skill</th>
+<th style="text-align: left;">All</th>
+<th style="text-align: right;">MLE</th>
+<th style="text-align: right;">AI eng</th>
+<th style="text-align: right;">Research eng</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/mlops.html#production-ml">Shipping ML to production (end-to-end lifecycle)</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:61%"></span><span class="pct">61%</span></span></td>
+<td style="text-align: right;">67%</td>
+<td style="text-align: right;">59%</td>
+<td style="text-align: right;">46%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/mlops.html#cloud">Cloud platforms (AWS, GCP, Azure)</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:37%"></span><span class="pct">37%</span></span></td>
+<td style="text-align: right;">29%</td>
+<td style="text-align: right;">50%</td>
+<td style="text-align: right;">9%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/mlops.html#mlops">MLOps and ML CI/CD</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:34%"></span><span class="pct">34%</span></span></td>
+<td style="text-align: right;">44%</td>
+<td style="text-align: right;">30%</td>
+<td style="text-align: right;">18%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/mlops.html#containers">Containers and infrastructure as code</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:29%"></span><span class="pct">29%</span></span></td>
+<td style="text-align: right;">20%</td>
+<td style="text-align: right;">38%</td>
+<td style="text-align: right;">20%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/mlops.html#devex">Developer tooling and platform ergonomics</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:26%"></span><span class="pct">26%</span></span></td>
+<td style="text-align: right;">16%</td>
+<td style="text-align: right;">36%</td>
+<td style="text-align: right;">18%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/mlops.html#security-privacy">Security, privacy and compliance in ML systems</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:21%"></span><span class="pct">21%</span></span></td>
+<td style="text-align: right;">14%</td>
+<td style="text-align: right;">31%</td>
+<td style="text-align: right;">6%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/mlops.html#databases">Databases, caches and queues</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:20%"></span><span class="pct">20%</span></span></td>
+<td style="text-align: right;">12%</td>
+<td style="text-align: right;">30%</td>
+<td style="text-align: right;">3%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/mlops.html#data-quality">Data validation and pipeline quality</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:9%"></span><span class="pct">9%</span></span></td>
+<td style="text-align: right;">5%</td>
+<td style="text-align: right;">14%</td>
+<td style="text-align: right;">2%</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="rl" class="level2">
+<h2 class="anchored" data-anchor-id="rl">Reinforcement learning and decision making</h2>
+<p><a href="../skills/rl.html">Open the area page</a></p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Skill</th>
+<th style="text-align: left;">All</th>
+<th style="text-align: right;">MLE</th>
+<th style="text-align: right;">AI eng</th>
+<th style="text-align: right;">Research eng</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/rl.html#rl">Reinforcement learning</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:16%"></span><span class="pct">16%</span></span></td>
+<td style="text-align: right;">19%</td>
+<td style="text-align: right;">6%</td>
+<td style="text-align: right;">42%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/rl.html#optimization-or">Operations research and combinatorial optimization</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:4%"></span><span class="pct">4%</span></span></td>
+<td style="text-align: right;">3%</td>
+<td style="text-align: right;">6%</td>
+<td style="text-align: right;">3%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/rl.html#planning">Planning, search and sequential decision making</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:4%"></span><span class="pct">4%</span></span></td>
+<td style="text-align: right;">7%</td>
+<td style="text-align: right;">2%</td>
+<td style="text-align: right;">2%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/rl.html#reward">Reward design and credit assignment</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:2%"></span><span class="pct">2%</span></span></td>
+<td style="text-align: right;">2%</td>
+<td style="text-align: right;">0%</td>
+<td style="text-align: right;">6%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/rl.html#imitation">Imitation learning and behaviour cloning</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:1%"></span><span class="pct">1%</span></span></td>
+<td style="text-align: right;">2%</td>
+<td style="text-align: right;">0%</td>
+<td style="text-align: right;">2%</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="domain" class="level2">
+<h2 class="anchored" data-anchor-id="domain">Domain specialties</h2>
+<p><a href="../skills/domain.html">Open the area page</a></p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Skill</th>
+<th style="text-align: left;">All</th>
+<th style="text-align: right;">MLE</th>
+<th style="text-align: right;">AI eng</th>
+<th style="text-align: right;">Research eng</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/domain.html#robotics">Robotics and embodied AI (VLA, manipulation)</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:14%"></span><span class="pct">14%</span></span></td>
+<td style="text-align: right;">17%</td>
+<td style="text-align: right;">10%</td>
+<td style="text-align: right;">16%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/domain.html#health">Healthcare and clinical ML</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:12%"></span><span class="pct">12%</span></span></td>
+<td style="text-align: right;">8%</td>
+<td style="text-align: right;">14%</td>
+<td style="text-align: right;">14%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/domain.html#cv">Computer vision</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:11%"></span><span class="pct">11%</span></span></td>
+<td style="text-align: right;">17%</td>
+<td style="text-align: right;">6%</td>
+<td style="text-align: right;">12%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/domain.html#autonomy">Autonomous driving (prediction, planning, end-to-end)</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:9%"></span><span class="pct">9%</span></span></td>
+<td style="text-align: right;">15%</td>
+<td style="text-align: right;">6%</td>
+<td style="text-align: right;">5%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/domain.html#speech">Speech and audio (ASR, TTS, voice)</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:9%"></span><span class="pct">9%</span></span></td>
+<td style="text-align: right;">11%</td>
+<td style="text-align: right;">6%</td>
+<td style="text-align: right;">14%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/domain.html#perception-3d">3D perception, sensor fusion and geometry</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:8%"></span><span class="pct">8%</span></span></td>
+<td style="text-align: right;">13%</td>
+<td style="text-align: right;">4%</td>
+<td style="text-align: right;">11%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/domain.html#finance">Finance, trading and fintech ML</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:8%"></span><span class="pct">8%</span></span></td>
+<td style="text-align: right;">5%</td>
+<td style="text-align: right;">11%</td>
+<td style="text-align: right;">5%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/domain.html#security-ml">Security and cyber ML</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:6%"></span><span class="pct">6%</span></span></td>
+<td style="text-align: right;">4%</td>
+<td style="text-align: right;">8%</td>
+<td style="text-align: right;">6%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/domain.html#bio">Biology, chemistry and scientific ML</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:6%"></span><span class="pct">6%</span></span></td>
+<td style="text-align: right;">3%</td>
+<td style="text-align: right;">4%</td>
+<td style="text-align: right;">26%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/domain.html#defense">Defense and mission systems</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:4%"></span><span class="pct">4%</span></span></td>
+<td style="text-align: right;">3%</td>
+<td style="text-align: right;">3%</td>
+<td style="text-align: right;">10%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/domain.html#world-models">World models and video/image generation</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:2%"></span><span class="pct">2%</span></span></td>
+<td style="text-align: right;">3%</td>
+<td style="text-align: right;">0%</td>
+<td style="text-align: right;">8%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/domain.html#geospatial">Maps, geospatial and logistics</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:1%"></span><span class="pct">1%</span></span></td>
+<td style="text-align: right;">2%</td>
+<td style="text-align: right;">0%</td>
+<td style="text-align: right;">0%</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="research" class="level2">
+<h2 class="anchored" data-anchor-id="research">Research skills</h2>
+<p><a href="../skills/research.html">Open the area page</a></p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Skill</th>
+<th style="text-align: left;">All</th>
+<th style="text-align: right;">MLE</th>
+<th style="text-align: right;">AI eng</th>
+<th style="text-align: right;">Research eng</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/research.html#research-eng">Research engineering: fast, correct experiment code</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:32%"></span><span class="pct">32%</span></span></td>
+<td style="text-align: right;">24%</td>
+<td style="text-align: right;">29%</td>
+<td style="text-align: right;">71%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/research.html#publications">Publications and open-source track record</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:24%"></span><span class="pct">24%</span></span></td>
+<td style="text-align: right;">24%</td>
+<td style="text-align: right;">19%</td>
+<td style="text-align: right;">49%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/research.html#fairness">Fairness, bias and responsible AI</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:19%"></span><span class="pct">19%</span></span></td>
+<td style="text-align: right;">12%</td>
+<td style="text-align: right;">26%</td>
+<td style="text-align: right;">18%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/research.html#research-taste">Research judgment: picking problems, forming hypotheses</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:18%"></span><span class="pct">18%</span></span></td>
+<td style="text-align: right;">17%</td>
+<td style="text-align: right;">13%</td>
+<td style="text-align: right;">47%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/research.html#research-collab">Working with researchers / research-product bridge</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:16%"></span><span class="pct">16%</span></span></td>
+<td style="text-align: right;">14%</td>
+<td style="text-align: right;">7%</td>
+<td style="text-align: right;">57%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/research.html#papers">Reading, reproducing and implementing research</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:14%"></span><span class="pct">14%</span></span></td>
+<td style="text-align: right;">12%</td>
+<td style="text-align: right;">11%</td>
+<td style="text-align: right;">28%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/research.html#safety-research">AI safety and alignment</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:8%"></span><span class="pct">8%</span></span></td>
+<td style="text-align: right;">7%</td>
+<td style="text-align: right;">7%</td>
+<td style="text-align: right;">19%</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="senior" class="level2">
+<h2 class="anchored" data-anchor-id="senior">Senior-level scope and leadership</h2>
+<p><a href="../skills/senior.html">Open the area page</a></p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Skill</th>
+<th style="text-align: left;">All</th>
+<th style="text-align: right;">MLE</th>
+<th style="text-align: right;">AI eng</th>
+<th style="text-align: right;">Research eng</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/senior.html#ownership">End-to-end ownership</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:68%"></span><span class="pct">68%</span></span></td>
+<td style="text-align: right;">66%</td>
+<td style="text-align: right;">70%</td>
+<td style="text-align: right;">61%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/senior.html#xfn">Cross-functional collaboration</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:66%"></span><span class="pct">66%</span></span></td>
+<td style="text-align: right;">66%</td>
+<td style="text-align: right;">68%</td>
+<td style="text-align: right;">62%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/senior.html#communication">Communication (written and verbal)</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:64%"></span><span class="pct">64%</span></span></td>
+<td style="text-align: right;">58%</td>
+<td style="text-align: right;">69%</td>
+<td style="text-align: right;">64%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/senior.html#tech-leadership">Technical leadership and direction setting</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:49%"></span><span class="pct">49%</span></span></td>
+<td style="text-align: right;">48%</td>
+<td style="text-align: right;">56%</td>
+<td style="text-align: right;">22%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/senior.html#ambiguity">Operating in ambiguity</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:45%"></span><span class="pct">45%</span></span></td>
+<td style="text-align: right;">45%</td>
+<td style="text-align: right;">46%</td>
+<td style="text-align: right;">38%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/senior.html#mentoring">Mentoring and raising the bar</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:43%"></span><span class="pct">43%</span></span></td>
+<td style="text-align: right;">42%</td>
+<td style="text-align: right;">50%</td>
+<td style="text-align: right;">21%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/senior.html#tradeoffs">Judgment on trade-offs (quality, cost, speed, risk)</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:35%"></span><span class="pct">35%</span></span></td>
+<td style="text-align: right;">32%</td>
+<td style="text-align: right;">37%</td>
+<td style="text-align: right;">35%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><a href="../skills/senior.html#product-sense">Product sense and user focus</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:34%"></span><span class="pct">34%</span></span></td>
+<td style="text-align: right;">33%</td>
+<td style="text-align: right;">40%</td>
+<td style="text-align: right;">18%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><a href="../skills/senior.html#domain-translation">Translating business problems into ML problems</a></td>
+<td style="text-align: left;"><span class="barwrap"><span class="bar" style="--w:20%"></span><span class="pct">20%</span></span></td>
+<td style="text-align: right;">19%</td>
+<td style="text-align: right;">24%</td>
+<td style="text-align: right;">13%</td>
+</tr>
+</tbody>
+</table>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/threeeyelidds\.github\.io\/minimal-ml\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+      window.quartoDecorateExternalLinks = function (root) {
+     var links = (root || window.document).querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+          if (!link.classList.contains('no-external-icon')) {
+          }
+        }
+      }
+      };
+      window.quartoDecorateExternalLinks(window.document);
+    // Esc closes the popup (WCAG 1.4.13) and focus leaving both trigger and
+    // popup closes it (WCAG 2.4.11); tippy handles neither for interactive popups.
+    const hideOnEscAndFocusOut = {
+      name: 'hideOnEscAndFocusOut',
+      defaultValue: true,
+      fn(instance) {
+        const dismiss = () => {
+          // A show scheduled by the trigger delay would otherwise reopen it
+          instance.clearDelayTimeouts();
+          instance.hide();
+        };
+        const onKeyDown = (event) => {
+          if (event.key !== 'Escape') {
+            return;
+          }
+          // Keep Esc from also reaching page handlers (e.g. reveal.js overview),
+          // except an open reveal.js slide menu, which Esc should close too.
+          // The menu handles keys only when its keyboard option is on.
+          const menuHandlesEsc = window.Reveal?.getPlugin?.('menu')?.isOpen() &&
+            window.Reveal.getConfig().menu?.keyboard !== false;
+          if (!menuHandlesEsc) {
+            event.stopPropagation();
+          }
+          if (instance.popper.contains(window.document.activeElement)) {
+            // Disabled while refocusing so the focus trigger does not reopen it
+            instance.disable();
+            instance.reference.focus();
+            instance.enable();
+          }
+          dismiss();
+        };
+        const onFocusOut = (event) => {
+          const target = event.relatedTarget;
+          if (target && !instance.reference.contains(target) &&
+              !instance.popper.contains(target)) {
+            dismiss();
+          }
+        };
+        // On the trigger too: a click trigger (code-annotations: select) has no
+        // blur handling. Attached for the instance's lifetime so leaving the
+        // trigger also cancels a show still pending on the trigger delay.
+        instance.reference.addEventListener('focusout', onFocusOut);
+        return {
+          onShow() {
+            window.document.addEventListener('keydown', onKeyDown, true);
+            instance.popper.addEventListener('focusout', onFocusOut);
+          },
+          onHide() {
+            window.document.removeEventListener('keydown', onKeyDown, true);
+            instance.popper.removeEventListener('focusout', onFocusOut);
+          },
+          onDestroy() {
+            instance.reference.removeEventListener('focusout', onFocusOut);
+          },
+        };
+      },
+    };
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+        plugins: [hideOnEscAndFocusOut],
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          // Each band is positioned against its own containing block, which is
+          // not the offsetParent of the lines, so place it from client rects.
+          const placeBand = (band, firstEl, lastEl, codeBlock) => {
+            const container = band.offsetParent;
+            if (container === null) {
+              return;
+            }
+            const containerRect = container.getBoundingClientRect();
+            // Reveal.js scales slides with a transform, so convert client
+            // pixels back to the CSS pixels of the container.
+            const scale = containerRect.height / container.offsetHeight || 1;
+            const firstRect = firstEl.getBoundingClientRect();
+            const lastRect = lastEl.getBoundingClientRect();
+            const top = (firstRect.top - containerRect.top) / scale - container.clientTop + container.scrollTop;
+            const height = (lastRect.bottom - firstRect.top) / scale;
+            band.style.top = top - 2 + "px";
+            band.style.height = height + 4 + "px";
+            if (codeBlock) {
+              // Without the copy button wrapper, the containing block is wider
+              // than the code block, so span the code block explicitly.
+              const blockRect = codeBlock.getBoundingClientRect();
+              band.style.left = (blockRect.left - containerRect.left) / scale - container.clientLeft + container.scrollLeft + "px";
+              band.style.width = blockRect.width / scale + "px";
+            }
+          };
+          if (lineIds.length > 0) {
+            const el = window.document.getElementById(lineIds[0]);
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const parent = el.parentElement.parentElement;
+            // cook up a div (if necessary) and position it
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            placeBand(div, el, lastEl, parent.closest("div.sourceCode") || parent);
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            placeBand(gutterDiv, el, lastEl);
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+  <script type="application/javascript">
+  window.quartoScrollableRegionsLabels = {"code":"Scrollable code","output":"Scrollable output"};
+  </script>
+</div> <!-- /content -->
+<script>
+/* Site-wide: persistent checklists and review status on the skill pages. */
+(function () {
+  "use strict";
+  function get(k) { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch (e) { return {}; } }
+  function set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* storage blocked: ticks last for this page view */ } }
+
+  var chk = get("prep.chk.v1");
+  document.querySelectorAll("input.chk").forEach(function (el) {
+    el.checked = !!chk[el.dataset.chk];
+    el.addEventListener("change", function () {
+      if (el.checked) chk[el.dataset.chk] = 1; else delete chk[el.dataset.chk];
+      set("prep.chk.v1", chk);
+    });
+  });
+
+  var cards = (get("prep.v1").cards) || {};
+  document.querySelectorAll("details.qa[id]").forEach(function (el) {
+    var r = cards[el.id];
+    if (r) el.classList.add(r.ivl >= 7 ? "st-known" : "st-learning");
+  });
+
+  // open the question a link points at
+  function openTarget() {
+    var id = decodeURIComponent(location.hash.slice(1));
+    var el = id && document.getElementById(id);
+    if (el && el.tagName === "DETAILS") { el.open = true; el.scrollIntoView({ block: "start" }); }
+  }
+  window.addEventListener("hashchange", openTarget);
+  openTarget();
+
+  var mp = document.getElementById("map-progress");
+  if (mp) {
+    var seen = Object.keys(cards).length, known = Object.keys(cards).filter(function (k) { return cards[k].ivl >= 7; }).length;
+    var ticks = Object.keys(chk).length;
+    if (seen || ticks) {
+      mp.className = "tile";
+      mp.style.marginBottom = "1.2rem";
+      mp.textContent = "Your progress in this browser: " + seen + " cards reviewed, " + known + " known, " + ticks + " checklist items ticked.";
+    }
+  }
+})();
+</script>
+
+
+
+
+</body></html>

@@ -81,7 +81,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../../site_libs/quarto-html/quarto-syntax-highlighting-dark-447e42e69aaa9833c0ba1b986f430b20.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../../site_libs/bootstrap/bootstrap-bb4e448514b610e090e2765a04a7f37d.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="dark">
+<link href="../../site_libs/bootstrap/bootstrap-980fa6b4eab38a5377f72c7fe6f39b73.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="dark">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -143,6 +143,7 @@ window.Quarto = {
 
 <link rel="stylesheet" href="../../styles.css">
 <link rel="stylesheet" href="../../colors.css">
+<link rel="stylesheet" href="../../prep.css">
 </head>
 
 <body class="nav-fixed quarto-light"><a id="quarto-skip-link" class="visually-hidden-focusable" href="#quarto-document-content">Skip to main content</a>
@@ -164,6 +165,26 @@ window.Quarto = {
   <li class="nav-item">
     <a class="nav-link" href="../../index.html"> 
 <span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../report/index.html"> 
+<span class="menu-text">Report</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../skills/index.html"> 
+<span class="menu-text">Skills</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../review/index.html"> 
+<span class="menu-text">Review</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../plan/index.html"> 
+<span class="menu-text">Plan</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../jobs/index.html"> 
+<span class="menu-text">Open roles</span></a>
   </li>  
   <li class="nav-item">
     <a class="nav-link" href="../../notes/index.html"> 
@@ -436,7 +457,7 @@ M_{ij}
 \end{cases}
 \]</span></p>
 <p>The number of query-key pairs falls from <span class="math inline">\(O(T^2)\)</span> to <span class="math inline">\(O(TW)\)</span>. During decoding, only the most recent <span class="math inline">\(W\)</span> ordinary KV positions need to remain in a strictly windowed layer.</p>
-<div id="a2a49090" class="cell" data-execution_count="1">
+<div id="17b51681" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -512,7 +533,7 @@ O\left(L\left[pT^2+(1-p)TW\right]d_h\right).
 S_{ij}=\frac{\widehat q_i^T\widehat k_j}{\sqrt{d_h}}.
 \]</span></p>
 <p>The norm is commonly RMSNorm or LayerNorm, often with learned scale parameters. This prevents uncontrolled Q/K norms from directly inflating attention logits. Qwen3 is one publicly documented example using QK-Norm.</p>
-<div id="2d6a92c1" class="cell" data-execution_count="2">
+<div id="5635a055" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch.nn <span class="im">as</span> nn</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -548,7 +569,7 @@ S_{ij}=\frac{\widehat q_i^T\widehat k_j}{\sqrt{d_h}}.
 c\tanh\left(\frac{S}{c}\right).
 \]</span></p>
 <p>For <span class="math inline">\(|S|\ll c\)</span>, the function is approximately the identity. Extreme logits approach <span class="math inline">\(\pm c\)</span>, limiting softmax saturation without a hard, nondifferentiable clip. Gemma 2 is a documented example of attention-logit soft-capping.</p>
-<div id="cfc030fe" class="cell" data-execution_count="3">
+<div id="72688d38" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> soft_cap(scores, cap):</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> cap <span class="op">*</span> torch.tanh(scores <span class="op">/</span> cap)</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -579,7 +600,7 @@ o_i
 \frac{\sum_j e^{S_{ij}}v_j}
 {e^{a_h}+\sum_j e^{S_{ij}}}.
 \]</span></p>
-<div id="f684db09" class="cell" data-execution_count="4">
+<div id="6aa87fd1" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> attention_with_sink(q, k, v, sink_logits, mask<span class="op">=</span><span class="va">None</span>):</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Educational learned zero-valued sink; q/k/v are (B, H, T, D)."""</span></span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    scale <span class="op">=</span> q.shape[<span class="op">-</span><span class="dv">1</span>] <span class="op">**</span> <span class="op">-</span><span class="fl">0.5</span></span>
@@ -1185,6 +1206,49 @@ output                         ← FlashAttention can fuse this execution</code>
   window.quartoScrollableRegionsLabels = {"code":"Scrollable code","output":"Scrollable output"};
   </script>
 </div> <!-- /content -->
+<script>
+/* Site-wide: persistent checklists and review status on the skill pages. */
+(function () {
+  "use strict";
+  function get(k) { try { return JSON.parse(localStorage.getItem(k) || "{}"); } catch (e) { return {}; } }
+  function set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* storage blocked: ticks last for this page view */ } }
+
+  var chk = get("prep.chk.v1");
+  document.querySelectorAll("input.chk").forEach(function (el) {
+    el.checked = !!chk[el.dataset.chk];
+    el.addEventListener("change", function () {
+      if (el.checked) chk[el.dataset.chk] = 1; else delete chk[el.dataset.chk];
+      set("prep.chk.v1", chk);
+    });
+  });
+
+  var cards = (get("prep.v1").cards) || {};
+  document.querySelectorAll("details.qa[id]").forEach(function (el) {
+    var r = cards[el.id];
+    if (r) el.classList.add(r.ivl >= 7 ? "st-known" : "st-learning");
+  });
+
+  // open the question a link points at
+  function openTarget() {
+    var id = decodeURIComponent(location.hash.slice(1));
+    var el = id && document.getElementById(id);
+    if (el && el.tagName === "DETAILS") { el.open = true; el.scrollIntoView({ block: "start" }); }
+  }
+  window.addEventListener("hashchange", openTarget);
+  openTarget();
+
+  var mp = document.getElementById("map-progress");
+  if (mp) {
+    var seen = Object.keys(cards).length, known = Object.keys(cards).filter(function (k) { return cards[k].ivl >= 7; }).length;
+    var ticks = Object.keys(chk).length;
+    if (seen || ticks) {
+      mp.className = "tile";
+      mp.style.marginBottom = "1.2rem";
+      mp.textContent = "Your progress in this browser: " + seen + " cards reviewed, " + known + " known, " + ticks + " checklist items ticked.";
+    }
+  }
+})();
+</script>
 
 
 
