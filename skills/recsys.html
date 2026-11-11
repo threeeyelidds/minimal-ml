@@ -384,7 +384,7 @@ window.Quarto = {
 <header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="Breadcrumbs"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../skills/recsys.html">Product ML</a></li><li class="breadcrumb-item"><a href="../skills/recsys.html">Search, recommendation, ads and ranking</a></li></ol></nav>
 <div class="quarto-title">
 <h1 class="title">Search, recommendation, ads and ranking</h1>
-<p class="subtitle lead">Named in 55% of 2253 senior postings · 46 review cards</p>
+<p class="subtitle lead">Named in 55% of 2253 senior postings · 47 review cards</p>
 </div>
 
 
@@ -467,7 +467,7 @@ window.Quarto = {
 <td style="text-align: right;">20%</td>
 <td style="text-align: right;">5%</td>
 <td style="text-align: right;">4%</td>
-<td style="text-align: right;">7</td>
+<td style="text-align: right;">8</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"><a href="#ads">Ads, auctions, bidding and marketplace ML</a></td>
@@ -1380,6 +1380,42 @@ window.Quarto = {
 <li>How would you choose the similarity function for diversity?</li>
 <li>Diversity lowered CTR in the test but you believe it helps. How do you make the case?</li>
 </ul>
+</details>
+<details class="qa" id="recsys-047">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Meta</span> Design a model that predicts the probability that a user dislikes an item in their feed, and explain how the feed ranker should use it.
+</summary>
+<p><strong>Define the label first.</strong> “Dislike” is several signals with different meanings: hide or “see less” (not for me), report (violates rules), unfollow or block (about the author), and implicit ones such as a fast skip. Train separate heads or a graded label; one merged binary target mixes taste with policy.</p>
+<p><strong>What makes the labels hard.</strong></p>
+<ul>
+<li><strong>Rare.</strong> Explicit negative feedback is orders of magnitude rarer than likes, so the positive class is tiny.</li>
+<li><strong>Missing not at random.</strong> Most users never press hide. No feedback from them is not approval. Add a per-user feedback-propensity feature, and consider normalising within user.</li>
+<li><strong>Selection.</strong> Labels exist only for items the current ranker showed, which already avoids the worst items.</li>
+</ul>
+<p><strong>Model.</strong> A head on the multi-task ranker, sharing the representation with engagement heads, which gives the rare task far more signal than a standalone model. Features that matter: the user’s past negatives by topic, author and format; author-level negative rate with smoothing; content quality and classifier scores; similarity between this item and items the user hid.</p>
+<p><strong>Training.</strong> Downsample the majority class to keep cost down, then correct the output, because the ranker needs a calibrated probability. If non-dislike examples are kept at rate <span class="math inline">\(w\)</span>, the corrected prediction is</p>
+<p><span class="math display">\[p = \frac{p'}{p' + (1 - p')/w}.\]</span></p>
+<p><strong>Offline evaluation.</strong> PR-AUC and normalised cross-entropy, not ROC-AUC alone, which looks good on any rare class. Calibration by slice, and per-user AUC, since ranking happens within a user.</p>
+<p><strong>Use in ranking.</strong> Enter the value function as a negative term, <span class="math inline">\(\text{score} = \sum_k w_k p_k - w_\text{neg}\, p_\text{dislike}\)</span>, with <span class="math inline">\(w_\text{neg}\)</span> tuned online, because one hide costs far more than one like gains. Use a hard filter only for the policy heads.</p>
+<p><strong>Online evaluation.</strong> Hides and reports per impression, survey satisfaction and retention, with engagement as a counter-metric. A dislike model that only removes borderline engaging content can cut hides and time spent together; decide beforehand what trade is acceptable.</p>
+<p><strong>Failure modes.</strong></p>
+<ul>
+<li>The model succeeds and its labels disappear: suppressed items are no longer shown, so no one hides them. Keep a small exploration slice for training data.</li>
+<li>Coordinated hiding to bury a creator. Do not turn user-level dislike into a creator-level penalty without abuse checks.</li>
+<li>A UI change to the hide button shifts the label rate and looks like model drift.</li>
+</ul>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Hide rate fell 15% and sessions per user fell 1%. How do you decide whether to ship?</li>
+<li>How would you estimate dislike for users who have never given explicit feedback?</li>
+<li>Why does ROC-AUC flatter this model, and what would you report instead?</li>
+</ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>Meta, Machine Learning Engineer, Sep 2025: Model that predicts the probability a user dislikes a feed item (<a href="https://prachub.com/interview-questions/design-a-newsfeed-dislike-model">PracHub</a>)</li>
+</ul>
+</div>
 </details>
 </section>
 <section id="ads" class="level3">

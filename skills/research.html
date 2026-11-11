@@ -381,7 +381,7 @@ window.Quarto = {
 <header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="Breadcrumbs"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../skills/llm.html">LLMs and agents</a></li><li class="breadcrumb-item"><a href="../skills/research.html">Research skills</a></li></ol></nav>
 <div class="quarto-title">
 <h1 class="title">Research skills</h1>
-<p class="subtitle lead">Named in 68% of 2253 senior postings · 34 review cards</p>
+<p class="subtitle lead">Named in 68% of 2253 senior postings · 35 review cards</p>
 </div>
 
 
@@ -424,7 +424,7 @@ window.Quarto = {
 <td style="text-align: right;">24%</td>
 <td style="text-align: right;">29%</td>
 <td style="text-align: right;">71%</td>
-<td style="text-align: right;">9</td>
+<td style="text-align: right;">10</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"><a href="#publications">Publications and open-source track record</a></td>
@@ -759,6 +759,49 @@ window.Quarto = {
 <li>Why is stopping when the test first reaches significance a problem?</li>
 <li>How would you compare two methods when each run costs a week of compute?</li>
 </ul>
+</details>
+<details class="qa" id="research-035">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">RE</span> <span class="tag tag-track">MLE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Anthropic</span> Design an experiment to study sample-wise double descent: the claim that, for a fixed model, test error can get worse as you add training data. What do you run, what do you control, and what result would change your mind?
+</summary>
+<p><strong>State the hypothesis so it can fail.</strong> For a fixed model and training procedure, test error against training-set size <span class="math inline">\(n\)</span> is non-monotonic, with a peak where <span class="math inline">\(n\)</span> is about the largest set the model can fit exactly. Two predictions follow and are the real test: the peak <strong>moves right as the model gets larger</strong>, and it <strong>grows with label noise</strong>.</p>
+<p><strong>Start where the answer is known.</strong> Minimum-norm least squares in <span class="math inline">\(d\)</span> dimensions has a peak at <span class="math inline">\(n = d\)</span>, and for <span class="math inline">\(n &gt; d + 1\)</span> the excess risk is <span class="math inline">\(\sigma^2 d/(n - d - 1)\)</span>. If the harness cannot reproduce that, do not trust it on a network.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> run(n, d<span class="op">=</span><span class="dv">50</span>, sigma<span class="op">=</span><span class="fl">0.5</span>, trials<span class="op">=</span><span class="dv">200</span>, n_test<span class="op">=</span><span class="dv">2000</span>, seed<span class="op">=</span><span class="dv">0</span>):</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    rng <span class="op">=</span> np.random.default_rng(seed)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    errs <span class="op">=</span> []</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(trials):</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>        w <span class="op">=</span> rng.normal(size<span class="op">=</span>d) <span class="op">/</span> np.sqrt(d)</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>        X <span class="op">=</span> rng.normal(size<span class="op">=</span>(n, d))<span class="op">;</span> y <span class="op">=</span> X <span class="op">@</span> w <span class="op">+</span> sigma <span class="op">*</span> rng.normal(size<span class="op">=</span>n)</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>        w_hat <span class="op">=</span> np.linalg.pinv(X) <span class="op">@</span> y             <span class="co"># minimum-norm solution when n &lt; d</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>        Xt <span class="op">=</span> rng.normal(size<span class="op">=</span>(n_test, d))</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>        errs.append(np.mean((Xt <span class="op">@</span> (w_hat <span class="op">-</span> w)) <span class="op">**</span> <span class="dv">2</span>))</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.mean(errs), np.median(errs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>With <span class="math inline">\(d = 50\)</span> this gives a mean test error of 0.78 at <span class="math inline">\(n = 25\)</span>, 2.9 at <span class="math inline">\(n = 45\)</span>, a median of 26 at <span class="math inline">\(n = 50\)</span>, and 0.26 at <span class="math inline">\(n = 100\)</span>, matching the formula (<span class="math inline">\(0.25 \cdot 50/49\)</span>). Doubling the data from 25 to 50 made the model far worse. At the peak the mean is dominated by a few huge trials, so report the median and the spread.</p>
+<p><strong>The network experiment.</strong></p>
+<ul>
+<li><strong>Grid:</strong> 3 or 4 widths of one architecture, label noise of 0%, 10% and 20%, and about 12 values of <span class="math inline">\(n\)</span> on a log scale with extra points near each width’s threshold. Five seeds per cell.</li>
+<li><strong>Nested subsets:</strong> each larger training set contains the smaller ones, and a noisy label stays the same across subsets. Otherwise subset variation hides the curve.</li>
+<li><strong>Train to interpolation:</strong> no early stopping, augmentation or weight decay in the main arm, and a fixed number of gradient steps, not epochs, so small <span class="math inline">\(n\)</span> does not get fewer updates.</li>
+<li><strong>Measure:</strong> test error on a large, clean, fixed test set; final training error, which locates the interpolation threshold empirically; and the full training curve, to separate this from epoch-wise double descent.</li>
+<li><strong>Second arm:</strong> the same grid with tuned weight decay or early stopping. The expectation is that the peak shrinks or vanishes. That arm shows whether the effect matters in practice or only for unregularised training.</li>
+</ul>
+<p><strong>Confounds to rule out.</strong> A learning rate tuned at one <span class="math inline">\(n\)</span> and reused; an insufficient step budget that looks like a capacity limit; a noisy test set; and seed variance near the threshold, which is exactly where it is largest.</p>
+<p><strong>What would change my mind.</strong> No peak at any width or noise level; or a peak whose location does not move with width, which would point to an optimisation artefact and not to interpolation.</p>
+<p><strong>Budget.</strong> 4 widths x 3 noise levels x 12 sizes x 5 seeds is 720 runs per arm, so pick a model and dataset where one run takes minutes, and run the zero-noise and highest-noise columns first.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Why is the variance largest exactly at the interpolation threshold?</li>
+<li>Your curve has a peak at one width only. What do you check before believing it?</li>
+<li>What does this result imply for someone deciding whether to collect more data?</li>
+</ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>Anthropic, Machine Learning Engineer, Apr 2026: Design an experiment to study sample-wise double descent (<a href="https://prachub.com/interview-questions/design-a-double-descent-experiment">PracHub</a>)</li>
+</ul>
+</div>
 </details>
 </section>
 <section id="publications" class="level3">

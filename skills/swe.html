@@ -391,7 +391,7 @@ window.Quarto = {
 <header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="Breadcrumbs"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../skills/swe.html">The loop</a></li><li class="breadcrumb-item"><a href="../skills/swe.html">Programming and software engineering</a></li></ol></nav>
 <div class="quarto-title">
 <h1 class="title">Programming and software engineering</h1>
-<p class="subtitle lead">Named in 97% of 2253 senior postings · 39 review cards</p>
+<p class="subtitle lead">Named in 97% of 2253 senior postings · 41 review cards</p>
 </div>
 
 
@@ -554,7 +554,7 @@ window.Quarto = {
 <td style="text-align: right;">18%</td>
 <td style="text-align: right;">9%</td>
 <td style="text-align: right;">10%</td>
-<td style="text-align: right;">8</td>
+<td style="text-align: right;">10</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"><a href="#rust">Rust</a></td>
@@ -2080,6 +2080,173 @@ window.Quarto = {
 <li>Recover the actual edit script. What memory does that need?</li>
 <li>Why does Dijkstra fail with negative edges, in terms of the order in which states are finalised?</li>
 </ul>
+</details>
+<details class="qa" id="swe-040">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Anthropic</span> Implement an LRU cache with O(1) <code>get</code> and <code>put</code>. Then a staged follow-up, as in a timed assessment: build an in-memory key-value store with fields, add a prefix scan, add per-field TTL where every call carries a timestamp, and finally add backup and restore.
+</summary>
+<p><strong>LRU cache.</strong> A hash map from key to node, plus a doubly linked list ordered by recency. The map gives O(1) lookup; the list gives O(1) move-to-front and O(1) eviction from the tail. Two sentinel nodes remove every empty-list branch.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> Node:</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    <span class="va">__slots__</span> <span class="op">=</span> (<span class="st">"key"</span>, <span class="st">"val"</span>, <span class="st">"prev"</span>, <span class="st">"next"</span>)</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, key<span class="op">=</span><span class="va">None</span>, val<span class="op">=</span><span class="va">None</span>):</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.key, <span class="va">self</span>.val, <span class="va">self</span>.prev, <span class="va">self</span>.<span class="bu">next</span> <span class="op">=</span> key, val, <span class="va">None</span>, <span class="va">None</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> LRUCache:</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, capacity):</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.cap, <span class="va">self</span>.<span class="bu">map</span> <span class="op">=</span> capacity, {}</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.head, <span class="va">self</span>.tail <span class="op">=</span> Node(), Node()      <span class="co"># head.next is most recent</span></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.head.<span class="bu">next</span>, <span class="va">self</span>.tail.prev <span class="op">=</span> <span class="va">self</span>.tail, <span class="va">self</span>.head</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> _unlink(<span class="va">self</span>, n):</span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>        n.prev.<span class="bu">next</span>, n.<span class="bu">next</span>.prev <span class="op">=</span> n.<span class="bu">next</span>, n.prev</span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> _push_front(<span class="va">self</span>, n):</span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>        n.prev, n.<span class="bu">next</span> <span class="op">=</span> <span class="va">self</span>.head, <span class="va">self</span>.head.<span class="bu">next</span></span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.head.<span class="bu">next</span>.prev <span class="op">=</span> n</span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.head.<span class="bu">next</span> <span class="op">=</span> n</span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> get(<span class="va">self</span>, key):</span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a>        n <span class="op">=</span> <span class="va">self</span>.<span class="bu">map</span>.get(key)</span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> n <span class="kw">is</span> <span class="va">None</span>:</span>
+<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> <span class="va">None</span></span>
+<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>._unlink(n)<span class="op">;</span> <span class="va">self</span>._push_front(n)</span>
+<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> n.val</span>
+<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> put(<span class="va">self</span>, key, val):</span>
+<span id="cb12-28"><a href="#cb12-28" aria-hidden="true" tabindex="-1"></a>        n <span class="op">=</span> <span class="va">self</span>.<span class="bu">map</span>.get(key)</span>
+<span id="cb12-29"><a href="#cb12-29" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> n <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
+<span id="cb12-30"><a href="#cb12-30" aria-hidden="true" tabindex="-1"></a>            n.val <span class="op">=</span> val</span>
+<span id="cb12-31"><a href="#cb12-31" aria-hidden="true" tabindex="-1"></a>            <span class="va">self</span>._unlink(n)<span class="op">;</span> <span class="va">self</span>._push_front(n)</span>
+<span id="cb12-32"><a href="#cb12-32" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span></span>
+<span id="cb12-33"><a href="#cb12-33" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="bu">len</span>(<span class="va">self</span>.<span class="bu">map</span>) <span class="op">==</span> <span class="va">self</span>.cap:</span>
+<span id="cb12-34"><a href="#cb12-34" aria-hidden="true" tabindex="-1"></a>            lru <span class="op">=</span> <span class="va">self</span>.tail.prev</span>
+<span id="cb12-35"><a href="#cb12-35" aria-hidden="true" tabindex="-1"></a>            <span class="va">self</span>._unlink(lru)<span class="op">;</span> <span class="kw">del</span> <span class="va">self</span>.<span class="bu">map</span>[lru.key]</span>
+<span id="cb12-36"><a href="#cb12-36" aria-hidden="true" tabindex="-1"></a>        n <span class="op">=</span> Node(key, val)</span>
+<span id="cb12-37"><a href="#cb12-37" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.<span class="bu">map</span>[key] <span class="op">=</span> n<span class="op">;</span> <span class="va">self</span>._push_front(n)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Pitfalls: the node must store its key, or eviction cannot delete the map entry; updating an existing key must refresh recency and must not evict; <code>get</code> counts as a use. In Python, <code>collections.OrderedDict</code> with <code>move_to_end</code> and <code>popitem(last=False)</code> is the same structure. Say so, then write the list if asked.</p>
+<p><strong>Staged store.</strong> The stages are easy alone; the test is whether stage 1 survives stage 3. Put liveness in one helper, so TTL changes one function and not every method.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> DB:</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""key -&gt; field -&gt; (value, expires_at or None)"""</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>):</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.data <span class="op">=</span> {}</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> _live(<span class="va">self</span>, key, ts):</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>        rec <span class="op">=</span> <span class="va">self</span>.data.get(key, {})</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> {f: v <span class="cf">for</span> f, (v, exp) <span class="kw">in</span> rec.items() <span class="cf">if</span> exp <span class="kw">is</span> <span class="va">None</span> <span class="kw">or</span> ts <span class="op">&lt;</span> exp}</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="bu">set</span>(<span class="va">self</span>, ts, key, field, value, ttl<span class="op">=</span><span class="va">None</span>):</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.data.setdefault(key, {})[field] <span class="op">=</span> (value, <span class="va">None</span> <span class="cf">if</span> ttl <span class="kw">is</span> <span class="va">None</span> <span class="cf">else</span> ts <span class="op">+</span> ttl)</span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> get(<span class="va">self</span>, ts, key, field):</span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">self</span>._live(key, ts).get(field)</span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> delete(<span class="va">self</span>, ts, key, field):</span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> field <span class="kw">in</span> <span class="va">self</span>._live(key, ts):</span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>            <span class="kw">del</span> <span class="va">self</span>.data[key][field]</span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> <span class="va">True</span></span>
+<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">False</span></span>
+<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> scan(<span class="va">self</span>, ts, key, prefix<span class="op">=</span><span class="st">""</span>):</span>
+<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="bu">sorted</span>((f, v) <span class="cf">for</span> f, v <span class="kw">in</span> <span class="va">self</span>._live(key, ts).items() <span class="cf">if</span> f.startswith(prefix))</span>
+<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> backup(<span class="va">self</span>, ts):          <span class="co"># store remaining lifetime, not absolute expiry</span></span>
+<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> {k: {f: (v, <span class="va">None</span> <span class="cf">if</span> exp <span class="kw">is</span> <span class="va">None</span> <span class="cf">else</span> exp <span class="op">-</span> ts)</span>
+<span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a>                    <span class="cf">for</span> f, (v, exp) <span class="kw">in</span> rec.items() <span class="cf">if</span> exp <span class="kw">is</span> <span class="va">None</span> <span class="kw">or</span> ts <span class="op">&lt;</span> exp}</span>
+<span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a>                <span class="cf">for</span> k, rec <span class="kw">in</span> <span class="va">self</span>.data.items()}</span>
+<span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-30"><a href="#cb13-30" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> restore(<span class="va">self</span>, ts, snap):</span>
+<span id="cb13-31"><a href="#cb13-31" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.data <span class="op">=</span> {k: {f: (v, <span class="va">None</span> <span class="cf">if</span> left <span class="kw">is</span> <span class="va">None</span> <span class="cf">else</span> ts <span class="op">+</span> left)</span>
+<span id="cb13-32"><a href="#cb13-32" aria-hidden="true" tabindex="-1"></a>                         <span class="cf">for</span> f, (v, left) <span class="kw">in</span> rec.items()}</span>
+<span id="cb13-33"><a href="#cb13-33" aria-hidden="true" tabindex="-1"></a>                     <span class="cf">for</span> k, rec <span class="kw">in</span> snap.items()}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>What graders check: the expiry boundary (here a field set at <code>ts</code> with <code>ttl</code> is live on <code>[ts, ts + ttl)</code>; read the statement for which side is closed), deleting an expired field returns false, scan order is specified, and a restore recomputes expiry from the remaining lifetime. Expiry here is lazy: dead fields stay in memory until overwritten, which is fine for a timed task and worth saying aloud.</p>
+<p>In a timed assessment, pass each stage’s tests before reading the next, and do not design for stages you have not seen beyond keeping storage access behind one or two helpers.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Make the LRU cache safe for concurrent readers and writers. Where does a single lock hurt, and what do real caches do instead?</li>
+<li>The store now holds 10 million fields and most have expired. How do you reclaim memory without a full scan on every call?</li>
+<li>Change the eviction policy to LFU with O(1) operations. What extra structure do you need?</li>
+</ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>Anthropic, Machine Learning Engineer, undated: Implement an LRU cache (<a href="https://www.aced.io/questions/3625/lru-cache">Aced (formerly Exponent)</a>)</li>
+<li>Anthropic, Machine Learning Engineer, undated: Implement an in-memory database in a timed assessment (<a href="https://www.aced.io/questions/6237/implement-inmemory-database-codesignal">Aced (formerly Exponent)</a>)</li>
+</ul>
+</div>
+</details>
+<details class="qa" id="swe-041">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at OpenAI</span> A multi-part simulation question. A grid holds susceptible, infected and wall cells, and each step every infected cell infects its four neighbours. Part 1: write one step. Part 2: how many steps until nothing changes, and how many cells are never infected? Part 3: infected cells recover after k steps and become immune. Part 4: infection succeeds with probability p per infected neighbour. Part 5: make a step fast on a large grid.
+</summary>
+<p>The parts reuse one state representation, so choose it for the last part and not the first: integer codes per cell, and a step that <strong>reads the old grid and writes a new one</strong>. Updating in place is the classic bug: a cell infected in this step would infect its neighbours in the same step.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> collections <span class="im">import</span> deque</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>S, I, R, W <span class="op">=</span> <span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>          <span class="co"># susceptible, infected, recovered, wall</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>DIRS <span class="op">=</span> ((<span class="dv">1</span>, <span class="dv">0</span>), (<span class="op">-</span><span class="dv">1</span>, <span class="dv">0</span>), (<span class="dv">0</span>, <span class="dv">1</span>), (<span class="dv">0</span>, <span class="op">-</span><span class="dv">1</span>))</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> step(grid, age<span class="op">=</span><span class="va">None</span>, recover_after<span class="op">=</span><span class="va">None</span>):</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>    n, m <span class="op">=</span> <span class="bu">len</span>(grid), <span class="bu">len</span>(grid[<span class="dv">0</span>])</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>    new <span class="op">=</span> [row[:] <span class="cf">for</span> row <span class="kw">in</span> grid]</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>    new_age <span class="op">=</span> [row[:] <span class="cf">for</span> row <span class="kw">in</span> age] <span class="cf">if</span> age <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="cf">else</span> <span class="va">None</span></span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> r <span class="kw">in</span> <span class="bu">range</span>(n):</span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> c <span class="kw">in</span> <span class="bu">range</span>(m):</span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> grid[r][c] <span class="op">!=</span> I:</span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>                <span class="cf">continue</span></span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> dr, dc <span class="kw">in</span> DIRS:</span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>                rr, cc <span class="op">=</span> r <span class="op">+</span> dr, c <span class="op">+</span> dc</span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>                <span class="cf">if</span> <span class="dv">0</span> <span class="op">&lt;=</span> rr <span class="op">&lt;</span> n <span class="kw">and</span> <span class="dv">0</span> <span class="op">&lt;=</span> cc <span class="op">&lt;</span> m <span class="kw">and</span> grid[rr][cc] <span class="op">==</span> S:</span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>                    new[rr][cc] <span class="op">=</span> I</span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> recover_after <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:          <span class="co"># part 3</span></span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>                new_age[r][c] <span class="op">+=</span> <span class="dv">1</span></span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>                <span class="cf">if</span> new_age[r][c] <span class="op">&gt;=</span> recover_after:</span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>                    new[r][c] <span class="op">=</span> R</span>
+<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> (new, new_age) <span class="cf">if</span> age <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="cf">else</span> new</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Part 2</strong> does not need the simulation. Without recovery, a cell is infected at the step equal to its shortest-path distance from the nearest infected cell, so one multi-source BFS gives the answer in O(nm) instead of O(nm) per step:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> time_to_saturate(grid):</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>    n, m <span class="op">=</span> <span class="bu">len</span>(grid), <span class="bu">len</span>(grid[<span class="dv">0</span>])</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    dist <span class="op">=</span> [[<span class="op">-</span><span class="dv">1</span>] <span class="op">*</span> m <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(n)]</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>    q <span class="op">=</span> deque()</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> r <span class="kw">in</span> <span class="bu">range</span>(n):</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> c <span class="kw">in</span> <span class="bu">range</span>(m):</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> grid[r][c] <span class="op">==</span> I:</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>                dist[r][c] <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> q.append((r, c))</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>    last <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span> q:</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>        r, c <span class="op">=</span> q.popleft()</span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> dr, dc <span class="kw">in</span> DIRS:</span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>            rr, cc <span class="op">=</span> r <span class="op">+</span> dr, c <span class="op">+</span> dc</span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> <span class="dv">0</span> <span class="op">&lt;=</span> rr <span class="op">&lt;</span> n <span class="kw">and</span> <span class="dv">0</span> <span class="op">&lt;=</span> cc <span class="op">&lt;</span> m <span class="kw">and</span> grid[rr][cc] <span class="op">==</span> S <span class="kw">and</span> dist[rr][cc] <span class="op">&lt;</span> <span class="dv">0</span>:</span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>                dist[rr][cc] <span class="op">=</span> last <span class="op">=</span> dist[r][c] <span class="op">+</span> <span class="dv">1</span></span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>                q.append((rr, cc))</span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>    unreached <span class="op">=</span> <span class="bu">sum</span>(grid[r][c] <span class="op">==</span> S <span class="kw">and</span> dist[r][c] <span class="op">&lt;</span> <span class="dv">0</span></span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>                    <span class="cf">for</span> r <span class="kw">in</span> <span class="bu">range</span>(n) <span class="cf">for</span> c <span class="kw">in</span> <span class="bu">range</span>(m))</span>
+<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> last, unreached</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Part 3</strong> breaks that shortcut: with recovery the front can die out before it reaches a cell, so you simulate. State the order of events inside a step (here an infected cell infects, then ages, then may recover) because the tests depend on it.</p>
+<p><strong>Parts 4 and 5.</strong> A susceptible cell with <span class="math inline">\(k\)</span> infected neighbours is infected with probability <span class="math inline">\(1 - (1-p)^k\)</span>. Count neighbours with four shifted slices instead of a Python loop:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> step_np(g, p<span class="op">=</span><span class="fl">1.0</span>, rng<span class="op">=</span><span class="va">None</span>):</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>    inf <span class="op">=</span> (g <span class="op">==</span> I)</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>    k <span class="op">=</span> np.zeros(g.shape, dtype<span class="op">=</span><span class="bu">int</span>)</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>    k[<span class="dv">1</span>:, :] <span class="op">+=</span> inf[:<span class="op">-</span><span class="dv">1</span>, :]<span class="op">;</span> k[:<span class="op">-</span><span class="dv">1</span>, :] <span class="op">+=</span> inf[<span class="dv">1</span>:, :]</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>    k[:, <span class="dv">1</span>:] <span class="op">+=</span> inf[:, :<span class="op">-</span><span class="dv">1</span>]<span class="op">;</span> k[:, :<span class="op">-</span><span class="dv">1</span>] <span class="op">+=</span> inf[:, <span class="dv">1</span>:]</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>    hit <span class="op">=</span> k <span class="op">&gt;</span> <span class="dv">0</span> <span class="cf">if</span> p <span class="op">&gt;=</span> <span class="fl">1.0</span> <span class="cf">else</span> rng.random(g.shape) <span class="op">&lt;</span> <span class="dv">1</span> <span class="op">-</span> (<span class="dv">1</span> <span class="op">-</span> p) <span class="op">**</span> k</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> g.copy()</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>    out[(g <span class="op">==</span> S) <span class="op">&amp;</span> hit] <span class="op">=</span> I</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> out</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Slices do not wrap around, which <code>np.roll</code> would. Pass the random generator in, so a run is reproducible and a test can fix the seed.</p>
+<p><strong>Testing as you go.</strong> Check the deterministic vectorised step against the loop version on random small grids, check BFS against simulate-until-stable, and check the stochastic step by frequency: one cell between two infected cells with <span class="math inline">\(p = 0.3\)</span> should be infected in about 51% of trials.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>The grid is 100,000 by 100,000 and almost empty. What representation and what update loop do you use?</li>
+<li>With recovery and p &lt; 1, how would you estimate the probability that the outbreak reaches a given cell, and how many runs do you need for a given error?</li>
+<li>Your vectorised step disagrees with the loop version on one random grid in a thousand. How do you find the bug?</li>
+</ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>OpenAI, Research Engineer, Aug 2026: First-person report of two screens: a five-part grid simulation of infection spread; vectorised 1-nearest-neighbour, then as a network forward pass, then with L1 distance (<a href="https://prachub.com/interview-experiences/openai-research-engineer-interview-experience-two-back-to-back-screens-no-break-rejected">PracHub</a>)</li>
+</ul>
+</div>
 </details>
 </section>
 <section id="rust" class="level3">

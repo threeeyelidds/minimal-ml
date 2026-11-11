@@ -383,7 +383,7 @@ window.Quarto = {
 <header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="Breadcrumbs"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../skills/swe.html">The loop</a></li><li class="breadcrumb-item"><a href="../skills/eval.html">Evaluation and experimentation</a></li></ol></nav>
 <div class="quarto-title">
 <h1 class="title">Evaluation and experimentation</h1>
-<p class="subtitle lead">Named in 86% of 2253 senior postings · 36 review cards</p>
+<p class="subtitle lead">Named in 86% of 2253 senior postings · 37 review cards</p>
 </div>
 
 
@@ -434,7 +434,7 @@ window.Quarto = {
 <td style="text-align: right;">36%</td>
 <td style="text-align: right;">57%</td>
 <td style="text-align: right;">26%</td>
-<td style="text-align: right;">3</td>
+<td style="text-align: right;">4</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"><a href="#experimentation">Experiment design, ablations and rigor</a></td>
@@ -784,6 +784,57 @@ window.Quarto = {
 <li>How do you tell a traffic mix change from a real degradation?</li>
 </ul>
 </details>
+<details class="qa" id="eval-037">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at OpenAI</span> Design out-of-distribution detection for a deployed classifier: how do you score a single input, how do you evaluate the detector, and how do you monitor it in production?
+</summary>
+<p><strong>Say which shift you mean.</strong> Covariate shift (familiar classes, new input style: a new camera, a new language), semantic shift (a class the model never saw), and label shift (class frequencies move). A per-input detector targets the first two; label shift is a population-level question.</p>
+<p><strong>Per-input scores</strong>, cheapest first:</p>
+<ul>
+<li><strong>Maximum softmax probability.</strong> The baseline; weak because networks are confidently wrong far from the training data.</li>
+<li><strong>Energy</strong>, <span class="math inline">\(T \log \sum_c e^{z_c/T}\)</span> on the logits: free, and usually better than the softmax maximum.</li>
+<li><strong>Feature distance</strong>: Mahalanobis distance to the nearest class mean in the penultimate layer, or distance to the k-th nearest training embedding. Strong on semantic shift, needs no retraining.</li>
+<li><strong>Disagreement</strong> across an ensemble: best quality, several times the cost.</li>
+<li>Likelihood from a generative model is unreliable alone: such models can assign higher likelihood to out-of-distribution images than to their training data.</li>
+</ul>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> fit_mahalanobis(feats, labels):</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    classes <span class="op">=</span> np.unique(labels)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    mu <span class="op">=</span> np.stack([feats[labels <span class="op">==</span> c].mean(<span class="dv">0</span>) <span class="cf">for</span> c <span class="kw">in</span> classes])</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    centred <span class="op">=</span> feats <span class="op">-</span> mu[np.searchsorted(classes, labels)]</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    prec <span class="op">=</span> np.linalg.pinv(centred.T <span class="op">@</span> centred <span class="op">/</span> <span class="bu">len</span>(feats))   <span class="co"># shared covariance</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> mu, prec</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> mahalanobis_score(x, mu, prec):                           <span class="co"># higher = more in-distribution</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    d <span class="op">=</span> x[:, <span class="va">None</span>, :] <span class="op">-</span> mu[<span class="va">None</span>]</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="op">-</span>np.einsum(<span class="st">"ncd,de,nce-&gt;nc"</span>, d, prec, d).<span class="bu">min</span>(<span class="dv">1</span>)</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> fpr_at_tpr(id_scores, ood_scores, tpr<span class="op">=</span><span class="fl">0.95</span>):</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>    thr <span class="op">=</span> np.quantile(id_scores, <span class="dv">1</span> <span class="op">-</span> tpr)</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">float</span>((ood_scores <span class="op">&gt;=</span> thr).mean())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Evaluation.</strong> AUROC and the false-positive rate at 95% true-positive rate, reported separately for <strong>near</strong> shifts (similar classes, a new time period, a new region or device) and far ones (unrelated data). Far shifts flatter every method. Build the test sets from real held-out shifts in your own data; set the threshold on in-distribution validation data only, since real shifts are not known in advance.</p>
+<p><strong>Production design.</strong></p>
+<ol type="1">
+<li><strong>Per request:</strong> compute the score from activations the model already produces; above threshold, abstain, route to a fallback or a human, and log the input.</li>
+<li><strong>Population level:</strong> compare windows of scores, embeddings and predicted-class frequencies with a reference window, using a two-sample test or a classifier trained to tell the windows apart. Many small shifts never trip the per-input threshold and still move accuracy.</li>
+<li><strong>Close the loop:</strong> sample flagged inputs for labelling, measure accuracy on them, and add them to training or to the evaluation set.</li>
+<li><strong>Monitor the detector:</strong> flag rate over time, precision of flags from the labelled sample, and accuracy on unflagged traffic.</li>
+</ol>
+<p><strong>Failure modes.</strong> A flag rate that follows a benign traffic mix change and pages people for nothing; thresholds that go stale after each retrain because the feature space moved; the detector passing inputs that are in-distribution for the features and still adversarial; and treating “not flagged” as “correct”, which it is not.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>The flag rate doubled overnight and accuracy on a labelled sample did not move. What happened and what do you change?</li>
+<li>Why can a generative model give higher likelihood to data it was never trained on?</li>
+<li>How would you adapt this to a generative language model, where there are no class logits?</li>
+</ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>OpenAI, Machine Learning Engineer, Dec 2025: Out-of-distribution detection with production monitoring (<a href="https://prachub.com/interview-questions/design-an-ood-detection-system">PracHub</a>)</li>
+</ul>
+</div>
+</details>
 </section>
 <section id="experimentation" class="level3">
 <h3 class="anchored" data-anchor-id="experimentation">Experiment design, ablations and rigor <span class="demand">36% of postings</span></h3>
@@ -1130,25 +1181,25 @@ window.Quarto = {
 <summary>
 <span class="tag tag-core">core</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Implement NDCG@k and tell me the mistakes people make.
 </summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> dcg_at_k(rels, k):</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    rels <span class="op">=</span> np.asarray(rels, dtype<span class="op">=</span><span class="bu">float</span>)[:k]</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> rels.size <span class="op">==</span> <span class="dv">0</span>:</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="fl">0.0</span></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    discounts <span class="op">=</span> <span class="fl">1.0</span> <span class="op">/</span> np.log2(np.arange(<span class="dv">2</span>, rels.size <span class="op">+</span> <span class="dv">2</span>))     <span class="co"># positions 1..k -&gt; log2(i + 1)</span></span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">float</span>(np.<span class="bu">sum</span>((<span class="fl">2.0</span> <span class="op">**</span> rels <span class="op">-</span> <span class="fl">1.0</span>) <span class="op">*</span> discounts))</span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> ndcg_at_k(ranked_rels, k, all_rels<span class="op">=</span><span class="va">None</span>):</span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""ranked_rels: graded relevance of the returned items, in returned order.</span></span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="co">    all_rels: relevance of ALL judged items for the query (defines the ideal ranking)."""</span></span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    pool <span class="op">=</span> ranked_rels <span class="cf">if</span> all_rels <span class="kw">is</span> <span class="va">None</span> <span class="cf">else</span> all_rels</span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    idcg <span class="op">=</span> dcg_at_k(<span class="bu">sorted</span>(pool, reverse<span class="op">=</span><span class="va">True</span>), k)</span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> dcg_at_k(ranked_rels, k) <span class="op">/</span> idcg <span class="cf">if</span> idcg <span class="op">&gt;</span> <span class="dv">0</span> <span class="cf">else</span> <span class="fl">0.0</span></span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> mean_ndcg(queries, k):</span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""queries: list of (ranked_rels, all_rels). Macro-average over queries."""</span></span>
-<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">float</span>(np.mean([ndcg_at_k(r, k, a) <span class="cf">for</span> r, a <span class="kw">in</span> queries]))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> dcg_at_k(rels, k):</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    rels <span class="op">=</span> np.asarray(rels, dtype<span class="op">=</span><span class="bu">float</span>)[:k]</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> rels.size <span class="op">==</span> <span class="dv">0</span>:</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="fl">0.0</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    discounts <span class="op">=</span> <span class="fl">1.0</span> <span class="op">/</span> np.log2(np.arange(<span class="dv">2</span>, rels.size <span class="op">+</span> <span class="dv">2</span>))     <span class="co"># positions 1..k -&gt; log2(i + 1)</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">float</span>(np.<span class="bu">sum</span>((<span class="fl">2.0</span> <span class="op">**</span> rels <span class="op">-</span> <span class="fl">1.0</span>) <span class="op">*</span> discounts))</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> ndcg_at_k(ranked_rels, k, all_rels<span class="op">=</span><span class="va">None</span>):</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""ranked_rels: graded relevance of the returned items, in returned order.</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="co">    all_rels: relevance of ALL judged items for the query (defines the ideal ranking)."""</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>    pool <span class="op">=</span> ranked_rels <span class="cf">if</span> all_rels <span class="kw">is</span> <span class="va">None</span> <span class="cf">else</span> all_rels</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>    idcg <span class="op">=</span> dcg_at_k(<span class="bu">sorted</span>(pool, reverse<span class="op">=</span><span class="va">True</span>), k)</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> dcg_at_k(ranked_rels, k) <span class="op">/</span> idcg <span class="cf">if</span> idcg <span class="op">&gt;</span> <span class="dv">0</span> <span class="cf">else</span> <span class="fl">0.0</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> mean_ndcg(queries, k):</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""queries: list of (ranked_rels, all_rels). Macro-average over queries."""</span></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">float</span>(np.mean([ndcg_at_k(r, k, a) <span class="cf">for</span> r, a <span class="kw">in</span> queries]))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Check: relevances <code>[3, 2, 0, 1]</code> at <span class="math inline">\(k = 4\)</span> give <span class="math inline">\(\mathrm{DCG} = 7/1 + 3/1.585 + 0 + 1/2.322 \approx 9.32\)</span>, ideal <code>[3, 2, 1, 0]</code> gives <span class="math inline">\(7 + 1.893 + 0.5 = 9.39\)</span>, so NDCG is about 0.993.</p>
 <p>Mistakes an interviewer looks for:</p>
 <ul>
@@ -1383,20 +1434,20 @@ window.Quarto = {
 \]</span></p>
 <p>where <span class="math inline">\(p_o\)</span> is the observed agreement and <span class="math inline">\(p_{1k}, p_{2k}\)</span> are the fractions of items each rater assigns to category <span class="math inline">\(k\)</span>.</p>
 <p><strong>Example.</strong> 100 items; both say yes on 45, both say no on 35, and they split 10 and 10 on the rest. <span class="math inline">\(p_o = 0.80\)</span>. Each rater says yes 55% of the time, so <span class="math inline">\(p_e = 0.55^2 + 0.45^2 = 0.505\)</span> and <span class="math inline">\(\kappa = (0.80 - 0.505)/0.495 \approx 0.60\)</span>.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> cohens_kappa(r1, r2):</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    r1, r2 <span class="op">=</span> np.asarray(r1), np.asarray(r2)</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">assert</span> r1.shape <span class="op">==</span> r2.shape <span class="kw">and</span> r1.size <span class="op">&gt;</span> <span class="dv">0</span></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    labels <span class="op">=</span> np.unique(np.concatenate([r1, r2]))</span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    index <span class="op">=</span> {lab: i <span class="cf">for</span> i, lab <span class="kw">in</span> <span class="bu">enumerate</span>(labels)}</span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    C <span class="op">=</span> np.zeros((<span class="bu">len</span>(labels), <span class="bu">len</span>(labels)))</span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> a, b <span class="kw">in</span> <span class="bu">zip</span>(r1, r2):</span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>        C[index[a], index[b]] <span class="op">+=</span> <span class="dv">1</span>                 <span class="co"># confusion matrix between raters</span></span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    n <span class="op">=</span> C.<span class="bu">sum</span>()</span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>    p_o <span class="op">=</span> np.trace(C) <span class="op">/</span> n</span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>    p_e <span class="op">=</span> <span class="bu">float</span>(C.<span class="bu">sum</span>(axis<span class="op">=</span><span class="dv">1</span>) <span class="op">@</span> C.<span class="bu">sum</span>(axis<span class="op">=</span><span class="dv">0</span>)) <span class="op">/</span> n<span class="op">**</span><span class="dv">2</span></span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fl">1.0</span> <span class="cf">if</span> np.isclose(p_e, <span class="fl">1.0</span>) <span class="cf">else</span> (p_o <span class="op">-</span> p_e) <span class="op">/</span> (<span class="fl">1.0</span> <span class="op">-</span> p_e)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> cohens_kappa(r1, r2):</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    r1, r2 <span class="op">=</span> np.asarray(r1), np.asarray(r2)</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">assert</span> r1.shape <span class="op">==</span> r2.shape <span class="kw">and</span> r1.size <span class="op">&gt;</span> <span class="dv">0</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    labels <span class="op">=</span> np.unique(np.concatenate([r1, r2]))</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    index <span class="op">=</span> {lab: i <span class="cf">for</span> i, lab <span class="kw">in</span> <span class="bu">enumerate</span>(labels)}</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    C <span class="op">=</span> np.zeros((<span class="bu">len</span>(labels), <span class="bu">len</span>(labels)))</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> a, b <span class="kw">in</span> <span class="bu">zip</span>(r1, r2):</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>        C[index[a], index[b]] <span class="op">+=</span> <span class="dv">1</span>                 <span class="co"># confusion matrix between raters</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    n <span class="op">=</span> C.<span class="bu">sum</span>()</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    p_o <span class="op">=</span> np.trace(C) <span class="op">/</span> n</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>    p_e <span class="op">=</span> <span class="bu">float</span>(C.<span class="bu">sum</span>(axis<span class="op">=</span><span class="dv">1</span>) <span class="op">@</span> C.<span class="bu">sum</span>(axis<span class="op">=</span><span class="dv">0</span>)) <span class="op">/</span> n<span class="op">**</span><span class="dv">2</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fl">1.0</span> <span class="cf">if</span> np.isclose(p_e, <span class="fl">1.0</span>) <span class="cf">else</span> (p_o <span class="op">-</span> p_e) <span class="op">/</span> (<span class="fl">1.0</span> <span class="op">-</span> p_e)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><strong>When it misleads.</strong></p>
 <ul>
 <li><em>Prevalence.</em> If both raters say “pass” 97.5% of the time, chance agreement is already about 95%, so 95% observed agreement gives <span class="math inline">\(\kappa \approx 0\)</span>. Report raw agreement and the confusion matrix alongside kappa.</li>

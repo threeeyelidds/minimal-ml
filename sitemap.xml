@@ -2,202 +2,202 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/skills/swe.html</loc>
-    <lastmod>2026-11-10T23:55:47.129Z</lastmod>
+    <lastmod>2026-11-11T22:32:07.356Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/skills/senior.html</loc>
-    <lastmod>2026-11-10T23:55:47.129Z</lastmod>
+    <lastmod>2026-11-11T22:32:07.356Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/skills/research.html</loc>
-    <lastmod>2026-11-10T23:55:47.129Z</lastmod>
+    <lastmod>2026-11-11T22:32:07.356Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/skills/mlops.html</loc>
-    <lastmod>2026-11-10T23:55:47.129Z</lastmod>
+    <lastmod>2026-11-11T22:32:07.355Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/skills/llmapp.html</loc>
-    <lastmod>2026-11-10T23:55:47.128Z</lastmod>
+    <lastmod>2026-11-11T22:32:07.355Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/skills/infra.html</loc>
-    <lastmod>2026-11-10T23:55:47.128Z</lastmod>
+    <lastmod>2026-11-11T22:32:07.355Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/skills/eval.html</loc>
-    <lastmod>2026-11-10T23:55:47.128Z</lastmod>
+    <lastmod>2026-11-11T22:32:07.355Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/skills/dl.html</loc>
-    <lastmod>2026-11-10T23:55:47.128Z</lastmod>
+    <lastmod>2026-11-11T22:32:07.354Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/review/index.html</loc>
-    <lastmod>2026-11-10T23:55:47.124Z</lastmod>
+    <lastmod>2026-11-11T22:32:07.350Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/plan/index.html</loc>
-    <lastmod>2026-11-10T23:55:47.119Z</lastmod>
+    <lastmod>2026-11-11T22:32:07.344Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/notes/transformers/positional_encoding.html</loc>
-    <lastmod>2026-11-10T23:55:47.119Z</lastmod>
+    <lastmod>2026-11-11T22:32:07.344Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/notes/tokenization.html</loc>
-    <lastmod>2026-11-10T23:55:47.118Z</lastmod>
+    <lastmod>2026-11-11T22:32:07.344Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/notes/foundations/rnn_lstm.html</loc>
-    <lastmod>2026-11-10T23:55:47.118Z</lastmod>
+    <lastmod>2026-11-11T22:32:07.343Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/notes/foundations/prediction_decision_losses.html</loc>
-    <lastmod>2026-11-10T23:55:47.117Z</lastmod>
+    <lastmod>2026-11-11T22:32:07.343Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/notes/foundations/losses.html</loc>
-    <lastmod>2026-11-10T23:55:47.117Z</lastmod>
+    <lastmod>2026-11-11T22:32:07.343Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/notes/foundations/distillation.html</loc>
-    <lastmod>2026-11-10T23:55:47.117Z</lastmod>
+    <lastmod>2026-11-11T22:32:07.343Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/notes/foundations/calibration.html</loc>
-    <lastmod>2026-11-10T23:55:47.117Z</lastmod>
+    <lastmod>2026-11-11T22:32:07.343Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/notes/applied_ml/harness.html</loc>
-    <lastmod>2026-11-10T23:55:47.117Z</lastmod>
+    <lastmod>2026-11-11T22:32:07.342Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/notes/applied_ml/codex.html</loc>
-    <lastmod>2026-11-10T23:55:47.117Z</lastmod>
+    <lastmod>2026-11-11T22:32:07.342Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/notes/algorithms/rl_algo.html</loc>
-    <lastmod>2026-11-10T23:55:47.116Z</lastmod>
+    <lastmod>2026-11-11T22:32:07.342Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/notes/algorithms/probabilistic-modeling-practice-solutions.html</loc>
-    <lastmod>2026-11-10T23:55:47.116Z</lastmod>
+    <lastmod>2026-11-11T22:32:07.342Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/notes/advanced/linear_attention.html</loc>
-    <lastmod>2026-11-10T23:55:47.116Z</lastmod>
+    <lastmod>2026-11-11T22:32:07.341Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/notes/advanced/continual_intelligence_ttt.html</loc>
-    <lastmod>2026-11-10T23:55:47.116Z</lastmod>
+    <lastmod>2026-11-11T22:32:07.341Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/jobs/index.html</loc>
-    <lastmod>2026-11-10T23:55:47.110Z</lastmod>
+    <lastmod>2026-11-11T22:32:07.335Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/essays/index.html</loc>
-    <lastmod>2026-11-10T23:55:47.110Z</lastmod>
+    <lastmod>2026-11-11T22:32:07.335Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/essays/ai-gdp-productivity-purpose.html</loc>
-    <lastmod>2026-11-10T23:55:47.109Z</lastmod>
+    <lastmod>2026-11-11T22:32:07.335Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/index.html</loc>
-    <lastmod>2026-11-10T23:55:47.110Z</lastmod>
+    <lastmod>2026-11-11T22:32:07.335Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/notes/advanced/advanced_attention.html</loc>
-    <lastmod>2026-11-10T23:55:47.116Z</lastmod>
+    <lastmod>2026-11-11T22:32:07.341Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/notes/advanced/continual_intelligence_ttt_expanded.html</loc>
-    <lastmod>2026-11-10T23:55:47.116Z</lastmod>
+    <lastmod>2026-11-11T22:32:07.341Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/notes/algorithms/dynamic_programming_and_graph_algorithms.html</loc>
-    <lastmod>2026-11-10T23:55:47.116Z</lastmod>
+    <lastmod>2026-11-11T22:32:07.341Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/notes/algorithms/probabilistic_modeling_tricks.html</loc>
-    <lastmod>2026-11-10T23:55:47.116Z</lastmod>
+    <lastmod>2026-11-11T22:32:07.342Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/notes/applied_ml/agentic_search.html</loc>
-    <lastmod>2026-11-10T23:55:47.116Z</lastmod>
+    <lastmod>2026-11-11T22:32:07.342Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/notes/applied_ml/cursor_continual_training.html</loc>
-    <lastmod>2026-11-10T23:55:47.117Z</lastmod>
+    <lastmod>2026-11-11T22:32:07.342Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/notes/foundations/activations.html</loc>
-    <lastmod>2026-11-10T23:55:47.117Z</lastmod>
+    <lastmod>2026-11-11T22:32:07.342Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/notes/foundations/catenary-cosh-tanh.html</loc>
-    <lastmod>2026-11-10T23:55:47.117Z</lastmod>
+    <lastmod>2026-11-11T22:32:07.343Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/notes/foundations/generative_losses.html</loc>
-    <lastmod>2026-11-10T23:55:47.117Z</lastmod>
+    <lastmod>2026-11-11T22:32:07.343Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/notes/foundations/optimizers.html</loc>
-    <lastmod>2026-11-10T23:55:47.117Z</lastmod>
+    <lastmod>2026-11-11T22:32:07.343Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/notes/foundations/representation_learning.html</loc>
-    <lastmod>2026-11-10T23:55:47.118Z</lastmod>
+    <lastmod>2026-11-11T22:32:07.343Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/notes/index.html</loc>
-    <lastmod>2026-11-10T23:55:47.118Z</lastmod>
+    <lastmod>2026-11-11T22:32:07.344Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/notes/transformers/attention.html</loc>
-    <lastmod>2026-11-10T23:55:47.118Z</lastmod>
+    <lastmod>2026-11-11T22:32:07.344Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/notes/transformers/transformer.html</loc>
-    <lastmod>2026-11-10T23:55:47.119Z</lastmod>
+    <lastmod>2026-11-11T22:32:07.344Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/report/index.html</loc>
-    <lastmod>2026-11-10T23:55:47.120Z</lastmod>
+    <lastmod>2026-11-11T22:32:07.345Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/skills/cases.html</loc>
-    <lastmod>2026-11-10T23:55:47.127Z</lastmod>
+    <lastmod>2026-11-11T22:32:07.354Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/skills/domain.html</loc>
-    <lastmod>2026-11-10T23:55:47.128Z</lastmod>
+    <lastmod>2026-11-11T22:32:07.354Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/skills/index.html</loc>
-    <lastmod>2026-11-10T23:55:47.128Z</lastmod>
+    <lastmod>2026-11-11T22:32:07.355Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/skills/llm.html</loc>
-    <lastmod>2026-11-10T23:55:47.128Z</lastmod>
+    <lastmod>2026-11-11T22:32:07.355Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/skills/mlfund.html</loc>
-    <lastmod>2026-11-10T23:55:47.128Z</lastmod>
+    <lastmod>2026-11-11T22:32:07.355Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/skills/recsys.html</loc>
-    <lastmod>2026-11-10T23:55:47.129Z</lastmod>
+    <lastmod>2026-11-11T22:32:07.356Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/skills/rl.html</loc>
-    <lastmod>2026-11-10T23:55:47.129Z</lastmod>
+    <lastmod>2026-11-11T22:32:07.356Z</lastmod>
   </url>
   <url>
     <loc>https://threeeyelidds.github.io/minimal-ml/skills/serving.html</loc>
-    <lastmod>2026-11-10T23:55:47.129Z</lastmod>
+    <lastmod>2026-11-11T22:32:07.356Z</lastmod>
   </url>
 </urlset>

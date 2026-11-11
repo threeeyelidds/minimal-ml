@@ -385,7 +385,7 @@ window.Quarto = {
 <header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="Breadcrumbs"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../skills/swe.html">The loop</a></li><li class="breadcrumb-item"><a href="../skills/dl.html">Deep learning</a></li></ol></nav>
 <div class="quarto-title">
 <h1 class="title">Deep learning</h1>
-<p class="subtitle lead">Named in 52% of 2253 senior postings · 43 review cards</p>
+<p class="subtitle lead">Named in 52% of 2253 senior postings · 48 review cards</p>
 </div>
 
 
@@ -436,7 +436,7 @@ window.Quarto = {
 <td style="text-align: right;">36%</td>
 <td style="text-align: right;">10%</td>
 <td style="text-align: right;">27%</td>
-<td style="text-align: right;">9</td>
+<td style="text-align: right;">12</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"><a href="#tensorflow">TensorFlow / Keras</a></td>
@@ -468,7 +468,7 @@ window.Quarto = {
 <td style="text-align: right;">14%</td>
 <td style="text-align: right;">4%</td>
 <td style="text-align: right;">12%</td>
-<td style="text-align: right;">8</td>
+<td style="text-align: right;">9</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"><a href="#training-dynamics">Training large models (optimization, stability, debugging)</a></td>
@@ -508,7 +508,7 @@ window.Quarto = {
 <td style="text-align: right;">4%</td>
 <td style="text-align: right;">1%</td>
 <td style="text-align: right;">2%</td>
-<td style="text-align: right;">2</td>
+<td style="text-align: right;">3</td>
 </tr>
 </tbody>
 </table>
@@ -968,6 +968,174 @@ L=-\sum_iy_iz_i+\log\sum_je^{z_j}
 <li>Why is a convolution translation equivariant rather than invariant?</li>
 </ul>
 </details>
+<details class="qa" id="dl-044">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at OpenAI, Meta</span> Implement a 1-nearest-neighbour classifier in NumPy with no Python loop over points. Then show that it is the forward pass of a small network. Follow-up: switch to Manhattan distance. What changes?
+</summary>
+<p><strong>Vectorised Euclidean version.</strong> Expand the square so the pairwise term is one matrix product: <span class="math inline">\(\lVert x - c\rVert^2 = \lVert x\rVert^2 - 2\,x^\top c + \lVert c\rVert^2\)</span>.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> nn_l2(Xq, Xt, yt):</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Xq: (N, D) queries, Xt: (M, D) training points, yt: (M,) labels."""</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    d2 <span class="op">=</span> (Xq <span class="op">**</span> <span class="dv">2</span>).<span class="bu">sum</span>(<span class="dv">1</span>)[:, <span class="va">None</span>] <span class="op">-</span> <span class="dv">2</span> <span class="op">*</span> Xq <span class="op">@</span> Xt.T <span class="op">+</span> (Xt <span class="op">**</span> <span class="dv">2</span>).<span class="bu">sum</span>(<span class="dv">1</span>)[<span class="va">None</span>, :]   <span class="co"># (N, M)</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> yt[d2.argmin(<span class="dv">1</span>)]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Memory is <span class="math inline">\(O(NM)\)</span>, not <span class="math inline">\(O(NMD)\)</span>, and the work is one BLAS call. No square root is needed, since it does not change the argmin.</p>
+<p><strong>As a forward pass.</strong> <span class="math inline">\(\lVert x\rVert^2\)</span> is the same for every training point, so <span class="math inline">\(\arg\min_j \lVert x - c_j\rVert^2 = \arg\max_j \left(c_j^\top x - \tfrac12\lVert c_j\rVert^2\right)\)</span>. That is a linear layer with one unit per training point, weights <span class="math inline">\(W = X_t\)</span> and bias <span class="math inline">\(b_j = -\tfrac12\lVert c_j\rVert^2\)</span>, followed by an argmax and a label lookup:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> nn_as_layer(Xq, Xt, yt):</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    W, b <span class="op">=</span> Xt, <span class="op">-</span><span class="fl">0.5</span> <span class="op">*</span> (Xt <span class="op">**</span> <span class="dv">2</span>).<span class="bu">sum</span>(<span class="dv">1</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    scores <span class="op">=</span> Xq <span class="op">@</span> W.T <span class="op">+</span> b                    <span class="co"># (N, M)</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> yt[scores.argmax(<span class="dv">1</span>)]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>To output class scores, add a max over the units of each class. The reading: 1-NN is a network that memorises, with width equal to the dataset size and nothing learned. With unit-norm vectors the bias is constant and this is maximum inner-product search, which is what embedding retrieval does.</p>
+<p><strong>Manhattan distance.</strong> There is no expansion into a matrix product, so the direct broadcast builds an <span class="math inline">\((N, M, D)\)</span> array. Chunk the queries to bound it:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> nn_l1(Xq, Xt, yt, chunk<span class="op">=</span><span class="dv">256</span>):</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> np.empty(<span class="bu">len</span>(Xq), dtype<span class="op">=</span>yt.dtype)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">0</span>, <span class="bu">len</span>(Xq), chunk):</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>        d <span class="op">=</span> np.<span class="bu">abs</span>(Xq[i:i <span class="op">+</span> chunk, <span class="va">None</span>, :] <span class="op">-</span> Xt[<span class="va">None</span>, :, :]).<span class="bu">sum</span>(<span class="op">-</span><span class="dv">1</span>)</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>        out[i:i <span class="op">+</span> chunk] <span class="op">=</span> yt[d.argmin(<span class="dv">1</span>)]</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> out</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Unchunked, 10,000 queries against 60,000 training images of 784 float32 pixels would need 1.9 TB. As a network, <span class="math inline">\(|a| = \mathrm{relu}(a) + \mathrm{relu}(-a)\)</span>, so the L1 version needs a ReLU layer with <span class="math inline">\(2MD\)</span> units before the sum: no longer a single linear layer.</p>
+<p><strong>Pitfalls.</strong></p>
+<ul>
+<li>Cancellation: the expanded form subtracts large, nearly equal numbers. In float32 with large-magnitude features, the distance from a point to itself can come out as 8 instead of 0, and small negatives appear. Centre the data, use float64, or clip at zero before any square root.</li>
+<li>Ties: <code>argmin</code> returns the first index; say so.</li>
+<li>Shapes: <code>[:, None]</code> and <code>[None, :]</code> on the norms. Getting one wrong still broadcasts when <span class="math inline">\(N = M\)</span>, and silently gives wrong answers.</li>
+<li>Test against a two-loop version on small random data.</li>
+</ul>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Extend this to k neighbours with a majority vote, without sorting every row fully.</li>
+<li>At 100 million training points this is too slow. What replaces the exact search, and what do you give up?</li>
+<li>Why does nearest-neighbour search degrade in high dimensions, and why does it still work on learned embeddings?</li>
+</ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>OpenAI, Machine Learning Engineer, Sep 2026: Vectorised 1-nearest-neighbour in NumPy and its equivalence to a linear layer (<a href="https://prachub.com/interview-questions/vectorized-1-nearest-neighbor-in-numpy-and-its-equivalence-to-a-linear-layer">PracHub</a>)</li>
+<li>OpenAI, Machine Learning Engineer, Sep 2026: 1-nearest-neighbour classifier with a Manhattan-distance follow-up (<a href="https://prachub.com/interview-questions/implement-a-1-nearest-neighbor-classifier-with-a-manhattan-distance-follow-up">PracHub</a>)</li>
+<li>OpenAI, Machine Learning Engineer, Aug 2026: Vectorise 1-nearest-neighbour and express it as a network forward pass (<a href="https://prachub.com/interview-questions/vectorize-one-nearest-neighbor-and-express-it-as-a-neural-forward-pass">PracHub</a>)</li>
+<li>OpenAI, Machine Learning Engineer, Apr 2026: Compute entropy and implement 1-nearest-neighbour (<a href="https://prachub.com/interview-questions/compute-entropy-and-implement-1-nn">PracHub</a>)</li>
+<li>OpenAI, Machine Learning Engineer, May 2026: 1-nearest-neighbour classifier in NumPy (<a href="https://prachub.com/interview-questions/implement-1nn-with-numpy">PracHub</a>)</li>
+<li>OpenAI, Research Engineer, Aug 2026: First-person report of two screens: a five-part grid simulation of infection spread; vectorised 1-nearest-neighbour, then as a network forward pass, then with L1 distance (<a href="https://prachub.com/interview-experiences/openai-research-engineer-interview-experience-two-back-to-back-screens-no-break-rejected">PracHub</a>)</li>
+<li>Meta, Machine Learning Engineer, May 2026: 1-nearest-neighbour on embeddings and a forward pass (<a href="https://prachub.com/interview-questions/implement-1nn-embeddings-and-forward-pass">PracHub</a>)</li>
+</ul>
+</div>
+</details>
+<details class="qa" id="dl-045">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at OpenAI, Nvidia</span> Write a two-layer MLP classifier in NumPy, forward and backward, and give the shape of every tensor and gradient. Then state the broadcasting rule and show two ways it produces a silent bug.
+</summary>
+<p>Annotate shapes as you write. With batch <span class="math inline">\(B\)</span>, input <span class="math inline">\(D\)</span>, hidden <span class="math inline">\(H\)</span>, classes <span class="math inline">\(C\)</span>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> forward(X, y, W1, b1, W2, b2):</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""X: (B, D), y: (B,), W1: (D, H), b1: (H,), W2: (H, C), b2: (C,)."""</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    z1 <span class="op">=</span> X <span class="op">@</span> W1 <span class="op">+</span> b1                 <span class="co"># (B, H); b1 broadcasts over the batch</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    h <span class="op">=</span> np.maximum(z1, <span class="dv">0</span>)            <span class="co"># (B, H)</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    z2 <span class="op">=</span> h <span class="op">@</span> W2 <span class="op">+</span> b2                 <span class="co"># (B, C)</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    z2 <span class="op">=</span> z2 <span class="op">-</span> z2.<span class="bu">max</span>(<span class="dv">1</span>, keepdims<span class="op">=</span><span class="va">True</span>)                       <span class="co"># (B, 1) keeps the axis</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    logp <span class="op">=</span> z2 <span class="op">-</span> np.log(np.exp(z2).<span class="bu">sum</span>(<span class="dv">1</span>, keepdims<span class="op">=</span><span class="va">True</span>))     <span class="co"># (B, C)</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    loss <span class="op">=</span> <span class="op">-</span>logp[np.arange(<span class="bu">len</span>(y)), y].mean()                <span class="co"># scalar</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> loss, (X, z1, h, logp)</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> backward(y, W2, cache):</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>    X, z1, h, logp <span class="op">=</span> cache</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>    B <span class="op">=</span> <span class="bu">len</span>(y)</span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>    dz2 <span class="op">=</span> np.exp(logp)<span class="op">;</span> dz2[np.arange(B), y] <span class="op">-=</span> <span class="dv">1</span><span class="op">;</span> dz2 <span class="op">/=</span> B  <span class="co"># (B, C)</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>    dW2 <span class="op">=</span> h.T <span class="op">@</span> dz2                  <span class="co"># (H, C)</span></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>    db2 <span class="op">=</span> dz2.<span class="bu">sum</span>(<span class="dv">0</span>)                 <span class="co"># (C,)</span></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>    dh <span class="op">=</span> dz2 <span class="op">@</span> W2.T                  <span class="co"># (B, H)</span></span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>    dz1 <span class="op">=</span> dh <span class="op">*</span> (z1 <span class="op">&gt;</span> <span class="dv">0</span>)              <span class="co"># (B, H)</span></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>    dW1 <span class="op">=</span> X.T <span class="op">@</span> dz1                  <span class="co"># (D, H)</span></span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>    db1 <span class="op">=</span> dz1.<span class="bu">sum</span>(<span class="dv">0</span>)                 <span class="co"># (H,)</span></span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> dW1, db1, dW2, db2</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Three rules produce every line of the backward pass:</p>
+<ul>
+<li>A gradient has the shape of the thing it is the gradient of. That alone tells you <code>dW2</code> must be <code>h.T @ dz2</code> and not the other order.</li>
+<li>Softmax with cross-entropy gives <span class="math inline">\(\partial L/\partial z = (p - \text{onehot}(y))/B\)</span>.</li>
+<li><strong>Broadcasting forward is summing backward.</strong> <code>b2</code> was copied across the batch, so its gradient sums over the batch axis.</li>
+</ul>
+<p>Parameter count is <span class="math inline">\(DH + H + HC + C\)</span>. Note that <code>torch.nn.Linear(D, H)</code> stores its weight as <span class="math inline">\((H, D)\)</span> and computes <span class="math inline">\(xW^\top + b\)</span>, and it applies to the last axis, so an input of <span class="math inline">\((B, T, D)\)</span> gives <span class="math inline">\((B, T, H)\)</span>.</p>
+<p><strong>Broadcasting rule.</strong> Align shapes from the right. Two dimensions are compatible if they are equal or one of them is 1; a missing leading dimension counts as 1. So <span class="math inline">\((8, 1, 6)\)</span> with <span class="math inline">\((7, 1)\)</span> gives <span class="math inline">\((8, 7, 6)\)</span>, and <span class="math inline">\((2, 3)\)</span> with <span class="math inline">\((2,)\)</span> is an error, because 3 and 2 are compared.</p>
+<p><strong>Silent bugs.</strong></p>
+<ul>
+<li>Predictions of shape <span class="math inline">\((B, 1)\)</span> against targets of shape <span class="math inline">\((B,)\)</span>: the subtraction broadcasts to <span class="math inline">\((B, B)\)</span>, the loss is a mean over all pairs, and training runs and converges to predicting the mean. <code>mse_loss</code> only warns. Fix with <code>squeeze(-1)</code>.</li>
+<li>Normalising rows with <code>x / x.sum(1)</code>: the sum has shape <span class="math inline">\((B,)\)</span>, which aligns with the last axis. For a square input this runs and divides by the wrong sums. Use <code>keepdim=True</code>.</li>
+<li>A mask of shape <span class="math inline">\((B, T)\)</span> applied to scores of shape <span class="math inline">\((B, H, T, T)\)</span> needs explicit <code>[:, None, None, :]</code>. Without it the mask aligns with the last two axes: an error in general, and a silent wrong result when <span class="math inline">\(B = T\)</span>.</li>
+</ul>
+<p>Defences: assert shapes at function boundaries, test with every dimension a different size (never <span class="math inline">\(B = T\)</span>), and check analytic gradients against autograd or finite differences.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Derive the softmax cross-entropy gradient and show where the 1/B comes from.</li>
+<li>Add a third layer and dropout. Which cached values does the backward pass now need?</li>
+<li>Your gradient check passes for W2 and fails for W1. Where do you look?</li>
+</ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>OpenAI, Data Scientist, Feb 2026: Neural-network layers in NumPy, with matrix multiplication and broadcasting (<a href="https://prachub.com/interview-questions/implement-numpy-neural-network-layers">PracHub</a>)</li>
+<li>Nvidia, Software Engineer, Jan 2026: MLP tensor shapes and PyTorch broadcasting (<a href="https://prachub.com/interview-questions/derive-mlp-shapes-and-explain-pytorch-broadcasting">PracHub</a>)</li>
+</ul>
+</div>
+</details>
+<details class="qa" id="dl-046">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at OpenAI</span> Without autograd: given y = cumprod(x) and the upstream gradient dL/dy, write the backward pass in O(n), correct when x contains zeros. Then do the same for a product of weight matrices, and write a numerically stable cross-entropy with its gradient.
+</summary>
+<p><strong>Scalar prefix products.</strong> <span class="math inline">\(y_i = \prod_{j \le i} x_j\)</span>, so <span class="math inline">\(x_k\)</span> affects every <span class="math inline">\(y_i\)</span> with <span class="math inline">\(i \ge k\)</span>:</p>
+<p><span class="math display">\[\frac{\partial L}{\partial x_k} = \sum_{i \ge k} g_i \prod_{j \le i,\, j \ne k} x_j .\]</span></p>
+<p>The tempting form <span class="math inline">\(\sum_{i \ge k} g_i\, y_i / x_k\)</span> divides by zero. For <span class="math inline">\(x = (2, 0, 3)\)</span> and <span class="math inline">\(g = (1, 1, 1)\)</span> it returns NaN for <span class="math inline">\(x_1\)</span>, where the true gradient is <span class="math inline">\(x_0 + x_0 x_2 = 8\)</span>. Factor the product instead, into the part before <span class="math inline">\(k\)</span> and the part after:</p>
+<p><span class="math display">\[\frac{\partial L}{\partial x_k} = \Big(\prod_{j&lt;k} x_j\Big)\, s_k, \qquad s_k = g_k + x_{k+1}\, s_{k+1}.\]</span></p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> cumprod_backward(x, g):</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    n <span class="op">=</span> <span class="bu">len</span>(x)</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    excl <span class="op">=</span> np.ones(n)                    <span class="co"># excl[k] = x[0] * ... * x[k-1]</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> k <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1</span>, n):</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>        excl[k] <span class="op">=</span> excl[k <span class="op">-</span> <span class="dv">1</span>] <span class="op">*</span> x[k <span class="op">-</span> <span class="dv">1</span>]</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    grad, s <span class="op">=</span> np.empty(n), <span class="fl">0.0</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> k <span class="kw">in</span> <span class="bu">range</span>(n <span class="op">-</span> <span class="dv">1</span>, <span class="op">-</span><span class="dv">1</span>, <span class="op">-</span><span class="dv">1</span>):       <span class="co"># s = sum_{i&gt;=k} g[i] * x[k+1] * ... * x[i]</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>        s <span class="op">=</span> g[k] <span class="op">+</span> (x[k <span class="op">+</span> <span class="dv">1</span>] <span class="op">*</span> s <span class="cf">if</span> k <span class="op">+</span> <span class="dv">1</span> <span class="op">&lt;</span> n <span class="cf">else</span> <span class="fl">0.0</span>)</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>        grad[k] <span class="op">=</span> excl[k] <span class="op">*</span> s</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> grad</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>No division, two passes, and zeros need no special case.</p>
+<p><strong>Matrix products.</strong> With <span class="math inline">\(Y_k = W_k Y_{k-1}\)</span> and <span class="math inline">\(Y_0 = I\)</span>, carry <span class="math inline">\(B = \partial L/\partial Y_k\)</span> backwards. The order of the factors is fixed by the shapes:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> matprod_backward(Ws, G):</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""G[k] = dL/dY_k from a loss on that prefix (zeros if none)."""</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    Ys <span class="op">=</span> [np.eye(Ws[<span class="dv">0</span>].shape[<span class="dv">1</span>])]</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> W <span class="kw">in</span> Ws:</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>        Ys.append(W <span class="op">@</span> Ys[<span class="op">-</span><span class="dv">1</span>])</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    grads, B <span class="op">=</span> [<span class="va">None</span>] <span class="op">*</span> <span class="bu">len</span>(Ws), np.zeros_like(Ys[<span class="op">-</span><span class="dv">1</span>])</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> k <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(Ws) <span class="op">-</span> <span class="dv">1</span>, <span class="op">-</span><span class="dv">1</span>, <span class="op">-</span><span class="dv">1</span>):</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>        B <span class="op">=</span> B <span class="op">+</span> G[k]</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>        grads[k] <span class="op">=</span> B <span class="op">@</span> Ys[k].T           <span class="co"># dL/dW_k = B Y_{k-1}^T</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>        B <span class="op">=</span> Ws[k].T <span class="op">@</span> B                  <span class="co"># pass to the previous prefix</span></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> grads</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>For a loss on the last product only, this is <span class="math inline">\(\partial L/\partial W_k = (W_n \cdots W_{k+1})^\top G\, (W_{k-1} \cdots W_1)^\top\)</span>. That expression is also why deep linear chains have vanishing or exploding gradients: each weight’s gradient is multiplied by all the others.</p>
+<p><strong>Stable cross-entropy.</strong> Never compute <code>log(softmax(z))</code> in two steps. Subtract the row maximum, then use log-sum-exp:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> cross_entropy(z, y):</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    z <span class="op">=</span> z <span class="op">-</span> z.<span class="bu">max</span>(<span class="dv">1</span>, keepdims<span class="op">=</span><span class="va">True</span>)                      <span class="co"># exp cannot overflow</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    logp <span class="op">=</span> z <span class="op">-</span> np.log(np.exp(z).<span class="bu">sum</span>(<span class="dv">1</span>, keepdims<span class="op">=</span><span class="va">True</span>))</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    B <span class="op">=</span> <span class="bu">len</span>(y)</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    grad <span class="op">=</span> np.exp(logp)<span class="op">;</span> grad[np.arange(B), y] <span class="op">-=</span> <span class="dv">1</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="op">-</span>logp[np.arange(B), y].mean(), grad <span class="op">/</span> B</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>For logits <span class="math inline">\((1000, 0)\)</span> and target class 1 this returns 1000; the two-step version overflows. The gradient is <span class="math inline">\((\text{softmax}(z) - \text{onehot}(y))/B\)</span>.</p>
+<p><strong>Check your work</strong> against autograd or central finite differences, on inputs with zeros, with non-square matrices so a transposed factor fails loudly, and in float64.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Do the scalar version in log space. What breaks, and how do you handle signs and zeros?</li>
+<li>What does the matrix-product gradient tell you about initialising a deep linear network?</li>
+<li>Your finite-difference check disagrees in the fifth decimal. Bug or precision, and how do you tell?</li>
+</ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>OpenAI, Machine Learning Engineer, Sep 2026: Hand-written gradients for a prefix product and a stable cross-entropy (<a href="https://prachub.com/interview-questions/hand-written-gradients-prefix-product-backward-pass-and-stable-cross-entropy">PracHub</a>)</li>
+<li>OpenAI, Machine Learning Engineer, Apr 2026: Matrix prefix products and their gradients (<a href="https://prachub.com/interview-questions/compute-matrix-prefix-products-and-gradients">PracHub</a>)</li>
+<li>OpenAI, Machine Learning Engineer, Feb 2026: Backpropagation through a product of weight matrices (<a href="https://prachub.com/interview-questions/derive-backpropagation-for-matrix-product-layers">PracHub</a>)</li>
+<li>OpenAI, Machine Learning Engineer, Aug 2025: Prefix products and their backward pass, including zeros (<a href="https://prachub.com/interview-questions/implement-prefix-products-and-their-backward-pass">PracHub</a>)</li>
+</ul>
+</div>
+</details>
 </section>
 <section id="tensorflow" class="level3">
 <h3 class="anchored" data-anchor-id="tensorflow">TensorFlow / Keras <span class="demand">16% of postings</span></h3>
@@ -1019,16 +1187,16 @@ L=-\sum_iy_iz_i+\log\sum_je^{z_j}
 <summary>
 <span class="tag tag-senior">senior</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span> Implement the symmetric InfoNCE loss with in-batch negatives in PyTorch. What value does it take at chance, and what are the pitfalls?
 </summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch.nn.functional <span class="im">as</span> F</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> info_nce(a, b, temperature<span class="op">=</span><span class="fl">0.07</span>):</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""a[i] and b[i] are a positive pair; every other row in the batch is a negative. a, b: (N, d)."""</span></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    a <span class="op">=</span> F.normalize(a, dim<span class="op">=-</span><span class="dv">1</span>)</span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    b <span class="op">=</span> F.normalize(b, dim<span class="op">=-</span><span class="dv">1</span>)</span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    logits <span class="op">=</span> a <span class="op">@</span> b.T <span class="op">/</span> temperature                            <span class="co"># (N, N) cosine similarities / tau</span></span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    labels <span class="op">=</span> torch.arange(a.size(<span class="dv">0</span>), device<span class="op">=</span>a.device)         <span class="co"># positives on the diagonal</span></span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fl">0.5</span> <span class="op">*</span> (F.cross_entropy(logits, labels) <span class="op">+</span> F.cross_entropy(logits.T, labels))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch.nn.functional <span class="im">as</span> F</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> info_nce(a, b, temperature<span class="op">=</span><span class="fl">0.07</span>):</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""a[i] and b[i] are a positive pair; every other row in the batch is a negative. a, b: (N, d)."""</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    a <span class="op">=</span> F.normalize(a, dim<span class="op">=-</span><span class="dv">1</span>)</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    b <span class="op">=</span> F.normalize(b, dim<span class="op">=-</span><span class="dv">1</span>)</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>    logits <span class="op">=</span> a <span class="op">@</span> b.T <span class="op">/</span> temperature                            <span class="co"># (N, N) cosine similarities / tau</span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>    labels <span class="op">=</span> torch.arange(a.size(<span class="dv">0</span>), device<span class="op">=</span>a.device)         <span class="co"># positives on the diagonal</span></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fl">0.5</span> <span class="op">*</span> (F.cross_entropy(logits, labels) <span class="op">+</span> F.cross_entropy(logits.T, labels))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>It is an <span class="math inline">\(N\)</span>-way classification: for each anchor, pick its positive among the <span class="math inline">\(N\)</span> candidates in the batch. With uninformative embeddings the loss is about <span class="math inline">\(\ln N\)</span>. It also gives the bound <span class="math inline">\(I(a;b)\ge\ln N-L\)</span>, which is why the number of negatives caps what the loss can express.</p>
 <p>What an interviewer checks:</p>
 <ul>
@@ -1131,38 +1299,38 @@ L=-\sum_iy_iz_i+\log\sum_je^{z_j}
 <summary>
 <span class="tag tag-senior">senior</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> Write a jit-compiled training step in JAX for a small MLP with dropout, with explicit parameters and PRNG handling. Where would a PyTorch habit break it?
 </summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> jax</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> jax.numpy <span class="im">as</span> jnp</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> init(key, sizes):                                    <span class="co"># params are a pytree: a list of dicts</span></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    keys <span class="op">=</span> jax.random.split(key, <span class="bu">len</span>(sizes) <span class="op">-</span> <span class="dv">1</span>)</span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> [{<span class="st">"w"</span>: jax.random.normal(k, (m, n)) <span class="op">*</span> jnp.sqrt(<span class="fl">2.0</span> <span class="op">/</span> m), <span class="st">"b"</span>: jnp.zeros(n)}</span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> k, m, n <span class="kw">in</span> <span class="bu">zip</span>(keys, sizes[:<span class="op">-</span><span class="dv">1</span>], sizes[<span class="dv">1</span>:])]</span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> forward(params, x, key, p_drop<span class="op">=</span><span class="fl">0.1</span>):</span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> layer <span class="kw">in</span> params[:<span class="op">-</span><span class="dv">1</span>]:</span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>        x <span class="op">=</span> jax.nn.relu(x <span class="op">@</span> layer[<span class="st">"w"</span>] <span class="op">+</span> layer[<span class="st">"b"</span>])</span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>        key, sub <span class="op">=</span> jax.random.split(key)                 <span class="co"># a new key for every random draw</span></span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>        keep <span class="op">=</span> jax.random.bernoulli(sub, <span class="dv">1</span> <span class="op">-</span> p_drop, x.shape)</span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>        x <span class="op">=</span> jnp.where(keep, x <span class="op">/</span> (<span class="dv">1</span> <span class="op">-</span> p_drop), <span class="fl">0.0</span>)       <span class="co"># dropout</span></span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> x <span class="op">@</span> params[<span class="op">-</span><span class="dv">1</span>][<span class="st">"w"</span>] <span class="op">+</span> params[<span class="op">-</span><span class="dv">1</span>][<span class="st">"b"</span>]</span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> loss_fn(params, x, y, key):</span>
-<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>    logp <span class="op">=</span> jax.nn.log_softmax(forward(params, x, key))</span>
-<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="op">-</span>jnp.mean(jnp.take_along_axis(logp, y[:, <span class="va">None</span>], axis<span class="op">=</span><span class="dv">1</span>))</span>
-<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a><span class="at">@jax.jit</span>                                                 <span class="co"># traced once per input shape and dtype</span></span>
-<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> step(params, x, y, key, lr<span class="op">=</span><span class="fl">0.1</span>):</span>
-<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>    loss, grads <span class="op">=</span> jax.value_and_grad(loss_fn)(params, x, y, key)     <span class="co"># grads mirrors the params pytree</span></span>
-<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>    params <span class="op">=</span> jax.tree_util.tree_map(<span class="kw">lambda</span> p, g: p <span class="op">-</span> lr <span class="op">*</span> g, params, grads)</span>
-<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> params, loss                                  <span class="co"># new params returned, nothing mutated</span></span>
-<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>key <span class="op">=</span> jax.random.PRNGKey(<span class="dv">0</span>)</span>
-<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>key, k_init <span class="op">=</span> jax.random.split(key)</span>
-<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>params <span class="op">=</span> init(k_init, [<span class="dv">20</span>, <span class="dv">64</span>, <span class="dv">3</span>])</span>
-<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> x, y <span class="kw">in</span> batches:                                     <span class="co"># batches of fixed shape</span></span>
-<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>    key, k_step <span class="op">=</span> jax.random.split(key)                  <span class="co"># fresh key every step</span></span>
-<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>    params, loss <span class="op">=</span> step(params, x, y, k_step)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> jax</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> jax.numpy <span class="im">as</span> jnp</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> init(key, sizes):                                    <span class="co"># params are a pytree: a list of dicts</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>    keys <span class="op">=</span> jax.random.split(key, <span class="bu">len</span>(sizes) <span class="op">-</span> <span class="dv">1</span>)</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> [{<span class="st">"w"</span>: jax.random.normal(k, (m, n)) <span class="op">*</span> jnp.sqrt(<span class="fl">2.0</span> <span class="op">/</span> m), <span class="st">"b"</span>: jnp.zeros(n)}</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> k, m, n <span class="kw">in</span> <span class="bu">zip</span>(keys, sizes[:<span class="op">-</span><span class="dv">1</span>], sizes[<span class="dv">1</span>:])]</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> forward(params, x, key, p_drop<span class="op">=</span><span class="fl">0.1</span>):</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> layer <span class="kw">in</span> params[:<span class="op">-</span><span class="dv">1</span>]:</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>        x <span class="op">=</span> jax.nn.relu(x <span class="op">@</span> layer[<span class="st">"w"</span>] <span class="op">+</span> layer[<span class="st">"b"</span>])</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>        key, sub <span class="op">=</span> jax.random.split(key)                 <span class="co"># a new key for every random draw</span></span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>        keep <span class="op">=</span> jax.random.bernoulli(sub, <span class="dv">1</span> <span class="op">-</span> p_drop, x.shape)</span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>        x <span class="op">=</span> jnp.where(keep, x <span class="op">/</span> (<span class="dv">1</span> <span class="op">-</span> p_drop), <span class="fl">0.0</span>)       <span class="co"># dropout</span></span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> x <span class="op">@</span> params[<span class="op">-</span><span class="dv">1</span>][<span class="st">"w"</span>] <span class="op">+</span> params[<span class="op">-</span><span class="dv">1</span>][<span class="st">"b"</span>]</span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> loss_fn(params, x, y, key):</span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>    logp <span class="op">=</span> jax.nn.log_softmax(forward(params, x, key))</span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="op">-</span>jnp.mean(jnp.take_along_axis(logp, y[:, <span class="va">None</span>], axis<span class="op">=</span><span class="dv">1</span>))</span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a><span class="at">@jax.jit</span>                                                 <span class="co"># traced once per input shape and dtype</span></span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> step(params, x, y, key, lr<span class="op">=</span><span class="fl">0.1</span>):</span>
+<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a>    loss, grads <span class="op">=</span> jax.value_and_grad(loss_fn)(params, x, y, key)     <span class="co"># grads mirrors the params pytree</span></span>
+<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a>    params <span class="op">=</span> jax.tree_util.tree_map(<span class="kw">lambda</span> p, g: p <span class="op">-</span> lr <span class="op">*</span> g, params, grads)</span>
+<span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> params, loss                                  <span class="co"># new params returned, nothing mutated</span></span>
+<span id="cb11-26"><a href="#cb11-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-27"><a href="#cb11-27" aria-hidden="true" tabindex="-1"></a>key <span class="op">=</span> jax.random.PRNGKey(<span class="dv">0</span>)</span>
+<span id="cb11-28"><a href="#cb11-28" aria-hidden="true" tabindex="-1"></a>key, k_init <span class="op">=</span> jax.random.split(key)</span>
+<span id="cb11-29"><a href="#cb11-29" aria-hidden="true" tabindex="-1"></a>params <span class="op">=</span> init(k_init, [<span class="dv">20</span>, <span class="dv">64</span>, <span class="dv">3</span>])</span>
+<span id="cb11-30"><a href="#cb11-30" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> x, y <span class="kw">in</span> batches:                                     <span class="co"># batches of fixed shape</span></span>
+<span id="cb11-31"><a href="#cb11-31" aria-hidden="true" tabindex="-1"></a>    key, k_step <span class="op">=</span> jax.random.split(key)                  <span class="co"># fresh key every step</span></span>
+<span id="cb11-32"><a href="#cb11-32" aria-hidden="true" tabindex="-1"></a>    params, loss <span class="op">=</span> step(params, x, y, k_step)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Where PyTorch habits break it:</p>
 <ul>
 <li><strong>Mutation.</strong> <code>params["w"] -= lr * g</code> or <code>x[i] = v</code> fails or has no effect. Return new values; use <code>x.at[i].set(v)</code>.</li>
@@ -1221,32 +1389,32 @@ q^\top k=\sum_{i=1}^{d_k}q_ik_i,\qquad
 <summary>
 <span class="tag tag-core">core</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Anthropic, Meta, Nvidia +3</span> Implement scaled dot-product attention and multi-head self-attention with a causal mask in PyTorch. How do you test that it is correct?
 </summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> math</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch.nn <span class="im">as</span> nn</span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch.nn.functional <span class="im">as</span> F</span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> sdpa(q, k, v, mask<span class="op">=</span><span class="va">None</span>):</span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    <span class="co"># q, k, v: (..., T, d_k); mask broadcastable to (..., T_q, T_k), True = may attend</span></span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    att <span class="op">=</span> q <span class="op">@</span> k.transpose(<span class="op">-</span><span class="dv">2</span>, <span class="op">-</span><span class="dv">1</span>) <span class="op">/</span> math.sqrt(q.size(<span class="op">-</span><span class="dv">1</span>))</span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> mask <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>        att <span class="op">=</span> att.masked_fill(<span class="op">~</span>mask, <span class="bu">float</span>(<span class="st">"-inf"</span>))</span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> F.softmax(att, dim<span class="op">=-</span><span class="dv">1</span>) <span class="op">@</span> v</span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> MHA(nn.Module):</span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, d_model, n_heads):</span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>        <span class="bu">super</span>().<span class="fu">__init__</span>()</span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>        <span class="cf">assert</span> d_model <span class="op">%</span> n_heads <span class="op">==</span> <span class="dv">0</span></span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.h, <span class="va">self</span>.dh <span class="op">=</span> n_heads, d_model <span class="op">//</span> n_heads</span>
-<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.qkv <span class="op">=</span> nn.Linear(d_model, <span class="dv">3</span> <span class="op">*</span> d_model, bias<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.out <span class="op">=</span> nn.Linear(d_model, d_model, bias<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> forward(<span class="va">self</span>, x, causal<span class="op">=</span><span class="va">True</span>):                        <span class="co"># x: (B, T, D)</span></span>
-<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>        B, T, D <span class="op">=</span> x.shape</span>
-<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>        q, k, v <span class="op">=</span> <span class="va">self</span>.qkv(x).view(B, T, <span class="dv">3</span>, <span class="va">self</span>.h, <span class="va">self</span>.dh).permute(<span class="dv">2</span>, <span class="dv">0</span>, <span class="dv">3</span>, <span class="dv">1</span>, <span class="dv">4</span>)  <span class="co"># each (B, h, T, dh)</span></span>
-<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>        mask <span class="op">=</span> torch.ones(T, T, dtype<span class="op">=</span>torch.<span class="bu">bool</span>, device<span class="op">=</span>x.device).tril() <span class="cf">if</span> causal <span class="cf">else</span> <span class="va">None</span></span>
-<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>        y <span class="op">=</span> sdpa(q, k, v, mask)                               <span class="co"># (B, h, T, dh)</span></span>
-<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">self</span>.out(y.transpose(<span class="dv">1</span>, <span class="dv">2</span>).reshape(B, T, D))   <span class="co"># merge heads -&gt; (B, T, D)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> math</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch.nn <span class="im">as</span> nn</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch.nn.functional <span class="im">as</span> F</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> sdpa(q, k, v, mask<span class="op">=</span><span class="va">None</span>):</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>    <span class="co"># q, k, v: (..., T, d_k); mask broadcastable to (..., T_q, T_k), True = may attend</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>    att <span class="op">=</span> q <span class="op">@</span> k.transpose(<span class="op">-</span><span class="dv">2</span>, <span class="op">-</span><span class="dv">1</span>) <span class="op">/</span> math.sqrt(q.size(<span class="op">-</span><span class="dv">1</span>))</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> mask <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>        att <span class="op">=</span> att.masked_fill(<span class="op">~</span>mask, <span class="bu">float</span>(<span class="st">"-inf"</span>))</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> F.softmax(att, dim<span class="op">=-</span><span class="dv">1</span>) <span class="op">@</span> v</span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> MHA(nn.Module):</span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, d_model, n_heads):</span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>        <span class="bu">super</span>().<span class="fu">__init__</span>()</span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>        <span class="cf">assert</span> d_model <span class="op">%</span> n_heads <span class="op">==</span> <span class="dv">0</span></span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.h, <span class="va">self</span>.dh <span class="op">=</span> n_heads, d_model <span class="op">//</span> n_heads</span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.qkv <span class="op">=</span> nn.Linear(d_model, <span class="dv">3</span> <span class="op">*</span> d_model, bias<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.out <span class="op">=</span> nn.Linear(d_model, d_model, bias<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> forward(<span class="va">self</span>, x, causal<span class="op">=</span><span class="va">True</span>):                        <span class="co"># x: (B, T, D)</span></span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a>        B, T, D <span class="op">=</span> x.shape</span>
+<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>        q, k, v <span class="op">=</span> <span class="va">self</span>.qkv(x).view(B, T, <span class="dv">3</span>, <span class="va">self</span>.h, <span class="va">self</span>.dh).permute(<span class="dv">2</span>, <span class="dv">0</span>, <span class="dv">3</span>, <span class="dv">1</span>, <span class="dv">4</span>)  <span class="co"># each (B, h, T, dh)</span></span>
+<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a>        mask <span class="op">=</span> torch.ones(T, T, dtype<span class="op">=</span>torch.<span class="bu">bool</span>, device<span class="op">=</span>x.device).tril() <span class="cf">if</span> causal <span class="cf">else</span> <span class="va">None</span></span>
+<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a>        y <span class="op">=</span> sdpa(q, k, v, mask)                               <span class="co"># (B, h, T, dh)</span></span>
+<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">self</span>.out(y.transpose(<span class="dv">1</span>, <span class="dv">2</span>).reshape(B, T, D))   <span class="co"># merge heads -&gt; (B, T, D)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><strong>Tests.</strong> (1) Causality: perturb the last token and assert that the outputs at earlier positions are unchanged. (2) Compare with <code>F.scaled_dot_product_attention(q, k, v, is_causal=True)</code>, or with <code>nn.MultiheadAttention</code> after copying the weights.</p>
 <p>What an interviewer checks:</p>
 <ul>
@@ -1281,45 +1449,45 @@ q^\top k=\sum_{i=1}^{d_k}q_ik_i,\qquad
 <summary>
 <span class="tag tag-senior">senior</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> Implement a pre-norm decoder block in PyTorch and show how blocks are assembled into a minimal language model. What must not be forgotten around the block?
 </summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch.nn <span class="im">as</span> nn</span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> Block(nn.Module):</span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, d_model, n_heads, mlp_ratio<span class="op">=</span><span class="dv">4</span>, p_drop<span class="op">=</span><span class="fl">0.0</span>):</span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>        <span class="bu">super</span>().<span class="fu">__init__</span>()</span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.norm1 <span class="op">=</span> nn.LayerNorm(d_model)</span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.attn <span class="op">=</span> nn.MultiheadAttention(d_model, n_heads, dropout<span class="op">=</span>p_drop, batch_first<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.norm2 <span class="op">=</span> nn.LayerNorm(d_model)</span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.mlp <span class="op">=</span> nn.Sequential(</span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>            nn.Linear(d_model, mlp_ratio <span class="op">*</span> d_model), nn.GELU(),</span>
-<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>            nn.Linear(mlp_ratio <span class="op">*</span> d_model, d_model), nn.Dropout(p_drop),</span>
-<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>        )</span>
-<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> forward(<span class="va">self</span>, x):                                         <span class="co"># (B, T, D) -&gt; (B, T, D)</span></span>
-<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>        T <span class="op">=</span> x.size(<span class="dv">1</span>)</span>
-<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>        blocked <span class="op">=</span> torch.ones(T, T, dtype<span class="op">=</span>torch.<span class="bu">bool</span>, device<span class="op">=</span>x.device).triu(<span class="dv">1</span>)   <span class="co"># True = may NOT attend</span></span>
-<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>        h <span class="op">=</span> <span class="va">self</span>.norm1(x)</span>
-<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>        x <span class="op">=</span> x <span class="op">+</span> <span class="va">self</span>.attn(h, h, h, attn_mask<span class="op">=</span>blocked, need_weights<span class="op">=</span><span class="va">False</span>)[<span class="dv">0</span>]    <span class="co"># skip path stays un-normalised</span></span>
-<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>        x <span class="op">=</span> x <span class="op">+</span> <span class="va">self</span>.mlp(<span class="va">self</span>.norm2(x))</span>
-<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> x</span>
-<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> TinyGPT(nn.Module):</span>
-<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, vocab, d_model, n_heads, n_layers, max_len):</span>
-<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>        <span class="bu">super</span>().<span class="fu">__init__</span>()</span>
-<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.tok <span class="op">=</span> nn.Embedding(vocab, d_model)</span>
-<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.pos <span class="op">=</span> nn.Embedding(max_len, d_model)</span>
-<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.blocks <span class="op">=</span> nn.ModuleList(Block(d_model, n_heads) <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(n_layers))</span>
-<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.norm_f <span class="op">=</span> nn.LayerNorm(d_model)                       <span class="co"># pre-norm needs a final norm</span></span>
-<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.head <span class="op">=</span> nn.Linear(d_model, vocab, bias<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.head.weight <span class="op">=</span> <span class="va">self</span>.tok.weight                        <span class="co"># weight tying</span></span>
-<span id="cb6-32"><a href="#cb6-32" aria-hidden="true" tabindex="-1"></a>        nn.init.normal_(<span class="va">self</span>.tok.weight, std<span class="op">=</span><span class="fl">0.02</span>)</span>
-<span id="cb6-33"><a href="#cb6-33" aria-hidden="true" tabindex="-1"></a>        nn.init.normal_(<span class="va">self</span>.pos.weight, std<span class="op">=</span><span class="fl">0.02</span>)</span>
-<span id="cb6-34"><a href="#cb6-34" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-35"><a href="#cb6-35" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> forward(<span class="va">self</span>, idx):                                       <span class="co"># (B, T) -&gt; logits (B, T, V)</span></span>
-<span id="cb6-36"><a href="#cb6-36" aria-hidden="true" tabindex="-1"></a>        x <span class="op">=</span> <span class="va">self</span>.tok(idx) <span class="op">+</span> <span class="va">self</span>.pos(torch.arange(idx.size(<span class="dv">1</span>), device<span class="op">=</span>idx.device))</span>
-<span id="cb6-37"><a href="#cb6-37" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> blk <span class="kw">in</span> <span class="va">self</span>.blocks:</span>
-<span id="cb6-38"><a href="#cb6-38" aria-hidden="true" tabindex="-1"></a>            x <span class="op">=</span> blk(x)</span>
-<span id="cb6-39"><a href="#cb6-39" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">self</span>.head(<span class="va">self</span>.norm_f(x))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch.nn <span class="im">as</span> nn</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> Block(nn.Module):</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, d_model, n_heads, mlp_ratio<span class="op">=</span><span class="dv">4</span>, p_drop<span class="op">=</span><span class="fl">0.0</span>):</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>        <span class="bu">super</span>().<span class="fu">__init__</span>()</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.norm1 <span class="op">=</span> nn.LayerNorm(d_model)</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.attn <span class="op">=</span> nn.MultiheadAttention(d_model, n_heads, dropout<span class="op">=</span>p_drop, batch_first<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.norm2 <span class="op">=</span> nn.LayerNorm(d_model)</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.mlp <span class="op">=</span> nn.Sequential(</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>            nn.Linear(d_model, mlp_ratio <span class="op">*</span> d_model), nn.GELU(),</span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>            nn.Linear(mlp_ratio <span class="op">*</span> d_model, d_model), nn.Dropout(p_drop),</span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> forward(<span class="va">self</span>, x):                                         <span class="co"># (B, T, D) -&gt; (B, T, D)</span></span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>        T <span class="op">=</span> x.size(<span class="dv">1</span>)</span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>        blocked <span class="op">=</span> torch.ones(T, T, dtype<span class="op">=</span>torch.<span class="bu">bool</span>, device<span class="op">=</span>x.device).triu(<span class="dv">1</span>)   <span class="co"># True = may NOT attend</span></span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>        h <span class="op">=</span> <span class="va">self</span>.norm1(x)</span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>        x <span class="op">=</span> x <span class="op">+</span> <span class="va">self</span>.attn(h, h, h, attn_mask<span class="op">=</span>blocked, need_weights<span class="op">=</span><span class="va">False</span>)[<span class="dv">0</span>]    <span class="co"># skip path stays un-normalised</span></span>
+<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>        x <span class="op">=</span> x <span class="op">+</span> <span class="va">self</span>.mlp(<span class="va">self</span>.norm2(x))</span>
+<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> x</span>
+<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> TinyGPT(nn.Module):</span>
+<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, vocab, d_model, n_heads, n_layers, max_len):</span>
+<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a>        <span class="bu">super</span>().<span class="fu">__init__</span>()</span>
+<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.tok <span class="op">=</span> nn.Embedding(vocab, d_model)</span>
+<span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.pos <span class="op">=</span> nn.Embedding(max_len, d_model)</span>
+<span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.blocks <span class="op">=</span> nn.ModuleList(Block(d_model, n_heads) <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(n_layers))</span>
+<span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.norm_f <span class="op">=</span> nn.LayerNorm(d_model)                       <span class="co"># pre-norm needs a final norm</span></span>
+<span id="cb13-30"><a href="#cb13-30" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.head <span class="op">=</span> nn.Linear(d_model, vocab, bias<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb13-31"><a href="#cb13-31" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.head.weight <span class="op">=</span> <span class="va">self</span>.tok.weight                        <span class="co"># weight tying</span></span>
+<span id="cb13-32"><a href="#cb13-32" aria-hidden="true" tabindex="-1"></a>        nn.init.normal_(<span class="va">self</span>.tok.weight, std<span class="op">=</span><span class="fl">0.02</span>)</span>
+<span id="cb13-33"><a href="#cb13-33" aria-hidden="true" tabindex="-1"></a>        nn.init.normal_(<span class="va">self</span>.pos.weight, std<span class="op">=</span><span class="fl">0.02</span>)</span>
+<span id="cb13-34"><a href="#cb13-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-35"><a href="#cb13-35" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> forward(<span class="va">self</span>, idx):                                       <span class="co"># (B, T) -&gt; logits (B, T, V)</span></span>
+<span id="cb13-36"><a href="#cb13-36" aria-hidden="true" tabindex="-1"></a>        x <span class="op">=</span> <span class="va">self</span>.tok(idx) <span class="op">+</span> <span class="va">self</span>.pos(torch.arange(idx.size(<span class="dv">1</span>), device<span class="op">=</span>idx.device))</span>
+<span id="cb13-37"><a href="#cb13-37" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> blk <span class="kw">in</span> <span class="va">self</span>.blocks:</span>
+<span id="cb13-38"><a href="#cb13-38" aria-hidden="true" tabindex="-1"></a>            x <span class="op">=</span> blk(x)</span>
+<span id="cb13-39"><a href="#cb13-39" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">self</span>.head(<span class="va">self</span>.norm_f(x))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>What an interviewer checks:</p>
 <ul>
 <li><strong>Pre-norm wiring.</strong> The normalisation is applied to the branch input; the skip path adds the raw <code>x</code>. Writing <code>norm(x + f(x))</code> is post-norm.</li>
@@ -1471,6 +1639,74 @@ N\approx12Ld^2+Vd
 </ul>
 </div>
 </details>
+<details class="qa" id="dl-048">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">debugging</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> <span class="tag tag-track">AI</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at OpenAI</span> You are given a small decoder-only transformer in PyTorch that runs without errors and trains badly, with several planted bugs. How do you find them? Then add a KV cache to its generation loop and show that it is correct.
+</summary>
+<p><strong>Find bugs with tests that localise, not by reading top to bottom.</strong></p>
+<ol type="1">
+<li><strong>Initial loss.</strong> With random weights it should be near <span class="math inline">\(\ln V\)</span>. Far below means leakage; far above means bad initialisation or a wrong loss input.</li>
+<li><strong>Causality.</strong> Change the token at position <span class="math inline">\(t\)</span>; logits before <span class="math inline">\(t\)</span> must not change. This catches a missing or reversed mask in one assertion.</li>
+<li><strong>Overfit one batch.</strong> Loss should go to about zero in a few hundred steps. If it cannot, the bug is in the model or optimiser, not the data.</li>
+<li><strong>Loss near zero on real data</strong> within a few steps means the model sees its target: inputs and targets not shifted by one, or the mask.</li>
+<li><strong>Reference comparison.</strong> Copy weights into <code>F.scaled_dot_product_attention</code> or a known-good block and compare outputs.</li>
+<li><strong>Train and eval modes.</strong> Two eval-mode forward passes must be identical.</li>
+</ol>
+<p><strong>The usual planted bugs.</strong> Mask built with <code>triu</code> where <code>tril</code> is meant, applied after the softmax, or filled with 0 and not <span class="math inline">\(-\infty\)</span>; softmax over the wrong axis; the <span class="math inline">\(1/\sqrt{d_k}\)</span> scale missing; heads merged with <code>view</code> without the <code>transpose</code> back, which mixes positions and heads; no positional embedding; a residual connection dropped; targets not shifted; loss averaged over padding; probabilities passed to <code>cross_entropy</code>; <code>zero_grad</code> missing; <code>model.eval()</code> missing during generation.</p>
+<p><strong>KV cache.</strong> In causal attention, the keys and values of past positions do not depend on later tokens. So generation can feed only the new token, compute its query, key and value, and append the key and value to a per-layer cache.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> forward(<span class="va">self</span>, x, cache<span class="op">=</span><span class="va">None</span>):                      <span class="co"># x: (B, T, D), T = new tokens only</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>    B, T, D <span class="op">=</span> x.shape</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    q, k, v <span class="op">=</span> <span class="va">self</span>.qkv(x).view(B, T, <span class="dv">3</span>, <span class="va">self</span>.h, D <span class="op">//</span> <span class="va">self</span>.h).permute(<span class="dv">2</span>, <span class="dv">0</span>, <span class="dv">3</span>, <span class="dv">1</span>, <span class="dv">4</span>)   <span class="co"># (B, h, T, d_h)</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> cache <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="st">"k"</span> <span class="kw">in</span> cache:</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>            k, v <span class="op">=</span> torch.cat([cache[<span class="st">"k"</span>], k], <span class="dv">2</span>), torch.cat([cache[<span class="st">"v"</span>], v], <span class="dv">2</span>)</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>        cache[<span class="st">"k"</span>], cache[<span class="st">"v"</span>] <span class="op">=</span> k, v</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>    S <span class="op">=</span> k.shape[<span class="dv">2</span>]                                     <span class="co"># past + new</span></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>    att <span class="op">=</span> q <span class="op">@</span> k.transpose(<span class="op">-</span><span class="dv">1</span>, <span class="op">-</span><span class="dv">2</span>) <span class="op">/</span> math.sqrt(k.shape[<span class="op">-</span><span class="dv">1</span>])                            <span class="co"># (B, h, T, S)</span></span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>    causal <span class="op">=</span> torch.ones(S, S, dtype<span class="op">=</span>torch.<span class="bu">bool</span>, device<span class="op">=</span>x.device).tril()[S <span class="op">-</span> T:]</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>    att <span class="op">=</span> att.masked_fill(<span class="op">~</span>causal, <span class="bu">float</span>(<span class="st">"-inf"</span>)).softmax(<span class="op">-</span><span class="dv">1</span>)</span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="va">self</span>.proj((att <span class="op">@</span> v).transpose(<span class="dv">1</span>, <span class="dv">2</span>).reshape(B, T, D))</span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a><span class="at">@torch.no_grad</span>()</span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> generate(model, idx, n):</span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>    caches <span class="op">=</span> [{} <span class="cf">for</span> _ <span class="kw">in</span> model.blocks]</span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>    logits <span class="op">=</span> model(idx, caches)                        <span class="co"># prompt once</span></span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(n):</span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>        nxt <span class="op">=</span> logits[:, <span class="op">-</span><span class="dv">1</span>].argmax(<span class="op">-</span><span class="dv">1</span>, keepdim<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>        idx <span class="op">=</span> torch.cat([idx, nxt], <span class="dv">1</span>)</span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>        logits <span class="op">=</span> model(nxt, caches, offset<span class="op">=</span>idx.shape[<span class="dv">1</span>] <span class="op">-</span> <span class="dv">1</span>)</span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> idx</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Where cache bugs hide.</strong></p>
+<ul>
+<li><strong>Position.</strong> The new token must get position <code>offset</code>, not 0. This is the most common mistake.</li>
+<li><strong>Mask rows.</strong> With <span class="math inline">\(T\)</span> new tokens and <span class="math inline">\(S\)</span> total, the mask is the last <span class="math inline">\(T\)</span> rows of the <span class="math inline">\(S \times S\)</span> triangle.</li>
+<li><strong>One cache per layer</strong>, and per sequence in the batch; beam search must reorder it with the beams.</li>
+<li><strong>Context limit.</strong> With learned absolute positions, sliding the window invalidates the cache.</li>
+</ul>
+<p><strong>Prove it.</strong> Logits from one full forward pass must equal the concatenation of cached incremental passes, to floating-point tolerance, and cached greedy generation must return the same tokens as the uncached loop.</p>
+<p><strong>Cost.</strong> Without a cache each step recomputes the whole prefix, so attention work over <span class="math inline">\(n\)</span> generated tokens grows like <span class="math inline">\(n^3\)</span>; with it, like <span class="math inline">\(n^2\)</span>. The price is memory: <span class="math inline">\(2 L T d\)</span> values per sequence, about 4.3 GB at <span class="math inline">\(L = 32\)</span>, <span class="math inline">\(d = 4096\)</span>, <span class="math inline">\(T = 8192\)</span> in 16-bit floats.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>The cached and uncached outputs agree for the first 20 tokens and then diverge slightly. Bug or floating point?</li>
+<li>What changes in the cache for relative or rotary position encodings?</li>
+<li>How would you share the cache of a common prompt prefix across many requests?</li>
+</ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>OpenAI, Machine Learning Engineer, Sep 2026: Debug a small PyTorch transformer with planted bugs, then add a KV cache (<a href="https://prachub.com/interview-questions/debug-a-small-pytorch-transformer-with-four-bugs-then-add-a-kv-cache">PracHub</a>)</li>
+<li>OpenAI, Machine Learning Engineer, Sep 2026: Debug a transformer implementation and add a KV cache for decoding (<a href="https://prachub.com/interview-questions/debug-a-transformer-implementation-and-implement-a-kv-cache-for-decoding">PracHub</a>)</li>
+<li>OpenAI, Machine Learning Engineer, Apr 2026: Debug a small GPT and backpropagate through a matrix multiply (<a href="https://prachub.com/interview-questions/debug-minigpt-and-backpropagate-matmul">PracHub</a>)</li>
+<li>OpenAI, Data Scientist, Oct 2025: Debug and fix a PyTorch transformer training loop (<a href="https://prachub.com/interview-questions/debug-and-fix-a-pytorch-transformer-training-loop">PracHub</a>)</li>
+<li>OpenAI, Machine Learning Engineer, Mar 2026: Debug a broken transformer (<a href="https://prachub.com/interview-questions/debug-a-broken-transformer">PracHub</a>)</li>
+<li>OpenAI, Machine Learning Engineer, Aug 2025: Debug a transformer text classifier, then train and evaluate it (<a href="https://prachub.com/interview-questions/debug-transformer-and-train-classifier">PracHub</a>)</li>
+<li>OpenAI, Machine Learning Engineer, Jul 2025: Debug an encoder-decoder transformer training pipeline (<a href="https://prachub.com/interview-questions/debug-a-transformer-training-pipeline">PracHub</a>)</li>
+<li>OpenAI, Machine Learning Engineer, Feb 2026: Debug a transformer and add a KV cache for generation (<a href="https://prachub.com/interview-questions/debug-transformer-and-add-kv-cache">PracHub</a>)</li>
+<li>OpenAI, Machine Learning Engineer, Aug 2025: Diagnose transformer training and inference bugs (<a href="https://prachub.com/interview-questions/diagnose-transformer-training-and-inference-bugs">PracHub</a>)</li>
+<li>OpenAI, Machine Learning Engineer, Jan 2026: Debug a transformer that runs but behaves wrongly (<a href="https://prachub.com/interview-questions/debug-a-broken-transformer-implementation">PracHub</a>)</li>
+</ul>
+</div>
+</details>
 </section>
 <section id="training-dynamics" class="level3">
 <h3 class="anchored" data-anchor-id="training-dynamics">Training large models (optimization, stability, debugging) <span class="demand">9% of postings</span></h3>
@@ -1538,17 +1774,17 @@ m_t=\beta_1m_{t-1}+(1-\beta_1)g_t,\qquad v_t=\beta_2v_{t-1}+(1-\beta_2)g_t^2,
 <summary>
 <span class="tag tag-senior">senior</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> Implement a single AdamW update for one parameter tensor in PyTorch, without using torch.optim. How would you verify it?
 </summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="at">@torch.no_grad</span>()</span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> adamw_step(p, g, m, v, t, lr<span class="op">=</span><span class="fl">1e-3</span>, b1<span class="op">=</span><span class="fl">0.9</span>, b2<span class="op">=</span><span class="fl">0.999</span>, eps<span class="op">=</span><span class="fl">1e-8</span>, wd<span class="op">=</span><span class="fl">0.01</span>):</span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""One in-place AdamW step for one tensor. m, v start at zero; t starts at 1."""</span></span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    m.mul_(b1).add_(g, alpha<span class="op">=</span><span class="dv">1</span> <span class="op">-</span> b1)                 <span class="co"># EMA of gradients</span></span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    v.mul_(b2).addcmul_(g, g, value<span class="op">=</span><span class="dv">1</span> <span class="op">-</span> b2)          <span class="co"># EMA of squared gradients</span></span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    m_hat <span class="op">=</span> m <span class="op">/</span> (<span class="dv">1</span> <span class="op">-</span> b1 <span class="op">**</span> t)                        <span class="co"># bias correction: EMAs start at 0</span></span>
-<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    v_hat <span class="op">=</span> v <span class="op">/</span> (<span class="dv">1</span> <span class="op">-</span> b2 <span class="op">**</span> t)</span>
-<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>    p.mul_(<span class="dv">1</span> <span class="op">-</span> lr <span class="op">*</span> wd)                              <span class="co"># decoupled decay, not routed through v</span></span>
-<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>    p.addcdiv_(m_hat, v_hat.sqrt() <span class="op">+</span> eps, value<span class="op">=-</span>lr)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="at">@torch.no_grad</span>()</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> adamw_step(p, g, m, v, t, lr<span class="op">=</span><span class="fl">1e-3</span>, b1<span class="op">=</span><span class="fl">0.9</span>, b2<span class="op">=</span><span class="fl">0.999</span>, eps<span class="op">=</span><span class="fl">1e-8</span>, wd<span class="op">=</span><span class="fl">0.01</span>):</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""One in-place AdamW step for one tensor. m, v start at zero; t starts at 1."""</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>    m.mul_(b1).add_(g, alpha<span class="op">=</span><span class="dv">1</span> <span class="op">-</span> b1)                 <span class="co"># EMA of gradients</span></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>    v.mul_(b2).addcmul_(g, g, value<span class="op">=</span><span class="dv">1</span> <span class="op">-</span> b2)          <span class="co"># EMA of squared gradients</span></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>    m_hat <span class="op">=</span> m <span class="op">/</span> (<span class="dv">1</span> <span class="op">-</span> b1 <span class="op">**</span> t)                        <span class="co"># bias correction: EMAs start at 0</span></span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>    v_hat <span class="op">=</span> v <span class="op">/</span> (<span class="dv">1</span> <span class="op">-</span> b2 <span class="op">**</span> t)</span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>    p.mul_(<span class="dv">1</span> <span class="op">-</span> lr <span class="op">*</span> wd)                              <span class="co"># decoupled decay, not routed through v</span></span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>    p.addcdiv_(m_hat, v_hat.sqrt() <span class="op">+</span> eps, value<span class="op">=-</span>lr)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><strong>Verification.</strong> Run it next to <code>torch.optim.AdamW</code> on the same parameter and gradients for a few dozen steps and compare with <code>torch.allclose</code>. They agree to floating-point tolerance.</p>
 <p>What an interviewer checks:</p>
 <ul>
@@ -1693,24 +1929,24 @@ m_t=\beta_1m_{t-1}+(1-\beta_1)g_t,\qquad v_t=\beta_2v_{t-1}+(1-\beta_2)g_t^2,
 <summary>
 <span class="tag tag-senior">senior</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Anthropic</span> Implement next-token sampling with temperature, top-k and nucleus (top-p) filtering in PyTorch. Explain what each control does and the order in which they are applied.
 </summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="at">@torch.no_grad</span>()</span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> sample_next(logits, temperature<span class="op">=</span><span class="fl">1.0</span>, top_k<span class="op">=</span><span class="va">None</span>, top_p<span class="op">=</span><span class="va">None</span>):</span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""logits: (B, V) at the last position. Returns (B,) token ids."""</span></span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> temperature <span class="op">==</span> <span class="dv">0</span>:</span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> logits.argmax(<span class="op">-</span><span class="dv">1</span>)</span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>    logits <span class="op">=</span> logits <span class="op">/</span> temperature</span>
-<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> top_k <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
-<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>        kth <span class="op">=</span> logits.topk(<span class="bu">min</span>(top_k, logits.size(<span class="op">-</span><span class="dv">1</span>)), dim<span class="op">=-</span><span class="dv">1</span>).values[:, <span class="op">-</span><span class="dv">1</span>:]</span>
-<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>        logits <span class="op">=</span> logits.masked_fill(logits <span class="op">&lt;</span> kth, <span class="bu">float</span>(<span class="st">"-inf"</span>))</span>
-<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> top_p <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
-<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>        sorted_logits, sorted_idx <span class="op">=</span> logits.sort(dim<span class="op">=-</span><span class="dv">1</span>, descending<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>        probs <span class="op">=</span> sorted_logits.softmax(<span class="op">-</span><span class="dv">1</span>)</span>
-<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>        mass_before <span class="op">=</span> probs.cumsum(<span class="op">-</span><span class="dv">1</span>) <span class="op">-</span> probs                <span class="co"># mass of strictly higher-ranked tokens</span></span>
-<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>        sorted_logits <span class="op">=</span> sorted_logits.masked_fill(mass_before <span class="op">&gt;=</span> top_p, <span class="bu">float</span>(<span class="st">"-inf"</span>))</span>
-<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>        logits <span class="op">=</span> torch.full_like(logits, <span class="bu">float</span>(<span class="st">"-inf"</span>)).scatter(<span class="op">-</span><span class="dv">1</span>, sorted_idx, sorted_logits)</span>
-<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> torch.multinomial(logits.softmax(<span class="op">-</span><span class="dv">1</span>), num_samples<span class="op">=</span><span class="dv">1</span>).squeeze(<span class="op">-</span><span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="at">@torch.no_grad</span>()</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> sample_next(logits, temperature<span class="op">=</span><span class="fl">1.0</span>, top_k<span class="op">=</span><span class="va">None</span>, top_p<span class="op">=</span><span class="va">None</span>):</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""logits: (B, V) at the last position. Returns (B,) token ids."""</span></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> temperature <span class="op">==</span> <span class="dv">0</span>:</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> logits.argmax(<span class="op">-</span><span class="dv">1</span>)</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>    logits <span class="op">=</span> logits <span class="op">/</span> temperature</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> top_k <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>        kth <span class="op">=</span> logits.topk(<span class="bu">min</span>(top_k, logits.size(<span class="op">-</span><span class="dv">1</span>)), dim<span class="op">=-</span><span class="dv">1</span>).values[:, <span class="op">-</span><span class="dv">1</span>:]</span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>        logits <span class="op">=</span> logits.masked_fill(logits <span class="op">&lt;</span> kth, <span class="bu">float</span>(<span class="st">"-inf"</span>))</span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> top_p <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>        sorted_logits, sorted_idx <span class="op">=</span> logits.sort(dim<span class="op">=-</span><span class="dv">1</span>, descending<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>        probs <span class="op">=</span> sorted_logits.softmax(<span class="op">-</span><span class="dv">1</span>)</span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>        mass_before <span class="op">=</span> probs.cumsum(<span class="op">-</span><span class="dv">1</span>) <span class="op">-</span> probs                <span class="co"># mass of strictly higher-ranked tokens</span></span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a>        sorted_logits <span class="op">=</span> sorted_logits.masked_fill(mass_before <span class="op">&gt;=</span> top_p, <span class="bu">float</span>(<span class="st">"-inf"</span>))</span>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a>        logits <span class="op">=</span> torch.full_like(logits, <span class="bu">float</span>(<span class="st">"-inf"</span>)).scatter(<span class="op">-</span><span class="dv">1</span>, sorted_idx, sorted_logits)</span>
+<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> torch.multinomial(logits.softmax(<span class="op">-</span><span class="dv">1</span>), num_samples<span class="op">=</span><span class="dv">1</span>).squeeze(<span class="op">-</span><span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <ul>
 <li><strong>Temperature</strong> divides the logits. <span class="math inline">\(T&lt;1\)</span> sharpens, <span class="math inline">\(T&gt;1\)</span> flattens, and <span class="math inline">\(T\to0\)</span> is greedy decoding.</li>
 <li><strong>Top-k</strong> keeps the <span class="math inline">\(k\)</span> highest-scoring tokens. A fixed <span class="math inline">\(k\)</span> is too many when the distribution is peaked and too few when it is flat.</li>
@@ -2030,6 +2266,48 @@ c_t=f_t\odot c_{t-1}+i_t\odot g_t,\qquad h_t=o_t\odot\tanh(c_t)
 <li>Why does a constant path length matter for learning long-range dependencies?</li>
 <li>Give a task that attention solves trivially and a fixed-size state cannot.</li>
 </ul>
+</details>
+<details class="qa" id="dl-047">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at OpenAI</span> Implement cross-entropy for a batch of padded sequences with label smoothing: logits of shape (B, T, V), integer targets, and a mask for real tokens. What are the ways to get it subtly wrong?
+</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch, torch.nn.functional <span class="im">as</span> F</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> masked_smoothed_ce(logits, targets, mask, eps<span class="op">=</span><span class="fl">0.1</span>):</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""logits: (B, T, V); targets: (B, T) int64; mask: (B, T) bool, True = real token.</span></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a><span class="co">    Returns the mean loss per real token."""</span></span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>    logp <span class="op">=</span> F.log_softmax(logits, dim<span class="op">=-</span><span class="dv">1</span>)                              <span class="co"># (B, T, V)</span></span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>    safe <span class="op">=</span> targets.masked_fill(<span class="op">~</span>mask, <span class="dv">0</span>)                              <span class="co"># padding ids may be out of range</span></span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>    nll <span class="op">=</span> <span class="op">-</span>logp.gather(<span class="op">-</span><span class="dv">1</span>, safe.unsqueeze(<span class="op">-</span><span class="dv">1</span>)).squeeze(<span class="op">-</span><span class="dv">1</span>)            <span class="co"># (B, T)</span></span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>    uniform <span class="op">=</span> <span class="op">-</span>logp.mean(dim<span class="op">=-</span><span class="dv">1</span>)                                      <span class="co"># (B, T)</span></span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>    loss <span class="op">=</span> (<span class="dv">1</span> <span class="op">-</span> eps) <span class="op">*</span> nll <span class="op">+</span> eps <span class="op">*</span> uniform</span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>    mask <span class="op">=</span> mask.to(loss.dtype)</span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> (loss <span class="op">*</span> mask).<span class="bu">sum</span>() <span class="op">/</span> mask.<span class="bu">sum</span>().clamp_min(<span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Why this is the smoothed loss.</strong> The target is <span class="math inline">\(q = (1 - \varepsilon)\,\text{onehot}(y) + \varepsilon/V\)</span>. Cross-entropy is linear in the target, so it splits into <span class="math inline">\((1-\varepsilon)\)</span> times the usual negative log-likelihood plus <span class="math inline">\(\varepsilon\)</span> times the cross-entropy to the uniform distribution, which is the mean of <span class="math inline">\(-\log p\)</span> over the vocabulary. This matches <code>F.cross_entropy(..., label_smoothing=eps, ignore_index=...)</code>. Some papers spread <span class="math inline">\(\varepsilon\)</span> over the <span class="math inline">\(V - 1\)</span> wrong classes only; say which convention you use.</p>
+<p><strong>Ways to get it wrong.</strong></p>
+<ul>
+<li><strong>The denominator.</strong> Averaging over all <span class="math inline">\(B \cdot T\)</span> positions scales the loss by the fraction of real tokens. With 61% real tokens the loss and gradient are 61% of the right value, and they change from batch to batch with the amount of padding, which acts like a noisy learning rate.</li>
+<li><strong>Indexing with padding ids.</strong> A padding id of -100 or one outside the vocabulary crashes <code>gather</code>, or on GPU fails with an unhelpful assertion. Replace it before indexing, then mask.</li>
+<li><strong>Multiplying by the mask without changing the normaliser</strong>, or masking the logits instead of the loss.</li>
+<li><strong>Softmax then log.</strong> Use <code>log_softmax</code>; the two-step version underflows.</li>
+<li><strong>An empty mask.</strong> A batch with no real tokens divides by zero; clamp the denominator.</li>
+<li><strong>Smoothing at evaluation.</strong> Report unsmoothed loss and perplexity on validation data. The smoothed loss has a floor above zero, the entropy of the smoothed target: 1.41 nats for <span class="math inline">\(\varepsilon = 0.1\)</span> and <span class="math inline">\(V = 50{,}000\)</span>.</li>
+<li><strong>Per-token against per-sequence averaging.</strong> Per-token weights long sequences more. Either is defensible; mixing them between training and evaluation is not.</li>
+</ul>
+<p><strong>What smoothing does.</strong> With hard targets the loss keeps pushing the correct logit up without bound. With smoothing the optimum is a finite gap, <span class="math inline">\(\log\frac{1 - \varepsilon + \varepsilon/V}{\varepsilon/V}\)</span> (13.0 for the numbers above), which limits over-confidence and usually improves calibration and accuracy slightly. The costs: probabilities are no longer honest likelihoods, perplexity gets worse, and a teacher trained with smoothing gives a less informative signal for distillation.</p>
+<p><strong>Tests.</strong> Compare with the built-in on random inputs in float64; check that the gradient at masked positions is exactly zero; check that adding padding to a batch does not change the loss.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>How would you add per-token weights, for example to down-weight a template that repeats in every example?</li>
+<li>Why does label smoothing hurt distillation from that model?</li>
+<li>The loss is computed in half precision and occasionally returns infinity. Where can that come from?</li>
+</ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>OpenAI, Machine Learning Engineer, Jun 2026: Masked cross-entropy with label smoothing (<a href="https://prachub.com/interview-questions/implement-masked-cross-entropy-with-label-smoothing">PracHub</a>)</li>
+</ul>
+</div>
 </details>
 </section>
 </section>

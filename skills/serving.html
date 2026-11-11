@@ -382,7 +382,7 @@ window.Quarto = {
 <header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="Breadcrumbs"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../skills/infra.html">Systems</a></li><li class="breadcrumb-item"><a href="../skills/serving.html">Inference, serving and model optimization</a></li></ol></nav>
 <div class="quarto-title">
 <h1 class="title">Inference, serving and model optimization</h1>
-<p class="subtitle lead">Named in 79% of 2253 senior postings · 31 review cards</p>
+<p class="subtitle lead">Named in 79% of 2253 senior postings · 33 review cards</p>
 </div>
 
 
@@ -441,7 +441,7 @@ window.Quarto = {
 <td style="text-align: right;">25%</td>
 <td style="text-align: right;">16%</td>
 <td style="text-align: right;">20%</td>
-<td style="text-align: right;">4</td>
+<td style="text-align: right;">6</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"><a href="#autoscaling">Capacity, autoscaling and GPU cost efficiency</a></td>
@@ -1050,6 +1050,89 @@ window.Quarto = {
 <p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
 <ul>
 <li>Anthropic, Software Engineer, Aug 2025: GPU-backed inference API for multiple models (<a href="https://prachub.com/interview-questions/design-a-gpu-inference-api">PracHub</a>)</li>
+</ul>
+</div>
+</details>
+<details class="qa" id="serving-032">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Anthropic</span> Design the system that distributes model weight files of several hundred gigabytes to a fleet of GPU workers and activates a new version. Workers must never serve from a partial or corrupted copy, and a rollback must be fast.
+</summary>
+<p><strong>Separate three things:</strong> the artifact, its distribution, and its activation. Most failures come from coupling them.</p>
+<p><strong>Artifact.</strong> Immutable and content-addressed. A version is a <strong>manifest</strong>: the version id, the list of chunks with size and SHA-256, the file format, and a signature. Chunks of 64 to 256 MB make downloads parallel and resumable. Publish chunks first and the manifest last, so a visible manifest never points at missing data.</p>
+<p><strong>Distribution.</strong></p>
+<ul>
+<li>Tiers: origin object store, a cache per region or cluster, then local NVMe on each node. Peer-to-peer fetching between nodes in a cluster spreads the fan-out.</li>
+<li>The arithmetic decides the design. 500 GB over a dedicated 10 Gbit/s link takes about 400 seconds. 1,000 nodes pulling at once is 500 TB; through a shared 100 Gbit/s path that is about 11 hours, and it competes with serving traffic. So stage in the background with a bandwidth limit, in waves, from the nearest cache.</li>
+<li>The node agent fetches and verifies the manifest signature, checks free disk, downloads chunks with range requests into a <strong>staging directory</strong>, verifies every hash, and retries a bad chunk from another source. Progress is recorded per chunk, so a crash resumes instead of restarting.</li>
+</ul>
+<p><strong>Activation.</strong></p>
+<ul>
+<li>When all chunks verify, fsync and <strong>rename</strong> the staging directory to <code>versions/&lt;id&gt;</code>. Rename is atomic on one filesystem, so a version directory either exists complete or does not exist. The server only ever opens paths under <code>versions/</code>.</li>
+<li>Which version serves is control-plane state, not “the newest directory on disk”. The agent reports “staged”; the controller flips a desired-version setting for a canary group, then in stages.</li>
+<li>Loading hundreds of gigabytes into GPU memory takes minutes, so a worker drains, loads, passes a health check with a known prompt and expected output, and only then rejoins. The router tracks the version each worker serves so a request is never split across versions.</li>
+<li>Rollback is the same flip in reverse. Keep the previous version on disk until the new one has soaked; garbage-collect by reference count after that.</li>
+</ul>
+<p><strong>Loading speed.</strong> Use a format that can be memory-mapped and read at disk speed without deserialising, shard files per GPU, and keep hot versions in the page cache on warm nodes.</p>
+<p><strong>Scale-up.</strong> New nodes with empty disks are the worst case: autoscaling during a traffic spike makes every new node pull at once. Keep a warm pool with the current version staged, or bake it into the node image, and admit new nodes to the cache in bounded numbers.</p>
+<p><strong>Security.</strong> Weights are among the most valuable assets the company has. Encrypt in transit and at rest, give nodes short-lived credentials scoped to the versions they should run, sign manifests, log every fetch, and alert on fetch volume that does not match a rollout.</p>
+<p><strong>Failure modes.</strong> Silent disk corruption after verification (re-verify on load or periodically), disk full mid-download (reserve before starting), version skew between router and worker, a manifest signed for the wrong build (the canary’s golden-output check catches it), and a rollback blocked because the old version was already deleted.</p>
+<p><strong>Metrics.</strong> Time to stage the fleet, time from node start to ready, verification failures, origin egress, and the share of nodes on the desired version.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Why should activation be a control-plane decision and not a property of what is on disk?</li>
+<li>A region’s cache is down during a rollout. What should the agents do?</li>
+<li>How would you cut the time from node start to first request for a model of this size?</li>
+</ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>Anthropic, Software Engineer, Apr 2026: Distribute large model weight files to a GPU worker fleet (<a href="https://prachub.com/interview-questions/design-model-weight-distribution">PracHub</a>)</li>
+<li>Anthropic, Machine Learning Engineer, Feb 2026: Model downloader with versioning and integrity checks (<a href="https://prachub.com/interview-questions/design-a-model-downloader">PracHub</a>)</li>
+<li>Anthropic, Software Engineer, May 2026: Distribute and activate model weights without exposing partial state (<a href="https://prachub.com/interview-questions/design-safe-distribution-and-activation-of-model-weights">PracHub</a>)</li>
+</ul>
+</div>
+</details>
+<details class="qa" id="serving-033">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Anthropic</span> You have a pool of eight GPUs and two kinds of inference work: a small model that runs on one GPU and serves many short requests, and a large model that needs all eight GPUs at once. Design the routing, batching and scheduling. How do you keep the large jobs from starving and the small ones fast?
+</summary>
+<p><strong>Name the conflict.</strong> Small jobs can always start on any free GPU; the large job needs all eight free at the same moment. A scheduler that starts whatever fits will keep some GPU busy forever and the large job never runs. Everything else is refinement.</p>
+<p><strong>Scheduling between the two classes.</strong></p>
+<ul>
+<li><strong>Reservation with draining.</strong> When a large job reaches the head of the queue (or has waited past a threshold), stop admitting small jobs to the pool and let running ones finish.</li>
+<li><strong>The drain is expensive.</strong> The wait is the <em>maximum</em> of the eight remaining run times, not the mean. For exponentially distributed remaining times with mean <span class="math inline">\(m\)</span>, that is <span class="math inline">\(m(1 + \tfrac12 + \dots + \tfrac18) \approx 2.7m\)</span>, and about <span class="math inline">\(13.7m\)</span> GPU-seconds sit idle while the others finish. So keep small jobs short and bounded, and run large jobs back to back to amortise each switch.</li>
+<li><strong>Backfill.</strong> During a drain, admit a small job only if its estimated run time ends before the drain does. This needs a run-time estimate: maximum output tokens gives an upper bound.</li>
+<li><strong>Fairness.</strong> Account in GPU-seconds, not in job counts: one large job for a minute costs 480 GPU-seconds. Weighted fair sharing between the classes with ageing guarantees that neither waits without bound.</li>
+<li><strong>Switching cost.</strong> If loading a model’s weights takes minutes, a switch costs more than the drain. Either keep both resident if memory allows, or schedule in windows (large jobs at fixed intervals, sized from their arrival rate and deadline).</li>
+<li>If the large model’s demand is steady, the honest answer may be a static split of the fleet, which this pool is too small for: say so and ask whether more hardware is an option.</li>
+</ul>
+<p><strong>Routing small requests across GPUs.</strong></p>
+<ul>
+<li>One replica and one queue per GPU. Route to the replica with the least outstanding <em>work</em> (queued tokens), not the fewest requests; with many routers, sample two replicas and pick the lighter one.</li>
+<li>Session affinity helps when a replica holds a cached prefix for that conversation, and conflicts with load balance; break affinity above a queue-length threshold.</li>
+</ul>
+<p><strong>Batching.</strong></p>
+<ul>
+<li>Dynamic batching: dispatch when the batch is full or the oldest request has waited <span class="math inline">\(d\)</span> milliseconds. If a batch of <span class="math inline">\(b\)</span> takes <span class="math inline">\(t_0 + t_1 b\)</span>, with <span class="math inline">\(t_0 = 20\)</span> ms and <span class="math inline">\(t_1 = 2\)</span> ms, throughput goes from 45 requests per second at <span class="math inline">\(b = 1\)</span> to about 308 at <span class="math inline">\(b = 16\)</span>, while the compute latency goes from 22 to 52 ms plus the wait.</li>
+<li>Group requests of similar length so padding does not waste the batch. For token-by-token generation use continuous batching: requests join and leave the running batch at step boundaries.</li>
+<li>Set <span class="math inline">\(d\)</span> from the latency budget, not from throughput: at low load a long wait buys nothing.</li>
+</ul>
+<p><strong>Overload and failure.</strong> Bounded queues, deadlines carried with each request, and rejection at admission when the estimated wait exceeds the deadline; a request that will miss its deadline should not consume a GPU. On a GPU failure the large model cannot run at all, so its queue needs a policy (fail fast, or run a degraded configuration), while small traffic re-routes to seven replicas.</p>
+<p><strong>Heterogeneous backends.</strong> With CPU and several GPU types, route on a per-backend cost model: estimated latency and cost for this request size on each backend, capability constraints (memory, supported model), and current queue. Send small, latency-tolerant requests to the cheap backend first.</p>
+<p><strong>Metrics.</strong> Queue wait and total latency at p50 and p99 by class, GPU-seconds idle during drains, utilisation, deadline misses and rejection rate.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Small-model traffic is bursty. How do you stop a burst from delaying a large job that has already waited ten minutes?</li>
+<li>Where does your run-time estimate come from, and what happens when it is wrong?</li>
+<li>Why is join-shortest-queue by request count a poor rule for generation workloads?</li>
+</ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>Anthropic, Software Engineer, Sep 2026: Route and batch inference across eight GPUs (<a href="https://prachub.com/interview-questions/route-and-batch-inference-with-eight-gpus">PracHub</a>)</li>
+<li>Anthropic, Machine Learning Engineer, Aug 2026: Schedule large-model and small-model inference on an eight-GPU pool (<a href="https://prachub.com/interview-questions/schedule-large-and-small-model-inference-on-an-eight-gpu-pool">PracHub</a>)</li>
+<li>Anthropic, Software Engineer, Aug 2026: Schedule one-GPU and eight-GPU jobs fairly (<a href="https://prachub.com/interview-questions/schedule-one-gpu-and-eight-gpu-model-jobs">PracHub</a>)</li>
+<li>Anthropic, Machine Learning Engineer, Sep 2025: Routing and scheduling layer for heterogeneous GPU and CPU backends (<a href="https://prachub.com/interview-questions/design-an-inference-routing-and-scheduling-layer">PracHub</a>)</li>
 </ul>
 </div>
 </details>

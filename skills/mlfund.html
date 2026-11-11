@@ -385,7 +385,7 @@ window.Quarto = {
 <header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="Breadcrumbs"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../skills/swe.html">The loop</a></li><li class="breadcrumb-item"><a href="../skills/mlfund.html">ML fundamentals and statistics</a></li></ol></nav>
 <div class="quarto-title">
 <h1 class="title">ML fundamentals and statistics</h1>
-<p class="subtitle lead">Named in 52% of 2253 senior postings · 40 review cards</p>
+<p class="subtitle lead">Named in 52% of 2253 senior postings · 42 review cards</p>
 </div>
 
 
@@ -444,7 +444,7 @@ window.Quarto = {
 <td style="text-align: right;">16%</td>
 <td style="text-align: right;">10%</td>
 <td style="text-align: right;">20%</td>
-<td style="text-align: right;">3</td>
+<td style="text-align: right;">4</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"><a href="#classical-ml">Classical models (GBDT, linear, trees)</a></td>
@@ -484,7 +484,7 @@ window.Quarto = {
 <td style="text-align: right;">6%</td>
 <td style="text-align: right;">4%</td>
 <td style="text-align: right;">6%</td>
-<td style="text-align: right;">3</td>
+<td style="text-align: right;">4</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"><a href="#timeseries">Time series and forecasting</a></td>
@@ -1155,6 +1155,61 @@ E=1+\tfrac12E_H+\tfrac12E,\qquad E_H=1+\tfrac12\cdot 0+\tfrac12E
 <li>What would make you reject a source that improves the headline metric?</li>
 </ul>
 </details>
+<details class="qa" id="mlfund-041">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at OpenAI</span> Each item has labels from three annotators of unknown and unequal quality. Implement majority vote, say how accurate it is, then beat it. How would you find the bad annotations, and how should the classifier be trained on the result?
+</summary>
+<p><strong>Majority vote</strong> weights every annotator equally. With three independent annotators of accuracy <span class="math inline">\(p\)</span> on a binary task it is right with probability <span class="math inline">\(p^3 + 3p^2(1-p)\)</span>: 0.896 for <span class="math inline">\(p = 0.8\)</span>. It helps when annotators are similar and hurts when one is much better: with accuracies 0.95, 0.65 and 0.60 the vote is right 83.7% of the time, worse than the best annotator alone.</p>
+<p><strong>Beat it by estimating who to trust</strong> (Dawid and Skene, 1979). Treat the true label as latent and give each annotator a confusion matrix. EM alternates between the posterior over true labels and the confusion matrices:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> majority_vote(L, K):</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""L: (N, A) integer labels. Returns labels and (N, K) vote shares."""</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    counts <span class="op">=</span> np.stack([(L <span class="op">==</span> k).<span class="bu">sum</span>(<span class="dv">1</span>) <span class="cf">for</span> k <span class="kw">in</span> <span class="bu">range</span>(K)], axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> counts.argmax(<span class="dv">1</span>), counts <span class="op">/</span> counts.<span class="bu">sum</span>(<span class="dv">1</span>, keepdims<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> dawid_skene(L, K, iters<span class="op">=</span><span class="dv">50</span>, eps<span class="op">=</span><span class="fl">1e-6</span>):</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Returns posterior (N, K) and confusion (A, K, K) as conf[a, true, observed]."""</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    onehot <span class="op">=</span> np.eye(K)[L]                               <span class="co"># (N, A, K)</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    post <span class="op">=</span> majority_vote(L, K)[<span class="dv">1</span>]                       <span class="co"># initialise from vote shares</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(iters):</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>        prior <span class="op">=</span> post.mean(<span class="dv">0</span>)                            <span class="co"># M-step</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>        conf <span class="op">=</span> np.einsum(<span class="st">"nk,nal-&gt;akl"</span>, post, onehot) <span class="op">+</span> eps</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>        conf <span class="op">/=</span> conf.<span class="bu">sum</span>(<span class="dv">2</span>, keepdims<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>        logp <span class="op">=</span> np.log(prior)[<span class="va">None</span>] <span class="op">+</span> np.einsum(<span class="st">"nal,akl-&gt;nk"</span>, onehot, np.log(conf))</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>        logp <span class="op">-=</span> logp.<span class="bu">max</span>(<span class="dv">1</span>, keepdims<span class="op">=</span><span class="va">True</span>)              <span class="co"># E-step</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>        post <span class="op">=</span> np.exp(logp)<span class="op">;</span> post <span class="op">/=</span> post.<span class="bu">sum</span>(<span class="dv">1</span>, keepdims<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> post, conf</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>On 20,000 simulated items with those three accuracies, this reaches 95.0% against 83.5% for the vote, because it learns to follow the strong annotator. With only three annotators the estimates converge slowly and stay loose; five or more, or a small gold set to initialise the confusion matrices, makes them reliable. Missing labels need a mask in both steps.</p>
+<p><strong>The assumption that fails:</strong> errors are independent given the true label. Annotators share confusions on hard items, so agreement overstates confidence. Item difficulty can be modelled too (GLAD, or item-response models).</p>
+<p><strong>Finding bad annotations.</strong></p>
+<ul>
+<li>Per annotator: the estimated confusion matrix, accuracy on hidden gold items, agreement with the consensus, time per item.</li>
+<li>Per label: train with cross-validation and flag items where the out-of-fold predicted probability of the given label is low (confident learning). Review the flags; hard and rare examples are flagged too, and deleting them biases the data.</li>
+</ul>
+<p><strong>Training on the result.</strong></p>
+<ul>
+<li>Use the posterior as a soft target instead of its argmax, which keeps the uncertainty.</li>
+<li>Or train on every annotator’s label with an annotator-specific noise layer on top of a shared classifier, which uses the input to resolve disagreement.</li>
+<li>Spend relabelling budget where the posterior is uncertain, not uniformly.</li>
+<li>Keep a clean, adjudicated test set. Noisy test labels cap measured accuracy and can reorder models.</li>
+</ul>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Two of the three annotators copy each other. What does that do to majority vote and to the EM estimate?</li>
+<li>You can buy 10,000 more labels. Do you label new items once or relabel existing ones?</li>
+<li>When is the disagreement itself the signal and not noise?</li>
+</ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>OpenAI, Machine Learning Engineer, Oct 2026: Majority-vote labels from three noisy annotators, then beat that baseline (<a href="https://prachub.com/interview-questions/majority-vote-labels-from-three-noisy-annotators-then-beat-the-baseline">PracHub</a>)</li>
+<li>OpenAI, Machine Learning Engineer, Apr 2026: Improve training when labels come from noisy annotators (<a href="https://prachub.com/interview-questions/improve-training-with-noisy-annotators">PracHub</a>)</li>
+<li>OpenAI, Machine Learning Engineer, Feb 2026: Improve a classifier trained on noisy multi-annotator labels (<a href="https://prachub.com/interview-questions/improve-classifier-with-noisy-multi-annotator-labels">PracHub</a>)</li>
+<li>OpenAI, Machine Learning Engineer, Apr 2026: Filter bad human annotations (<a href="https://prachub.com/interview-questions/filter-bad-human-annotations">PracHub</a>)</li>
+</ul>
+</div>
+</details>
 </section>
 <section id="classical-ml" class="level3">
 <h3 class="anchored" data-anchor-id="classical-ml">Classical models (GBDT, linear, trees) <span class="demand">12% of postings</span></h3>
@@ -1169,27 +1224,27 @@ E=1+\tfrac12E_H+\tfrac12E,\qquad E_H=1+\tfrac12\cdot 0+\tfrac12E
 <summary>
 <span class="tag tag-core">core</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at TikTok</span> Implement binary logistic regression with mini-batch SGD and L2 regularisation in NumPy, including a numerically stable loss.
 </summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> sigmoid(z):</span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.exp(<span class="op">-</span>np.logaddexp(<span class="dv">0</span>, <span class="op">-</span>z))          <span class="co"># stable for large |z|</span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> fit_logreg(X, y, lr<span class="op">=</span><span class="fl">0.1</span>, l2<span class="op">=</span><span class="fl">1e-4</span>, epochs<span class="op">=</span><span class="dv">20</span>, batch<span class="op">=</span><span class="dv">64</span>, seed<span class="op">=</span><span class="dv">0</span>):</span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    rng <span class="op">=</span> np.random.default_rng(seed)</span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    n, d <span class="op">=</span> X.shape</span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>    w, b <span class="op">=</span> np.zeros(d), <span class="fl">0.0</span></span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(epochs):</span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>        perm <span class="op">=</span> rng.permutation(n)                 <span class="co"># reshuffle every epoch</span></span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">0</span>, n, batch):</span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>            idx <span class="op">=</span> perm[i:i <span class="op">+</span> batch]</span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>            g <span class="op">=</span> sigmoid(X[idx] <span class="op">@</span> w <span class="op">+</span> b) <span class="op">-</span> y[idx]  <span class="co"># dL/dz = p - y</span></span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>            w <span class="op">-=</span> lr <span class="op">*</span> (X[idx].T <span class="op">@</span> g <span class="op">/</span> <span class="bu">len</span>(idx) <span class="op">+</span> l2 <span class="op">*</span> w)</span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>            b <span class="op">-=</span> lr <span class="op">*</span> g.mean()                    <span class="co"># no penalty on the bias</span></span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> w, b</span>
-<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> log_loss(X, y, w, b):</span>
-<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>    z <span class="op">=</span> X <span class="op">@</span> w <span class="op">+</span> b</span>
-<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.mean(np.logaddexp(<span class="dv">0</span>, z) <span class="op">-</span> y <span class="op">*</span> z)    <span class="co"># log(1 + e^z) - y z</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> sigmoid(z):</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.exp(<span class="op">-</span>np.logaddexp(<span class="dv">0</span>, <span class="op">-</span>z))          <span class="co"># stable for large |z|</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> fit_logreg(X, y, lr<span class="op">=</span><span class="fl">0.1</span>, l2<span class="op">=</span><span class="fl">1e-4</span>, epochs<span class="op">=</span><span class="dv">20</span>, batch<span class="op">=</span><span class="dv">64</span>, seed<span class="op">=</span><span class="dv">0</span>):</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    rng <span class="op">=</span> np.random.default_rng(seed)</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    n, d <span class="op">=</span> X.shape</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    w, b <span class="op">=</span> np.zeros(d), <span class="fl">0.0</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(epochs):</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>        perm <span class="op">=</span> rng.permutation(n)                 <span class="co"># reshuffle every epoch</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">0</span>, n, batch):</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>            idx <span class="op">=</span> perm[i:i <span class="op">+</span> batch]</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>            g <span class="op">=</span> sigmoid(X[idx] <span class="op">@</span> w <span class="op">+</span> b) <span class="op">-</span> y[idx]  <span class="co"># dL/dz = p - y</span></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>            w <span class="op">-=</span> lr <span class="op">*</span> (X[idx].T <span class="op">@</span> g <span class="op">/</span> <span class="bu">len</span>(idx) <span class="op">+</span> l2 <span class="op">*</span> w)</span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>            b <span class="op">-=</span> lr <span class="op">*</span> g.mean()                    <span class="co"># no penalty on the bias</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> w, b</span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> log_loss(X, y, w, b):</span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>    z <span class="op">=</span> X <span class="op">@</span> w <span class="op">+</span> b</span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.mean(np.logaddexp(<span class="dv">0</span>, z) <span class="op">-</span> y <span class="op">*</span> z)    <span class="co"># log(1 + e^z) - y z</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Cost is <span class="math inline">\(O(\text{epochs}\cdot n\cdot d)\)</span>.</p>
 <p>What an interviewer checks:</p>
 <ul>
@@ -1246,24 +1301,24 @@ w_j^*=-\frac{G_j}{H_j+\lambda},\qquad
 <summary>
 <span class="tag tag-senior">senior</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span> Implement the best-split search for a regression decision stump in NumPy. It should run in O(n log n) per feature, not O(n^2).
 </summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> best_split(X, y):</span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Return (gain, feature, threshold) maximising the reduction in squared error."""</span></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    n, d <span class="op">=</span> X.shape</span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    total <span class="op">=</span> y.<span class="bu">sum</span>()</span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    best <span class="op">=</span> (<span class="fl">0.0</span>, <span class="va">None</span>, <span class="va">None</span>)</span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(d):</span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>        order <span class="op">=</span> np.argsort(X[:, j], kind<span class="op">=</span><span class="st">"mergesort"</span>)</span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>        xs, ys <span class="op">=</span> X[order, j], y[order]</span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>        left <span class="op">=</span> np.cumsum(ys)[:<span class="op">-</span><span class="dv">1</span>]                 <span class="co"># sum of y in the left child for a split after row i</span></span>
-<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>        nl <span class="op">=</span> np.arange(<span class="dv">1</span>, n)</span>
-<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>        gain <span class="op">=</span> left<span class="op">**</span><span class="dv">2</span> <span class="op">/</span> nl <span class="op">+</span> (total <span class="op">-</span> left)<span class="op">**</span><span class="dv">2</span> <span class="op">/</span> (n <span class="op">-</span> nl) <span class="op">-</span> total<span class="op">**</span><span class="dv">2</span> <span class="op">/</span> n</span>
-<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>        gain[xs[<span class="dv">1</span>:] <span class="op">==</span> xs[:<span class="op">-</span><span class="dv">1</span>]] <span class="op">=</span> <span class="op">-</span>np.inf         <span class="co"># cannot split between equal values</span></span>
-<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>        i <span class="op">=</span> <span class="bu">int</span>(gain.argmax())</span>
-<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> gain[i] <span class="op">&gt;</span> best[<span class="dv">0</span>]:</span>
-<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>            best <span class="op">=</span> (<span class="bu">float</span>(gain[i]), j, <span class="bu">float</span>((xs[i] <span class="op">+</span> xs[i <span class="op">+</span> <span class="dv">1</span>]) <span class="op">/</span> <span class="dv">2</span>))</span>
-<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> best</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> best_split(X, y):</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Return (gain, feature, threshold) maximising the reduction in squared error."""</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    n, d <span class="op">=</span> X.shape</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    total <span class="op">=</span> y.<span class="bu">sum</span>()</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    best <span class="op">=</span> (<span class="fl">0.0</span>, <span class="va">None</span>, <span class="va">None</span>)</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(d):</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>        order <span class="op">=</span> np.argsort(X[:, j], kind<span class="op">=</span><span class="st">"mergesort"</span>)</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>        xs, ys <span class="op">=</span> X[order, j], y[order]</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>        left <span class="op">=</span> np.cumsum(ys)[:<span class="op">-</span><span class="dv">1</span>]                 <span class="co"># sum of y in the left child for a split after row i</span></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>        nl <span class="op">=</span> np.arange(<span class="dv">1</span>, n)</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>        gain <span class="op">=</span> left<span class="op">**</span><span class="dv">2</span> <span class="op">/</span> nl <span class="op">+</span> (total <span class="op">-</span> left)<span class="op">**</span><span class="dv">2</span> <span class="op">/</span> (n <span class="op">-</span> nl) <span class="op">-</span> total<span class="op">**</span><span class="dv">2</span> <span class="op">/</span> n</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>        gain[xs[<span class="dv">1</span>:] <span class="op">==</span> xs[:<span class="op">-</span><span class="dv">1</span>]] <span class="op">=</span> <span class="op">-</span>np.inf         <span class="co"># cannot split between equal values</span></span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>        i <span class="op">=</span> <span class="bu">int</span>(gain.argmax())</span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> gain[i] <span class="op">&gt;</span> best[<span class="dv">0</span>]:</span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>            best <span class="op">=</span> (<span class="bu">float</span>(gain[i]), j, <span class="bu">float</span>((xs[i] <span class="op">+</span> xs[i <span class="op">+</span> <span class="dv">1</span>]) <span class="op">/</span> <span class="dv">2</span>))</span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> best</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><strong>Why the formula.</strong> The squared error of a node around its mean is <span class="math inline">\(\sum y^2-S^2/n\)</span> with <span class="math inline">\(S=\sum y\)</span>. The <span class="math inline">\(\sum y^2\)</span> terms cancel between parent and children, so</p>
 <p><span class="math display">\[
 \text{gain}=\frac{S_L^2}{n_L}+\frac{S_R^2}{n_R}-\frac{S^2}{n}.
@@ -1558,6 +1613,48 @@ p_k=\frac{e^{\lambda s_k}}{\sum_j e^{\lambda s_j}}.
 <li>What does a multiplier of zero tell you about its constraint?</li>
 <li>Why can the duality gap be non-zero for a non-convex problem?</li>
 </ul>
+</details>
+<details class="qa" id="mlfund-042">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Google</span> Define KL divergence and explain where it appears in language modelling. Why does the direction matter, what happens when the supports differ, and how do you compute it safely from logits?
+</summary>
+<p><span class="math display">\[D_{\mathrm{KL}}(p \,\|\, q) = \sum_x p(x) \log \frac{p(x)}{q(x)} \ge 0,\]</span></p>
+<p>zero only when <span class="math inline">\(p = q\)</span>. It is the expected extra code length (in nats, or bits with <span class="math inline">\(\log_2\)</span>) from coding samples of <span class="math inline">\(p\)</span> with a code built for <span class="math inline">\(q\)</span>. It is not symmetric and not a distance: for <span class="math inline">\(p = (0.5, 0.5)\)</span> and <span class="math inline">\(q = (0.9, 0.1)\)</span>, <span class="math inline">\(D_{\mathrm{KL}}(p\|q) = 0.51\)</span> and <span class="math inline">\(D_{\mathrm{KL}}(q\|p) = 0.37\)</span> nats.</p>
+<p><strong>Link to the training loss.</strong> Cross-entropy decomposes as <span class="math inline">\(H(p, q) = H(p) + D_{\mathrm{KL}}(p\|q)\)</span>. The data entropy <span class="math inline">\(H(p)\)</span> does not depend on the model, so minimising next-token cross-entropy is minimising the forward KL from the data distribution to the model. Perplexity is <span class="math inline">\(\exp\)</span> of that cross-entropy.</p>
+<p><strong>Direction.</strong></p>
+<ul>
+<li><strong>Forward, <span class="math inline">\(D_{\mathrm{KL}}(p_\text{data}\|q_\theta)\)</span>:</strong> the expectation is under the data. The model is punished wherever the data has mass and the model has little, so it spreads to cover everything (mass-covering). This is maximum likelihood, and one reason a language model puts some probability on implausible text.</li>
+<li><strong>Reverse, <span class="math inline">\(D_{\mathrm{KL}}(q_\theta\|p)\)</span>:</strong> the expectation is under the model. The model is punished for putting mass where the target has none, so it can ignore modes (mode-seeking). It needs samples from the model and a target density, which is the situation in variational inference and in policy optimisation.</li>
+</ul>
+<p><strong>Support.</strong> If <span class="math inline">\(q(x) = 0\)</span> where <span class="math inline">\(p(x) &gt; 0\)</span>, the divergence is infinite; where <span class="math inline">\(p(x) = 0\)</span> the term is 0 by convention. A softmax never outputs exactly zero, so in practice the problem appears as huge values from tiny probabilities, and with top-k or nucleus truncation, which does create zeros. Jensen-Shannon divergence is the bounded, symmetric alternative.</p>
+<p><strong>Where it appears in language models.</strong></p>
+<ul>
+<li><strong>Distillation:</strong> minimise <span class="math inline">\(D_{\mathrm{KL}}(p_\text{teacher}\|p_\text{student})\)</span> per token, often at temperature <span class="math inline">\(T\)</span> with the loss scaled by <span class="math inline">\(T^2\)</span>.</li>
+<li><strong>Label smoothing:</strong> cross-entropy against a smoothed target equals a KL to that target plus a constant.</li>
+<li><strong>Keeping a fine-tuned policy close to a reference:</strong> a KL penalty or constraint in policy-gradient fine-tuning, and the KL term of a VAE.</li>
+<li><strong>Measuring change:</strong> mean per-token KL between a model and its quantised or fine-tuned version, on the same inputs, is more sensitive than accuracy.</li>
+</ul>
+<p><strong>Computing it.</strong> Work in log space from logits; never take <code>log</code> of a <code>softmax</code>.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> kl_from_logits(zp, zq):</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""KL(p || q) per row in nats, logits of shape (..., V)."""</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    lp <span class="op">=</span> zp <span class="op">-</span> zp.<span class="bu">max</span>(<span class="op">-</span><span class="dv">1</span>, keepdims<span class="op">=</span><span class="va">True</span>)<span class="op">;</span> lp <span class="op">=</span> lp <span class="op">-</span> np.log(np.exp(lp).<span class="bu">sum</span>(<span class="op">-</span><span class="dv">1</span>, keepdims<span class="op">=</span><span class="va">True</span>))</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    lq <span class="op">=</span> zq <span class="op">-</span> zq.<span class="bu">max</span>(<span class="op">-</span><span class="dv">1</span>, keepdims<span class="op">=</span><span class="va">True</span>)<span class="op">;</span> lq <span class="op">=</span> lq <span class="op">-</span> np.log(np.exp(lq).<span class="bu">sum</span>(<span class="op">-</span><span class="dv">1</span>, keepdims<span class="op">=</span><span class="va">True</span>))</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> (np.exp(lp) <span class="op">*</span> (lp <span class="op">-</span> lq)).<span class="bu">sum</span>(<span class="op">-</span><span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Pitfalls: PyTorch’s <code>F.kl_div(input, target)</code> expects <strong>log-probabilities as input and probabilities as target</strong>, and computes <span class="math inline">\(D_{\mathrm{KL}}(\text{target}\|\text{input})\)</span>; its default <code>reduction='mean'</code> averages over every element, so use <code>'batchmean'</code> or sum over the vocabulary yourself. For sequences, mask padding and say whether you report per token or per sequence.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Fit a single Gaussian to a two-mode distribution under each direction. What do you get?</li>
+<li>Why is the distillation loss multiplied by T squared?</li>
+<li>Two models have the same perplexity on a test set. Can the KL between them be large?</li>
+</ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>Google, Machine Learning Engineer, Aug 2026: KL divergence in language models, including direction and support (<a href="https://prachub.com/interview-questions/explain-kl-divergence-in-language-models">PracHub</a>)</li>
+</ul>
+</div>
 </details>
 </section>
 <section id="timeseries" class="level3">

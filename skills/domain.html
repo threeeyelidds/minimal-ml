@@ -26,6 +26,41 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
 </style>
 
 
@@ -351,7 +386,7 @@ window.Quarto = {
 <header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="Breadcrumbs"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../skills/recsys.html">Product ML</a></li><li class="breadcrumb-item"><a href="../skills/domain.html">Domain specialties</a></li></ol></nav>
 <div class="quarto-title">
 <h1 class="title">Domain specialties</h1>
-<p class="subtitle lead">Named in 54% of 2253 senior postings · 30 review cards</p>
+<p class="subtitle lead">Named in 54% of 2253 senior postings · 31 review cards</p>
 </div>
 
 
@@ -410,7 +445,7 @@ window.Quarto = {
 <td style="text-align: right;">17%</td>
 <td style="text-align: right;">6%</td>
 <td style="text-align: right;">12%</td>
-<td style="text-align: right;">3</td>
+<td style="text-align: right;">4</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"><a href="#autonomy">Autonomous driving (prediction, planning, end-to-end)</a></td>
@@ -787,6 +822,71 @@ window.Quarto = {
 <li>What does collapse look like and how does each family prevent it?</li>
 <li>How would you tell whether in-domain pretraining was worth the compute?</li>
 </ul>
+</details>
+<details class="qa" id="domain-031">
+<summary>
+<span class="tag tag-core">core</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Apple</span> Implement intersection over union for two sets of boxes. Then implement average precision for one class of an object detector, and say how mean average precision is built from it.
+</summary>
+<p><strong>IoU</strong>, vectorised over all pairs with broadcasting:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> iou_matrix(a, b):</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""a: (N, 4), b: (M, 4), boxes as x1, y1, x2, y2. Returns (N, M)."""</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    lt <span class="op">=</span> np.maximum(a[:, <span class="va">None</span>, :<span class="dv">2</span>], b[<span class="va">None</span>, :, :<span class="dv">2</span>])</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    rb <span class="op">=</span> np.minimum(a[:, <span class="va">None</span>, <span class="dv">2</span>:], b[<span class="va">None</span>, :, <span class="dv">2</span>:])</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    wh <span class="op">=</span> np.clip(rb <span class="op">-</span> lt, <span class="dv">0</span>, <span class="va">None</span>)                  <span class="co"># no overlap gives 0, not a negative area</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    inter <span class="op">=</span> wh[..., <span class="dv">0</span>] <span class="op">*</span> wh[..., <span class="dv">1</span>]</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    area_a <span class="op">=</span> (a[:, <span class="dv">2</span>] <span class="op">-</span> a[:, <span class="dv">0</span>]) <span class="op">*</span> (a[:, <span class="dv">3</span>] <span class="op">-</span> a[:, <span class="dv">1</span>])</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    area_b <span class="op">=</span> (b[:, <span class="dv">2</span>] <span class="op">-</span> b[:, <span class="dv">0</span>]) <span class="op">*</span> (b[:, <span class="dv">3</span>] <span class="op">-</span> b[:, <span class="dv">1</span>])</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    union <span class="op">=</span> area_a[:, <span class="va">None</span>] <span class="op">+</span> area_b[<span class="va">None</span>, :] <span class="op">-</span> inter</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> inter <span class="op">/</span> np.maximum(union, <span class="fl">1e-12</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Average precision for one class.</strong> Rank every detection of the class across the whole dataset by confidence. Walk down the ranking: a detection is a true positive if its best-overlapping unmatched ground-truth box in the same image has IoU at or above the threshold; otherwise it is a false positive. Each ground-truth box can be matched once, so a second detection of the same object is a false positive.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> average_precision(dets, gts, thr<span class="op">=</span><span class="fl">0.5</span>):</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""dets: list of (image_id, score, box); gts: {image_id: (K, 4) array}."""</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    dets <span class="op">=</span> <span class="bu">sorted</span>(dets, key<span class="op">=</span><span class="kw">lambda</span> d: <span class="op">-</span>d[<span class="dv">1</span>])</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    used <span class="op">=</span> {i: np.zeros(<span class="bu">len</span>(g), <span class="bu">bool</span>) <span class="cf">for</span> i, g <span class="kw">in</span> gts.items()}</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    n_gt <span class="op">=</span> <span class="bu">sum</span>(<span class="bu">len</span>(g) <span class="cf">for</span> g <span class="kw">in</span> gts.values())</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    tp <span class="op">=</span> np.zeros(<span class="bu">len</span>(dets))</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> j, (img, _, box) <span class="kw">in</span> <span class="bu">enumerate</span>(dets):</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>        g <span class="op">=</span> gts.get(img)</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> g <span class="kw">is</span> <span class="va">None</span> <span class="kw">or</span> <span class="bu">len</span>(g) <span class="op">==</span> <span class="dv">0</span>:</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>            <span class="cf">continue</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>        ious <span class="op">=</span> iou_matrix(np.asarray(box, <span class="bu">float</span>)[<span class="va">None</span>], g)[<span class="dv">0</span>]</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>        ious[used[img]] <span class="op">=</span> <span class="op">-</span><span class="dv">1</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>        k <span class="op">=</span> <span class="bu">int</span>(ious.argmax())</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> ious[k] <span class="op">&gt;=</span> thr:</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>            tp[j] <span class="op">=</span> <span class="dv">1</span><span class="op">;</span> used[img][k] <span class="op">=</span> <span class="va">True</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>    ctp <span class="op">=</span> np.cumsum(tp)</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>    recall <span class="op">=</span> ctp <span class="op">/</span> <span class="bu">max</span>(n_gt, <span class="dv">1</span>)</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>    precision <span class="op">=</span> ctp <span class="op">/</span> (np.arange(<span class="bu">len</span>(dets)) <span class="op">+</span> <span class="dv">1</span>)</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>    r <span class="op">=</span> np.concatenate([[<span class="fl">0.0</span>], recall, [<span class="fl">1.0</span>]])</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>    p <span class="op">=</span> np.concatenate([[<span class="fl">0.0</span>], precision, [<span class="fl">0.0</span>]])</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>    p <span class="op">=</span> np.maximum.accumulate(p[::<span class="op">-</span><span class="dv">1</span>])[::<span class="op">-</span><span class="dv">1</span>]        <span class="co"># precision envelope</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>    idx <span class="op">=</span> np.nonzero(r[<span class="dv">1</span>:] <span class="op">!=</span> r[:<span class="op">-</span><span class="dv">1</span>])[<span class="dv">0</span>]</span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">float</span>(np.<span class="bu">sum</span>((r[idx <span class="op">+</span> <span class="dv">1</span>] <span class="op">-</span> r[idx]) <span class="op">*</span> p[idx <span class="op">+</span> <span class="dv">1</span>]))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The envelope replaces each precision by the best precision at any higher recall, which removes the sawtooth; AP is then the area under that step curve.</p>
+<p><strong>mAP</strong> is the mean of AP over classes. The convention differs by benchmark, so name the one you mean: PASCAL VOC uses IoU 0.5 (and before 2010 an 11-point interpolation); COCO averages AP over IoU thresholds 0.50 to 0.95 in steps of 0.05, samples precision at 101 recall points, caps detections at 100 per image and also reports AP by object size.</p>
+<p>Pitfalls an interviewer looks for:</p>
+<ul>
+<li>Ranking per image instead of across the dataset.</li>
+<li>Letting one ground-truth box match several detections.</li>
+<li>A division by zero for a class with no ground truth; decide whether to skip the class or count it as 0, and say which.</li>
+<li>Pixel conventions: some datasets define width as <code>x2 - x1 + 1</code>.</li>
+<li>Running the metric after a confidence cut-off. AP needs the low-confidence tail, so evaluate with a very low threshold.</li>
+</ul>
+<p>AP summarises ranking quality across all thresholds. It says nothing about calibration or about the operating point you will ship, so a product decision also needs precision and recall at the chosen threshold.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Two detectors have the same mAP at IoU 0.5 and very different COCO mAP. What differs between them?</li>
+<li>How does non-maximum suppression interact with this metric, and what happens to AP if you remove it?</li>
+<li>Why can mAP rise while the product metric you care about falls?</li>
+</ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>Apple, Machine Learning Engineer, undated: First-person report of a phone screen: implement intersection over union, then mean average precision (<a href="https://www.aced.io/experiences/apple-senior-machine-learning-engineer-interview-649eca">Aced (formerly Exponent)</a>)</li>
+</ul>
+</div>
 </details>
 </section>
 <section id="autonomy" class="level3">

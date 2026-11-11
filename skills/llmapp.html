@@ -388,7 +388,7 @@ window.Quarto = {
 <header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="Breadcrumbs"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../skills/llm.html">LLMs and agents</a></li><li class="breadcrumb-item"><a href="../skills/llmapp.html">LLM application engineering (agents, RAG, prompts)</a></li></ol></nav>
 <div class="quarto-title">
 <h1 class="title">LLM application engineering (agents, RAG, prompts)</h1>
-<p class="subtitle lead">Named in 74% of 2253 senior postings · 45 review cards</p>
+<p class="subtitle lead">Named in 74% of 2253 senior postings · 47 review cards</p>
 </div>
 
 
@@ -447,7 +447,7 @@ window.Quarto = {
 <td style="text-align: right;">16%</td>
 <td style="text-align: right;">32%</td>
 <td style="text-align: right;">24%</td>
-<td style="text-align: right;">2</td>
+<td style="text-align: right;">3</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"><a href="#prompting">Prompt and context engineering</a></td>
@@ -487,7 +487,7 @@ window.Quarto = {
 <td style="text-align: right;">11%</td>
 <td style="text-align: right;">23%</td>
 <td style="text-align: right;">4%</td>
-<td style="text-align: right;">2</td>
+<td style="text-align: right;">3</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"><a href="#llm-cost">Cost, latency and model routing for LLM products</a></td>
@@ -996,6 +996,56 @@ window.Quarto = {
 <li>How do you decide the number of trials per eval case?</li>
 </ul>
 </details>
+<details class="qa" id="llmapp-047">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">AI</span> <span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Anthropic</span> You have one helper, <code>logprob(prompt, continuation)</code>, which returns the log-probability a language model assigns to a continuation. Build a binary text classifier from it, with a calibrated probability and a threshold you can defend.
+</summary>
+<p><strong>Score by comparing label continuations.</strong> Put the input in a template that ends where the answer starts, and compare the log-probabilities of the two answers:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>YES, NO <span class="op">=</span> [<span class="st">" Yes"</span>, <span class="st">" yes"</span>], [<span class="st">" No"</span>, <span class="st">" no"</span>]</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>TEMPLATE <span class="op">=</span> <span class="st">"Review: </span><span class="sc">{text}</span><span class="ch">\n</span><span class="st">Is this review positive? Answer Yes or No.</span><span class="ch">\n</span><span class="st">Answer:"</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> logsumexp(v):</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    v <span class="op">=</span> np.asarray(v)<span class="op">;</span> m <span class="op">=</span> v.<span class="bu">max</span>()</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> m <span class="op">+</span> np.log(np.exp(v <span class="op">-</span> m).<span class="bu">sum</span>())</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> score(text, logprob):</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    p <span class="op">=</span> TEMPLATE.<span class="bu">format</span>(text<span class="op">=</span>text)</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> logsumexp([logprob(p, v) <span class="cf">for</span> v <span class="kw">in</span> YES]) <span class="op">-</span> logsumexp([logprob(p, v) <span class="cf">for</span> v <span class="kw">in</span> NO])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The difference is a log-odds restricted to the two labels, so probability mass on anything else cancels.</p>
+<p><strong>What goes wrong, and the fix for each.</strong></p>
+<ul>
+<li><strong>Surface forms.</strong> “Yes”, “yes” and “Y” split the mass. Sum over the verbalisers of each class (the <code>logsumexp</code> above).</li>
+<li><strong>Tokenisation.</strong> The leading space and the casing change the tokens. A multi-token label has a lower log-probability only because it is longer, so choose single-token labels of similar frequency, or normalise.</li>
+<li><strong>Prior bias.</strong> The model prefers one answer regardless of input, and few-shot examples add a bias toward the majority and the most recent label. Correct it by subtracting the score of a content-free input (“N/A”), or better, by fitting a calibration map on labelled data.</li>
+<li><strong>Prompt sensitivity.</strong> Average the score over a few paraphrased templates.</li>
+</ul>
+<p><strong>Calibrate on a small labelled set.</strong> Fit <span class="math inline">\(p = \sigma(a s + b)\)</span> (Platt scaling) on a few hundred examples:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> fit_platt(s, y, steps<span class="op">=</span><span class="dv">2000</span>, lr<span class="op">=</span><span class="fl">0.1</span>):</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    a, b <span class="op">=</span> <span class="fl">1.0</span>, <span class="fl">0.0</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(steps):</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>        p <span class="op">=</span> <span class="dv">1</span> <span class="op">/</span> (<span class="dv">1</span> <span class="op">+</span> np.exp(<span class="op">-</span>(a <span class="op">*</span> s <span class="op">+</span> b)))</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>        a <span class="op">-=</span> lr <span class="op">*</span> np.mean((p <span class="op">-</span> y) <span class="op">*</span> s)<span class="op">;</span> b <span class="op">-=</span> lr <span class="op">*</span> np.mean(p <span class="op">-</span> y)</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> a, b</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>In a simulation with a helper that is overconfident by a factor of 3 and biased toward “Yes”, fitting on 500 examples cut log loss from 0.59 to 0.35 and barely changed accuracy: calibration fixes the probabilities, not the ranking.</p>
+<p><strong>Threshold.</strong> Choose it on held-out data from the cost of each error, or to hit a target precision, and report the confidence interval: with 500 examples a precision estimate is loose. Add an abstain band around the threshold if a human can take the uncertain cases.</p>
+<p><strong>Evaluation.</strong> AUROC and PR-AUC for ranking, log loss and a reliability diagram for calibration, both by slice (length, language, source). Keep the calibration set, the threshold set and the test set separate.</p>
+<p><strong>Cost.</strong> One call per label per template. Cache the shared prompt prefix, batch, and if the helper can return the next-token distribution, read both labels from one call.</p>
+<p><strong>Limits to state.</strong> Calibration is specific to the model version and the template, so refit after either changes. And a zero-shot score is a baseline: with a few thousand labels, a small classifier on the model’s embeddings is usually cheaper and better.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Extend this to 50 classes with multi-token names. What breaks first?</li>
+<li>The calibrated classifier drifts after a model upgrade. How do you detect it without new labels?</li>
+<li>Why can few-shot examples make the classifier worse on the minority class?</li>
+</ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>Anthropic, Software Engineer, Sep 2025: Binary text classifier using only an LLM log-probability helper (<a href="https://prachub.com/interview-questions/design-an-llm-based-binary-classifier">PracHub</a>)</li>
+</ul>
+</div>
+</details>
 </section>
 <section id="prompting" class="level3">
 <h3 class="anchored" data-anchor-id="prompting">Prompt and context engineering <span class="demand">22% of postings</span></h3>
@@ -1237,25 +1287,25 @@ window.Quarto = {
 <span class="tag tag-senior">senior</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Implement hybrid retrieval with reciprocal rank fusion.
 </summary>
 <p>RRF scores a document by its ranks across retrievers: <span class="math inline">\(\mathrm{RRF}(d) = \sum_{r} \frac{w_r}{k + \mathrm{rank}_r(d)}\)</span>, with <span class="math inline">\(k = 60\)</span> by convention and ranks starting at 1. A document absent from a list contributes nothing for that list.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> collections <span class="im">import</span> defaultdict</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> rrf(rankings, k<span class="op">=</span><span class="dv">60</span>, weights<span class="op">=</span><span class="va">None</span>):</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""rankings: list of ranked lists of doc ids, best first. Returns [(doc_id, score)]."""</span></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    weights <span class="op">=</span> weights <span class="kw">or</span> [<span class="fl">1.0</span>] <span class="op">*</span> <span class="bu">len</span>(rankings)</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    scores <span class="op">=</span> defaultdict(<span class="bu">float</span>)</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> w, ranking <span class="kw">in</span> <span class="bu">zip</span>(weights, rankings):</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>        seen <span class="op">=</span> <span class="bu">set</span>()</span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> rank, doc_id <span class="kw">in</span> <span class="bu">enumerate</span>(ranking, start<span class="op">=</span><span class="dv">1</span>):</span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> doc_id <span class="kw">in</span> seen:                    <span class="co"># count each doc once per list</span></span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>                <span class="cf">continue</span></span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>            seen.add(doc_id)</span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>            scores[doc_id] <span class="op">+=</span> w <span class="op">/</span> (k <span class="op">+</span> rank)</span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">sorted</span>(scores.items(), key<span class="op">=</span><span class="kw">lambda</span> x: (<span class="op">-</span>x[<span class="dv">1</span>], <span class="bu">str</span>(x[<span class="dv">0</span>])))   <span class="co"># deterministic ties</span></span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> hybrid_search(query, bm25, embed, ann, top_k<span class="op">=</span><span class="dv">10</span>, depth<span class="op">=</span><span class="dv">100</span>, flt<span class="op">=</span><span class="va">None</span>):</span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>    lexical <span class="op">=</span> bm25.search(query, depth, <span class="bu">filter</span><span class="op">=</span>flt)           <span class="co"># -&gt; [doc_id, ...]</span></span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>    dense <span class="op">=</span> ann.search(embed(query), depth, <span class="bu">filter</span><span class="op">=</span>flt)       <span class="co"># -&gt; [doc_id, ...]</span></span>
-<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> rrf([lexical, dense])[:top_k]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> collections <span class="im">import</span> defaultdict</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> rrf(rankings, k<span class="op">=</span><span class="dv">60</span>, weights<span class="op">=</span><span class="va">None</span>):</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""rankings: list of ranked lists of doc ids, best first. Returns [(doc_id, score)]."""</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    weights <span class="op">=</span> weights <span class="kw">or</span> [<span class="fl">1.0</span>] <span class="op">*</span> <span class="bu">len</span>(rankings)</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    scores <span class="op">=</span> defaultdict(<span class="bu">float</span>)</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> w, ranking <span class="kw">in</span> <span class="bu">zip</span>(weights, rankings):</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>        seen <span class="op">=</span> <span class="bu">set</span>()</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> rank, doc_id <span class="kw">in</span> <span class="bu">enumerate</span>(ranking, start<span class="op">=</span><span class="dv">1</span>):</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> doc_id <span class="kw">in</span> seen:                    <span class="co"># count each doc once per list</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>                <span class="cf">continue</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>            seen.add(doc_id)</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>            scores[doc_id] <span class="op">+=</span> w <span class="op">/</span> (k <span class="op">+</span> rank)</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">sorted</span>(scores.items(), key<span class="op">=</span><span class="kw">lambda</span> x: (<span class="op">-</span>x[<span class="dv">1</span>], <span class="bu">str</span>(x[<span class="dv">0</span>])))   <span class="co"># deterministic ties</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> hybrid_search(query, bm25, embed, ann, top_k<span class="op">=</span><span class="dv">10</span>, depth<span class="op">=</span><span class="dv">100</span>, flt<span class="op">=</span><span class="va">None</span>):</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>    lexical <span class="op">=</span> bm25.search(query, depth, <span class="bu">filter</span><span class="op">=</span>flt)           <span class="co"># -&gt; [doc_id, ...]</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>    dense <span class="op">=</span> ann.search(embed(query), depth, <span class="bu">filter</span><span class="op">=</span>flt)       <span class="co"># -&gt; [doc_id, ...]</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> rrf([lexical, dense])[:top_k]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Pitfalls:</p>
 <ul>
 <li>RRF uses ranks only, so it needs no score normalisation but ignores how confident each retriever was. A weighted sum of normalised scores can do better if scores are calibrated.</li>
@@ -1276,29 +1326,29 @@ window.Quarto = {
 <span class="tag tag-senior">senior</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Implement semantic chunking: split a document where the topic changes, with size limits.
 </summary>
 <p>Embed sentences, measure the cosine distance between neighbours, and cut at the largest jumps, subject to minimum and maximum chunk sizes.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> re</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> semantic_chunks(text, embed, max_tokens<span class="op">=</span><span class="dv">400</span>, min_tokens<span class="op">=</span><span class="dv">80</span>, pct<span class="op">=</span><span class="dv">90</span>,</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>                    n_tokens<span class="op">=</span><span class="kw">lambda</span> s: <span class="bu">len</span>(s.split())):</span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    sents <span class="op">=</span> [s.strip() <span class="cf">for</span> s <span class="kw">in</span> re.split(<span class="vs">r"</span><span class="kw">(</span><span class="fu">?&lt;</span><span class="vs">=</span><span class="pp">[.!?]</span><span class="kw">)</span><span class="dv">\s</span><span class="op">+</span><span class="vs">"</span>, text) <span class="cf">if</span> s.strip()]</span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">len</span>(sents) <span class="op">&lt;</span> <span class="dv">2</span>:</span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> sents</span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    E <span class="op">=</span> np.asarray(embed(sents), dtype<span class="op">=</span>np.float32)                  <span class="co"># (n, d)</span></span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    E <span class="op">/=</span> np.linalg.norm(E, axis<span class="op">=</span><span class="dv">1</span>, keepdims<span class="op">=</span><span class="va">True</span>) <span class="op">+</span> <span class="fl">1e-12</span></span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    dist <span class="op">=</span> <span class="fl">1.0</span> <span class="op">-</span> np.<span class="bu">sum</span>(E[:<span class="op">-</span><span class="dv">1</span>] <span class="op">*</span> E[<span class="dv">1</span>:], axis<span class="op">=</span><span class="dv">1</span>)                     <span class="co"># (n-1,) neighbour distance</span></span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>    thresh <span class="op">=</span> np.percentile(dist, pct)                               <span class="co"># cut at the largest jumps</span></span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>    chunks, cur, cur_len <span class="op">=</span> [], [sents[<span class="dv">0</span>]], n_tokens(sents[<span class="dv">0</span>])</span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1</span>, <span class="bu">len</span>(sents)):</span>
-<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>        n <span class="op">=</span> n_tokens(sents[i])</span>
-<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>        topic_shift <span class="op">=</span> dist[i <span class="op">-</span> <span class="dv">1</span>] <span class="op">&gt;</span> thresh <span class="kw">and</span> cur_len <span class="op">&gt;=</span> min_tokens</span>
-<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> topic_shift <span class="kw">or</span> cur_len <span class="op">+</span> n <span class="op">&gt;</span> max_tokens:</span>
-<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>            chunks.append(<span class="st">" "</span>.join(cur))</span>
-<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>            cur, cur_len <span class="op">=</span> [], <span class="dv">0</span></span>
-<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>        cur.append(sents[i])</span>
-<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>        cur_len <span class="op">+=</span> n</span>
-<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>    chunks.append(<span class="st">" "</span>.join(cur))</span>
-<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> chunks</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> re</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> semantic_chunks(text, embed, max_tokens<span class="op">=</span><span class="dv">400</span>, min_tokens<span class="op">=</span><span class="dv">80</span>, pct<span class="op">=</span><span class="dv">90</span>,</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>                    n_tokens<span class="op">=</span><span class="kw">lambda</span> s: <span class="bu">len</span>(s.split())):</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    sents <span class="op">=</span> [s.strip() <span class="cf">for</span> s <span class="kw">in</span> re.split(<span class="vs">r"</span><span class="kw">(</span><span class="fu">?&lt;</span><span class="vs">=</span><span class="pp">[.!?]</span><span class="kw">)</span><span class="dv">\s</span><span class="op">+</span><span class="vs">"</span>, text) <span class="cf">if</span> s.strip()]</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">len</span>(sents) <span class="op">&lt;</span> <span class="dv">2</span>:</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> sents</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>    E <span class="op">=</span> np.asarray(embed(sents), dtype<span class="op">=</span>np.float32)                  <span class="co"># (n, d)</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    E <span class="op">/=</span> np.linalg.norm(E, axis<span class="op">=</span><span class="dv">1</span>, keepdims<span class="op">=</span><span class="va">True</span>) <span class="op">+</span> <span class="fl">1e-12</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    dist <span class="op">=</span> <span class="fl">1.0</span> <span class="op">-</span> np.<span class="bu">sum</span>(E[:<span class="op">-</span><span class="dv">1</span>] <span class="op">*</span> E[<span class="dv">1</span>:], axis<span class="op">=</span><span class="dv">1</span>)                     <span class="co"># (n-1,) neighbour distance</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>    thresh <span class="op">=</span> np.percentile(dist, pct)                               <span class="co"># cut at the largest jumps</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    chunks, cur, cur_len <span class="op">=</span> [], [sents[<span class="dv">0</span>]], n_tokens(sents[<span class="dv">0</span>])</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1</span>, <span class="bu">len</span>(sents)):</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>        n <span class="op">=</span> n_tokens(sents[i])</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>        topic_shift <span class="op">=</span> dist[i <span class="op">-</span> <span class="dv">1</span>] <span class="op">&gt;</span> thresh <span class="kw">and</span> cur_len <span class="op">&gt;=</span> min_tokens</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> topic_shift <span class="kw">or</span> cur_len <span class="op">+</span> n <span class="op">&gt;</span> max_tokens:</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>            chunks.append(<span class="st">" "</span>.join(cur))</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>            cur, cur_len <span class="op">=</span> [], <span class="dv">0</span></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>        cur.append(sents[i])</span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>        cur_len <span class="op">+=</span> n</span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>    chunks.append(<span class="st">" "</span>.join(cur))</span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> chunks</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Pitfalls:</p>
 <ul>
 <li>Single-sentence embeddings are noisy. Embedding a sliding window of two or three sentences around each position gives steadier boundaries.</li>
@@ -1680,6 +1730,42 @@ window.Quarto = {
 <li>How do you run an output check on a streamed answer?</li>
 </ul>
 </details>
+<details class="qa" id="llmapp-046">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">AI</span> <span class="tag tag-track">MLE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Meta</span> Your company runs coding agents on private repositories. How can private code or secrets leak, and what do you build to prevent it? How would you test that the controls work?
+</summary>
+<p><strong>Enumerate the exits first.</strong> Code can leave by five routes, and each needs its own control:</p>
+<ol type="1">
+<li><strong>To the model provider</strong>, in prompts: retention, logging, use for training.</li>
+<li><strong>Through the agent’s own actions:</strong> a shell command that makes a network request, a package install, a web fetch with code in the URL, a push to the wrong remote, a comment on a public issue.</li>
+<li><strong>Through prompt injection:</strong> text in a dependency’s README, an issue or a web page tells the agent to send data somewhere. This needs three things together: access to private data, exposure to untrusted content, and a channel out. Remove one and it fails.</li>
+<li><strong>Across tenants or users:</strong> a shared retrieval index, cache or agent memory without access control; a model fine-tuned on one customer’s code that reproduces it for another.</li>
+<li><strong>Through side stores:</strong> traces, logs, analytics and crash reports that capture prompts.</li>
+</ol>
+<p><strong>Controls, by route.</strong></p>
+<ul>
+<li><strong>Provider:</strong> contractual zero retention and no training, or a model hosted inside the trust boundary for the most sensitive repositories. A policy map of which repositories may use which endpoint, enforced in a gateway, not left to each developer.</li>
+<li><strong>Actions:</strong> run the agent in a sandbox with <strong>network egress denied by default</strong> and an allowlist through a proxy (package mirror, internal services). Short-lived credentials scoped to one repository, read-only unless the task needs a write. Outbound actions that publish (push, open a pull request, post) need approval or are restricted to internal targets.</li>
+<li><strong>Injection:</strong> treat fetched and third-party content as data. After the agent has read untrusted content, restrict the tools it may call, or require approval for anything with a destination. Prompting the model to ignore instructions is not a control.</li>
+<li><strong>Tenancy:</strong> retrieval filtered by the caller’s permissions at query time, caches and memory keyed by tenant, no training on customer code without consent.</li>
+<li><strong>Secrets:</strong> scan before content enters the context and scan outputs; keep <code>.env</code> files and key stores out of the agent’s reach; prefer a secrets broker that injects credentials into tools without the model seeing them.</li>
+<li><strong>Side stores:</strong> redact and set retention on traces; restrict who can read them.</li>
+</ul>
+<p><strong>Testing.</strong> Plant unique canary strings and canary credentials in test repositories, and plant instructions in dependencies, issues and web pages that try to exfiltrate them. Run the suite on every agent and tool change and report the exfiltration rate, which must be zero for the blocked channels. Canary credentials that alert when used catch what the suite misses. Track the cost too: blocked legitimate requests and approval prompts per task, because controls that annoy developers get bypassed.</p>
+<p><strong>What the senior answer gets right.</strong> Egress control and credential scope are the hard guarantees; model-level defences are probabilistic and count only as a second layer. And the provider question is a data-governance decision, made per repository class, before any engineering.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>The agent needs internet access to read documentation. How do you allow that without opening an exfiltration channel?</li>
+<li>A developer pastes a stack trace containing a customer token into the chat. Which control catches it?</li>
+<li>How would you detect, after the fact, that code from one tenant was shown to another?</li>
+</ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>Meta, Machine Learning Engineer, Apr 2026: Prevent private code leakage in coding agents (<a href="https://prachub.com/interview-questions/prevent-private-code-leakage-in-coding-agents">PracHub</a>)</li>
+</ul>
+</div>
+</details>
 </section>
 <section id="llm-cost" class="level3">
 <h3 class="anchored" data-anchor-id="llm-cost">Cost, latency and model routing for LLM products <span class="demand">14% of postings</span></h3>
@@ -1919,33 +2005,33 @@ window.Quarto = {
 <summary>
 <span class="tag tag-senior">senior</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> Write a retry-with-validation wrapper for structured output from an LLM.
 </summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pydantic <span class="im">import</span> BaseModel, ValidationError</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> extract_json(text: <span class="bu">str</span>) <span class="op">-&gt;</span> <span class="bu">str</span>:</span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    start, end <span class="op">=</span> text.find(<span class="st">"{"</span>), text.rfind(<span class="st">"}"</span>)</span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> start <span class="op">==</span> <span class="op">-</span><span class="dv">1</span> <span class="kw">or</span> end <span class="op">&lt;=</span> start:</span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="st">"no JSON object found in output"</span>)</span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> text[start:end <span class="op">+</span> <span class="dv">1</span>]</span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> structured_call(llm, messages, schema: <span class="bu">type</span>[BaseModel], max_attempts<span class="op">=</span><span class="dv">3</span>, check<span class="op">=</span><span class="va">None</span>):</span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""llm(messages) -&gt; str. Returns a validated `schema` instance or raises."""</span></span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    msgs, last_err <span class="op">=</span> <span class="bu">list</span>(messages), <span class="va">None</span></span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> attempt <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1</span>, max_attempts <span class="op">+</span> <span class="dv">1</span>):</span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>        raw <span class="op">=</span> llm(msgs)</span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>        <span class="cf">try</span>:</span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>            obj <span class="op">=</span> schema.model_validate_json(extract_json(raw))</span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> check <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
-<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>                check(obj)                       <span class="co"># business rules; raises ValueError</span></span>
-<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> obj</span>
-<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>        <span class="cf">except</span> (ValidationError, <span class="pp">ValueError</span>) <span class="im">as</span> e:</span>
-<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>            last_err <span class="op">=</span> e</span>
-<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>            msgs <span class="op">=</span> <span class="bu">list</span>(messages) <span class="op">+</span> [            <span class="co"># keep only the latest failed attempt</span></span>
-<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>                {<span class="st">"role"</span>: <span class="st">"assistant"</span>, <span class="st">"content"</span>: raw},</span>
-<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>                {<span class="st">"role"</span>: <span class="st">"user"</span>, <span class="st">"content"</span>:</span>
-<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>                    <span class="ss">f"That output was invalid:</span><span class="ch">\n</span><span class="sc">{</span>e<span class="sc">}</span><span class="ch">\n</span><span class="ss">"</span></span>
-<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>                    <span class="st">"Return only a corrected JSON object that matches the schema."</span>},</span>
-<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>            ]</span>
-<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>    <span class="cf">raise</span> <span class="pp">RuntimeError</span>(<span class="ss">f"no valid output after </span><span class="sc">{</span>max_attempts<span class="sc">}</span><span class="ss"> attempts: </span><span class="sc">{</span>last_err<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pydantic <span class="im">import</span> BaseModel, ValidationError</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> extract_json(text: <span class="bu">str</span>) <span class="op">-&gt;</span> <span class="bu">str</span>:</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    start, end <span class="op">=</span> text.find(<span class="st">"{"</span>), text.rfind(<span class="st">"}"</span>)</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> start <span class="op">==</span> <span class="op">-</span><span class="dv">1</span> <span class="kw">or</span> end <span class="op">&lt;=</span> start:</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="st">"no JSON object found in output"</span>)</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> text[start:end <span class="op">+</span> <span class="dv">1</span>]</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> structured_call(llm, messages, schema: <span class="bu">type</span>[BaseModel], max_attempts<span class="op">=</span><span class="dv">3</span>, check<span class="op">=</span><span class="va">None</span>):</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""llm(messages) -&gt; str. Returns a validated `schema` instance or raises."""</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>    msgs, last_err <span class="op">=</span> <span class="bu">list</span>(messages), <span class="va">None</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> attempt <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1</span>, max_attempts <span class="op">+</span> <span class="dv">1</span>):</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>        raw <span class="op">=</span> llm(msgs)</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>        <span class="cf">try</span>:</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>            obj <span class="op">=</span> schema.model_validate_json(extract_json(raw))</span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> check <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>                check(obj)                       <span class="co"># business rules; raises ValueError</span></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> obj</span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>        <span class="cf">except</span> (ValidationError, <span class="pp">ValueError</span>) <span class="im">as</span> e:</span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>            last_err <span class="op">=</span> e</span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>            msgs <span class="op">=</span> <span class="bu">list</span>(messages) <span class="op">+</span> [            <span class="co"># keep only the latest failed attempt</span></span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>                {<span class="st">"role"</span>: <span class="st">"assistant"</span>, <span class="st">"content"</span>: raw},</span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>                {<span class="st">"role"</span>: <span class="st">"user"</span>, <span class="st">"content"</span>:</span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>                    <span class="ss">f"That output was invalid:</span><span class="ch">\n</span><span class="sc">{</span>e<span class="sc">}</span><span class="ch">\n</span><span class="ss">"</span></span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>                    <span class="st">"Return only a corrected JSON object that matches the schema."</span>},</span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a>            ]</span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a>    <span class="cf">raise</span> <span class="pp">RuntimeError</span>(<span class="ss">f"no valid output after </span><span class="sc">{</span>max_attempts<span class="sc">}</span><span class="ss"> attempts: </span><span class="sc">{</span>last_err<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Pitfalls an interviewer checks:</p>
 <ul>
 <li><strong>Bounded attempts.</strong> Each retry is a full paid call; two or three is the usual cap.</li>

@@ -384,7 +384,7 @@ window.Quarto = {
 <header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="Breadcrumbs"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../skills/infra.html">Systems</a></li><li class="breadcrumb-item"><a href="../skills/infra.html">Training infrastructure and data systems</a></li></ol></nav>
 <div class="quarto-title">
 <h1 class="title">Training infrastructure and data systems</h1>
-<p class="subtitle lead">Named in 78% of 2253 senior postings · 35 review cards</p>
+<p class="subtitle lead">Named in 78% of 2253 senior postings · 36 review cards</p>
 </div>
 
 
@@ -451,7 +451,7 @@ window.Quarto = {
 <td style="text-align: right;">21%</td>
 <td style="text-align: right;">7%</td>
 <td style="text-align: right;">36%</td>
-<td style="text-align: right;">5</td>
+<td style="text-align: right;">6</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"><a href="#rl-envs">Simulation, sandboxes and RL environments</a></td>
@@ -1111,6 +1111,75 @@ window.Quarto = {
 <li>How does the answer change if a failed node can be replaced without restarting the whole job?</li>
 <li>What would you measure in production to set these parameters?</li>
 </ul>
+</details>
+<details class="qa" id="infra-036">
+<summary>
+<span class="tag tag-senior">senior</span><span class="tag tag-type">derivation</span><span class="tag tag-track">RE</span> <span class="tag tag-track">MLE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at OpenAI, Anthropic, Google</span> A matrix multiply Y = XW, with X of shape (B, d_in) and W of shape (d_in, d_out), is split across P devices. Give the ways to shard it, the communication each needs in the forward and backward pass, and a performance model: FLOPs, memory, network. Then apply it to a feed-forward block.
+</summary>
+<p><strong>Single device.</strong> <span class="math inline">\(2\,B\,d_\text{in}\,d_\text{out}\)</span> FLOPs (a multiply and an add per term), <span class="math inline">\(d_\text{in} d_\text{out}\)</span> weights, and with upstream gradient <span class="math inline">\(G = \partial L/\partial Y\)</span>: <span class="math inline">\(\partial L/\partial W = X^\top G\)</span> and <span class="math inline">\(\partial L/\partial X = G W^\top\)</span>.</p>
+<p><strong>Three ways to shard.</strong></p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Shard</th>
+<th style="text-align: left;">Each device holds</th>
+<th style="text-align: left;">Forward communication</th>
+<th style="text-align: left;">Backward communication</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Batch rows</td>
+<td style="text-align: left;">all of <span class="math inline">\(W\)</span>, <span class="math inline">\(B/P\)</span> rows of <span class="math inline">\(X\)</span></td>
+<td style="text-align: left;">none</td>
+<td style="text-align: left;">sum <span class="math inline">\(X^\top G\)</span> across devices: all-reduce of <span class="math inline">\(d_\text{in} d_\text{out}\)</span> values</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Columns of <span class="math inline">\(W\)</span> (output dim)</td>
+<td style="text-align: left;"><span class="math inline">\(W[:, c_p]\)</span>, all of <span class="math inline">\(X\)</span></td>
+<td style="text-align: left;">none to compute; <span class="math inline">\(Y\)</span> is the concatenation of the parts</td>
+<td style="text-align: left;"><span class="math inline">\(\partial L/\partial W\)</span> is local; <span class="math inline">\(\partial L/\partial X = \sum_p G[:, c_p]\, W[:, c_p]^\top\)</span>: all-reduce of <span class="math inline">\(B d_\text{in}\)</span> values</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Rows of <span class="math inline">\(W\)</span> (input dim)</td>
+<td style="text-align: left;"><span class="math inline">\(W[r_p, :]\)</span>, <span class="math inline">\(X[:, r_p]\)</span></td>
+<td style="text-align: left;"><span class="math inline">\(Y = \sum_p X[:, r_p]\, W[r_p, :]\)</span>: all-reduce of <span class="math inline">\(B d_\text{out}\)</span> values</td>
+<td style="text-align: left;">every device needs <span class="math inline">\(G\)</span>; both gradients are then local</td>
+</tr>
+</tbody>
+</table>
+<p>Batch sharding replicates the weights, so it scales throughput and not model size. The other two split the weights, which is what you need when <span class="math inline">\(W\)</span> does not fit on one device. The pattern to remember: wherever the forward pass concatenates, the backward pass sums, and the reverse.</p>
+<p><strong>Feed-forward block</strong> (<span class="math inline">\(d \to 4d \to d\)</span>). Shard the first matrix by columns and the second by rows, on the same partition of the hidden units. Each device computes its own slice of the hidden layer, applies the nonlinearity (elementwise, so local), and multiplies by its rows of the second matrix. The hidden activations never leave the device. The cost is <strong>one all-reduce of <span class="math inline">\(B d\)</span> values</strong> at the output, and one in the backward pass for the gradient with respect to the input.</p>
+<p><strong>Performance model.</strong></p>
+<ul>
+<li>Compute time is FLOPs divided by the FLOP rate the device actually achieves.</li>
+<li>Communication time is bytes divided by link bandwidth, plus latency per message. A ring all-reduce moves about <span class="math inline">\(2(P-1)/P\)</span> times the tensor size per device.</li>
+<li>Memory per device is the weight shard, the activations kept for the backward pass, and communication buffers.</li>
+</ul>
+<p>Worked example, with <span class="math inline">\(d = 8192\)</span>, <span class="math inline">\(B = 4096\)</span> token positions, 16-bit floats, <span class="math inline">\(P = 8\)</span>: each matrix has 268M weights, 537 MB. The block costs <span class="math inline">\(4.4 \times 10^{12}\)</span> FLOPs. At an assumed <span class="math inline">\(10^{14}\)</span> FLOP/s per device that is 44 ms on one device and 5.5 ms on eight. The all-reduce tensor is 67 MB; at an assumed 50 GB/s it takes about 2.3 ms. So communication is already 30% of the step, and it does not shrink as devices are added, while compute per device does. That ratio, not the FLOP count, sets the scaling limit.</p>
+<p><strong>Roofline check.</strong> Arithmetic intensity is FLOPs per byte moved through memory. For a large batch the weights are reused across rows, intensity is high and the multiply is compute-bound. For <span class="math inline">\(B = 1\)</span>, each 2-byte weight is read once for 2 FLOPs: 1 FLOP per byte, which is bound by memory bandwidth, and more compute does not help. The attainable rate is <span class="math inline">\(\min(\text{peak FLOP/s},\ \text{intensity} \times \text{memory bandwidth})\)</span>.</p>
+<p><strong>What to verify.</strong> The assumed rates: measure them. And the identities: split a small random example in NumPy and compare with the unsharded result.</p>
+<p><strong>Follow-ups</strong></p>
+<ul>
+<li>Communication is 30% of the step at eight devices. What are your options to reduce it?</li>
+<li>Which sharding would you choose when the batch is one long sequence, and why?</li>
+<li>How does the picture change when devices are in different machines and the link is ten times slower?</li>
+</ul>
+<div class="reported">
+<p><strong>Reported in interviews</strong> (candidate reports on third-party sites, not verified)</p>
+<ul>
+<li>OpenAI, Machine Learning Engineer, Apr 2026: Sharded matrix multiplication and its backpropagation (<a href="https://prachub.com/interview-questions/derive-sharded-matrix-multiplication-and-backpropagation">PracHub</a>)</li>
+<li>Anthropic, Software Engineer, Sep 2026: Performance model of a sharded matrix multiply: FLOPs, memory, network (<a href="https://prachub.com/interview-questions/performance-model-a-sharded-matrix-multiply-flops-memory-network-and-roofline">PracHub</a>)</li>
+<li>Anthropic, Software Engineer, Mar 2026: Estimate feed-forward layer compute, memory and sharding communication (<a href="https://prachub.com/interview-questions/estimate-ffn-compute-memory-and-sharding-communication">PracHub</a>)</li>
+<li>Google, Machine Learning Engineer, Sep 2025: Multi-GPU matrix multiplication (<a href="https://prachub.com/interview-questions/design-multi-gpu-matrix-multiplication">PracHub</a>)</li>
+</ul>
+</div>
 </details>
 </section>
 <section id="rl-envs" class="level3">
