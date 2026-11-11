@@ -1453,3 +1453,43 @@ cards:
     probes:
       - How is this different from query autocomplete?
       - How do you stop the feature's own clicks from polluting its training data?
+
+  - id: recsys-047
+    skill: ranking
+    also: [multi-objective, recsys, labeling, metrics]
+    type: design
+    level: senior
+    tracks: [mle]
+    q: >-
+      Design a model that predicts the probability that a user dislikes an item in their feed, and explain
+      how the feed ranker should use it.
+    a: |
+      **Define the label first.** "Dislike" is several signals with different meanings: hide or "see less" (not for me), report (violates rules), unfollow or block (about the author), and implicit ones such as a fast skip. Train separate heads or a graded label; one merged binary target mixes taste with policy.
+
+      **What makes the labels hard.**
+
+      - **Rare.** Explicit negative feedback is orders of magnitude rarer than likes, so the positive class is tiny.
+      - **Missing not at random.** Most users never press hide. No feedback from them is not approval. Add a per-user feedback-propensity feature, and consider normalising within user.
+      - **Selection.** Labels exist only for items the current ranker showed, which already avoids the worst items.
+
+      **Model.** A head on the multi-task ranker, sharing the representation with engagement heads, which gives the rare task far more signal than a standalone model. Features that matter: the user's past negatives by topic, author and format; author-level negative rate with smoothing; content quality and classifier scores; similarity between this item and items the user hid.
+
+      **Training.** Downsample the majority class to keep cost down, then correct the output, because the ranker needs a calibrated probability. If non-dislike examples are kept at rate $w$, the corrected prediction is
+
+      $$p = \frac{p'}{p' + (1 - p')/w}.$$
+
+      **Offline evaluation.** PR-AUC and normalised cross-entropy, not ROC-AUC alone, which looks good on any rare class. Calibration by slice, and per-user AUC, since ranking happens within a user.
+
+      **Use in ranking.** Enter the value function as a negative term, $\text{score} = \sum_k w_k p_k - w_\text{neg}\, p_\text{dislike}$, with $w_\text{neg}$ tuned online, because one hide costs far more than one like gains. Use a hard filter only for the policy heads.
+
+      **Online evaluation.** Hides and reports per impression, survey satisfaction and retention, with engagement as a counter-metric. A dislike model that only removes borderline engaging content can cut hides and time spent together; decide beforehand what trade is acceptable.
+
+      **Failure modes.**
+
+      - The model succeeds and its labels disappear: suppressed items are no longer shown, so no one hides them. Keep a small exploration slice for training data.
+      - Coordinated hiding to bury a creator. Do not turn user-level dislike into a creator-level penalty without abuse checks.
+      - A UI change to the hide button shifts the label rate and looks like model drift.
+    probes:
+      - Hide rate fell 15% and sessions per user fell 1%. How do you decide whether to ship?
+      - How would you estimate dislike for users who have never given explicit feedback?
+      - Why does ROC-AUC flatter this model, and what would you report instead?

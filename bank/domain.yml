@@ -1022,3 +1022,76 @@ cards:
     probes:
       - Why is batched matching better than assigning each request greedily on arrival?
       - How does a better ETA model change dispatch decisions, and how would you measure that?
+
+  - id: domain-031
+    skill: cv
+    also: [metrics, python]
+    type: coding
+    level: core
+    tracks: [mle, re]
+    q: >-
+      Implement intersection over union for two sets of boxes. Then implement average precision for one
+      class of an object detector, and say how mean average precision is built from it.
+    a: |
+      **IoU**, vectorised over all pairs with broadcasting:
+
+      ```python
+      import numpy as np
+
+      def iou_matrix(a, b):
+          """a: (N, 4), b: (M, 4), boxes as x1, y1, x2, y2. Returns (N, M)."""
+          lt = np.maximum(a[:, None, :2], b[None, :, :2])
+          rb = np.minimum(a[:, None, 2:], b[None, :, 2:])
+          wh = np.clip(rb - lt, 0, None)                  # no overlap gives 0, not a negative area
+          inter = wh[..., 0] * wh[..., 1]
+          area_a = (a[:, 2] - a[:, 0]) * (a[:, 3] - a[:, 1])
+          area_b = (b[:, 2] - b[:, 0]) * (b[:, 3] - b[:, 1])
+          union = area_a[:, None] + area_b[None, :] - inter
+          return inter / np.maximum(union, 1e-12)
+      ```
+
+      **Average precision for one class.** Rank every detection of the class across the whole dataset by confidence. Walk down the ranking: a detection is a true positive if its best-overlapping unmatched ground-truth box in the same image has IoU at or above the threshold; otherwise it is a false positive. Each ground-truth box can be matched once, so a second detection of the same object is a false positive.
+
+      ```python
+      def average_precision(dets, gts, thr=0.5):
+          """dets: list of (image_id, score, box); gts: {image_id: (K, 4) array}."""
+          dets = sorted(dets, key=lambda d: -d[1])
+          used = {i: np.zeros(len(g), bool) for i, g in gts.items()}
+          n_gt = sum(len(g) for g in gts.values())
+          tp = np.zeros(len(dets))
+          for j, (img, _, box) in enumerate(dets):
+              g = gts.get(img)
+              if g is None or len(g) == 0:
+                  continue
+              ious = iou_matrix(np.asarray(box, float)[None], g)[0]
+              ious[used[img]] = -1
+              k = int(ious.argmax())
+              if ious[k] >= thr:
+                  tp[j] = 1; used[img][k] = True
+          ctp = np.cumsum(tp)
+          recall = ctp / max(n_gt, 1)
+          precision = ctp / (np.arange(len(dets)) + 1)
+          r = np.concatenate([[0.0], recall, [1.0]])
+          p = np.concatenate([[0.0], precision, [0.0]])
+          p = np.maximum.accumulate(p[::-1])[::-1]        # precision envelope
+          idx = np.nonzero(r[1:] != r[:-1])[0]
+          return float(np.sum((r[idx + 1] - r[idx]) * p[idx + 1]))
+      ```
+
+      The envelope replaces each precision by the best precision at any higher recall, which removes the sawtooth; AP is then the area under that step curve.
+
+      **mAP** is the mean of AP over classes. The convention differs by benchmark, so name the one you mean: PASCAL VOC uses IoU 0.5 (and before 2010 an 11-point interpolation); COCO averages AP over IoU thresholds 0.50 to 0.95 in steps of 0.05, samples precision at 101 recall points, caps detections at 100 per image and also reports AP by object size.
+
+      Pitfalls an interviewer looks for:
+
+      - Ranking per image instead of across the dataset.
+      - Letting one ground-truth box match several detections.
+      - A division by zero for a class with no ground truth; decide whether to skip the class or count it as 0, and say which.
+      - Pixel conventions: some datasets define width as `x2 - x1 + 1`.
+      - Running the metric after a confidence cut-off. AP needs the low-confidence tail, so evaluate with a very low threshold.
+
+      AP summarises ranking quality across all thresholds. It says nothing about calibration or about the operating point you will ship, so a product decision also needs precision and recall at the chosen threshold.
+    probes:
+      - Two detectors have the same mAP at IoU 0.5 and very different COCO mAP. What differs between them?
+      - How does non-maximum suppression interact with this metric, and what happens to AP if you remove it?
+      - Why can mAP rise while the product metric you care about falls?

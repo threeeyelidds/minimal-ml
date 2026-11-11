@@ -1,6 +1,6 @@
 ---
 title: "Review"
-subtitle: "526 cards · spaced repetition · progress by skill and track"
+subtitle: "548 cards · spaced repetition · progress by skill and track"
 toc: false
 page-layout: full
 format:
@@ -1620,6 +1620,205 @@ You are asked to make a 30-person ML engineering organisation effective with cod
 
 ::::
 
+:::: {.rv-card data-id="swe-040" data-area="swe" data-skill="dsa" data-also="python swe-practice" data-type="coding" data-level="core" data-tracks="mle ai re" data-reported="Anthropic"}
+
+::: {.rv-q}
+Implement an LRU cache with O(1) `get` and `put`. Then a staged follow-up, as in a timed assessment: build an in-memory key-value store with fields, add a prefix scan, add per-field TTL where every call carries a timestamp, and finally add backup and restore.
+:::
+
+::: {.rv-a}
+**LRU cache.** A hash map from key to node, plus a doubly linked list ordered by recency. The map gives O(1) lookup; the list gives O(1) move-to-front and O(1) eviction from the tail. Two sentinel nodes remove every empty-list branch.
+
+```python
+class Node:
+    __slots__ = ("key", "val", "prev", "next")
+    def __init__(self, key=None, val=None):
+        self.key, self.val, self.prev, self.next = key, val, None, None
+
+class LRUCache:
+    def __init__(self, capacity):
+        self.cap, self.map = capacity, {}
+        self.head, self.tail = Node(), Node()      # head.next is most recent
+        self.head.next, self.tail.prev = self.tail, self.head
+
+    def _unlink(self, n):
+        n.prev.next, n.next.prev = n.next, n.prev
+
+    def _push_front(self, n):
+        n.prev, n.next = self.head, self.head.next
+        self.head.next.prev = n
+        self.head.next = n
+
+    def get(self, key):
+        n = self.map.get(key)
+        if n is None:
+            return None
+        self._unlink(n); self._push_front(n)
+        return n.val
+
+    def put(self, key, val):
+        n = self.map.get(key)
+        if n is not None:
+            n.val = val
+            self._unlink(n); self._push_front(n)
+            return
+        if len(self.map) == self.cap:
+            lru = self.tail.prev
+            self._unlink(lru); del self.map[lru.key]
+        n = Node(key, val)
+        self.map[key] = n; self._push_front(n)
+```
+
+Pitfalls: the node must store its key, or eviction cannot delete the map entry; updating an existing key must refresh recency and must not evict; `get` counts as a use. In Python, `collections.OrderedDict` with `move_to_end` and `popitem(last=False)` is the same structure. Say so, then write the list if asked.
+
+**Staged store.** The stages are easy alone; the test is whether stage 1 survives stage 3. Put liveness in one helper, so TTL changes one function and not every method.
+
+```python
+class DB:
+    """key -> field -> (value, expires_at or None)"""
+    def __init__(self):
+        self.data = {}
+
+    def _live(self, key, ts):
+        rec = self.data.get(key, {})
+        return {f: v for f, (v, exp) in rec.items() if exp is None or ts < exp}
+
+    def set(self, ts, key, field, value, ttl=None):
+        self.data.setdefault(key, {})[field] = (value, None if ttl is None else ts + ttl)
+
+    def get(self, ts, key, field):
+        return self._live(key, ts).get(field)
+
+    def delete(self, ts, key, field):
+        if field in self._live(key, ts):
+            del self.data[key][field]
+            return True
+        return False
+
+    def scan(self, ts, key, prefix=""):
+        return sorted((f, v) for f, v in self._live(key, ts).items() if f.startswith(prefix))
+
+    def backup(self, ts):          # store remaining lifetime, not absolute expiry
+        return {k: {f: (v, None if exp is None else exp - ts)
+                    for f, (v, exp) in rec.items() if exp is None or ts < exp}
+                for k, rec in self.data.items()}
+
+    def restore(self, ts, snap):
+        self.data = {k: {f: (v, None if left is None else ts + left)
+                         for f, (v, left) in rec.items()}
+                     for k, rec in snap.items()}
+```
+
+What graders check: the expiry boundary (here a field set at `ts` with `ttl` is live on `[ts, ts + ttl)`; read the statement for which side is closed), deleting an expired field returns false, scan order is specified, and a restore recomputes expiry from the remaining lifetime. Expiry here is lazy: dead fields stay in memory until overwritten, which is fine for a timed task and worth saying aloud.
+
+In a timed assessment, pass each stage's tests before reading the next, and do not design for stages you have not seen beyond keeping storage access behind one or two helpers.
+:::
+
+::: {.rv-probes}
+- Make the LRU cache safe for concurrent readers and writers. Where does a single lock hurt, and what do real caches do instead?
+- The store now holds 10 million fields and most have expired. How do you reclaim memory without a full scan on every call?
+- Change the eviction policy to LFU with O(1) operations. What extra structure do you need?
+:::
+
+::: {.rv-reported}
+- Anthropic, Machine Learning Engineer, undated: Implement an LRU cache ([Aced (formerly Exponent)](https://www.aced.io/questions/3625/lru-cache))
+- Anthropic, Machine Learning Engineer, undated: Implement an in-memory database in a timed assessment ([Aced (formerly Exponent)](https://www.aced.io/questions/6237/implement-inmemory-database-codesignal))
+:::
+
+::::
+
+:::: {.rv-card data-id="swe-041" data-area="swe" data-skill="dsa" data-also="python" data-type="coding" data-level="senior" data-tracks="mle re" data-reported="OpenAI"}
+
+::: {.rv-q}
+A multi-part simulation question. A grid holds susceptible, infected and wall cells, and each step every infected cell infects its four neighbours. Part 1: write one step. Part 2: how many steps until nothing changes, and how many cells are never infected? Part 3: infected cells recover after k steps and become immune. Part 4: infection succeeds with probability p per infected neighbour. Part 5: make a step fast on a large grid.
+:::
+
+::: {.rv-a}
+The parts reuse one state representation, so choose it for the last part and not the first: integer codes per cell, and a step that **reads the old grid and writes a new one**. Updating in place is the classic bug: a cell infected in this step would infect its neighbours in the same step.
+
+```python
+from collections import deque
+import numpy as np
+
+S, I, R, W = 0, 1, 2, 3          # susceptible, infected, recovered, wall
+DIRS = ((1, 0), (-1, 0), (0, 1), (0, -1))
+
+def step(grid, age=None, recover_after=None):
+    n, m = len(grid), len(grid[0])
+    new = [row[:] for row in grid]
+    new_age = [row[:] for row in age] if age is not None else None
+    for r in range(n):
+        for c in range(m):
+            if grid[r][c] != I:
+                continue
+            for dr, dc in DIRS:
+                rr, cc = r + dr, c + dc
+                if 0 <= rr < n and 0 <= cc < m and grid[rr][cc] == S:
+                    new[rr][cc] = I
+            if recover_after is not None:          # part 3
+                new_age[r][c] += 1
+                if new_age[r][c] >= recover_after:
+                    new[r][c] = R
+    return (new, new_age) if age is not None else new
+```
+
+**Part 2** does not need the simulation. Without recovery, a cell is infected at the step equal to its shortest-path distance from the nearest infected cell, so one multi-source BFS gives the answer in O(nm) instead of O(nm) per step:
+
+```python
+def time_to_saturate(grid):
+    n, m = len(grid), len(grid[0])
+    dist = [[-1] * m for _ in range(n)]
+    q = deque()
+    for r in range(n):
+        for c in range(m):
+            if grid[r][c] == I:
+                dist[r][c] = 0; q.append((r, c))
+    last = 0
+    while q:
+        r, c = q.popleft()
+        for dr, dc in DIRS:
+            rr, cc = r + dr, c + dc
+            if 0 <= rr < n and 0 <= cc < m and grid[rr][cc] == S and dist[rr][cc] < 0:
+                dist[rr][cc] = last = dist[r][c] + 1
+                q.append((rr, cc))
+    unreached = sum(grid[r][c] == S and dist[r][c] < 0
+                    for r in range(n) for c in range(m))
+    return last, unreached
+```
+
+**Part 3** breaks that shortcut: with recovery the front can die out before it reaches a cell, so you simulate. State the order of events inside a step (here an infected cell infects, then ages, then may recover) because the tests depend on it.
+
+**Parts 4 and 5.** A susceptible cell with $k$ infected neighbours is infected with probability $1 - (1-p)^k$. Count neighbours with four shifted slices instead of a Python loop:
+
+```python
+def step_np(g, p=1.0, rng=None):
+    inf = (g == I)
+    k = np.zeros(g.shape, dtype=int)
+    k[1:, :] += inf[:-1, :]; k[:-1, :] += inf[1:, :]
+    k[:, 1:] += inf[:, :-1]; k[:, :-1] += inf[:, 1:]
+    hit = k > 0 if p >= 1.0 else rng.random(g.shape) < 1 - (1 - p) ** k
+    out = g.copy()
+    out[(g == S) & hit] = I
+    return out
+```
+
+Slices do not wrap around, which `np.roll` would. Pass the random generator in, so a run is reproducible and a test can fix the seed.
+
+**Testing as you go.** Check the deterministic vectorised step against the loop version on random small grids, check BFS against simulate-until-stable, and check the stochastic step by frequency: one cell between two infected cells with $p = 0.3$ should be infected in about 51% of trials.
+:::
+
+::: {.rv-probes}
+- The grid is 100,000 by 100,000 and almost empty. What representation and what update loop do you use?
+- With recovery and p < 1, how would you estimate the probability that the outbreak reaches a given cell, and how many runs do you need for a given error?
+- Your vectorised step disagrees with the loop version on one random grid in a thousand. How do you find the bug?
+:::
+
+::: {.rv-reported}
+- OpenAI, Research Engineer, Aug 2026: First-person report of two screens: a five-part grid simulation of infection spread; vectorised 1-nearest-neighbour, then as a network forward pass, then with L1 distance ([PracHub](https://prachub.com/interview-experiences/openai-research-engineer-interview-experience-two-back-to-back-screens-no-break-rejected))
+:::
+
+::::
+
 :::: {.rv-card data-id="mlfund-001" data-area="mlfund" data-skill="ml-fundamentals" data-also="" data-type="concept" data-level="core" data-tracks="mle ai re" data-reported="Nvidia|Amazon"}
 
 ::: {.rv-q}
@@ -3060,6 +3259,125 @@ Treat it as a change that needs evidence at three levels: the rows, the distribu
 - The ablation shows no difference at small scale. Does that mean the data is useless at full scale?
 - How would you detect near-duplicates across a billion documents?
 - What would make you reject a source that improves the headline metric?
+:::
+
+::::
+
+:::: {.rv-card data-id="mlfund-041" data-area="mlfund" data-skill="labeling" data-also="statistics bayesian data-quality" data-type="coding" data-level="senior" data-tracks="mle re" data-reported="OpenAI"}
+
+::: {.rv-q}
+Each item has labels from three annotators of unknown and unequal quality. Implement majority vote, say how accurate it is, then beat it. How would you find the bad annotations, and how should the classifier be trained on the result?
+:::
+
+::: {.rv-a}
+**Majority vote** weights every annotator equally. With three independent annotators of accuracy $p$ on a binary task it is right with probability $p^3 + 3p^2(1-p)$: 0.896 for $p = 0.8$. It helps when annotators are similar and hurts when one is much better: with accuracies 0.95, 0.65 and 0.60 the vote is right 83.7% of the time, worse than the best annotator alone.
+
+**Beat it by estimating who to trust** (Dawid and Skene, 1979). Treat the true label as latent and give each annotator a confusion matrix. EM alternates between the posterior over true labels and the confusion matrices:
+
+```python
+import numpy as np
+
+def majority_vote(L, K):
+    """L: (N, A) integer labels. Returns labels and (N, K) vote shares."""
+    counts = np.stack([(L == k).sum(1) for k in range(K)], axis=1)
+    return counts.argmax(1), counts / counts.sum(1, keepdims=True)
+
+def dawid_skene(L, K, iters=50, eps=1e-6):
+    """Returns posterior (N, K) and confusion (A, K, K) as conf[a, true, observed]."""
+    onehot = np.eye(K)[L]                               # (N, A, K)
+    post = majority_vote(L, K)[1]                       # initialise from vote shares
+    for _ in range(iters):
+        prior = post.mean(0)                            # M-step
+        conf = np.einsum("nk,nal->akl", post, onehot) + eps
+        conf /= conf.sum(2, keepdims=True)
+        logp = np.log(prior)[None] + np.einsum("nal,akl->nk", onehot, np.log(conf))
+        logp -= logp.max(1, keepdims=True)              # E-step
+        post = np.exp(logp); post /= post.sum(1, keepdims=True)
+    return post, conf
+```
+
+On 20,000 simulated items with those three accuracies, this reaches 95.0% against 83.5% for the vote, because it learns to follow the strong annotator. With only three annotators the estimates converge slowly and stay loose; five or more, or a small gold set to initialise the confusion matrices, makes them reliable. Missing labels need a mask in both steps.
+
+**The assumption that fails:** errors are independent given the true label. Annotators share confusions on hard items, so agreement overstates confidence. Item difficulty can be modelled too (GLAD, or item-response models).
+
+**Finding bad annotations.**
+
+- Per annotator: the estimated confusion matrix, accuracy on hidden gold items, agreement with the consensus, time per item.
+- Per label: train with cross-validation and flag items where the out-of-fold predicted probability of the given label is low (confident learning). Review the flags; hard and rare examples are flagged too, and deleting them biases the data.
+
+**Training on the result.**
+
+- Use the posterior as a soft target instead of its argmax, which keeps the uncertainty.
+- Or train on every annotator's label with an annotator-specific noise layer on top of a shared classifier, which uses the input to resolve disagreement.
+- Spend relabelling budget where the posterior is uncertain, not uniformly.
+- Keep a clean, adjudicated test set. Noisy test labels cap measured accuracy and can reorder models.
+:::
+
+::: {.rv-probes}
+- Two of the three annotators copy each other. What does that do to majority vote and to the EM estimate?
+- You can buy 10,000 more labels. Do you label new items once or relabel existing ones?
+- When is the disagreement itself the signal and not noise?
+:::
+
+::: {.rv-reported}
+- OpenAI, Machine Learning Engineer, Oct 2026: Majority-vote labels from three noisy annotators, then beat that baseline ([PracHub](https://prachub.com/interview-questions/majority-vote-labels-from-three-noisy-annotators-then-beat-the-baseline))
+- OpenAI, Machine Learning Engineer, Apr 2026: Improve training when labels come from noisy annotators ([PracHub](https://prachub.com/interview-questions/improve-training-with-noisy-annotators))
+- OpenAI, Machine Learning Engineer, Feb 2026: Improve a classifier trained on noisy multi-annotator labels ([PracHub](https://prachub.com/interview-questions/improve-classifier-with-noisy-multi-annotator-labels))
+- OpenAI, Machine Learning Engineer, Apr 2026: Filter bad human annotations ([PracHub](https://prachub.com/interview-questions/filter-bad-human-annotations))
+:::
+
+::::
+
+:::: {.rv-card data-id="mlfund-042" data-area="mlfund" data-skill="math" data-also="statistics llm-general distillation ml-fundamentals" data-type="concept" data-level="core" data-tracks="mle ai re" data-reported="Google"}
+
+::: {.rv-q}
+Define KL divergence and explain where it appears in language modelling. Why does the direction matter, what happens when the supports differ, and how do you compute it safely from logits?
+:::
+
+::: {.rv-a}
+$$D_{\mathrm{KL}}(p \,\|\, q) = \sum_x p(x) \log \frac{p(x)}{q(x)} \ge 0,$$
+
+zero only when $p = q$. It is the expected extra code length (in nats, or bits with $\log_2$) from coding samples of $p$ with a code built for $q$. It is not symmetric and not a distance: for $p = (0.5, 0.5)$ and $q = (0.9, 0.1)$, $D_{\mathrm{KL}}(p\|q) = 0.51$ and $D_{\mathrm{KL}}(q\|p) = 0.37$ nats.
+
+**Link to the training loss.** Cross-entropy decomposes as $H(p, q) = H(p) + D_{\mathrm{KL}}(p\|q)$. The data entropy $H(p)$ does not depend on the model, so minimising next-token cross-entropy is minimising the forward KL from the data distribution to the model. Perplexity is $\exp$ of that cross-entropy.
+
+**Direction.**
+
+- **Forward, $D_{\mathrm{KL}}(p_\text{data}\|q_\theta)$:** the expectation is under the data. The model is punished wherever the data has mass and the model has little, so it spreads to cover everything (mass-covering). This is maximum likelihood, and one reason a language model puts some probability on implausible text.
+- **Reverse, $D_{\mathrm{KL}}(q_\theta\|p)$:** the expectation is under the model. The model is punished for putting mass where the target has none, so it can ignore modes (mode-seeking). It needs samples from the model and a target density, which is the situation in variational inference and in policy optimisation.
+
+**Support.** If $q(x) = 0$ where $p(x) > 0$, the divergence is infinite; where $p(x) = 0$ the term is 0 by convention. A softmax never outputs exactly zero, so in practice the problem appears as huge values from tiny probabilities, and with top-k or nucleus truncation, which does create zeros. Jensen-Shannon divergence is the bounded, symmetric alternative.
+
+**Where it appears in language models.**
+
+- **Distillation:** minimise $D_{\mathrm{KL}}(p_\text{teacher}\|p_\text{student})$ per token, often at temperature $T$ with the loss scaled by $T^2$.
+- **Label smoothing:** cross-entropy against a smoothed target equals a KL to that target plus a constant.
+- **Keeping a fine-tuned policy close to a reference:** a KL penalty or constraint in policy-gradient fine-tuning, and the KL term of a VAE.
+- **Measuring change:** mean per-token KL between a model and its quantised or fine-tuned version, on the same inputs, is more sensitive than accuracy.
+
+**Computing it.** Work in log space from logits; never take `log` of a `softmax`.
+
+```python
+import numpy as np
+
+def kl_from_logits(zp, zq):
+    """KL(p || q) per row in nats, logits of shape (..., V)."""
+    lp = zp - zp.max(-1, keepdims=True); lp = lp - np.log(np.exp(lp).sum(-1, keepdims=True))
+    lq = zq - zq.max(-1, keepdims=True); lq = lq - np.log(np.exp(lq).sum(-1, keepdims=True))
+    return (np.exp(lp) * (lp - lq)).sum(-1)
+```
+
+Pitfalls: PyTorch's `F.kl_div(input, target)` expects **log-probabilities as input and probabilities as target**, and computes $D_{\mathrm{KL}}(\text{target}\|\text{input})$; its default `reduction='mean'` averages over every element, so use `'batchmean'` or sum over the vocabulary yourself. For sequences, mask padding and say whether you report per token or per sequence.
+:::
+
+::: {.rv-probes}
+- Fit a single Gaussian to a two-mode distribution under each direction. What do you get?
+- Why is the distillation loss multiplied by T squared?
+- Two models have the same perplexity on a test set. Can the KL between them be large?
+:::
+
+::: {.rv-reported}
+- Google, Machine Learning Engineer, Aug 2026: KL divergence in language models, including direction and support ([PracHub](https://prachub.com/interview-questions/explain-kl-divergence-in-language-models))
 :::
 
 ::::
@@ -4743,6 +5061,356 @@ For serving at volume, move from `generate` to a dedicated inference server; the
 ::: {.rv-probes}
 - Why left padding for decoder-only generation, and right padding for training?
 - What does merging a LoRA adapter change at inference time?
+:::
+
+::::
+
+:::: {.rv-card data-id="dl-044" data-area="dl" data-skill="dl-fundamentals" data-also="python classical-ml math" data-type="coding" data-level="core" data-tracks="mle re" data-reported="OpenAI|Meta"}
+
+::: {.rv-q}
+Implement a 1-nearest-neighbour classifier in NumPy with no Python loop over points. Then show that it is the forward pass of a small network. Follow-up: switch to Manhattan distance. What changes?
+:::
+
+::: {.rv-a}
+**Vectorised Euclidean version.** Expand the square so the pairwise term is one matrix product:
+$\lVert x - c\rVert^2 = \lVert x\rVert^2 - 2\,x^\top c + \lVert c\rVert^2$.
+
+```python
+import numpy as np
+
+def nn_l2(Xq, Xt, yt):
+    """Xq: (N, D) queries, Xt: (M, D) training points, yt: (M,) labels."""
+    d2 = (Xq ** 2).sum(1)[:, None] - 2 * Xq @ Xt.T + (Xt ** 2).sum(1)[None, :]   # (N, M)
+    return yt[d2.argmin(1)]
+```
+
+Memory is $O(NM)$, not $O(NMD)$, and the work is one BLAS call. No square root is needed, since it does not change the argmin.
+
+**As a forward pass.** $\lVert x\rVert^2$ is the same for every training point, so
+$\arg\min_j \lVert x - c_j\rVert^2 = \arg\max_j \left(c_j^\top x - \tfrac12\lVert c_j\rVert^2\right)$.
+That is a linear layer with one unit per training point, weights $W = X_t$ and bias $b_j = -\tfrac12\lVert c_j\rVert^2$, followed by an argmax and a label lookup:
+
+```python
+def nn_as_layer(Xq, Xt, yt):
+    W, b = Xt, -0.5 * (Xt ** 2).sum(1)
+    scores = Xq @ W.T + b                    # (N, M)
+    return yt[scores.argmax(1)]
+```
+
+To output class scores, add a max over the units of each class. The reading: 1-NN is a network that memorises, with width equal to the dataset size and nothing learned. With unit-norm vectors the bias is constant and this is maximum inner-product search, which is what embedding retrieval does.
+
+**Manhattan distance.** There is no expansion into a matrix product, so the direct broadcast builds an $(N, M, D)$ array. Chunk the queries to bound it:
+
+```python
+def nn_l1(Xq, Xt, yt, chunk=256):
+    out = np.empty(len(Xq), dtype=yt.dtype)
+    for i in range(0, len(Xq), chunk):
+        d = np.abs(Xq[i:i + chunk, None, :] - Xt[None, :, :]).sum(-1)
+        out[i:i + chunk] = yt[d.argmin(1)]
+    return out
+```
+
+Unchunked, 10,000 queries against 60,000 training images of 784 float32 pixels would need 1.9 TB. As a network, $|a| = \mathrm{relu}(a) + \mathrm{relu}(-a)$, so the L1 version needs a ReLU layer with $2MD$ units before the sum: no longer a single linear layer.
+
+**Pitfalls.**
+
+- Cancellation: the expanded form subtracts large, nearly equal numbers. In float32 with large-magnitude features, the distance from a point to itself can come out as 8 instead of 0, and small negatives appear. Centre the data, use float64, or clip at zero before any square root.
+- Ties: `argmin` returns the first index; say so.
+- Shapes: `[:, None]` and `[None, :]` on the norms. Getting one wrong still broadcasts when $N = M$, and silently gives wrong answers.
+- Test against a two-loop version on small random data.
+:::
+
+::: {.rv-probes}
+- Extend this to k neighbours with a majority vote, without sorting every row fully.
+- At 100 million training points this is too slow. What replaces the exact search, and what do you give up?
+- Why does nearest-neighbour search degrade in high dimensions, and why does it still work on learned embeddings?
+:::
+
+::: {.rv-reported}
+- OpenAI, Machine Learning Engineer, Sep 2026: Vectorised 1-nearest-neighbour in NumPy and its equivalence to a linear layer ([PracHub](https://prachub.com/interview-questions/vectorized-1-nearest-neighbor-in-numpy-and-its-equivalence-to-a-linear-layer))
+- OpenAI, Machine Learning Engineer, Sep 2026: 1-nearest-neighbour classifier with a Manhattan-distance follow-up ([PracHub](https://prachub.com/interview-questions/implement-a-1-nearest-neighbor-classifier-with-a-manhattan-distance-follow-up))
+- OpenAI, Machine Learning Engineer, Aug 2026: Vectorise 1-nearest-neighbour and express it as a network forward pass ([PracHub](https://prachub.com/interview-questions/vectorize-one-nearest-neighbor-and-express-it-as-a-neural-forward-pass))
+- OpenAI, Machine Learning Engineer, Apr 2026: Compute entropy and implement 1-nearest-neighbour ([PracHub](https://prachub.com/interview-questions/compute-entropy-and-implement-1-nn))
+- OpenAI, Machine Learning Engineer, May 2026: 1-nearest-neighbour classifier in NumPy ([PracHub](https://prachub.com/interview-questions/implement-1nn-with-numpy))
+- OpenAI, Research Engineer, Aug 2026: First-person report of two screens: a five-part grid simulation of infection spread; vectorised 1-nearest-neighbour, then as a network forward pass, then with L1 distance ([PracHub](https://prachub.com/interview-experiences/openai-research-engineer-interview-experience-two-back-to-back-screens-no-break-rejected))
+- Meta, Machine Learning Engineer, May 2026: 1-nearest-neighbour on embeddings and a forward pass ([PracHub](https://prachub.com/interview-questions/implement-1nn-embeddings-and-forward-pass))
+:::
+
+::::
+
+:::: {.rv-card data-id="dl-045" data-area="dl" data-skill="dl-fundamentals" data-also="pytorch python math" data-type="coding" data-level="core" data-tracks="mle ai re" data-reported="OpenAI|Nvidia"}
+
+::: {.rv-q}
+Write a two-layer MLP classifier in NumPy, forward and backward, and give the shape of every tensor and gradient. Then state the broadcasting rule and show two ways it produces a silent bug.
+:::
+
+::: {.rv-a}
+Annotate shapes as you write. With batch $B$, input $D$, hidden $H$, classes $C$:
+
+```python
+import numpy as np
+
+def forward(X, y, W1, b1, W2, b2):
+    """X: (B, D), y: (B,), W1: (D, H), b1: (H,), W2: (H, C), b2: (C,)."""
+    z1 = X @ W1 + b1                 # (B, H); b1 broadcasts over the batch
+    h = np.maximum(z1, 0)            # (B, H)
+    z2 = h @ W2 + b2                 # (B, C)
+    z2 = z2 - z2.max(1, keepdims=True)                       # (B, 1) keeps the axis
+    logp = z2 - np.log(np.exp(z2).sum(1, keepdims=True))     # (B, C)
+    loss = -logp[np.arange(len(y)), y].mean()                # scalar
+    return loss, (X, z1, h, logp)
+
+def backward(y, W2, cache):
+    X, z1, h, logp = cache
+    B = len(y)
+    dz2 = np.exp(logp); dz2[np.arange(B), y] -= 1; dz2 /= B  # (B, C)
+    dW2 = h.T @ dz2                  # (H, C)
+    db2 = dz2.sum(0)                 # (C,)
+    dh = dz2 @ W2.T                  # (B, H)
+    dz1 = dh * (z1 > 0)              # (B, H)
+    dW1 = X.T @ dz1                  # (D, H)
+    db1 = dz1.sum(0)                 # (H,)
+    return dW1, db1, dW2, db2
+```
+
+Three rules produce every line of the backward pass:
+
+- A gradient has the shape of the thing it is the gradient of. That alone tells you `dW2` must be `h.T @ dz2` and not the other order.
+- Softmax with cross-entropy gives $\partial L/\partial z = (p - \text{onehot}(y))/B$.
+- **Broadcasting forward is summing backward.** `b2` was copied across the batch, so its gradient sums over the batch axis.
+
+Parameter count is $DH + H + HC + C$. Note that `torch.nn.Linear(D, H)` stores its weight as $(H, D)$ and computes $xW^\top + b$, and it applies to the last axis, so an input of $(B, T, D)$ gives $(B, T, H)$.
+
+**Broadcasting rule.** Align shapes from the right. Two dimensions are compatible if they are equal or one of them is 1; a missing leading dimension counts as 1. So $(8, 1, 6)$ with $(7, 1)$ gives $(8, 7, 6)$, and $(2, 3)$ with $(2,)$ is an error, because 3 and 2 are compared.
+
+**Silent bugs.**
+
+- Predictions of shape $(B, 1)$ against targets of shape $(B,)$: the subtraction broadcasts to $(B, B)$, the loss is a mean over all pairs, and training runs and converges to predicting the mean. `mse_loss` only warns. Fix with `squeeze(-1)`.
+- Normalising rows with `x / x.sum(1)`: the sum has shape $(B,)$, which aligns with the last axis. For a square input this runs and divides by the wrong sums. Use `keepdim=True`.
+- A mask of shape $(B, T)$ applied to scores of shape $(B, H, T, T)$ needs explicit `[:, None, None, :]`. Without it the mask aligns with the last two axes: an error in general, and a silent wrong result when $B = T$.
+
+Defences: assert shapes at function boundaries, test with every dimension a different size (never $B = T$), and check analytic gradients against autograd or finite differences.
+:::
+
+::: {.rv-probes}
+- Derive the softmax cross-entropy gradient and show where the 1/B comes from.
+- Add a third layer and dropout. Which cached values does the backward pass now need?
+- Your gradient check passes for W2 and fails for W1. Where do you look?
+:::
+
+::: {.rv-reported}
+- OpenAI, Data Scientist, Feb 2026: Neural-network layers in NumPy, with matrix multiplication and broadcasting ([PracHub](https://prachub.com/interview-questions/implement-numpy-neural-network-layers))
+- Nvidia, Software Engineer, Jan 2026: MLP tensor shapes and PyTorch broadcasting ([PracHub](https://prachub.com/interview-questions/derive-mlp-shapes-and-explain-pytorch-broadcasting))
+:::
+
+::::
+
+:::: {.rv-card data-id="dl-046" data-area="dl" data-skill="dl-fundamentals" data-also="math python pytorch" data-type="coding" data-level="senior" data-tracks="mle re" data-reported="OpenAI"}
+
+::: {.rv-q}
+Without autograd: given y = cumprod(x) and the upstream gradient dL/dy, write the backward pass in O(n), correct when x contains zeros. Then do the same for a product of weight matrices, and write a numerically stable cross-entropy with its gradient.
+:::
+
+::: {.rv-a}
+**Scalar prefix products.** $y_i = \prod_{j \le i} x_j$, so $x_k$ affects every $y_i$ with $i \ge k$:
+
+$$\frac{\partial L}{\partial x_k} = \sum_{i \ge k} g_i \prod_{j \le i,\, j \ne k} x_j .$$
+
+The tempting form $\sum_{i \ge k} g_i\, y_i / x_k$ divides by zero. For $x = (2, 0, 3)$ and $g = (1, 1, 1)$ it returns NaN for $x_1$, where the true gradient is $x_0 + x_0 x_2 = 8$. Factor the product instead, into the part before $k$ and the part after:
+
+$$\frac{\partial L}{\partial x_k} = \Big(\prod_{j<k} x_j\Big)\, s_k, \qquad s_k = g_k + x_{k+1}\, s_{k+1}.$$
+
+```python
+import numpy as np
+
+def cumprod_backward(x, g):
+    n = len(x)
+    excl = np.ones(n)                    # excl[k] = x[0] * ... * x[k-1]
+    for k in range(1, n):
+        excl[k] = excl[k - 1] * x[k - 1]
+    grad, s = np.empty(n), 0.0
+    for k in range(n - 1, -1, -1):       # s = sum_{i>=k} g[i] * x[k+1] * ... * x[i]
+        s = g[k] + (x[k + 1] * s if k + 1 < n else 0.0)
+        grad[k] = excl[k] * s
+    return grad
+```
+
+No division, two passes, and zeros need no special case.
+
+**Matrix products.** With $Y_k = W_k Y_{k-1}$ and $Y_0 = I$, carry $B = \partial L/\partial Y_k$ backwards. The order of the factors is fixed by the shapes:
+
+```python
+def matprod_backward(Ws, G):
+    """G[k] = dL/dY_k from a loss on that prefix (zeros if none)."""
+    Ys = [np.eye(Ws[0].shape[1])]
+    for W in Ws:
+        Ys.append(W @ Ys[-1])
+    grads, B = [None] * len(Ws), np.zeros_like(Ys[-1])
+    for k in range(len(Ws) - 1, -1, -1):
+        B = B + G[k]
+        grads[k] = B @ Ys[k].T           # dL/dW_k = B Y_{k-1}^T
+        B = Ws[k].T @ B                  # pass to the previous prefix
+    return grads
+```
+
+For a loss on the last product only, this is $\partial L/\partial W_k = (W_n \cdots W_{k+1})^\top G\, (W_{k-1} \cdots W_1)^\top$. That expression is also why deep linear chains have vanishing or exploding gradients: each weight's gradient is multiplied by all the others.
+
+**Stable cross-entropy.** Never compute `log(softmax(z))` in two steps. Subtract the row maximum, then use log-sum-exp:
+
+```python
+def cross_entropy(z, y):
+    z = z - z.max(1, keepdims=True)                      # exp cannot overflow
+    logp = z - np.log(np.exp(z).sum(1, keepdims=True))
+    B = len(y)
+    grad = np.exp(logp); grad[np.arange(B), y] -= 1
+    return -logp[np.arange(B), y].mean(), grad / B
+```
+
+For logits $(1000, 0)$ and target class 1 this returns 1000; the two-step version overflows. The gradient is $(\text{softmax}(z) - \text{onehot}(y))/B$.
+
+**Check your work** against autograd or central finite differences, on inputs with zeros, with non-square matrices so a transposed factor fails loudly, and in float64.
+:::
+
+::: {.rv-probes}
+- Do the scalar version in log space. What breaks, and how do you handle signs and zeros?
+- What does the matrix-product gradient tell you about initialising a deep linear network?
+- Your finite-difference check disagrees in the fifth decimal. Bug or precision, and how do you tell?
+:::
+
+::: {.rv-reported}
+- OpenAI, Machine Learning Engineer, Sep 2026: Hand-written gradients for a prefix product and a stable cross-entropy ([PracHub](https://prachub.com/interview-questions/hand-written-gradients-prefix-product-backward-pass-and-stable-cross-entropy))
+- OpenAI, Machine Learning Engineer, Apr 2026: Matrix prefix products and their gradients ([PracHub](https://prachub.com/interview-questions/compute-matrix-prefix-products-and-gradients))
+- OpenAI, Machine Learning Engineer, Feb 2026: Backpropagation through a product of weight matrices ([PracHub](https://prachub.com/interview-questions/derive-backpropagation-for-matrix-product-layers))
+- OpenAI, Machine Learning Engineer, Aug 2025: Prefix products and their backward pass, including zeros ([PracHub](https://prachub.com/interview-questions/implement-prefix-products-and-their-backward-pass))
+:::
+
+::::
+
+:::: {.rv-card data-id="dl-047" data-area="dl" data-skill="sequence-models" data-also="pytorch dl-fundamentals training-dynamics" data-type="coding" data-level="senior" data-tracks="mle re" data-reported="OpenAI"}
+
+::: {.rv-q}
+Implement cross-entropy for a batch of padded sequences with label smoothing: logits of shape (B, T, V), integer targets, and a mask for real tokens. What are the ways to get it subtly wrong?
+:::
+
+::: {.rv-a}
+```python
+import torch, torch.nn.functional as F
+
+def masked_smoothed_ce(logits, targets, mask, eps=0.1):
+    """logits: (B, T, V); targets: (B, T) int64; mask: (B, T) bool, True = real token.
+    Returns the mean loss per real token."""
+    logp = F.log_softmax(logits, dim=-1)                              # (B, T, V)
+    safe = targets.masked_fill(~mask, 0)                              # padding ids may be out of range
+    nll = -logp.gather(-1, safe.unsqueeze(-1)).squeeze(-1)            # (B, T)
+    uniform = -logp.mean(dim=-1)                                      # (B, T)
+    loss = (1 - eps) * nll + eps * uniform
+    mask = mask.to(loss.dtype)
+    return (loss * mask).sum() / mask.sum().clamp_min(1)
+```
+
+**Why this is the smoothed loss.** The target is $q = (1 - \varepsilon)\,\text{onehot}(y) + \varepsilon/V$. Cross-entropy is linear in the target, so it splits into $(1-\varepsilon)$ times the usual negative log-likelihood plus $\varepsilon$ times the cross-entropy to the uniform distribution, which is the mean of $-\log p$ over the vocabulary. This matches `F.cross_entropy(..., label_smoothing=eps, ignore_index=...)`. Some papers spread $\varepsilon$ over the $V - 1$ wrong classes only; say which convention you use.
+
+**Ways to get it wrong.**
+
+- **The denominator.** Averaging over all $B \cdot T$ positions scales the loss by the fraction of real tokens. With 61% real tokens the loss and gradient are 61% of the right value, and they change from batch to batch with the amount of padding, which acts like a noisy learning rate.
+- **Indexing with padding ids.** A padding id of -100 or one outside the vocabulary crashes `gather`, or on GPU fails with an unhelpful assertion. Replace it before indexing, then mask.
+- **Multiplying by the mask without changing the normaliser**, or masking the logits instead of the loss.
+- **Softmax then log.** Use `log_softmax`; the two-step version underflows.
+- **An empty mask.** A batch with no real tokens divides by zero; clamp the denominator.
+- **Smoothing at evaluation.** Report unsmoothed loss and perplexity on validation data. The smoothed loss has a floor above zero, the entropy of the smoothed target: 1.41 nats for $\varepsilon = 0.1$ and $V = 50{,}000$.
+- **Per-token against per-sequence averaging.** Per-token weights long sequences more. Either is defensible; mixing them between training and evaluation is not.
+
+**What smoothing does.** With hard targets the loss keeps pushing the correct logit up without bound. With smoothing the optimum is a finite gap, $\log\frac{1 - \varepsilon + \varepsilon/V}{\varepsilon/V}$ (13.0 for the numbers above), which limits over-confidence and usually improves calibration and accuracy slightly. The costs: probabilities are no longer honest likelihoods, perplexity gets worse, and a teacher trained with smoothing gives a less informative signal for distillation.
+
+**Tests.** Compare with the built-in on random inputs in float64; check that the gradient at masked positions is exactly zero; check that adding padding to a batch does not change the loss.
+:::
+
+::: {.rv-probes}
+- How would you add per-token weights, for example to down-weight a template that repeats in every example?
+- Why does label smoothing hurt distillation from that model?
+- The loss is computed in half precision and occasionally returns infinity. Where can that come from?
+:::
+
+::: {.rv-reported}
+- OpenAI, Machine Learning Engineer, Jun 2026: Masked cross-entropy with label smoothing ([PracHub](https://prachub.com/interview-questions/implement-masked-cross-entropy-with-label-smoothing))
+:::
+
+::::
+
+:::: {.rv-card data-id="dl-048" data-area="dl" data-skill="transformers" data-also="pytorch debug-perf llm-inference training-dynamics" data-type="debug" data-level="senior" data-tracks="mle re ai" data-reported="OpenAI"}
+
+::: {.rv-q}
+You are given a small decoder-only transformer in PyTorch that runs without errors and trains badly, with several planted bugs. How do you find them? Then add a KV cache to its generation loop and show that it is correct.
+:::
+
+::: {.rv-a}
+**Find bugs with tests that localise, not by reading top to bottom.**
+
+1. **Initial loss.** With random weights it should be near $\ln V$. Far below means leakage; far above means bad initialisation or a wrong loss input.
+2. **Causality.** Change the token at position $t$; logits before $t$ must not change. This catches a missing or reversed mask in one assertion.
+3. **Overfit one batch.** Loss should go to about zero in a few hundred steps. If it cannot, the bug is in the model or optimiser, not the data.
+4. **Loss near zero on real data** within a few steps means the model sees its target: inputs and targets not shifted by one, or the mask.
+5. **Reference comparison.** Copy weights into `F.scaled_dot_product_attention` or a known-good block and compare outputs.
+6. **Train and eval modes.** Two eval-mode forward passes must be identical.
+
+**The usual planted bugs.** Mask built with `triu` where `tril` is meant, applied after the softmax, or filled with 0 and not $-\infty$; softmax over the wrong axis; the $1/\sqrt{d_k}$ scale missing; heads merged with `view` without the `transpose` back, which mixes positions and heads; no positional embedding; a residual connection dropped; targets not shifted; loss averaged over padding; probabilities passed to `cross_entropy`; `zero_grad` missing; `model.eval()` missing during generation.
+
+**KV cache.** In causal attention, the keys and values of past positions do not depend on later tokens. So generation can feed only the new token, compute its query, key and value, and append the key and value to a per-layer cache.
+
+```python
+def forward(self, x, cache=None):                      # x: (B, T, D), T = new tokens only
+    B, T, D = x.shape
+    q, k, v = self.qkv(x).view(B, T, 3, self.h, D // self.h).permute(2, 0, 3, 1, 4)   # (B, h, T, d_h)
+    if cache is not None:
+        if "k" in cache:
+            k, v = torch.cat([cache["k"], k], 2), torch.cat([cache["v"], v], 2)
+        cache["k"], cache["v"] = k, v
+    S = k.shape[2]                                     # past + new
+    att = q @ k.transpose(-1, -2) / math.sqrt(k.shape[-1])                            # (B, h, T, S)
+    causal = torch.ones(S, S, dtype=torch.bool, device=x.device).tril()[S - T:]
+    att = att.masked_fill(~causal, float("-inf")).softmax(-1)
+    return self.proj((att @ v).transpose(1, 2).reshape(B, T, D))
+
+@torch.no_grad()
+def generate(model, idx, n):
+    caches = [{} for _ in model.blocks]
+    logits = model(idx, caches)                        # prompt once
+    for _ in range(n):
+        nxt = logits[:, -1].argmax(-1, keepdim=True)
+        idx = torch.cat([idx, nxt], 1)
+        logits = model(nxt, caches, offset=idx.shape[1] - 1)
+    return idx
+```
+
+**Where cache bugs hide.**
+
+- **Position.** The new token must get position `offset`, not 0. This is the most common mistake.
+- **Mask rows.** With $T$ new tokens and $S$ total, the mask is the last $T$ rows of the $S \times S$ triangle.
+- **One cache per layer**, and per sequence in the batch; beam search must reorder it with the beams.
+- **Context limit.** With learned absolute positions, sliding the window invalidates the cache.
+
+**Prove it.** Logits from one full forward pass must equal the concatenation of cached incremental passes, to floating-point tolerance, and cached greedy generation must return the same tokens as the uncached loop.
+
+**Cost.** Without a cache each step recomputes the whole prefix, so attention work over $n$ generated tokens grows like $n^3$; with it, like $n^2$. The price is memory: $2 L T d$ values per sequence, about 4.3 GB at $L = 32$, $d = 4096$, $T = 8192$ in 16-bit floats.
+:::
+
+::: {.rv-probes}
+- The cached and uncached outputs agree for the first 20 tokens and then diverge slightly. Bug or floating point?
+- What changes in the cache for relative or rotary position encodings?
+- How would you share the cache of a common prompt prefix across many requests?
+:::
+
+::: {.rv-reported}
+- OpenAI, Machine Learning Engineer, Sep 2026: Debug a small PyTorch transformer with planted bugs, then add a KV cache ([PracHub](https://prachub.com/interview-questions/debug-a-small-pytorch-transformer-with-four-bugs-then-add-a-kv-cache))
+- OpenAI, Machine Learning Engineer, Sep 2026: Debug a transformer implementation and add a KV cache for decoding ([PracHub](https://prachub.com/interview-questions/debug-a-transformer-implementation-and-implement-a-kv-cache-for-decoding))
+- OpenAI, Machine Learning Engineer, Apr 2026: Debug a small GPT and backpropagate through a matrix multiply ([PracHub](https://prachub.com/interview-questions/debug-minigpt-and-backpropagate-matmul))
+- OpenAI, Data Scientist, Oct 2025: Debug and fix a PyTorch transformer training loop ([PracHub](https://prachub.com/interview-questions/debug-and-fix-a-pytorch-transformer-training-loop))
+- OpenAI, Machine Learning Engineer, Mar 2026: Debug a broken transformer ([PracHub](https://prachub.com/interview-questions/debug-a-broken-transformer))
+- OpenAI, Machine Learning Engineer, Aug 2025: Debug a transformer text classifier, then train and evaluate it ([PracHub](https://prachub.com/interview-questions/debug-transformer-and-train-classifier))
+- OpenAI, Machine Learning Engineer, Jul 2025: Debug an encoder-decoder transformer training pipeline ([PracHub](https://prachub.com/interview-questions/debug-a-transformer-training-pipeline))
+- OpenAI, Machine Learning Engineer, Feb 2026: Debug a transformer and add a KV cache for generation ([PracHub](https://prachub.com/interview-questions/debug-transformer-and-add-kv-cache))
+- OpenAI, Machine Learning Engineer, Aug 2025: Diagnose transformer training and inference bugs ([PracHub](https://prachub.com/interview-questions/diagnose-transformer-training-and-inference-bugs))
+- OpenAI, Machine Learning Engineer, Jan 2026: Debug a transformer that runs but behaves wrongly ([PracHub](https://prachub.com/interview-questions/debug-a-broken-transformer-implementation))
 :::
 
 ::::
@@ -9275,6 +9943,114 @@ criteria, scope growth, and a pilot group that is not representative.
 
 ::::
 
+:::: {.rv-card data-id="llmapp-046" data-area="llmapp" data-skill="guardrails" data-also="agents tool-use ai-coding-tools security-ml red-team" data-type="design" data-level="senior" data-tracks="ai mle" data-reported="Meta"}
+
+::: {.rv-q}
+Your company runs coding agents on private repositories. How can private code or secrets leak, and what do you build to prevent it? How would you test that the controls work?
+:::
+
+::: {.rv-a}
+**Enumerate the exits first.** Code can leave by five routes, and each needs its own control:
+
+1. **To the model provider**, in prompts: retention, logging, use for training.
+2. **Through the agent's own actions:** a shell command that makes a network request, a package install, a web fetch with code in the URL, a push to the wrong remote, a comment on a public issue.
+3. **Through prompt injection:** text in a dependency's README, an issue or a web page tells the agent to send data somewhere. This needs three things together: access to private data, exposure to untrusted content, and a channel out. Remove one and it fails.
+4. **Across tenants or users:** a shared retrieval index, cache or agent memory without access control; a model fine-tuned on one customer's code that reproduces it for another.
+5. **Through side stores:** traces, logs, analytics and crash reports that capture prompts.
+
+**Controls, by route.**
+
+- **Provider:** contractual zero retention and no training, or a model hosted inside the trust boundary for the most sensitive repositories. A policy map of which repositories may use which endpoint, enforced in a gateway, not left to each developer.
+- **Actions:** run the agent in a sandbox with **network egress denied by default** and an allowlist through a proxy (package mirror, internal services). Short-lived credentials scoped to one repository, read-only unless the task needs a write. Outbound actions that publish (push, open a pull request, post) need approval or are restricted to internal targets.
+- **Injection:** treat fetched and third-party content as data. After the agent has read untrusted content, restrict the tools it may call, or require approval for anything with a destination. Prompting the model to ignore instructions is not a control.
+- **Tenancy:** retrieval filtered by the caller's permissions at query time, caches and memory keyed by tenant, no training on customer code without consent.
+- **Secrets:** scan before content enters the context and scan outputs; keep `.env` files and key stores out of the agent's reach; prefer a secrets broker that injects credentials into tools without the model seeing them.
+- **Side stores:** redact and set retention on traces; restrict who can read them.
+
+**Testing.** Plant unique canary strings and canary credentials in test repositories, and plant instructions in dependencies, issues and web pages that try to exfiltrate them. Run the suite on every agent and tool change and report the exfiltration rate, which must be zero for the blocked channels. Canary credentials that alert when used catch what the suite misses. Track the cost too: blocked legitimate requests and approval prompts per task, because controls that annoy developers get bypassed.
+
+**What the senior answer gets right.** Egress control and credential scope are the hard guarantees; model-level defences are probabilistic and count only as a second layer. And the provider question is a data-governance decision, made per repository class, before any engineering.
+:::
+
+::: {.rv-probes}
+- The agent needs internet access to read documentation. How do you allow that without opening an exfiltration channel?
+- A developer pastes a stack trace containing a customer token into the chat. Which control catches it?
+- How would you detect, after the fact, that code from one tenant was shown to another?
+:::
+
+::: {.rv-reported}
+- Meta, Machine Learning Engineer, Apr 2026: Prevent private code leakage in coding agents ([PracHub](https://prachub.com/interview-questions/prevent-private-code-leakage-in-coding-agents))
+:::
+
+::::
+
+:::: {.rv-card data-id="llmapp-047" data-area="llmapp" data-skill="llm-apis" data-also="prompting structured-output evals metrics" data-type="design" data-level="senior" data-tracks="ai mle re" data-reported="Anthropic"}
+
+::: {.rv-q}
+You have one helper, `logprob(prompt, continuation)`, which returns the log-probability a language model assigns to a continuation. Build a binary text classifier from it, with a calibrated probability and a threshold you can defend.
+:::
+
+::: {.rv-a}
+**Score by comparing label continuations.** Put the input in a template that ends where the answer starts, and compare the log-probabilities of the two answers:
+
+```python
+import numpy as np
+
+YES, NO = [" Yes", " yes"], [" No", " no"]
+TEMPLATE = "Review: {text}\nIs this review positive? Answer Yes or No.\nAnswer:"
+
+def logsumexp(v):
+    v = np.asarray(v); m = v.max()
+    return m + np.log(np.exp(v - m).sum())
+
+def score(text, logprob):
+    p = TEMPLATE.format(text=text)
+    return logsumexp([logprob(p, v) for v in YES]) - logsumexp([logprob(p, v) for v in NO])
+```
+
+The difference is a log-odds restricted to the two labels, so probability mass on anything else cancels.
+
+**What goes wrong, and the fix for each.**
+
+- **Surface forms.** "Yes", "yes" and "Y" split the mass. Sum over the verbalisers of each class (the `logsumexp` above).
+- **Tokenisation.** The leading space and the casing change the tokens. A multi-token label has a lower log-probability only because it is longer, so choose single-token labels of similar frequency, or normalise.
+- **Prior bias.** The model prefers one answer regardless of input, and few-shot examples add a bias toward the majority and the most recent label. Correct it by subtracting the score of a content-free input ("N/A"), or better, by fitting a calibration map on labelled data.
+- **Prompt sensitivity.** Average the score over a few paraphrased templates.
+
+**Calibrate on a small labelled set.** Fit $p = \sigma(a s + b)$ (Platt scaling) on a few hundred examples:
+
+```python
+def fit_platt(s, y, steps=2000, lr=0.1):
+    a, b = 1.0, 0.0
+    for _ in range(steps):
+        p = 1 / (1 + np.exp(-(a * s + b)))
+        a -= lr * np.mean((p - y) * s); b -= lr * np.mean(p - y)
+    return a, b
+```
+
+In a simulation with a helper that is overconfident by a factor of 3 and biased toward "Yes", fitting on 500 examples cut log loss from 0.59 to 0.35 and barely changed accuracy: calibration fixes the probabilities, not the ranking.
+
+**Threshold.** Choose it on held-out data from the cost of each error, or to hit a target precision, and report the confidence interval: with 500 examples a precision estimate is loose. Add an abstain band around the threshold if a human can take the uncertain cases.
+
+**Evaluation.** AUROC and PR-AUC for ranking, log loss and a reliability diagram for calibration, both by slice (length, language, source). Keep the calibration set, the threshold set and the test set separate.
+
+**Cost.** One call per label per template. Cache the shared prompt prefix, batch, and if the helper can return the next-token distribution, read both labels from one call.
+
+**Limits to state.** Calibration is specific to the model version and the template, so refit after either changes. And a zero-shot score is a baseline: with a few thousand labels, a small classifier on the model's embeddings is usually cheaper and better.
+:::
+
+::: {.rv-probes}
+- Extend this to 50 classes with multi-token names. What breaks first?
+- The calibrated classifier drifts after a model upgrade. How do you detect it without new labels?
+- Why can few-shot examples make the classifier worse on the minority class?
+:::
+
+::: {.rv-reported}
+- Anthropic, Software Engineer, Sep 2025: Binary text classifier using only an LLM log-probability helper ([PracHub](https://prachub.com/interview-questions/design-an-llm-based-binary-classifier))
+:::
+
+::::
+
 :::: {.rv-card data-id="eval-001" data-area="eval" data-skill="evals" data-also="llm-evals" data-type="concept" data-level="core" data-tracks="mle ai re" data-reported=""}
 
 ::: {.rv-q}
@@ -11009,6 +11785,66 @@ freshness check, or a data-quality gate.
 
 ::::
 
+:::: {.rv-card data-id="eval-037" data-area="eval" data-skill="ml-observability" data-also="anomaly evals metrics" data-type="design" data-level="senior" data-tracks="mle re" data-reported="OpenAI"}
+
+::: {.rv-q}
+Design out-of-distribution detection for a deployed classifier: how do you score a single input, how do you evaluate the detector, and how do you monitor it in production?
+:::
+
+::: {.rv-a}
+**Say which shift you mean.** Covariate shift (familiar classes, new input style: a new camera, a new language), semantic shift (a class the model never saw), and label shift (class frequencies move). A per-input detector targets the first two; label shift is a population-level question.
+
+**Per-input scores**, cheapest first:
+
+- **Maximum softmax probability.** The baseline; weak because networks are confidently wrong far from the training data.
+- **Energy**, $T \log \sum_c e^{z_c/T}$ on the logits: free, and usually better than the softmax maximum.
+- **Feature distance**: Mahalanobis distance to the nearest class mean in the penultimate layer, or distance to the k-th nearest training embedding. Strong on semantic shift, needs no retraining.
+- **Disagreement** across an ensemble: best quality, several times the cost.
+- Likelihood from a generative model is unreliable alone: such models can assign higher likelihood to out-of-distribution images than to their training data.
+
+```python
+import numpy as np
+
+def fit_mahalanobis(feats, labels):
+    classes = np.unique(labels)
+    mu = np.stack([feats[labels == c].mean(0) for c in classes])
+    centred = feats - mu[np.searchsorted(classes, labels)]
+    prec = np.linalg.pinv(centred.T @ centred / len(feats))   # shared covariance
+    return mu, prec
+
+def mahalanobis_score(x, mu, prec):                           # higher = more in-distribution
+    d = x[:, None, :] - mu[None]
+    return -np.einsum("ncd,de,nce->nc", d, prec, d).min(1)
+
+def fpr_at_tpr(id_scores, ood_scores, tpr=0.95):
+    thr = np.quantile(id_scores, 1 - tpr)
+    return float((ood_scores >= thr).mean())
+```
+
+**Evaluation.** AUROC and the false-positive rate at 95% true-positive rate, reported separately for **near** shifts (similar classes, a new time period, a new region or device) and far ones (unrelated data). Far shifts flatter every method. Build the test sets from real held-out shifts in your own data; set the threshold on in-distribution validation data only, since real shifts are not known in advance.
+
+**Production design.**
+
+1. **Per request:** compute the score from activations the model already produces; above threshold, abstain, route to a fallback or a human, and log the input.
+2. **Population level:** compare windows of scores, embeddings and predicted-class frequencies with a reference window, using a two-sample test or a classifier trained to tell the windows apart. Many small shifts never trip the per-input threshold and still move accuracy.
+3. **Close the loop:** sample flagged inputs for labelling, measure accuracy on them, and add them to training or to the evaluation set.
+4. **Monitor the detector:** flag rate over time, precision of flags from the labelled sample, and accuracy on unflagged traffic.
+
+**Failure modes.** A flag rate that follows a benign traffic mix change and pages people for nothing; thresholds that go stale after each retrain because the feature space moved; the detector passing inputs that are in-distribution for the features and still adversarial; and treating "not flagged" as "correct", which it is not.
+:::
+
+::: {.rv-probes}
+- The flag rate doubled overnight and accuracy on a labelled sample did not move. What happened and what do you change?
+- Why can a generative model give higher likelihood to data it was never trained on?
+- How would you adapt this to a generative language model, where there are no class logits?
+:::
+
+::: {.rv-reported}
+- OpenAI, Machine Learning Engineer, Dec 2025: Out-of-distribution detection with production monitoring ([PracHub](https://prachub.com/interview-questions/design-an-ood-detection-system))
+:::
+
+::::
+
 :::: {.rv-card data-id="recsys-001" data-area="recsys" data-skill="recsys" data-also="retrieval ranking latency" data-type="concept" data-level="core" data-tracks="mle ai" data-reported=""}
 
 ::: {.rv-q}
@@ -12529,6 +13365,52 @@ Design a "people also search for" or related-query suggestion feature for a sear
 ::: {.rv-probes}
 - How is this different from query autocomplete?
 - How do you stop the feature's own clicks from polluting its training data?
+:::
+
+::::
+
+:::: {.rv-card data-id="recsys-047" data-area="recsys" data-skill="ranking" data-also="multi-objective recsys labeling metrics" data-type="design" data-level="senior" data-tracks="mle" data-reported="Meta"}
+
+::: {.rv-q}
+Design a model that predicts the probability that a user dislikes an item in their feed, and explain how the feed ranker should use it.
+:::
+
+::: {.rv-a}
+**Define the label first.** "Dislike" is several signals with different meanings: hide or "see less" (not for me), report (violates rules), unfollow or block (about the author), and implicit ones such as a fast skip. Train separate heads or a graded label; one merged binary target mixes taste with policy.
+
+**What makes the labels hard.**
+
+- **Rare.** Explicit negative feedback is orders of magnitude rarer than likes, so the positive class is tiny.
+- **Missing not at random.** Most users never press hide. No feedback from them is not approval. Add a per-user feedback-propensity feature, and consider normalising within user.
+- **Selection.** Labels exist only for items the current ranker showed, which already avoids the worst items.
+
+**Model.** A head on the multi-task ranker, sharing the representation with engagement heads, which gives the rare task far more signal than a standalone model. Features that matter: the user's past negatives by topic, author and format; author-level negative rate with smoothing; content quality and classifier scores; similarity between this item and items the user hid.
+
+**Training.** Downsample the majority class to keep cost down, then correct the output, because the ranker needs a calibrated probability. If non-dislike examples are kept at rate $w$, the corrected prediction is
+
+$$p = \frac{p'}{p' + (1 - p')/w}.$$
+
+**Offline evaluation.** PR-AUC and normalised cross-entropy, not ROC-AUC alone, which looks good on any rare class. Calibration by slice, and per-user AUC, since ranking happens within a user.
+
+**Use in ranking.** Enter the value function as a negative term, $\text{score} = \sum_k w_k p_k - w_\text{neg}\, p_\text{dislike}$, with $w_\text{neg}$ tuned online, because one hide costs far more than one like gains. Use a hard filter only for the policy heads.
+
+**Online evaluation.** Hides and reports per impression, survey satisfaction and retention, with engagement as a counter-metric. A dislike model that only removes borderline engaging content can cut hides and time spent together; decide beforehand what trade is acceptable.
+
+**Failure modes.**
+
+- The model succeeds and its labels disappear: suppressed items are no longer shown, so no one hides them. Keep a small exploration slice for training data.
+- Coordinated hiding to bury a creator. Do not turn user-level dislike into a creator-level penalty without abuse checks.
+- A UI change to the hide button shifts the label rate and looks like model drift.
+:::
+
+::: {.rv-probes}
+- Hide rate fell 15% and sessions per user fell 1%. How do you decide whether to ship?
+- How would you estimate dislike for users who have never given explicit feedback?
+- Why does ROC-AUC flatter this model, and what would you report instead?
+:::
+
+::: {.rv-reported}
+- Meta, Machine Learning Engineer, Sep 2025: Model that predicts the probability a user dislikes a feed item ([PracHub](https://prachub.com/interview-questions/design-a-newsfeed-dislike-model))
 :::
 
 ::::
@@ -14468,6 +15350,55 @@ a fidelity gap, and a policy optimised against it must be validated online.
 
 ::::
 
+:::: {.rv-card data-id="infra-036" data-area="infra" data-skill="dist-training" data-also="gpu hpc math dl-fundamentals" data-type="derivation" data-level="senior" data-tracks="re mle" data-reported="OpenAI|Anthropic|Google"}
+
+::: {.rv-q}
+A matrix multiply Y = XW, with X of shape (B, d_in) and W of shape (d_in, d_out), is split across P devices. Give the ways to shard it, the communication each needs in the forward and backward pass, and a performance model: FLOPs, memory, network. Then apply it to a feed-forward block.
+:::
+
+::: {.rv-a}
+**Single device.** $2\,B\,d_\text{in}\,d_\text{out}$ FLOPs (a multiply and an add per term), $d_\text{in} d_\text{out}$ weights, and with upstream gradient $G = \partial L/\partial Y$: $\partial L/\partial W = X^\top G$ and $\partial L/\partial X = G W^\top$.
+
+**Three ways to shard.**
+
+| Shard | Each device holds | Forward communication | Backward communication |
+|:--|:--|:--|:--|
+| Batch rows | all of $W$, $B/P$ rows of $X$ | none | sum $X^\top G$ across devices: all-reduce of $d_\text{in} d_\text{out}$ values |
+| Columns of $W$ (output dim) | $W[:, c_p]$, all of $X$ | none to compute; $Y$ is the concatenation of the parts | $\partial L/\partial W$ is local; $\partial L/\partial X = \sum_p G[:, c_p]\, W[:, c_p]^\top$: all-reduce of $B d_\text{in}$ values |
+| Rows of $W$ (input dim) | $W[r_p, :]$, $X[:, r_p]$ | $Y = \sum_p X[:, r_p]\, W[r_p, :]$: all-reduce of $B d_\text{out}$ values | every device needs $G$; both gradients are then local |
+
+Batch sharding replicates the weights, so it scales throughput and not model size. The other two split the weights, which is what you need when $W$ does not fit on one device. The pattern to remember: wherever the forward pass concatenates, the backward pass sums, and the reverse.
+
+**Feed-forward block** ($d \to 4d \to d$). Shard the first matrix by columns and the second by rows, on the same partition of the hidden units. Each device computes its own slice of the hidden layer, applies the nonlinearity (elementwise, so local), and multiplies by its rows of the second matrix. The hidden activations never leave the device. The cost is **one all-reduce of $B d$ values** at the output, and one in the backward pass for the gradient with respect to the input.
+
+**Performance model.**
+
+- Compute time is FLOPs divided by the FLOP rate the device actually achieves.
+- Communication time is bytes divided by link bandwidth, plus latency per message. A ring all-reduce moves about $2(P-1)/P$ times the tensor size per device.
+- Memory per device is the weight shard, the activations kept for the backward pass, and communication buffers.
+
+Worked example, with $d = 8192$, $B = 4096$ token positions, 16-bit floats, $P = 8$: each matrix has 268M weights, 537 MB. The block costs $4.4 \times 10^{12}$ FLOPs. At an assumed $10^{14}$ FLOP/s per device that is 44 ms on one device and 5.5 ms on eight. The all-reduce tensor is 67 MB; at an assumed 50 GB/s it takes about 2.3 ms. So communication is already 30% of the step, and it does not shrink as devices are added, while compute per device does. That ratio, not the FLOP count, sets the scaling limit.
+
+**Roofline check.** Arithmetic intensity is FLOPs per byte moved through memory. For a large batch the weights are reused across rows, intensity is high and the multiply is compute-bound. For $B = 1$, each 2-byte weight is read once for 2 FLOPs: 1 FLOP per byte, which is bound by memory bandwidth, and more compute does not help. The attainable rate is $\min(\text{peak FLOP/s},\ \text{intensity} \times \text{memory bandwidth})$.
+
+**What to verify.** The assumed rates: measure them. And the identities: split a small random example in NumPy and compare with the unsharded result.
+:::
+
+::: {.rv-probes}
+- Communication is 30% of the step at eight devices. What are your options to reduce it?
+- Which sharding would you choose when the batch is one long sequence, and why?
+- How does the picture change when devices are in different machines and the link is ten times slower?
+:::
+
+::: {.rv-reported}
+- OpenAI, Machine Learning Engineer, Apr 2026: Sharded matrix multiplication and its backpropagation ([PracHub](https://prachub.com/interview-questions/derive-sharded-matrix-multiplication-and-backpropagation))
+- Anthropic, Software Engineer, Sep 2026: Performance model of a sharded matrix multiply: FLOPs, memory, network ([PracHub](https://prachub.com/interview-questions/performance-model-a-sharded-matrix-multiply-flops-memory-network-and-roofline))
+- Anthropic, Software Engineer, Mar 2026: Estimate feed-forward layer compute, memory and sharding communication ([PracHub](https://prachub.com/interview-questions/estimate-ffn-compute-memory-and-sharding-communication))
+- Google, Machine Learning Engineer, Sep 2025: Multi-GPU matrix multiplication ([PracHub](https://prachub.com/interview-questions/design-multi-gpu-matrix-multiplication))
+:::
+
+::::
+
 :::: {.rv-card data-id="serving-001" data-area="serving" data-skill="model-serving" data-also="" data-type="tradeoff" data-level="core" data-tracks="mle ai" data-reported="Anthropic"}
 
 ::: {.rv-q}
@@ -16065,6 +16996,106 @@ service needs a quality signal in its release and alerting path.
 ::: {.rv-probes}
 - Rollback is impossible because the feature schema changed. What do you do?
 - What would an automatic rollback criterion for output quality look like?
+:::
+
+::::
+
+:::: {.rv-card data-id="serving-032" data-area="serving" data-skill="model-serving" data-also="reliability distsys sysdesign autoscaling" data-type="design" data-level="senior" data-tracks="mle ai" data-reported="Anthropic"}
+
+::: {.rv-q}
+Design the system that distributes model weight files of several hundred gigabytes to a fleet of GPU workers and activates a new version. Workers must never serve from a partial or corrupted copy, and a rollback must be fast.
+:::
+
+::: {.rv-a}
+**Separate three things:** the artifact, its distribution, and its activation. Most failures come from coupling them.
+
+**Artifact.** Immutable and content-addressed. A version is a **manifest**: the version id, the list of chunks with size and SHA-256, the file format, and a signature. Chunks of 64 to 256 MB make downloads parallel and resumable. Publish chunks first and the manifest last, so a visible manifest never points at missing data.
+
+**Distribution.**
+
+- Tiers: origin object store, a cache per region or cluster, then local NVMe on each node. Peer-to-peer fetching between nodes in a cluster spreads the fan-out.
+- The arithmetic decides the design. 500 GB over a dedicated 10 Gbit/s link takes about 400 seconds. 1,000 nodes pulling at once is 500 TB; through a shared 100 Gbit/s path that is about 11 hours, and it competes with serving traffic. So stage in the background with a bandwidth limit, in waves, from the nearest cache.
+- The node agent fetches and verifies the manifest signature, checks free disk, downloads chunks with range requests into a **staging directory**, verifies every hash, and retries a bad chunk from another source. Progress is recorded per chunk, so a crash resumes instead of restarting.
+
+**Activation.**
+
+- When all chunks verify, fsync and **rename** the staging directory to `versions/<id>`. Rename is atomic on one filesystem, so a version directory either exists complete or does not exist. The server only ever opens paths under `versions/`.
+- Which version serves is control-plane state, not "the newest directory on disk". The agent reports "staged"; the controller flips a desired-version setting for a canary group, then in stages.
+- Loading hundreds of gigabytes into GPU memory takes minutes, so a worker drains, loads, passes a health check with a known prompt and expected output, and only then rejoins. The router tracks the version each worker serves so a request is never split across versions.
+- Rollback is the same flip in reverse. Keep the previous version on disk until the new one has soaked; garbage-collect by reference count after that.
+
+**Loading speed.** Use a format that can be memory-mapped and read at disk speed without deserialising, shard files per GPU, and keep hot versions in the page cache on warm nodes.
+
+**Scale-up.** New nodes with empty disks are the worst case: autoscaling during a traffic spike makes every new node pull at once. Keep a warm pool with the current version staged, or bake it into the node image, and admit new nodes to the cache in bounded numbers.
+
+**Security.** Weights are among the most valuable assets the company has. Encrypt in transit and at rest, give nodes short-lived credentials scoped to the versions they should run, sign manifests, log every fetch, and alert on fetch volume that does not match a rollout.
+
+**Failure modes.** Silent disk corruption after verification (re-verify on load or periodically), disk full mid-download (reserve before starting), version skew between router and worker, a manifest signed for the wrong build (the canary's golden-output check catches it), and a rollback blocked because the old version was already deleted.
+
+**Metrics.** Time to stage the fleet, time from node start to ready, verification failures, origin egress, and the share of nodes on the desired version.
+:::
+
+::: {.rv-probes}
+- Why should activation be a control-plane decision and not a property of what is on disk?
+- A region's cache is down during a rollout. What should the agents do?
+- How would you cut the time from node start to first request for a model of this size?
+:::
+
+::: {.rv-reported}
+- Anthropic, Software Engineer, Apr 2026: Distribute large model weight files to a GPU worker fleet ([PracHub](https://prachub.com/interview-questions/design-model-weight-distribution))
+- Anthropic, Machine Learning Engineer, Feb 2026: Model downloader with versioning and integrity checks ([PracHub](https://prachub.com/interview-questions/design-a-model-downloader))
+- Anthropic, Software Engineer, May 2026: Distribute and activate model weights without exposing partial state ([PracHub](https://prachub.com/interview-questions/design-safe-distribution-and-activation-of-model-weights))
+:::
+
+::::
+
+:::: {.rv-card data-id="serving-033" data-area="serving" data-skill="model-serving" data-also="latency cluster gpu autoscaling reliability" data-type="design" data-level="senior" data-tracks="mle ai re" data-reported="Anthropic"}
+
+::: {.rv-q}
+You have a pool of eight GPUs and two kinds of inference work: a small model that runs on one GPU and serves many short requests, and a large model that needs all eight GPUs at once. Design the routing, batching and scheduling. How do you keep the large jobs from starving and the small ones fast?
+:::
+
+::: {.rv-a}
+**Name the conflict.** Small jobs can always start on any free GPU; the large job needs all eight free at the same moment. A scheduler that starts whatever fits will keep some GPU busy forever and the large job never runs. Everything else is refinement.
+
+**Scheduling between the two classes.**
+
+- **Reservation with draining.** When a large job reaches the head of the queue (or has waited past a threshold), stop admitting small jobs to the pool and let running ones finish.
+- **The drain is expensive.** The wait is the *maximum* of the eight remaining run times, not the mean. For exponentially distributed remaining times with mean $m$, that is $m(1 + \tfrac12 + \dots + \tfrac18) \approx 2.7m$, and about $13.7m$ GPU-seconds sit idle while the others finish. So keep small jobs short and bounded, and run large jobs back to back to amortise each switch.
+- **Backfill.** During a drain, admit a small job only if its estimated run time ends before the drain does. This needs a run-time estimate: maximum output tokens gives an upper bound.
+- **Fairness.** Account in GPU-seconds, not in job counts: one large job for a minute costs 480 GPU-seconds. Weighted fair sharing between the classes with ageing guarantees that neither waits without bound.
+- **Switching cost.** If loading a model's weights takes minutes, a switch costs more than the drain. Either keep both resident if memory allows, or schedule in windows (large jobs at fixed intervals, sized from their arrival rate and deadline).
+- If the large model's demand is steady, the honest answer may be a static split of the fleet, which this pool is too small for: say so and ask whether more hardware is an option.
+
+**Routing small requests across GPUs.**
+
+- One replica and one queue per GPU. Route to the replica with the least outstanding *work* (queued tokens), not the fewest requests; with many routers, sample two replicas and pick the lighter one.
+- Session affinity helps when a replica holds a cached prefix for that conversation, and conflicts with load balance; break affinity above a queue-length threshold.
+
+**Batching.**
+
+- Dynamic batching: dispatch when the batch is full or the oldest request has waited $d$ milliseconds. If a batch of $b$ takes $t_0 + t_1 b$, with $t_0 = 20$ ms and $t_1 = 2$ ms, throughput goes from 45 requests per second at $b = 1$ to about 308 at $b = 16$, while the compute latency goes from 22 to 52 ms plus the wait.
+- Group requests of similar length so padding does not waste the batch. For token-by-token generation use continuous batching: requests join and leave the running batch at step boundaries.
+- Set $d$ from the latency budget, not from throughput: at low load a long wait buys nothing.
+
+**Overload and failure.** Bounded queues, deadlines carried with each request, and rejection at admission when the estimated wait exceeds the deadline; a request that will miss its deadline should not consume a GPU. On a GPU failure the large model cannot run at all, so its queue needs a policy (fail fast, or run a degraded configuration), while small traffic re-routes to seven replicas.
+
+**Heterogeneous backends.** With CPU and several GPU types, route on a per-backend cost model: estimated latency and cost for this request size on each backend, capability constraints (memory, supported model), and current queue. Send small, latency-tolerant requests to the cheap backend first.
+
+**Metrics.** Queue wait and total latency at p50 and p99 by class, GPU-seconds idle during drains, utilisation, deadline misses and rejection rate.
+:::
+
+::: {.rv-probes}
+- Small-model traffic is bursty. How do you stop a burst from delaying a large job that has already waited ten minutes?
+- Where does your run-time estimate come from, and what happens when it is wrong?
+- Why is join-shortest-queue by request count a poor rule for generation workloads?
+:::
+
+::: {.rv-reported}
+- Anthropic, Software Engineer, Sep 2026: Route and batch inference across eight GPUs ([PracHub](https://prachub.com/interview-questions/route-and-batch-inference-with-eight-gpus))
+- Anthropic, Machine Learning Engineer, Aug 2026: Schedule large-model and small-model inference on an eight-GPU pool ([PracHub](https://prachub.com/interview-questions/schedule-large-and-small-model-inference-on-an-eight-gpu-pool))
+- Anthropic, Software Engineer, Aug 2026: Schedule one-GPU and eight-GPU jobs fairly ([PracHub](https://prachub.com/interview-questions/schedule-one-gpu-and-eight-gpu-model-jobs))
+- Anthropic, Machine Learning Engineer, Sep 2025: Routing and scheduling layer for heterogeneous GPU and CPU backends ([PracHub](https://prachub.com/interview-questions/design-an-inference-routing-and-scheduling-layer))
 :::
 
 ::::
@@ -18605,6 +19636,68 @@ forecast error because decision quality degrades with it.
 
 ::::
 
+:::: {.rv-card data-id="rl-027" data-area="rl" data-skill="rl" data-also="post-training statistics math pytorch" data-type="derivation" data-level="senior" data-tracks="re mle" data-reported="Anthropic|Google"}
+
+::: {.rv-q}
+Explain importance sampling as it is used when a language model is fine-tuned with a policy-gradient method: what the ratio corrects, why its variance grows with sequence length, and what clipping does. Then name the bugs you would look for in a training step that computes these ratios.
+:::
+
+::: {.rv-a}
+**What it corrects.** Samples were generated by one policy, $\mu$ (the model when the batch was sampled), and the gradient is wanted for another, $\pi_\theta$ (the model after some updates). For any $f$,
+
+$$\mathbb{E}_{x \sim \pi_\theta}[f(x)] = \mathbb{E}_{x \sim \mu}\!\left[\frac{\pi_\theta(x)}{\mu(x)} f(x)\right],$$
+
+provided $\mu(x) > 0$ wherever $\pi_\theta(x) > 0$. Reusing a batch for several gradient steps is exactly this situation.
+
+**Why variance explodes with length.** For a sequence the ratio is a product over tokens, $\prod_t \pi_\theta(x_t \mid x_{<t}) / \mu(x_t \mid x_{<t})$, so its log is a sum. If each token's log-ratio has standard deviation $\sigma$, the variance of the product grows like $e^{T\sigma^2} - 1$. With $\sigma = 0.1$: 0.11 at 10 tokens, 1.7 at 100, and about 22,000 at 1,000. The effective sample size, $(\sum w)^2 / \sum w^2$, falls to 37% of the batch at 100 tokens and to a few thousandths of a percent at 1,000: a handful of samples carry the whole estimate.
+
+**What practice does instead.**
+
+- **Per-token ratios** in a surrogate objective, not the full product. This is biased (it ignores how earlier tokens change the state distribution) and has bounded variance when the policies stay close.
+- **Clipping**, as in PPO: $\min\big(r_t A,\ \mathrm{clip}(r_t, 1-\epsilon, 1+\epsilon)\, A\big)$. When a change would improve the objective beyond the clip range, the gradient is zero; changes that make things worse are still penalised. It is a pessimistic bound, and it removes the incentive to move far from $\mu$ on one batch.
+- **A KL penalty or early stop** when the measured divergence from $\mu$ exceeds a threshold, and few epochs per batch.
+- **Self-normalised weights** (divide by $\sum w$): biased, much lower variance.
+
+```python
+import torch
+
+def clipped_pg_loss(new_logp, old_logp, adv, mask, clip=0.2):
+    """new_logp, old_logp: (B, T) log-probs of the sampled tokens; adv: (B, 1); mask: (B, T) bool."""
+    ratio = torch.exp(new_logp - old_logp.detach())          # old is a constant
+    adv = adv.detach()
+    surr = torch.minimum(ratio * adv, ratio.clamp(1 - clip, 1 + clip) * adv)
+    mask = mask.to(surr.dtype)
+    return -(surr * mask).sum() / mask.sum().clamp_min(1)
+```
+
+At ratio 1 its gradient equals the plain policy gradient, a useful unit test.
+
+**Bugs to look for.**
+
+- `old_logp` recomputed from the current model, or not detached: the ratio is always 1 or carries gradient it should not.
+- `old_logp` not from the distribution that was actually sampled. If generation used a temperature or nucleus truncation, $\mu$ is that modified distribution, and truncation also breaks the support condition.
+- Ratios from probabilities instead of log-probabilities: underflow on long sequences.
+- Padding or prompt tokens included in the sum or the mean.
+- Advantage with gradient attached, with the wrong sign, or normalised over the wrong group (across prompts when the baseline is per prompt).
+- Dropout active when scoring, so "old" and "new" differ with identical weights.
+- A mismatch between per-token ratios and a per-sequence clip, or the reverse.
+
+**Diagnostics to log every step:** mean and maximum ratio, clip fraction, approximate KL to $\mu$, and effective sample size. A clip fraction near zero means the update is too timid; near one, the batch is stale.
+:::
+
+::: {.rv-probes}
+- Why is the clipped objective asymmetric in the sign of the advantage?
+- You want to reuse samples from three checkpoints ago. What would you need to store, and when is it hopeless?
+- How does a per-prompt baseline change the variance, and does it introduce bias?
+:::
+
+::: {.rv-reported}
+- Anthropic, Software Engineer, Feb 2026: Find the bugs in a simplified GRPO training step and explain the importance ratios ([PracHub](https://prachub.com/interview-questions/debug-a-grpo-training-loop-and-explain-ratios))
+- Google, Machine Learning Engineer, Aug 2026: Importance sampling in LLM training, including variance and clipping ([PracHub](https://prachub.com/interview-questions/explain-importance-sampling-in-llm-training))
+:::
+
+::::
+
 :::: {.rv-card data-id="domain-001" data-area="domain" data-skill="cv" data-also="dl-fundamentals metrics" data-type="concept" data-level="core" data-tracks="mle re" data-reported=""}
 
 ::: {.rv-q}
@@ -19607,6 +20700,85 @@ Experiments in marketplaces suffer interference between units, so region-and-tim
 ::: {.rv-probes}
 - Why is batched matching better than assigning each request greedily on arrival?
 - How does a better ETA model change dispatch decisions, and how would you measure that?
+:::
+
+::::
+
+:::: {.rv-card data-id="domain-031" data-area="domain" data-skill="cv" data-also="metrics python" data-type="coding" data-level="core" data-tracks="mle re" data-reported="Apple"}
+
+::: {.rv-q}
+Implement intersection over union for two sets of boxes. Then implement average precision for one class of an object detector, and say how mean average precision is built from it.
+:::
+
+::: {.rv-a}
+**IoU**, vectorised over all pairs with broadcasting:
+
+```python
+import numpy as np
+
+def iou_matrix(a, b):
+    """a: (N, 4), b: (M, 4), boxes as x1, y1, x2, y2. Returns (N, M)."""
+    lt = np.maximum(a[:, None, :2], b[None, :, :2])
+    rb = np.minimum(a[:, None, 2:], b[None, :, 2:])
+    wh = np.clip(rb - lt, 0, None)                  # no overlap gives 0, not a negative area
+    inter = wh[..., 0] * wh[..., 1]
+    area_a = (a[:, 2] - a[:, 0]) * (a[:, 3] - a[:, 1])
+    area_b = (b[:, 2] - b[:, 0]) * (b[:, 3] - b[:, 1])
+    union = area_a[:, None] + area_b[None, :] - inter
+    return inter / np.maximum(union, 1e-12)
+```
+
+**Average precision for one class.** Rank every detection of the class across the whole dataset by confidence. Walk down the ranking: a detection is a true positive if its best-overlapping unmatched ground-truth box in the same image has IoU at or above the threshold; otherwise it is a false positive. Each ground-truth box can be matched once, so a second detection of the same object is a false positive.
+
+```python
+def average_precision(dets, gts, thr=0.5):
+    """dets: list of (image_id, score, box); gts: {image_id: (K, 4) array}."""
+    dets = sorted(dets, key=lambda d: -d[1])
+    used = {i: np.zeros(len(g), bool) for i, g in gts.items()}
+    n_gt = sum(len(g) for g in gts.values())
+    tp = np.zeros(len(dets))
+    for j, (img, _, box) in enumerate(dets):
+        g = gts.get(img)
+        if g is None or len(g) == 0:
+            continue
+        ious = iou_matrix(np.asarray(box, float)[None], g)[0]
+        ious[used[img]] = -1
+        k = int(ious.argmax())
+        if ious[k] >= thr:
+            tp[j] = 1; used[img][k] = True
+    ctp = np.cumsum(tp)
+    recall = ctp / max(n_gt, 1)
+    precision = ctp / (np.arange(len(dets)) + 1)
+    r = np.concatenate([[0.0], recall, [1.0]])
+    p = np.concatenate([[0.0], precision, [0.0]])
+    p = np.maximum.accumulate(p[::-1])[::-1]        # precision envelope
+    idx = np.nonzero(r[1:] != r[:-1])[0]
+    return float(np.sum((r[idx + 1] - r[idx]) * p[idx + 1]))
+```
+
+The envelope replaces each precision by the best precision at any higher recall, which removes the sawtooth; AP is then the area under that step curve.
+
+**mAP** is the mean of AP over classes. The convention differs by benchmark, so name the one you mean: PASCAL VOC uses IoU 0.5 (and before 2010 an 11-point interpolation); COCO averages AP over IoU thresholds 0.50 to 0.95 in steps of 0.05, samples precision at 101 recall points, caps detections at 100 per image and also reports AP by object size.
+
+Pitfalls an interviewer looks for:
+
+- Ranking per image instead of across the dataset.
+- Letting one ground-truth box match several detections.
+- A division by zero for a class with no ground truth; decide whether to skip the class or count it as 0, and say which.
+- Pixel conventions: some datasets define width as `x2 - x1 + 1`.
+- Running the metric after a confidence cut-off. AP needs the low-confidence tail, so evaluate with a very low threshold.
+
+AP summarises ranking quality across all thresholds. It says nothing about calibration or about the operating point you will ship, so a product decision also needs precision and recall at the chosen threshold.
+:::
+
+::: {.rv-probes}
+- Two detectors have the same mAP at IoU 0.5 and very different COCO mAP. What differs between them?
+- How does non-maximum suppression interact with this metric, and what happens to AP if you remove it?
+- Why can mAP rise while the product metric you care about falls?
+:::
+
+::: {.rv-reported}
+- Apple, Machine Learning Engineer, undated: First-person report of a phone screen: implement intersection over union, then mean average precision ([Aced (formerly Exponent)](https://www.aced.io/experiences/apple-senior-machine-learning-engineer-interview-649eca))
 :::
 
 ::::
@@ -20677,6 +21849,61 @@ Governance is the set of processes that make someone accountable for a model's b
 ::: {.rv-probes}
 - What belongs in a model card that an engineer, not a policy team, must supply?
 - How do you make a fairness requirement into a release gate without blocking every launch on noise?
+:::
+
+::::
+
+:::: {.rv-card data-id="research-035" data-area="research" data-skill="research-eng" data-also="ml-fundamentals experimentation statistics" data-type="design" data-level="senior" data-tracks="re mle" data-reported="Anthropic"}
+
+::: {.rv-q}
+Design an experiment to study sample-wise double descent: the claim that, for a fixed model, test error can get worse as you add training data. What do you run, what do you control, and what result would change your mind?
+:::
+
+::: {.rv-a}
+**State the hypothesis so it can fail.** For a fixed model and training procedure, test error against training-set size $n$ is non-monotonic, with a peak where $n$ is about the largest set the model can fit exactly. Two predictions follow and are the real test: the peak **moves right as the model gets larger**, and it **grows with label noise**.
+
+**Start where the answer is known.** Minimum-norm least squares in $d$ dimensions has a peak at $n = d$, and for $n > d + 1$ the excess risk is $\sigma^2 d/(n - d - 1)$. If the harness cannot reproduce that, do not trust it on a network.
+
+```python
+import numpy as np
+
+def run(n, d=50, sigma=0.5, trials=200, n_test=2000, seed=0):
+    rng = np.random.default_rng(seed)
+    errs = []
+    for _ in range(trials):
+        w = rng.normal(size=d) / np.sqrt(d)
+        X = rng.normal(size=(n, d)); y = X @ w + sigma * rng.normal(size=n)
+        w_hat = np.linalg.pinv(X) @ y             # minimum-norm solution when n < d
+        Xt = rng.normal(size=(n_test, d))
+        errs.append(np.mean((Xt @ (w_hat - w)) ** 2))
+    return np.mean(errs), np.median(errs)
+```
+
+With $d = 50$ this gives a mean test error of 0.78 at $n = 25$, 2.9 at $n = 45$, a median of 26 at $n = 50$, and 0.26 at $n = 100$, matching the formula ($0.25 \cdot 50/49$). Doubling the data from 25 to 50 made the model far worse. At the peak the mean is dominated by a few huge trials, so report the median and the spread.
+
+**The network experiment.**
+
+- **Grid:** 3 or 4 widths of one architecture, label noise of 0%, 10% and 20%, and about 12 values of $n$ on a log scale with extra points near each width's threshold. Five seeds per cell.
+- **Nested subsets:** each larger training set contains the smaller ones, and a noisy label stays the same across subsets. Otherwise subset variation hides the curve.
+- **Train to interpolation:** no early stopping, augmentation or weight decay in the main arm, and a fixed number of gradient steps, not epochs, so small $n$ does not get fewer updates.
+- **Measure:** test error on a large, clean, fixed test set; final training error, which locates the interpolation threshold empirically; and the full training curve, to separate this from epoch-wise double descent.
+- **Second arm:** the same grid with tuned weight decay or early stopping. The expectation is that the peak shrinks or vanishes. That arm shows whether the effect matters in practice or only for unregularised training.
+
+**Confounds to rule out.** A learning rate tuned at one $n$ and reused; an insufficient step budget that looks like a capacity limit; a noisy test set; and seed variance near the threshold, which is exactly where it is largest.
+
+**What would change my mind.** No peak at any width or noise level; or a peak whose location does not move with width, which would point to an optimisation artefact and not to interpolation.
+
+**Budget.** 4 widths x 3 noise levels x 12 sizes x 5 seeds is 720 runs per arm, so pick a model and dataset where one run takes minutes, and run the zero-noise and highest-noise columns first.
+:::
+
+::: {.rv-probes}
+- Why is the variance largest exactly at the interpolation threshold?
+- Your curve has a peak at one width only. What do you check before believing it?
+- What does this result imply for someone deciding whether to collect more data?
+:::
+
+::: {.rv-reported}
+- Anthropic, Machine Learning Engineer, Apr 2026: Design an experiment to study sample-wise double descent ([PracHub](https://prachub.com/interview-questions/design-a-double-descent-experiment))
 :::
 
 ::::
@@ -22615,6 +23842,154 @@ Design the data engine for a perception system in autonomous driving: long-tail 
 - How do you find examples of a failure you have seen only three times?
 - How do you measure auto-label quality without labelling everything by hand?
 - A new model is better on average and worse on one rare slice. Do you ship it?
+:::
+
+::::
+
+:::: {.rv-card data-id="cases-018" data-area="cases" data-skill="geospatial" data-also="recsys retrieval ranking personalization latency ab-testing" data-type="case" data-level="senior" data-tracks="mle" data-reported="Meta"}
+
+::: {.rv-q}
+Design nearby place recommendations for a mobile app: when a user opens the app, show places around them that they are likely to visit. Follow-up: the same system also decides when to send a notification about a nearby place.
+:::
+
+::: {.rv-a}
+**Clarify.** Assume 100M places worldwide, 500M daily users, 20k requests per second at peak and a 200 ms budget. The surface is a ranked list of about 20 places with no query. Ask what counts as success (a tap, a save, a visit), whether the user is at home or travelling, and what location precision and consent exist.
+
+**Metrics.** Online: place actions per session (directions, save, call, booking), confirmed visits where consent allows, hides and "not interested", and retention as the guardrail. Offline: recall@k for retrieval, NDCG for ranking, calibration of the predicted action rates, all sliced by density (city centre against rural), by home against travel, and by new against established places.
+
+**Data and labels.** Positives are graded: visit > directions or booking > save > tap. Negatives are impressions without action, corrected for position. A visit label comes from location pings matched to a place footprint, which is noisy in malls and tower blocks, so treat it as a probability and not a fact. Log the candidate set and the user's location cell at request time, so training sees what serving saw.
+
+**Architecture.**
+
+1. **Geo retrieval.** Index places by a hierarchical cell id (S2 or H3). Take the user's cell and rings of neighbours, widening until there are about 2,000 candidates: the radius must adapt, because 1 km holds thousands of places in a city centre and none in the countryside. Filter by open-now and by category policy.
+2. **Personalised retrieval** inside the geo candidate set: a two-tower model scoring user against place embeddings, plus sources for popular-nearby, places similar to ones the user saved, and places friends visited if the product has a graph.
+3. **Ranking.** A multi-task model that predicts tap, save, directions and visit. Features: distance and estimated travel time, user-category affinity, time of day and day of week, place quality (rating, review count, recency), price level, popularity at this hour, weather, and whether the user is far from their usual area. Distance sensitivity differs by category (people travel further for a restaurant than for a coffee), so let distance interact with category.
+4. **Re-ranking** for category diversity and for exploration slots given to new places.
+
+**Serving.** The place index is small enough for memory: 100M places with 200 bytes of metadata and a 64-dimension float embedding (256 bytes) is about 46 GB, sharded by region. Scoring 2,000 candidates with a light first-stage model and 200 with the full model fits the budget. Cache the non-personalised parts by coarse cell and hour.
+
+**Notifications.** This is a different decision: not which place is best, but whether interrupting now is worth it. Score the incremental value of sending (uplift against not sending), subtract a cost for fatigue, enforce a per-user budget and quiet hours, and trigger on events such as arriving somewhere new at mealtime. The guardrails are the rate of notification opt-outs and uninstalls, measured against a long-term holdout that receives none.
+
+**Evaluation and launch.** Offline replay, then an A/B test by user, read by slice. A visit lags the impression by hours or days, so fix the attribution window before the test starts.
+
+**Failure modes and iteration.**
+
+- Popularity feedback: shown places get the actions that get them shown. Use exploration and position-debiased training.
+- New places have no history: use content features (category, photos, menu text) and a boost with a decay.
+- Stale place data: closed businesses and wrong opening hours do more damage than a weak ranker.
+- Privacy: location history is sensitive. Coarsen what is stored, limit retention, exclude sensitive categories such as clinics and places of worship from inference and from notifications.
+
+**What a senior answer adds.** Density-adaptive retrieval instead of a fixed radius; the choice of label and its noise as the main modelling decision; notifications framed as an uplift problem with a budget; and privacy treated as a design constraint from the first minute.
+:::
+
+::: {.rv-probes}
+- A user lands in a city they have never visited. What changes in retrieval and in ranking?
+- Visits rise 3% and notification opt-outs rise 10%. Do you launch?
+- How do you tell a real visit from someone walking past the door?
+:::
+
+::: {.rv-reported}
+- Meta, Machine Learning Engineer, Jan 2026: Real-time nearby-place and notification ranking ([PracHub](https://prachub.com/interview-questions/design-nearby-and-notification-ranking))
+- Meta, Machine Learning Engineer, Jan 2026: Location recommendation system ([PracHub](https://prachub.com/interview-questions/design-a-location-recommendation-system))
+- Meta, Machine Learning Engineer, Mar 2026: Place recommendation for a maps or local-discovery product ([PracHub](https://prachub.com/interview-questions/design-place-recommendation-system))
+- Meta, Machine Learning Engineer, Sep 2025: Real-time nearby place recommendations for a mobile app ([PracHub](https://prachub.com/interview-questions/design-nearby-place-recommendations))
+:::
+
+::::
+
+:::: {.rv-card data-id="cases-019" data-area="cases" data-skill="representation" data-also="cv retrieval labeling data-pipelines anomaly" data-type="case" data-level="senior" data-tracks="mle re" data-reported="OpenAI"}
+
+::: {.rv-q}
+You have 10 billion unlabelled images and a labelled dataset of 50 million. Design a system that finds the images in the large corpus that are novel relative to the labelled set, so they can be labelled and added.
+:::
+
+::: {.rv-a}
+**Clarify.** Novel for what purpose? Here: content the current dataset does not cover, so that a model trained on it fails there. That makes novelty relative to a reference set and to a model, not an absolute property. Ask about the labelling budget (assume 1M images), and about licences and privacy in the corpus.
+
+**Metrics.** Precision: the share of mined groups that reviewers accept as new and useful. Recall, by a planted test: remove some known classes from the reference set, run the system, and count how many it recovers. Downstream: accuracy gain on target slices per 1,000 labels, compared with labelling a random sample.
+
+**Architecture.**
+
+1. **Clean first.** Remove corrupt and blank files, then duplicates: exact hash, perceptual hash, then near-duplicates by embedding. Without this, the outliers found are mostly junk and the largest "new clusters" are copies of one image.
+2. **Embed** every image with a general self-supervised or image-text encoder, and with the task model's own features. Two views matter, because an encoder maps content unlike its training data onto familiar regions.
+3. **Score against the reference.** Build an approximate nearest-neighbour index over the 50M labelled embeddings; an image's score is the distance to its k-th nearest labelled neighbour. Add model signals: low confidence, or disagreement between the task model and a larger model.
+4. **Separate new modes from singletons.** Take the top few percent by score and cluster them. A point far from the reference with many corpus neighbours is a new mode, which is what you want. A point far from everything is usually noise.
+5. **Review by cluster.** Show reviewers 20 samples per cluster; they name it and accept or reject it. One decision covers thousands of images, which is what makes a 1M-label budget go far.
+6. **Select and iterate.** From accepted clusters choose a diverse subset (farthest-point or k-centre selection), label it, add it to the reference, and rerun: what was novel is now covered.
+
+**Scale.** At 2,000 images per second per GPU, embedding 10B images takes 5M GPU-seconds, about 1,400 GPU-hours, so 60 GPUs finish in a day. Decoding and storage reads usually limit throughput before the GPU does. 512-dimension float16 embeddings take 10 TB; product quantisation to 64 bytes takes 640 GB. The index is over the 50M reference set, not the 10B corpus, so scoring is 10B cheap queries that parallelise by shard.
+
+**Evaluation and launch.** Run the planted-class test before trusting any ranking. Then pilot on 1% of the corpus, measure reviewer acceptance per cluster, and compare the downstream gain with a random-sample baseline at equal label cost.
+
+**Failure modes and iteration.**
+
+- Novelty that is irrelevant to the task (a new watermark style, a new aspect ratio). Reviewer rejections become negatives for a learned relevance filter.
+- Cluster granularity: too coarse hides a rare class inside a common one, too fine floods reviewers.
+- Unsafe or private content surfacing in review, since outliers concentrate it. Run safety filters first and protect reviewers.
+- Adding many rare images shifts class priors; reweight or keep the evaluation distribution fixed.
+
+**What a senior answer adds.** Novelty defined relative to the reference and the purpose; duplicates and junk handled before any modelling; the mode-versus-singleton distinction; review economics at cluster level; and a planted-class test that makes recall measurable.
+:::
+
+::: {.rv-probes}
+- Your encoder was trained on data like the labelled set. Why is that a problem, and what do you do about it?
+- How do you choose the number of clusters when you do not know how many new concepts exist?
+- After three rounds the system returns almost nothing new. How do you know whether the corpus is exhausted or the method is blind?
+:::
+
+::: {.rv-reported}
+- OpenAI, Machine Learning Engineer, Apr 2026: Mine novel images from a massive unlabelled corpus ([PracHub](https://prachub.com/interview-questions/mine-novel-images-from-unlabeled-data))
+:::
+
+::::
+
+:::: {.rv-card data-id="cases-020" data-area="cases" data-skill="model-serving" data-also="sysdesign generative autoscaling reliability guardrails backend" data-type="case" data-level="senior" data-tracks="mle ai" data-reported="OpenAI"}
+
+::: {.rv-q}
+Design a text-to-video generation service: a user submits a prompt and receives a short video minutes later. The model is given. Cover the request path, the GPU fleet and its scheduling, storage and delivery, safety, and what happens under overload.
+:::
+
+::: {.rv-a}
+**Clarify.** Assume 1M videos per day, clips of 10 seconds, and 2 GPU-minutes per clip on one GPU. Generation takes minutes, so the product is asynchronous: submit, watch progress, get notified. Ask about tiers (free and paid), maximum length and resolution, and whether a failed job is retried or refunded.
+
+**Metrics.** Time from submit to first frame and to finished video (p50 and p95, by tier), job success rate, GPU utilisation, cost per video, queue age, share of outputs blocked by safety checks, and user actions on the result (download, regenerate) as a quality proxy.
+
+**Capacity.** 1M x 2 GPU-minutes is 2M GPU-minutes per day, about 1,400 GPUs running flat out. With a peak of twice the average and a 70% utilisation target, about 4,000. Output at 10 MB per clip is 10 TB per day.
+
+**Request path.**
+
+1. **API:** authenticate, check quota, run the prompt safety check, write a job record (id, user, parameters, state) to a durable store, enqueue, return the job id. An idempotency key makes a client retry safe.
+2. **Queue:** durable, with one logical queue per priority class. The job record is the source of truth; the queue is a hint.
+3. **Workers:** each holds the model in GPU memory, leases a job with a visibility timeout, heartbeats, writes progress, uploads the result to object storage and marks the job done. A worker that dies lets the lease expire and the job is picked up again; the output key is derived from the job id, so a duplicate run overwrites and does not double-charge.
+4. **Post-processing:** encode to streaming renditions, make a thumbnail, run output safety checks on sampled frames, add provenance metadata or a watermark, then publish through a CDN with signed URLs.
+5. **Status:** the client polls or holds a server-sent event stream; preview frames from intermediate steps make a long wait tolerable.
+
+**Scheduling the fleet.**
+
+- Model load takes minutes, so keep workers warm and scale on **queue age and backlog in GPU-minutes**, not on GPU utilisation, which is always high.
+- Priority classes with weighted fair queuing across users, so one user's 500 jobs do not starve the rest. Paid work can preempt free work at a checkpoint between denoising steps.
+- Job cost varies by length and resolution. Admit by estimated GPU-minutes, and pack short jobs into batches where the model allows it.
+- Buy the base load reserved, the peak on demand, and run the free tier on preemptible capacity with resumable jobs.
+
+**Overload.** Decide in advance: reject at admission with a clear wait estimate, degrade (shorter clip, lower resolution, fewer steps) for the free tier first, and never accept work that cannot finish within its promise. A queue with no bound converts overload into timeouts for everyone.
+
+**Safety.** Check the prompt before spending GPU time and the output before release; treat likenesses of real people and minors as separate policies; rate-limit by account and device; keep an audit trail linking output to request.
+
+**Failure modes and iteration.** Poison jobs that crash every worker (cap retries, quarantine), a new model version changing the output for a retried job (pin the version in the job record), stuck jobs with live heartbeats (a deadline per job), hot-spotting when every worker reloads weights at once, and storage growth (retention by tier).
+
+**What a senior answer adds.** The arithmetic from demand to GPUs; idempotent, resumable jobs; autoscaling on backlog measured in work, not requests; and an explicit overload policy by tier.
+:::
+
+::: {.rv-probes}
+- A deploy of new weights must not drop in-flight jobs. How do you roll it out?
+- GPU utilisation is 95% and p95 completion time doubled. What do you look at first?
+- How would the design change if generation took 5 seconds instead of 2 minutes?
+:::
+
+::: {.rv-reported}
+- OpenAI, Software Engineer, May 2026: Text-to-video generation system ([PracHub](https://prachub.com/interview-questions/design-a-text-to-video-generation-system))
+- OpenAI, Software Engineer, Jul 2026: Asynchronous video generation service with GPU fleet scheduling ([PracHub](https://prachub.com/interview-questions/design-a-video-generation-service-with-gpu-fleet-management))
+- OpenAI, Software Engineer, Jun 2026: Text-to-video platform around a large model ([PracHub](https://prachub.com/interview-questions/design-a-text-to-video-generation-platform-sora-style))
 :::
 
 ::::

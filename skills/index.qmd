@@ -12,21 +12,21 @@ toc-depth: 2
 
 | Area | Postings naming it | Skills | Cards |
 |:--|:--|--:|--:|
-| [Programming and software engineering](swe.qmd) | <span class="barwrap"><span class="bar " style="--w:97%"></span><span class="pct">97%</span></span> | 17 | 39 |
-| [ML fundamentals and statistics](mlfund.qmd) | <span class="barwrap"><span class="bar " style="--w:52%"></span><span class="pct">52%</span></span> | 11 | 40 |
-| [Deep learning](dl.qmd) | <span class="barwrap"><span class="bar " style="--w:52%"></span><span class="pct">52%</span></span> | 11 | 43 |
+| [Programming and software engineering](swe.qmd) | <span class="barwrap"><span class="bar " style="--w:97%"></span><span class="pct">97%</span></span> | 17 | 41 |
+| [ML fundamentals and statistics](mlfund.qmd) | <span class="barwrap"><span class="bar " style="--w:52%"></span><span class="pct">52%</span></span> | 11 | 42 |
+| [Deep learning](dl.qmd) | <span class="barwrap"><span class="bar " style="--w:52%"></span><span class="pct">52%</span></span> | 11 | 48 |
 | [LLMs and foundation models (training side)](llm.qmd) | <span class="barwrap"><span class="bar " style="--w:79%"></span><span class="pct">79%</span></span> | 13 | 43 |
-| [LLM application engineering (agents, RAG, prompts)](llmapp.qmd) | <span class="barwrap"><span class="bar " style="--w:74%"></span><span class="pct">74%</span></span> | 14 | 45 |
-| [Evaluation and experimentation](eval.qmd) | <span class="barwrap"><span class="bar " style="--w:86%"></span><span class="pct">86%</span></span> | 9 | 36 |
-| [Search, recommendation, ads and ranking](recsys.qmd) | <span class="barwrap"><span class="bar " style="--w:55%"></span><span class="pct">55%</span></span> | 10 | 46 |
-| [Training infrastructure and data systems](infra.qmd) | <span class="barwrap"><span class="bar " style="--w:78%"></span><span class="pct">78%</span></span> | 11 | 35 |
-| [Inference, serving and model optimization](serving.qmd) | <span class="barwrap"><span class="bar " style="--w:79%"></span><span class="pct">79%</span></span> | 9 | 31 |
+| [LLM application engineering (agents, RAG, prompts)](llmapp.qmd) | <span class="barwrap"><span class="bar " style="--w:74%"></span><span class="pct">74%</span></span> | 14 | 47 |
+| [Evaluation and experimentation](eval.qmd) | <span class="barwrap"><span class="bar " style="--w:86%"></span><span class="pct">86%</span></span> | 9 | 37 |
+| [Search, recommendation, ads and ranking](recsys.qmd) | <span class="barwrap"><span class="bar " style="--w:55%"></span><span class="pct">55%</span></span> | 10 | 47 |
+| [Training infrastructure and data systems](infra.qmd) | <span class="barwrap"><span class="bar " style="--w:78%"></span><span class="pct">78%</span></span> | 11 | 36 |
+| [Inference, serving and model optimization](serving.qmd) | <span class="barwrap"><span class="bar " style="--w:79%"></span><span class="pct">79%</span></span> | 9 | 33 |
 | [MLOps, cloud and production operations](mlops.qmd) | <span class="barwrap"><span class="bar " style="--w:87%"></span><span class="pct">87%</span></span> | 8 | 31 |
-| [Reinforcement learning and decision making](rl.qmd) | <span class="barwrap"><span class="bar " style="--w:20%"></span><span class="pct">20%</span></span> | 5 | 26 |
-| [Domain specialties](domain.qmd) | <span class="barwrap"><span class="bar " style="--w:54%"></span><span class="pct">54%</span></span> | 12 | 30 |
-| [Research skills](research.qmd) | <span class="barwrap"><span class="bar " style="--w:68%"></span><span class="pct">68%</span></span> | 7 | 34 |
+| [Reinforcement learning and decision making](rl.qmd) | <span class="barwrap"><span class="bar " style="--w:20%"></span><span class="pct">20%</span></span> | 5 | 27 |
+| [Domain specialties](domain.qmd) | <span class="barwrap"><span class="bar " style="--w:54%"></span><span class="pct">54%</span></span> | 12 | 31 |
+| [Research skills](research.qmd) | <span class="barwrap"><span class="bar " style="--w:68%"></span><span class="pct">68%</span></span> | 7 | 35 |
 | [Senior-level scope and leadership](senior.qmd) | <span class="barwrap"><span class="bar " style="--w:98%"></span><span class="pct">98%</span></span> | 9 | 30 |
-| [ML and AI system design cases](cases.qmd) | <span class="muted">the design round in every loop</span> | | 17 |
+| [ML and AI system design cases](cases.qmd) | <span class="muted">the design round in every loop</span> | | 20 |
 
 ## Programming and software engineering {#swe}
 

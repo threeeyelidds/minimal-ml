@@ -50,7 +50,8 @@ reports:
   source: prachub
   path: /interview-questions/mine-novel-images-from-unlabeled-data
   topic: Mine novel images from a massive unlabelled corpus
-  cards: []
+  cards:
+  - cases-019
 - company:
   - OpenAI
   role: Software Engineer
@@ -58,7 +59,8 @@ reports:
   source: prachub
   path: /interview-questions/design-a-text-to-video-generation-system
   topic: Text-to-video generation system
-  cards: []
+  cards:
+  - cases-020
 - company:
   - OpenAI
   role: Machine Learning Engineer
@@ -102,7 +104,8 @@ reports:
   source: prachub
   path: /interview-questions/design-a-video-generation-service-with-gpu-fleet-management
   topic: Asynchronous video generation service with GPU fleet scheduling
-  cards: []
+  cards:
+  - cases-020
 - company:
   - OpenAI
   role: Machine Learning Engineer
@@ -127,7 +130,8 @@ reports:
   source: prachub
   path: /interview-questions/design-a-text-to-video-generation-platform-sora-style
   topic: Text-to-video platform around a large model
-  cards: []
+  cards:
+  - cases-020
 - company:
   - OpenAI
   role: Machine Learning Engineer
@@ -144,7 +148,8 @@ reports:
   source: prachub
   path: /interview-questions/design-an-ood-detection-system
   topic: Out-of-distribution detection with production monitoring
-  cards: []
+  cards:
+  - eval-037
 - company:
   - OpenAI
   role: Machine Learning Engineer
@@ -197,7 +202,8 @@ reports:
   source: prachub
   path: /interview-questions/majority-vote-labels-from-three-noisy-annotators-then-beat-the-baseline
   topic: Majority-vote labels from three noisy annotators, then beat that baseline
-  cards: []
+  cards:
+  - mlfund-041
 - company:
   - OpenAI
   role: Machine Learning Engineer
@@ -205,7 +211,8 @@ reports:
   source: prachub
   path: /interview-questions/debug-a-small-pytorch-transformer-with-four-bugs-then-add-a-kv-cache
   topic: Debug a small PyTorch transformer with planted bugs, then add a KV cache
-  cards: []
+  cards:
+  - dl-048
 - company:
   - OpenAI
   role: Machine Learning Engineer
@@ -213,7 +220,8 @@ reports:
   source: prachub
   path: /interview-questions/hand-written-gradients-prefix-product-backward-pass-and-stable-cross-entropy
   topic: Hand-written gradients for a prefix product and a stable cross-entropy
-  cards: []
+  cards:
+  - dl-046
 - company:
   - OpenAI
   role: Machine Learning Engineer
@@ -221,7 +229,8 @@ reports:
   source: prachub
   path: /interview-questions/vectorized-1-nearest-neighbor-in-numpy-and-its-equivalence-to-a-linear-layer
   topic: Vectorised 1-nearest-neighbour in NumPy and its equivalence to a linear layer
-  cards: []
+  cards:
+  - dl-044
 - company:
   - OpenAI
   role: Machine Learning Engineer
@@ -229,7 +238,8 @@ reports:
   source: prachub
   path: /interview-questions/debug-a-transformer-implementation-and-implement-a-kv-cache-for-decoding
   topic: Debug a transformer implementation and add a KV cache for decoding
-  cards: []
+  cards:
+  - dl-048
 - company:
   - OpenAI
   role: Machine Learning Engineer
@@ -237,7 +247,8 @@ reports:
   source: prachub
   path: /interview-questions/implement-a-1-nearest-neighbor-classifier-with-a-manhattan-distance-follow-up
   topic: 1-nearest-neighbour classifier with a Manhattan-distance follow-up
-  cards: []
+  cards:
+  - dl-044
 - company:
   - OpenAI
   role: Software Engineer
@@ -254,7 +265,8 @@ reports:
   source: prachub
   path: /interview-questions/implement-masked-cross-entropy-with-label-smoothing
   topic: Masked cross-entropy with label smoothing
-  cards: []
+  cards:
+  - dl-047
 - company:
   - OpenAI
   role: Machine Learning Engineer
@@ -262,7 +274,8 @@ reports:
   source: prachub
   path: /interview-questions/vectorize-one-nearest-neighbor-and-express-it-as-a-neural-forward-pass
   topic: Vectorise 1-nearest-neighbour and express it as a network forward pass
-  cards: []
+  cards:
+  - dl-044
 - company:
   - OpenAI
   role: Machine Learning Engineer
@@ -270,7 +283,8 @@ reports:
   source: prachub
   path: /interview-questions/improve-training-with-noisy-annotators
   topic: Improve training when labels come from noisy annotators
-  cards: []
+  cards:
+  - mlfund-041
 - company:
   - OpenAI
   role: Machine Learning Engineer
@@ -278,7 +292,8 @@ reports:
   source: prachub
   path: /interview-questions/derive-sharded-matrix-multiplication-and-backpropagation
   topic: Sharded matrix multiplication and its backpropagation
-  cards: []
+  cards:
+  - infra-036
 - company:
   - OpenAI
   role: Machine Learning Engineer
@@ -286,7 +301,8 @@ reports:
   source: prachub
   path: /interview-questions/compute-entropy-and-implement-1-nn
   topic: Compute entropy and implement 1-nearest-neighbour
-  cards: []
+  cards:
+  - dl-044
 - company:
   - OpenAI
   role: Machine Learning Engineer
@@ -295,6 +311,7 @@ reports:
   path: /interview-questions/debug-minigpt-and-backpropagate-matmul
   topic: Debug a small GPT and backpropagate through a matrix multiply
   cards:
+  - dl-048
   - dl-002
 - company:
   - OpenAI
@@ -303,7 +320,8 @@ reports:
   source: prachub
   path: /interview-questions/compute-matrix-prefix-products-and-gradients
   topic: Matrix prefix products and their gradients
-  cards: []
+  cards:
+  - dl-046
 - company:
   - OpenAI
   role: Machine Learning Engineer
@@ -311,7 +329,8 @@ reports:
   source: prachub
   path: /interview-questions/improve-classifier-with-noisy-multi-annotator-labels
   topic: Improve a classifier trained on noisy multi-annotator labels
-  cards: []
+  cards:
+  - mlfund-041
 - company:
   - OpenAI
   role: Data Scientist
@@ -319,7 +338,8 @@ reports:
   source: prachub
   path: /interview-questions/debug-and-fix-a-pytorch-transformer-training-loop
   topic: Debug and fix a PyTorch transformer training loop
-  cards: []
+  cards:
+  - dl-048
 - company:
   - OpenAI
   role: Machine Learning Engineer
@@ -336,7 +356,8 @@ reports:
   source: prachub
   path: /interview-questions/filter-bad-human-annotations
   topic: Filter bad human annotations
-  cards: []
+  cards:
+  - mlfund-041
 - company:
   - OpenAI
   role: Machine Learning Engineer
@@ -344,7 +365,8 @@ reports:
   source: prachub
   path: /interview-questions/debug-a-broken-transformer
   topic: Debug a broken transformer
-  cards: []
+  cards:
+  - dl-048
 - company:
   - OpenAI
   role: Machine Learning Engineer
@@ -352,7 +374,8 @@ reports:
   source: prachub
   path: /interview-questions/implement-1nn-with-numpy
   topic: 1-nearest-neighbour classifier in NumPy
-  cards: []
+  cards:
+  - dl-044
 - company:
   - OpenAI
   role: Software Engineer
@@ -369,7 +392,8 @@ reports:
   source: prachub
   path: /interview-questions/debug-transformer-and-train-classifier
   topic: Debug a transformer text classifier, then train and evaluate it
-  cards: []
+  cards:
+  - dl-048
 - company:
   - OpenAI
   role: Software Engineer
@@ -386,7 +410,8 @@ reports:
   source: prachub
   path: /interview-questions/debug-a-transformer-training-pipeline
   topic: Debug an encoder-decoder transformer training pipeline
-  cards: []
+  cards:
+  - dl-048
 - company:
   - OpenAI
   role: Machine Learning Engineer
@@ -394,7 +419,8 @@ reports:
   source: prachub
   path: /interview-questions/derive-backpropagation-for-matrix-product-layers
   topic: Backpropagation through a product of weight matrices
-  cards: []
+  cards:
+  - dl-046
 - company:
   - OpenAI
   role: Machine Learning Engineer
@@ -411,7 +437,8 @@ reports:
   source: prachub
   path: /interview-questions/debug-transformer-and-add-kv-cache
   topic: Debug a transformer and add a KV cache for generation
-  cards: []
+  cards:
+  - dl-048
 - company:
   - OpenAI
   role: Machine Learning Engineer
@@ -435,7 +462,8 @@ reports:
   source: prachub
   path: /interview-questions/implement-prefix-products-and-their-backward-pass
   topic: Prefix products and their backward pass, including zeros
-  cards: []
+  cards:
+  - dl-046
 - company:
   - OpenAI
   role: Machine Learning Engineer
@@ -443,7 +471,8 @@ reports:
   source: prachub
   path: /interview-questions/diagnose-transformer-training-and-inference-bugs
   topic: Diagnose transformer training and inference bugs
-  cards: []
+  cards:
+  - dl-048
 - company:
   - OpenAI
   role: Machine Learning Engineer
@@ -451,7 +480,8 @@ reports:
   source: prachub
   path: /interview-questions/debug-a-broken-transformer-implementation
   topic: Debug a transformer that runs but behaves wrongly
-  cards: []
+  cards:
+  - dl-048
 - company:
   - OpenAI
   role: Software Engineer
@@ -476,7 +506,8 @@ reports:
   source: prachub
   path: /interview-questions/implement-numpy-neural-network-layers
   topic: Neural-network layers in NumPy, with matrix multiplication and broadcasting
-  cards: []
+  cards:
+  - dl-045
 - company:
   - OpenAI
   role: Product Manager
@@ -503,7 +534,9 @@ reports:
   path: /interview-experiences/openai-research-engineer-interview-experience-two-back-to-back-screens-no-break-rejected
   topic: 'First-person report of two screens: a five-part grid simulation of infection spread; vectorised 1-nearest-neighbour,
     then as a network forward pass, then with L1 distance'
-  cards: []
+  cards:
+  - swe-041
+  - dl-044
 - company:
   - OpenAI
   role: Research Engineer
@@ -521,6 +554,7 @@ reports:
   path: /interview-questions/debug-a-grpo-training-loop-and-explain-ratios
   topic: Find the bugs in a simplified GRPO training step and explain the importance ratios
   cards:
+  - rl-027
   - llm-017
 - company:
   - Anthropic
@@ -539,6 +573,7 @@ reports:
   path: /interview-questions/design-a-double-descent-experiment
   topic: Design an experiment to study sample-wise double descent
   cards:
+  - research-035
   - mlfund-004
 - company:
   - Anthropic
@@ -592,7 +627,8 @@ reports:
   source: prachub
   path: /interview-questions/performance-model-a-sharded-matrix-multiply-flops-memory-network-and-roofline
   topic: 'Performance model of a sharded matrix multiply: FLOPs, memory, network'
-  cards: []
+  cards:
+  - infra-036
 - company:
   - Anthropic
   role: Software Engineer
@@ -600,7 +636,8 @@ reports:
   source: prachub
   path: /interview-questions/route-and-batch-inference-with-eight-gpus
   topic: Route and batch inference across eight GPUs
-  cards: []
+  cards:
+  - serving-033
 - company:
   - Anthropic
   role: Machine Learning Engineer
@@ -608,7 +645,8 @@ reports:
   source: prachub
   path: /interview-questions/schedule-large-and-small-model-inference-on-an-eight-gpu-pool
   topic: Schedule large-model and small-model inference on an eight-GPU pool
-  cards: []
+  cards:
+  - serving-033
 - company:
   - Anthropic
   role: Software Engineer
@@ -626,6 +664,7 @@ reports:
   path: /interview-questions/schedule-one-gpu-and-eight-gpu-model-jobs
   topic: Schedule one-GPU and eight-GPU jobs fairly
   cards:
+  - serving-033
   - infra-010
 - company:
   - Anthropic
@@ -634,7 +673,8 @@ reports:
   source: prachub
   path: /interview-questions/design-model-weight-distribution
   topic: Distribute large model weight files to a GPU worker fleet
-  cards: []
+  cards:
+  - serving-032
 - company:
   - Anthropic
   role: Software Engineer
@@ -670,7 +710,8 @@ reports:
   source: prachub
   path: /interview-questions/estimate-ffn-compute-memory-and-sharding-communication
   topic: Estimate feed-forward layer compute, memory and sharding communication
-  cards: []
+  cards:
+  - infra-036
 - company:
   - Anthropic
   role: Software Engineer
@@ -688,7 +729,8 @@ reports:
   source: prachub
   path: /interview-questions/design-an-inference-routing-and-scheduling-layer
   topic: Routing and scheduling layer for heterogeneous GPU and CPU backends
-  cards: []
+  cards:
+  - serving-033
 - company:
   - Anthropic
   role: Software Engineer
@@ -714,7 +756,8 @@ reports:
   source: prachub
   path: /interview-questions/design-a-model-downloader
   topic: Model downloader with versioning and integrity checks
-  cards: []
+  cards:
+  - serving-032
 - company:
   - Anthropic
   role: Software Engineer
@@ -722,7 +765,8 @@ reports:
   source: prachub
   path: /interview-questions/design-an-llm-based-binary-classifier
   topic: Binary text classifier using only an LLM log-probability helper
-  cards: []
+  cards:
+  - llmapp-047
 - company:
   - Anthropic
   role: Software Engineer
@@ -730,7 +774,8 @@ reports:
   source: prachub
   path: /interview-questions/design-safe-distribution-and-activation-of-model-weights
   topic: Distribute and activate model weights without exposing partial state
-  cards: []
+  cards:
+  - serving-032
 - company:
   - Anthropic
   role: Software Engineer
@@ -766,7 +811,8 @@ reports:
   source: aced
   path: /questions/3625/lru-cache
   topic: Implement an LRU cache
-  cards: []
+  cards:
+  - swe-040
 - company:
   - Anthropic
   role: Machine Learning Engineer
@@ -774,7 +820,8 @@ reports:
   source: aced
   path: /questions/6237/implement-inmemory-database-codesignal
   topic: Implement an in-memory database in a timed assessment
-  cards: []
+  cards:
+  - swe-040
 - company:
   - Anthropic
   role: Machine Learning Engineer
@@ -999,7 +1046,8 @@ reports:
   source: prachub
   path: /interview-questions/explain-kl-divergence-in-language-models
   topic: KL divergence in language models, including direction and support
-  cards: []
+  cards:
+  - mlfund-042
 - company:
   - Google
   role: Machine Learning Engineer
@@ -1017,7 +1065,8 @@ reports:
   source: prachub
   path: /interview-questions/explain-importance-sampling-in-llm-training
   topic: Importance sampling in LLM training, including variance and clipping
-  cards: []
+  cards:
+  - rl-027
 - company:
   - Google
   role: Machine Learning Engineer
@@ -1159,7 +1208,8 @@ reports:
   source: prachub
   path: /interview-questions/design-multi-gpu-matrix-multiplication
   topic: Multi-GPU matrix multiplication
-  cards: []
+  cards:
+  - infra-036
 - company:
   - Google
   role: Software Engineer
@@ -1236,7 +1286,8 @@ reports:
   source: prachub
   path: /interview-questions/prevent-private-code-leakage-in-coding-agents
   topic: Prevent private code leakage in coding agents
-  cards: []
+  cards:
+  - llmapp-046
 - company:
   - Meta
   role: Machine Learning Engineer
@@ -1244,7 +1295,8 @@ reports:
   source: prachub
   path: /interview-questions/design-nearby-and-notification-ranking
   topic: Real-time nearby-place and notification ranking
-  cards: []
+  cards:
+  - cases-018
 - company:
   - Meta
   role: Machine Learning Engineer
@@ -1298,7 +1350,8 @@ reports:
   source: prachub
   path: /interview-questions/design-a-location-recommendation-system
   topic: Location recommendation system
-  cards: []
+  cards:
+  - cases-018
 - company:
   - Meta
   role: Machine Learning Engineer
@@ -1315,7 +1368,8 @@ reports:
   source: prachub
   path: /interview-questions/design-a-newsfeed-dislike-model
   topic: Model that predicts the probability a user dislikes a feed item
-  cards: []
+  cards:
+  - recsys-047
 - company:
   - Meta
   role: Machine Learning Engineer
@@ -1342,7 +1396,8 @@ reports:
   source: prachub
   path: /interview-questions/design-place-recommendation-system
   topic: Place recommendation for a maps or local-discovery product
-  cards: []
+  cards:
+  - cases-018
 - company:
   - Meta
   role: Machine Learning Engineer
@@ -1350,7 +1405,8 @@ reports:
   source: prachub
   path: /interview-questions/design-nearby-place-recommendations
   topic: Real-time nearby place recommendations for a mobile app
-  cards: []
+  cards:
+  - cases-018
 - company:
   - Meta
   role: Machine Learning Engineer
@@ -1403,7 +1459,8 @@ reports:
   source: prachub
   path: /interview-questions/implement-1nn-embeddings-and-forward-pass
   topic: 1-nearest-neighbour on embeddings and a forward pass
-  cards: []
+  cards:
+  - dl-044
 - company:
   - Meta
   role: Machine Learning Engineer
@@ -1486,7 +1543,8 @@ reports:
   source: prachub
   path: /interview-questions/derive-mlp-shapes-and-explain-pytorch-broadcasting
   topic: MLP tensor shapes and PyTorch broadcasting
-  cards: []
+  cards:
+  - dl-045
 - company:
   - Nvidia
   role: Applied Scientist
@@ -1779,4 +1837,5 @@ reports:
   source: aced
   path: /experiences/apple-senior-machine-learning-engineer-interview-649eca
   topic: 'First-person report of a phone screen: implement intersection over union, then mean average precision'
-  cards: []
+  cards:
+  - domain-031

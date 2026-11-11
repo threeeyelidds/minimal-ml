@@ -1,6 +1,6 @@
 ---
 title: "LLM application engineering (agents, RAG, prompts)"
-subtitle: "Named in 74% of 2253 senior postings · 45 review cards"
+subtitle: "Named in 74% of 2253 senior postings · 47 review cards"
 toc: true
 toc-depth: 3
 ---
@@ -18,12 +18,12 @@ Share of postings that name each skill, overall and by track.
 |:--|:--|--:|--:|--:|--:|
 | [Agents and agentic systems](#agents) | <span class="barwrap"><span class="bar " style="--w:57%"></span><span class="pct">57%</span></span> | 37% | 75% | 51% | 7 |
 | [Agent frameworks, harnesses and runtimes (LangGraph, LlamaIndex, agent SDKs)](#orchestration) | <span class="barwrap"><span class="bar " style="--w:26%"></span><span class="pct">26%</span></span> | 13% | 40% | 10% | 4 |
-| [Building on model APIs (OpenAI, Anthropic, Gemini, Bedrock)](#llm-apis) | <span class="barwrap"><span class="bar " style="--w:25%"></span><span class="pct">25%</span></span> | 16% | 32% | 24% | 2 |
+| [Building on model APIs (OpenAI, Anthropic, Gemini, Bedrock)](#llm-apis) | <span class="barwrap"><span class="bar " style="--w:25%"></span><span class="pct">25%</span></span> | 16% | 32% | 24% | 3 |
 | [Prompt and context engineering](#prompting) | <span class="barwrap"><span class="bar " style="--w:22%"></span><span class="pct">22%</span></span> | 13% | 33% | 10% | 5 |
 | [Retrieval-augmented generation](#rag) | <span class="barwrap"><span class="bar " style="--w:22%"></span><span class="pct">22%</span></span> | 15% | 32% | 4% | 8 |
 | [Tool use, function calling, MCP](#tool-use) | <span class="barwrap"><span class="bar " style="--w:21%"></span><span class="pct">21%</span></span> | 11% | 31% | 12% | 5 |
 | [Workflow automation and enterprise integration](#workflow-automation) | <span class="barwrap"><span class="bar " style="--w:17%"></span><span class="pct">17%</span></span> | 8% | 27% | 6% | 1 |
-| [Guardrails, safety filters, hallucination control](#guardrails) | <span class="barwrap"><span class="bar " style="--w:16%"></span><span class="pct">16%</span></span> | 11% | 23% | 4% | 2 |
+| [Guardrails, safety filters, hallucination control](#guardrails) | <span class="barwrap"><span class="bar " style="--w:16%"></span><span class="pct">16%</span></span> | 11% | 23% | 4% | 3 |
 | [Cost, latency and model routing for LLM products](#llm-cost) | <span class="barwrap"><span class="bar " style="--w:14%"></span><span class="pct">14%</span></span> | 12% | 19% | 4% | 3 |
 | [Forward-deployed / customer-embedded delivery](#fde) | <span class="barwrap"><span class="bar " style="--w:12%"></span><span class="pct">12%</span></span> | 6% | 18% | 8% | 2 |
 | [Vector search and embedding stores](#vector-db) | <span class="barwrap"><span class="bar " style="--w:12%"></span><span class="pct">12%</span></span> | 7% | 18% | 1% | 2 |
@@ -621,6 +621,72 @@ distributed systems treat networks.
 
 - A test passes locally and fails in CI one time in ten. What do you do?
 - How do you decide the number of trials per eval case?
+
+</details>
+
+<details class="qa" id="llmapp-047">
+<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">AI</span> <span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Anthropic</span> You have one helper, `logprob(prompt, continuation)`, which returns the log-probability a language model assigns to a continuation. Build a binary text classifier from it, with a calibrated probability and a threshold you can defend.</summary>
+
+**Score by comparing label continuations.** Put the input in a template that ends where the answer starts, and compare the log-probabilities of the two answers:
+
+```python
+import numpy as np
+
+YES, NO = [" Yes", " yes"], [" No", " no"]
+TEMPLATE = "Review: {text}\nIs this review positive? Answer Yes or No.\nAnswer:"
+
+def logsumexp(v):
+    v = np.asarray(v); m = v.max()
+    return m + np.log(np.exp(v - m).sum())
+
+def score(text, logprob):
+    p = TEMPLATE.format(text=text)
+    return logsumexp([logprob(p, v) for v in YES]) - logsumexp([logprob(p, v) for v in NO])
+```
+
+The difference is a log-odds restricted to the two labels, so probability mass on anything else cancels.
+
+**What goes wrong, and the fix for each.**
+
+- **Surface forms.** "Yes", "yes" and "Y" split the mass. Sum over the verbalisers of each class (the `logsumexp` above).
+- **Tokenisation.** The leading space and the casing change the tokens. A multi-token label has a lower log-probability only because it is longer, so choose single-token labels of similar frequency, or normalise.
+- **Prior bias.** The model prefers one answer regardless of input, and few-shot examples add a bias toward the majority and the most recent label. Correct it by subtracting the score of a content-free input ("N/A"), or better, by fitting a calibration map on labelled data.
+- **Prompt sensitivity.** Average the score over a few paraphrased templates.
+
+**Calibrate on a small labelled set.** Fit $p = \sigma(a s + b)$ (Platt scaling) on a few hundred examples:
+
+```python
+def fit_platt(s, y, steps=2000, lr=0.1):
+    a, b = 1.0, 0.0
+    for _ in range(steps):
+        p = 1 / (1 + np.exp(-(a * s + b)))
+        a -= lr * np.mean((p - y) * s); b -= lr * np.mean(p - y)
+    return a, b
+```
+
+In a simulation with a helper that is overconfident by a factor of 3 and biased toward "Yes", fitting on 500 examples cut log loss from 0.59 to 0.35 and barely changed accuracy: calibration fixes the probabilities, not the ranking.
+
+**Threshold.** Choose it on held-out data from the cost of each error, or to hit a target precision, and report the confidence interval: with 500 examples a precision estimate is loose. Add an abstain band around the threshold if a human can take the uncertain cases.
+
+**Evaluation.** AUROC and PR-AUC for ranking, log loss and a reliability diagram for calibration, both by slice (length, language, source). Keep the calibration set, the threshold set and the test set separate.
+
+**Cost.** One call per label per template. Cache the shared prompt prefix, batch, and if the helper can return the next-token distribution, read both labels from one call.
+
+**Limits to state.** Calibration is specific to the model version and the template, so refit after either changes. And a zero-shot score is a baseline: with a few thousand labels, a small classifier on the model's embeddings is usually cheaper and better.
+
+**Follow-ups**
+
+- Extend this to 50 classes with multi-token names. What breaks first?
+- The calibrated classifier drifts after a model upgrade. How do you detect it without new labels?
+- Why can few-shot examples make the classifier worse on the minority class?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- Anthropic, Software Engineer, Sep 2025: Binary text classifier using only an LLM log-probability helper ([PracHub](https://prachub.com/interview-questions/design-an-llm-based-binary-classifier))
+
+</div>
 
 </details>
 
@@ -1588,6 +1654,46 @@ approvals in code bound the damage.
 
 - Which layer would you cut first under a latency budget, and what risk do you accept?
 - How do you run an output check on a streamed answer?
+
+</details>
+
+<details class="qa" id="llmapp-046">
+<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">AI</span> <span class="tag tag-track">MLE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Meta</span> Your company runs coding agents on private repositories. How can private code or secrets leak, and what do you build to prevent it? How would you test that the controls work?</summary>
+
+**Enumerate the exits first.** Code can leave by five routes, and each needs its own control:
+
+1. **To the model provider**, in prompts: retention, logging, use for training.
+2. **Through the agent's own actions:** a shell command that makes a network request, a package install, a web fetch with code in the URL, a push to the wrong remote, a comment on a public issue.
+3. **Through prompt injection:** text in a dependency's README, an issue or a web page tells the agent to send data somewhere. This needs three things together: access to private data, exposure to untrusted content, and a channel out. Remove one and it fails.
+4. **Across tenants or users:** a shared retrieval index, cache or agent memory without access control; a model fine-tuned on one customer's code that reproduces it for another.
+5. **Through side stores:** traces, logs, analytics and crash reports that capture prompts.
+
+**Controls, by route.**
+
+- **Provider:** contractual zero retention and no training, or a model hosted inside the trust boundary for the most sensitive repositories. A policy map of which repositories may use which endpoint, enforced in a gateway, not left to each developer.
+- **Actions:** run the agent in a sandbox with **network egress denied by default** and an allowlist through a proxy (package mirror, internal services). Short-lived credentials scoped to one repository, read-only unless the task needs a write. Outbound actions that publish (push, open a pull request, post) need approval or are restricted to internal targets.
+- **Injection:** treat fetched and third-party content as data. After the agent has read untrusted content, restrict the tools it may call, or require approval for anything with a destination. Prompting the model to ignore instructions is not a control.
+- **Tenancy:** retrieval filtered by the caller's permissions at query time, caches and memory keyed by tenant, no training on customer code without consent.
+- **Secrets:** scan before content enters the context and scan outputs; keep `.env` files and key stores out of the agent's reach; prefer a secrets broker that injects credentials into tools without the model seeing them.
+- **Side stores:** redact and set retention on traces; restrict who can read them.
+
+**Testing.** Plant unique canary strings and canary credentials in test repositories, and plant instructions in dependencies, issues and web pages that try to exfiltrate them. Run the suite on every agent and tool change and report the exfiltration rate, which must be zero for the blocked channels. Canary credentials that alert when used catch what the suite misses. Track the cost too: blocked legitimate requests and approval prompts per task, because controls that annoy developers get bypassed.
+
+**What the senior answer gets right.** Egress control and credential scope are the hard guarantees; model-level defences are probabilistic and count only as a second layer. And the provider question is a data-governance decision, made per repository class, before any engineering.
+
+**Follow-ups**
+
+- The agent needs internet access to read documentation. How do you allow that without opening an exfiltration channel?
+- A developer pastes a stack trace containing a customer token into the chat. Which control catches it?
+- How would you detect, after the fact, that code from one tenant was shown to another?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- Meta, Machine Learning Engineer, Apr 2026: Prevent private code leakage in coding agents ([PracHub](https://prachub.com/interview-questions/prevent-private-code-leakage-in-coding-agents))
+
+</div>
 
 </details>
 

@@ -611,8 +611,8 @@ n_arch_recsys_search_ads: 182
 n_arch_research_engineer: 262
 n_areas: 14
 n_boards: 256
-n_cards: 526
-n_cases: 17
+n_cards: 548
+n_cases: 20
 n_companies: 218
 n_group_ai_infra: 155
 n_group_ai_startup: 183
@@ -629,10 +629,10 @@ n_mle: 890
 n_postings: 2253
 n_raw: 3211
 n_report_companies: 8
-n_reported_cards: 86
+n_reported_cards: 108
 n_reports: 201
-n_reports_carded: 127
-n_reports_nocard: 74
+n_reports_carded: 181
+n_reports_nocard: 20
 n_research_engineer: 262
 n_skills: 146
 n_unique: 2617

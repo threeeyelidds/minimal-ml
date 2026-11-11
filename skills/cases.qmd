@@ -1,6 +1,6 @@
 ---
 title: "ML and AI system design cases"
-subtitle: "17 worked design rounds"
+subtitle: "20 worked design rounds"
 toc: true
 toc-depth: 2
 ---
@@ -671,6 +671,151 @@ I would choose compressed vectors in memory with full-precision re-scoring, shar
 - How do you find examples of a failure you have seen only three times?
 - How do you measure auto-label quality without labelling everything by hand?
 - A new model is better on average and worse on one rare slice. Do you ship it?
+
+</details>
+
+<details class="qa" id="cases-018">
+<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">design case</span><span class="tag tag-track">MLE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Meta</span> Design nearby place recommendations for a mobile app: when a user opens the app, show places around them that they are likely to visit. Follow-up: the same system also decides when to send a notification about a nearby place.</summary>
+
+**Clarify.** Assume 100M places worldwide, 500M daily users, 20k requests per second at peak and a 200 ms budget. The surface is a ranked list of about 20 places with no query. Ask what counts as success (a tap, a save, a visit), whether the user is at home or travelling, and what location precision and consent exist.
+
+**Metrics.** Online: place actions per session (directions, save, call, booking), confirmed visits where consent allows, hides and "not interested", and retention as the guardrail. Offline: recall@k for retrieval, NDCG for ranking, calibration of the predicted action rates, all sliced by density (city centre against rural), by home against travel, and by new against established places.
+
+**Data and labels.** Positives are graded: visit > directions or booking > save > tap. Negatives are impressions without action, corrected for position. A visit label comes from location pings matched to a place footprint, which is noisy in malls and tower blocks, so treat it as a probability and not a fact. Log the candidate set and the user's location cell at request time, so training sees what serving saw.
+
+**Architecture.**
+
+1. **Geo retrieval.** Index places by a hierarchical cell id (S2 or H3). Take the user's cell and rings of neighbours, widening until there are about 2,000 candidates: the radius must adapt, because 1 km holds thousands of places in a city centre and none in the countryside. Filter by open-now and by category policy.
+2. **Personalised retrieval** inside the geo candidate set: a two-tower model scoring user against place embeddings, plus sources for popular-nearby, places similar to ones the user saved, and places friends visited if the product has a graph.
+3. **Ranking.** A multi-task model that predicts tap, save, directions and visit. Features: distance and estimated travel time, user-category affinity, time of day and day of week, place quality (rating, review count, recency), price level, popularity at this hour, weather, and whether the user is far from their usual area. Distance sensitivity differs by category (people travel further for a restaurant than for a coffee), so let distance interact with category.
+4. **Re-ranking** for category diversity and for exploration slots given to new places.
+
+**Serving.** The place index is small enough for memory: 100M places with 200 bytes of metadata and a 64-dimension float embedding (256 bytes) is about 46 GB, sharded by region. Scoring 2,000 candidates with a light first-stage model and 200 with the full model fits the budget. Cache the non-personalised parts by coarse cell and hour.
+
+**Notifications.** This is a different decision: not which place is best, but whether interrupting now is worth it. Score the incremental value of sending (uplift against not sending), subtract a cost for fatigue, enforce a per-user budget and quiet hours, and trigger on events such as arriving somewhere new at mealtime. The guardrails are the rate of notification opt-outs and uninstalls, measured against a long-term holdout that receives none.
+
+**Evaluation and launch.** Offline replay, then an A/B test by user, read by slice. A visit lags the impression by hours or days, so fix the attribution window before the test starts.
+
+**Failure modes and iteration.**
+
+- Popularity feedback: shown places get the actions that get them shown. Use exploration and position-debiased training.
+- New places have no history: use content features (category, photos, menu text) and a boost with a decay.
+- Stale place data: closed businesses and wrong opening hours do more damage than a weak ranker.
+- Privacy: location history is sensitive. Coarsen what is stored, limit retention, exclude sensitive categories such as clinics and places of worship from inference and from notifications.
+
+**What a senior answer adds.** Density-adaptive retrieval instead of a fixed radius; the choice of label and its noise as the main modelling decision; notifications framed as an uplift problem with a budget; and privacy treated as a design constraint from the first minute.
+
+**Follow-ups**
+
+- A user lands in a city they have never visited. What changes in retrieval and in ranking?
+- Visits rise 3% and notification opt-outs rise 10%. Do you launch?
+- How do you tell a real visit from someone walking past the door?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- Meta, Machine Learning Engineer, Jan 2026: Real-time nearby-place and notification ranking ([PracHub](https://prachub.com/interview-questions/design-nearby-and-notification-ranking))
+- Meta, Machine Learning Engineer, Jan 2026: Location recommendation system ([PracHub](https://prachub.com/interview-questions/design-a-location-recommendation-system))
+- Meta, Machine Learning Engineer, Mar 2026: Place recommendation for a maps or local-discovery product ([PracHub](https://prachub.com/interview-questions/design-place-recommendation-system))
+- Meta, Machine Learning Engineer, Sep 2025: Real-time nearby place recommendations for a mobile app ([PracHub](https://prachub.com/interview-questions/design-nearby-place-recommendations))
+
+</div>
+
+</details>
+
+<details class="qa" id="cases-019">
+<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">design case</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at OpenAI</span> You have 10 billion unlabelled images and a labelled dataset of 50 million. Design a system that finds the images in the large corpus that are novel relative to the labelled set, so they can be labelled and added.</summary>
+
+**Clarify.** Novel for what purpose? Here: content the current dataset does not cover, so that a model trained on it fails there. That makes novelty relative to a reference set and to a model, not an absolute property. Ask about the labelling budget (assume 1M images), and about licences and privacy in the corpus.
+
+**Metrics.** Precision: the share of mined groups that reviewers accept as new and useful. Recall, by a planted test: remove some known classes from the reference set, run the system, and count how many it recovers. Downstream: accuracy gain on target slices per 1,000 labels, compared with labelling a random sample.
+
+**Architecture.**
+
+1. **Clean first.** Remove corrupt and blank files, then duplicates: exact hash, perceptual hash, then near-duplicates by embedding. Without this, the outliers found are mostly junk and the largest "new clusters" are copies of one image.
+2. **Embed** every image with a general self-supervised or image-text encoder, and with the task model's own features. Two views matter, because an encoder maps content unlike its training data onto familiar regions.
+3. **Score against the reference.** Build an approximate nearest-neighbour index over the 50M labelled embeddings; an image's score is the distance to its k-th nearest labelled neighbour. Add model signals: low confidence, or disagreement between the task model and a larger model.
+4. **Separate new modes from singletons.** Take the top few percent by score and cluster them. A point far from the reference with many corpus neighbours is a new mode, which is what you want. A point far from everything is usually noise.
+5. **Review by cluster.** Show reviewers 20 samples per cluster; they name it and accept or reject it. One decision covers thousands of images, which is what makes a 1M-label budget go far.
+6. **Select and iterate.** From accepted clusters choose a diverse subset (farthest-point or k-centre selection), label it, add it to the reference, and rerun: what was novel is now covered.
+
+**Scale.** At 2,000 images per second per GPU, embedding 10B images takes 5M GPU-seconds, about 1,400 GPU-hours, so 60 GPUs finish in a day. Decoding and storage reads usually limit throughput before the GPU does. 512-dimension float16 embeddings take 10 TB; product quantisation to 64 bytes takes 640 GB. The index is over the 50M reference set, not the 10B corpus, so scoring is 10B cheap queries that parallelise by shard.
+
+**Evaluation and launch.** Run the planted-class test before trusting any ranking. Then pilot on 1% of the corpus, measure reviewer acceptance per cluster, and compare the downstream gain with a random-sample baseline at equal label cost.
+
+**Failure modes and iteration.**
+
+- Novelty that is irrelevant to the task (a new watermark style, a new aspect ratio). Reviewer rejections become negatives for a learned relevance filter.
+- Cluster granularity: too coarse hides a rare class inside a common one, too fine floods reviewers.
+- Unsafe or private content surfacing in review, since outliers concentrate it. Run safety filters first and protect reviewers.
+- Adding many rare images shifts class priors; reweight or keep the evaluation distribution fixed.
+
+**What a senior answer adds.** Novelty defined relative to the reference and the purpose; duplicates and junk handled before any modelling; the mode-versus-singleton distinction; review economics at cluster level; and a planted-class test that makes recall measurable.
+
+**Follow-ups**
+
+- Your encoder was trained on data like the labelled set. Why is that a problem, and what do you do about it?
+- How do you choose the number of clusters when you do not know how many new concepts exist?
+- After three rounds the system returns almost nothing new. How do you know whether the corpus is exhausted or the method is blind?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- OpenAI, Machine Learning Engineer, Apr 2026: Mine novel images from a massive unlabelled corpus ([PracHub](https://prachub.com/interview-questions/mine-novel-images-from-unlabeled-data))
+
+</div>
+
+</details>
+
+<details class="qa" id="cases-020">
+<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">design case</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at OpenAI</span> Design a text-to-video generation service: a user submits a prompt and receives a short video minutes later. The model is given. Cover the request path, the GPU fleet and its scheduling, storage and delivery, safety, and what happens under overload.</summary>
+
+**Clarify.** Assume 1M videos per day, clips of 10 seconds, and 2 GPU-minutes per clip on one GPU. Generation takes minutes, so the product is asynchronous: submit, watch progress, get notified. Ask about tiers (free and paid), maximum length and resolution, and whether a failed job is retried or refunded.
+
+**Metrics.** Time from submit to first frame and to finished video (p50 and p95, by tier), job success rate, GPU utilisation, cost per video, queue age, share of outputs blocked by safety checks, and user actions on the result (download, regenerate) as a quality proxy.
+
+**Capacity.** 1M x 2 GPU-minutes is 2M GPU-minutes per day, about 1,400 GPUs running flat out. With a peak of twice the average and a 70% utilisation target, about 4,000. Output at 10 MB per clip is 10 TB per day.
+
+**Request path.**
+
+1. **API:** authenticate, check quota, run the prompt safety check, write a job record (id, user, parameters, state) to a durable store, enqueue, return the job id. An idempotency key makes a client retry safe.
+2. **Queue:** durable, with one logical queue per priority class. The job record is the source of truth; the queue is a hint.
+3. **Workers:** each holds the model in GPU memory, leases a job with a visibility timeout, heartbeats, writes progress, uploads the result to object storage and marks the job done. A worker that dies lets the lease expire and the job is picked up again; the output key is derived from the job id, so a duplicate run overwrites and does not double-charge.
+4. **Post-processing:** encode to streaming renditions, make a thumbnail, run output safety checks on sampled frames, add provenance metadata or a watermark, then publish through a CDN with signed URLs.
+5. **Status:** the client polls or holds a server-sent event stream; preview frames from intermediate steps make a long wait tolerable.
+
+**Scheduling the fleet.**
+
+- Model load takes minutes, so keep workers warm and scale on **queue age and backlog in GPU-minutes**, not on GPU utilisation, which is always high.
+- Priority classes with weighted fair queuing across users, so one user's 500 jobs do not starve the rest. Paid work can preempt free work at a checkpoint between denoising steps.
+- Job cost varies by length and resolution. Admit by estimated GPU-minutes, and pack short jobs into batches where the model allows it.
+- Buy the base load reserved, the peak on demand, and run the free tier on preemptible capacity with resumable jobs.
+
+**Overload.** Decide in advance: reject at admission with a clear wait estimate, degrade (shorter clip, lower resolution, fewer steps) for the free tier first, and never accept work that cannot finish within its promise. A queue with no bound converts overload into timeouts for everyone.
+
+**Safety.** Check the prompt before spending GPU time and the output before release; treat likenesses of real people and minors as separate policies; rate-limit by account and device; keep an audit trail linking output to request.
+
+**Failure modes and iteration.** Poison jobs that crash every worker (cap retries, quarantine), a new model version changing the output for a retried job (pin the version in the job record), stuck jobs with live heartbeats (a deadline per job), hot-spotting when every worker reloads weights at once, and storage growth (retention by tier).
+
+**What a senior answer adds.** The arithmetic from demand to GPUs; idempotent, resumable jobs; autoscaling on backlog measured in work, not requests; and an explicit overload policy by tier.
+
+**Follow-ups**
+
+- A deploy of new weights must not drop in-flight jobs. How do you roll it out?
+- GPU utilisation is 95% and p95 completion time doubled. What do you look at first?
+- How would the design change if generation took 5 seconds instead of 2 minutes?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- OpenAI, Software Engineer, May 2026: Text-to-video generation system ([PracHub](https://prachub.com/interview-questions/design-a-text-to-video-generation-system))
+- OpenAI, Software Engineer, Jul 2026: Asynchronous video generation service with GPU fleet scheduling ([PracHub](https://prachub.com/interview-questions/design-a-video-generation-service-with-gpu-fleet-management))
+- OpenAI, Software Engineer, Jun 2026: Text-to-video platform around a large model ([PracHub](https://prachub.com/interview-questions/design-a-text-to-video-generation-platform-sora-style))
+
+</div>
 
 </details>
 

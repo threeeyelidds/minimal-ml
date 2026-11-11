@@ -1,6 +1,6 @@
 ---
 title: "Search, recommendation, ads and ranking"
-subtitle: "Named in 55% of 2253 senior postings · 46 review cards"
+subtitle: "Named in 55% of 2253 senior postings · 47 review cards"
 toc: true
 toc-depth: 3
 ---
@@ -21,7 +21,7 @@ Share of postings that name each skill, overall and by track.
 | [NLP and content understanding](#nlp) | <span class="barwrap"><span class="bar " style="--w:18%"></span><span class="pct">18%</span></span> | 29% | 9% | 14% | 2 |
 | [Personalization and user modeling](#personalization) | <span class="barwrap"><span class="bar " style="--w:17%"></span><span class="pct">17%</span></span> | 21% | 16% | 11% | 4 |
 | [Recommender systems](#recsys) | <span class="barwrap"><span class="bar " style="--w:16%"></span><span class="pct">16%</span></span> | 27% | 11% | 5% | 5 |
-| [Ranking and learning to rank](#ranking) | <span class="barwrap"><span class="bar " style="--w:11%"></span><span class="pct">11%</span></span> | 20% | 5% | 4% | 7 |
+| [Ranking and learning to rank](#ranking) | <span class="barwrap"><span class="bar " style="--w:11%"></span><span class="pct">11%</span></span> | 20% | 5% | 4% | 8 |
 | [Ads, auctions, bidding and marketplace ML](#ads) | <span class="barwrap"><span class="bar " style="--w:10%"></span><span class="pct">10%</span></span> | 17% | 5% | 5% | 8 |
 | [Trust and safety / integrity ML](#trust-safety) | <span class="barwrap"><span class="bar " style="--w:4%"></span><span class="pct">4%</span></span> | 5% | 3% | 3% | 2 |
 | [Multi-objective optimization, exploration, bandits](#multi-objective) | <span class="barwrap"><span class="bar " style="--w:3%"></span><span class="pct">3%</span></span> | 6% | 1% | 1% | 3 |
@@ -984,6 +984,51 @@ Evaluation needs online tests: per-item offline metrics cannot see diversity eff
 
 - How would you choose the similarity function for diversity?
 - Diversity lowered CTR in the test but you believe it helps. How do you make the case?
+
+</details>
+
+<details class="qa" id="recsys-047">
+<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Meta</span> Design a model that predicts the probability that a user dislikes an item in their feed, and explain how the feed ranker should use it.</summary>
+
+**Define the label first.** "Dislike" is several signals with different meanings: hide or "see less" (not for me), report (violates rules), unfollow or block (about the author), and implicit ones such as a fast skip. Train separate heads or a graded label; one merged binary target mixes taste with policy.
+
+**What makes the labels hard.**
+
+- **Rare.** Explicit negative feedback is orders of magnitude rarer than likes, so the positive class is tiny.
+- **Missing not at random.** Most users never press hide. No feedback from them is not approval. Add a per-user feedback-propensity feature, and consider normalising within user.
+- **Selection.** Labels exist only for items the current ranker showed, which already avoids the worst items.
+
+**Model.** A head on the multi-task ranker, sharing the representation with engagement heads, which gives the rare task far more signal than a standalone model. Features that matter: the user's past negatives by topic, author and format; author-level negative rate with smoothing; content quality and classifier scores; similarity between this item and items the user hid.
+
+**Training.** Downsample the majority class to keep cost down, then correct the output, because the ranker needs a calibrated probability. If non-dislike examples are kept at rate $w$, the corrected prediction is
+
+$$p = \frac{p'}{p' + (1 - p')/w}.$$
+
+**Offline evaluation.** PR-AUC and normalised cross-entropy, not ROC-AUC alone, which looks good on any rare class. Calibration by slice, and per-user AUC, since ranking happens within a user.
+
+**Use in ranking.** Enter the value function as a negative term, $\text{score} = \sum_k w_k p_k - w_\text{neg}\, p_\text{dislike}$, with $w_\text{neg}$ tuned online, because one hide costs far more than one like gains. Use a hard filter only for the policy heads.
+
+**Online evaluation.** Hides and reports per impression, survey satisfaction and retention, with engagement as a counter-metric. A dislike model that only removes borderline engaging content can cut hides and time spent together; decide beforehand what trade is acceptable.
+
+**Failure modes.**
+
+- The model succeeds and its labels disappear: suppressed items are no longer shown, so no one hides them. Keep a small exploration slice for training data.
+- Coordinated hiding to bury a creator. Do not turn user-level dislike into a creator-level penalty without abuse checks.
+- A UI change to the hide button shifts the label rate and looks like model drift.
+
+**Follow-ups**
+
+- Hide rate fell 15% and sessions per user fell 1%. How do you decide whether to ship?
+- How would you estimate dislike for users who have never given explicit feedback?
+- Why does ROC-AUC flatter this model, and what would you report instead?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- Meta, Machine Learning Engineer, Sep 2025: Model that predicts the probability a user dislikes a feed item ([PracHub](https://prachub.com/interview-questions/design-a-newsfeed-dislike-model))
+
+</div>
 
 </details>
 

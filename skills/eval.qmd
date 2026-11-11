@@ -1,6 +1,6 @@
 ---
 title: "Evaluation and experimentation"
-subtitle: "Named in 86% of 2253 senior postings · 36 review cards"
+subtitle: "Named in 86% of 2253 senior postings · 37 review cards"
 toc: true
 toc-depth: 3
 ---
@@ -17,7 +17,7 @@ Share of postings that name each skill, overall and by track.
 | Skill | All postings | MLE | AI eng | Research eng | Cards |
 |:--|:--|--:|--:|--:|--:|
 | [Model evaluation and benchmarks](#evals) | <span class="barwrap"><span class="bar " style="--w:58%"></span><span class="pct">58%</span></span> | 57% | 59% | 62% | 5 |
-| [Monitoring, drift and observability](#ml-observability) | <span class="barwrap"><span class="bar " style="--w:45%"></span><span class="pct">45%</span></span> | 36% | 57% | 26% | 3 |
+| [Monitoring, drift and observability](#ml-observability) | <span class="barwrap"><span class="bar " style="--w:45%"></span><span class="pct">45%</span></span> | 36% | 57% | 26% | 4 |
 | [Experiment design, ablations and rigor](#experimentation) | <span class="barwrap"><span class="bar " style="--w:36%"></span><span class="pct">36%</span></span> | 40% | 27% | 60% | 3 |
 | [LLM / agent evals (harnesses, judges, graders)](#llm-evals) | <span class="barwrap"><span class="bar " style="--w:31%"></span><span class="pct">31%</span></span> | 31% | 32% | 26% | 5 |
 | [Metric design (offline/online, business metrics)](#metrics) | <span class="barwrap"><span class="bar " style="--w:29%"></span><span class="pct">29%</span></span> | 34% | 27% | 17% | 7 |
@@ -442,6 +442,65 @@ freshness check, or a data-quality gate.
 
 - The drop affects only one tenant. What are the first three things you check?
 - How do you tell a traffic mix change from a real degradation?
+
+</details>
+
+<details class="qa" id="eval-037">
+<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">design</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at OpenAI</span> Design out-of-distribution detection for a deployed classifier: how do you score a single input, how do you evaluate the detector, and how do you monitor it in production?</summary>
+
+**Say which shift you mean.** Covariate shift (familiar classes, new input style: a new camera, a new language), semantic shift (a class the model never saw), and label shift (class frequencies move). A per-input detector targets the first two; label shift is a population-level question.
+
+**Per-input scores**, cheapest first:
+
+- **Maximum softmax probability.** The baseline; weak because networks are confidently wrong far from the training data.
+- **Energy**, $T \log \sum_c e^{z_c/T}$ on the logits: free, and usually better than the softmax maximum.
+- **Feature distance**: Mahalanobis distance to the nearest class mean in the penultimate layer, or distance to the k-th nearest training embedding. Strong on semantic shift, needs no retraining.
+- **Disagreement** across an ensemble: best quality, several times the cost.
+- Likelihood from a generative model is unreliable alone: such models can assign higher likelihood to out-of-distribution images than to their training data.
+
+```python
+import numpy as np
+
+def fit_mahalanobis(feats, labels):
+    classes = np.unique(labels)
+    mu = np.stack([feats[labels == c].mean(0) for c in classes])
+    centred = feats - mu[np.searchsorted(classes, labels)]
+    prec = np.linalg.pinv(centred.T @ centred / len(feats))   # shared covariance
+    return mu, prec
+
+def mahalanobis_score(x, mu, prec):                           # higher = more in-distribution
+    d = x[:, None, :] - mu[None]
+    return -np.einsum("ncd,de,nce->nc", d, prec, d).min(1)
+
+def fpr_at_tpr(id_scores, ood_scores, tpr=0.95):
+    thr = np.quantile(id_scores, 1 - tpr)
+    return float((ood_scores >= thr).mean())
+```
+
+**Evaluation.** AUROC and the false-positive rate at 95% true-positive rate, reported separately for **near** shifts (similar classes, a new time period, a new region or device) and far ones (unrelated data). Far shifts flatter every method. Build the test sets from real held-out shifts in your own data; set the threshold on in-distribution validation data only, since real shifts are not known in advance.
+
+**Production design.**
+
+1. **Per request:** compute the score from activations the model already produces; above threshold, abstain, route to a fallback or a human, and log the input.
+2. **Population level:** compare windows of scores, embeddings and predicted-class frequencies with a reference window, using a two-sample test or a classifier trained to tell the windows apart. Many small shifts never trip the per-input threshold and still move accuracy.
+3. **Close the loop:** sample flagged inputs for labelling, measure accuracy on them, and add them to training or to the evaluation set.
+4. **Monitor the detector:** flag rate over time, precision of flags from the labelled sample, and accuracy on unflagged traffic.
+
+**Failure modes.** A flag rate that follows a benign traffic mix change and pages people for nothing; thresholds that go stale after each retrain because the feature space moved; the detector passing inputs that are in-distribution for the features and still adversarial; and treating "not flagged" as "correct", which it is not.
+
+**Follow-ups**
+
+- The flag rate doubled overnight and accuracy on a labelled sample did not move. What happened and what do you change?
+- Why can a generative model give higher likelihood to data it was never trained on?
+- How would you adapt this to a generative language model, where there are no class logits?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- OpenAI, Machine Learning Engineer, Dec 2025: Out-of-distribution detection with production monitoring ([PracHub](https://prachub.com/interview-questions/design-an-ood-detection-system))
+
+</div>
 
 </details>
 

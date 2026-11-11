@@ -1,6 +1,6 @@
 ---
 title: "ML fundamentals and statistics"
-subtitle: "Named in 52% of 2253 senior postings · 40 review cards"
+subtitle: "Named in 52% of 2253 senior postings · 42 review cards"
 toc: true
 toc-depth: 3
 ---
@@ -18,12 +18,12 @@ Share of postings that name each skill, overall and by track.
 |:--|:--|--:|--:|--:|--:|
 | [Machine learning fundamentals](#ml-fundamentals) | <span class="barwrap"><span class="bar " style="--w:16%"></span><span class="pct">16%</span></span> | 28% | 8% | 16% | 11 |
 | [Statistics and probability](#statistics) | <span class="barwrap"><span class="bar " style="--w:13%"></span><span class="pct">13%</span></span> | 20% | 8% | 14% | 7 |
-| [Data labeling, curation and quality](#labeling) | <span class="barwrap"><span class="bar " style="--w:13%"></span><span class="pct">13%</span></span> | 16% | 10% | 20% | 3 |
+| [Data labeling, curation and quality](#labeling) | <span class="barwrap"><span class="bar " style="--w:13%"></span><span class="pct">13%</span></span> | 16% | 10% | 20% | 4 |
 | [Classical models (GBDT, linear, trees)](#classical-ml) | <span class="barwrap"><span class="bar " style="--w:12%"></span><span class="pct">12%</span></span> | 16% | 11% | 3% | 4 |
 | [Anomaly, fraud and risk detection](#anomaly) | <span class="barwrap"><span class="bar " style="--w:8%"></span><span class="pct">8%</span></span> | 11% | 7% | 6% | 2 |
 | [Data analysis (pandas, numpy, notebooks)](#data-analysis) | <span class="barwrap"><span class="bar " style="--w:8%"></span><span class="pct">8%</span></span> | 10% | 6% | 7% | 1 |
 | [Feature engineering](#feature-eng) | <span class="barwrap"><span class="bar " style="--w:7%"></span><span class="pct">7%</span></span> | 14% | 3% | 2% | 3 |
-| [Linear algebra, calculus, optimization math](#math) | <span class="barwrap"><span class="bar " style="--w:5%"></span><span class="pct">5%</span></span> | 6% | 4% | 6% | 3 |
+| [Linear algebra, calculus, optimization math](#math) | <span class="barwrap"><span class="bar " style="--w:5%"></span><span class="pct">5%</span></span> | 6% | 4% | 6% | 4 |
 | [Time series and forecasting](#timeseries) | <span class="barwrap"><span class="bar " style="--w:5%"></span><span class="pct">5%</span></span> | 5% | 4% | 5% | 2 |
 | [Bayesian and probabilistic modeling](#bayesian) | <span class="barwrap"><span class="bar " style="--w:4%"></span><span class="pct">4%</span></span> | 6% | 2% | 7% | 2 |
 | [Causal inference](#causal) | <span class="barwrap"><span class="bar " style="--w:3%"></span><span class="pct">3%</span></span> | 5% | 1% | 2% | 2 |
@@ -767,6 +767,70 @@ Treat it as a change that needs evidence at three levels: the rows, the distribu
 
 </details>
 
+<details class="qa" id="mlfund-041">
+<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">coding</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at OpenAI</span> Each item has labels from three annotators of unknown and unequal quality. Implement majority vote, say how accurate it is, then beat it. How would you find the bad annotations, and how should the classifier be trained on the result?</summary>
+
+**Majority vote** weights every annotator equally. With three independent annotators of accuracy $p$ on a binary task it is right with probability $p^3 + 3p^2(1-p)$: 0.896 for $p = 0.8$. It helps when annotators are similar and hurts when one is much better: with accuracies 0.95, 0.65 and 0.60 the vote is right 83.7% of the time, worse than the best annotator alone.
+
+**Beat it by estimating who to trust** (Dawid and Skene, 1979). Treat the true label as latent and give each annotator a confusion matrix. EM alternates between the posterior over true labels and the confusion matrices:
+
+```python
+import numpy as np
+
+def majority_vote(L, K):
+    """L: (N, A) integer labels. Returns labels and (N, K) vote shares."""
+    counts = np.stack([(L == k).sum(1) for k in range(K)], axis=1)
+    return counts.argmax(1), counts / counts.sum(1, keepdims=True)
+
+def dawid_skene(L, K, iters=50, eps=1e-6):
+    """Returns posterior (N, K) and confusion (A, K, K) as conf[a, true, observed]."""
+    onehot = np.eye(K)[L]                               # (N, A, K)
+    post = majority_vote(L, K)[1]                       # initialise from vote shares
+    for _ in range(iters):
+        prior = post.mean(0)                            # M-step
+        conf = np.einsum("nk,nal->akl", post, onehot) + eps
+        conf /= conf.sum(2, keepdims=True)
+        logp = np.log(prior)[None] + np.einsum("nal,akl->nk", onehot, np.log(conf))
+        logp -= logp.max(1, keepdims=True)              # E-step
+        post = np.exp(logp); post /= post.sum(1, keepdims=True)
+    return post, conf
+```
+
+On 20,000 simulated items with those three accuracies, this reaches 95.0% against 83.5% for the vote, because it learns to follow the strong annotator. With only three annotators the estimates converge slowly and stay loose; five or more, or a small gold set to initialise the confusion matrices, makes them reliable. Missing labels need a mask in both steps.
+
+**The assumption that fails:** errors are independent given the true label. Annotators share confusions on hard items, so agreement overstates confidence. Item difficulty can be modelled too (GLAD, or item-response models).
+
+**Finding bad annotations.**
+
+- Per annotator: the estimated confusion matrix, accuracy on hidden gold items, agreement with the consensus, time per item.
+- Per label: train with cross-validation and flag items where the out-of-fold predicted probability of the given label is low (confident learning). Review the flags; hard and rare examples are flagged too, and deleting them biases the data.
+
+**Training on the result.**
+
+- Use the posterior as a soft target instead of its argmax, which keeps the uncertainty.
+- Or train on every annotator's label with an annotator-specific noise layer on top of a shared classifier, which uses the input to resolve disagreement.
+- Spend relabelling budget where the posterior is uncertain, not uniformly.
+- Keep a clean, adjudicated test set. Noisy test labels cap measured accuracy and can reorder models.
+
+**Follow-ups**
+
+- Two of the three annotators copy each other. What does that do to majority vote and to the EM estimate?
+- You can buy 10,000 more labels. Do you label new items once or relabel existing ones?
+- When is the disagreement itself the signal and not noise?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- OpenAI, Machine Learning Engineer, Oct 2026: Majority-vote labels from three noisy annotators, then beat that baseline ([PracHub](https://prachub.com/interview-questions/majority-vote-labels-from-three-noisy-annotators-then-beat-the-baseline))
+- OpenAI, Machine Learning Engineer, Apr 2026: Improve training when labels come from noisy annotators ([PracHub](https://prachub.com/interview-questions/improve-training-with-noisy-annotators))
+- OpenAI, Machine Learning Engineer, Feb 2026: Improve a classifier trained on noisy multi-annotator labels ([PracHub](https://prachub.com/interview-questions/improve-classifier-with-noisy-multi-annotator-labels))
+- OpenAI, Machine Learning Engineer, Apr 2026: Filter bad human annotations ([PracHub](https://prachub.com/interview-questions/filter-bad-human-annotations))
+
+</div>
+
+</details>
+
 
 ### Classical models (GBDT, linear, trees) <span class="demand">12% of postings</span> {#classical-ml}
 
@@ -1223,6 +1287,59 @@ For a convex problem satisfying Slater's condition they are necessary and suffic
 
 - What does a multiplier of zero tell you about its constraint?
 - Why can the duality gap be non-zero for a non-convex problem?
+
+</details>
+
+<details class="qa" id="mlfund-042">
+<summary><span class="tag tag-core">core</span><span class="tag tag-type">concept</span><span class="tag tag-track">MLE</span> <span class="tag tag-track">AI</span> <span class="tag tag-track">RE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at Google</span> Define KL divergence and explain where it appears in language modelling. Why does the direction matter, what happens when the supports differ, and how do you compute it safely from logits?</summary>
+
+$$D_{\mathrm{KL}}(p \,\|\, q) = \sum_x p(x) \log \frac{p(x)}{q(x)} \ge 0,$$
+
+zero only when $p = q$. It is the expected extra code length (in nats, or bits with $\log_2$) from coding samples of $p$ with a code built for $q$. It is not symmetric and not a distance: for $p = (0.5, 0.5)$ and $q = (0.9, 0.1)$, $D_{\mathrm{KL}}(p\|q) = 0.51$ and $D_{\mathrm{KL}}(q\|p) = 0.37$ nats.
+
+**Link to the training loss.** Cross-entropy decomposes as $H(p, q) = H(p) + D_{\mathrm{KL}}(p\|q)$. The data entropy $H(p)$ does not depend on the model, so minimising next-token cross-entropy is minimising the forward KL from the data distribution to the model. Perplexity is $\exp$ of that cross-entropy.
+
+**Direction.**
+
+- **Forward, $D_{\mathrm{KL}}(p_\text{data}\|q_\theta)$:** the expectation is under the data. The model is punished wherever the data has mass and the model has little, so it spreads to cover everything (mass-covering). This is maximum likelihood, and one reason a language model puts some probability on implausible text.
+- **Reverse, $D_{\mathrm{KL}}(q_\theta\|p)$:** the expectation is under the model. The model is punished for putting mass where the target has none, so it can ignore modes (mode-seeking). It needs samples from the model and a target density, which is the situation in variational inference and in policy optimisation.
+
+**Support.** If $q(x) = 0$ where $p(x) > 0$, the divergence is infinite; where $p(x) = 0$ the term is 0 by convention. A softmax never outputs exactly zero, so in practice the problem appears as huge values from tiny probabilities, and with top-k or nucleus truncation, which does create zeros. Jensen-Shannon divergence is the bounded, symmetric alternative.
+
+**Where it appears in language models.**
+
+- **Distillation:** minimise $D_{\mathrm{KL}}(p_\text{teacher}\|p_\text{student})$ per token, often at temperature $T$ with the loss scaled by $T^2$.
+- **Label smoothing:** cross-entropy against a smoothed target equals a KL to that target plus a constant.
+- **Keeping a fine-tuned policy close to a reference:** a KL penalty or constraint in policy-gradient fine-tuning, and the KL term of a VAE.
+- **Measuring change:** mean per-token KL between a model and its quantised or fine-tuned version, on the same inputs, is more sensitive than accuracy.
+
+**Computing it.** Work in log space from logits; never take `log` of a `softmax`.
+
+```python
+import numpy as np
+
+def kl_from_logits(zp, zq):
+    """KL(p || q) per row in nats, logits of shape (..., V)."""
+    lp = zp - zp.max(-1, keepdims=True); lp = lp - np.log(np.exp(lp).sum(-1, keepdims=True))
+    lq = zq - zq.max(-1, keepdims=True); lq = lq - np.log(np.exp(lq).sum(-1, keepdims=True))
+    return (np.exp(lp) * (lp - lq)).sum(-1)
+```
+
+Pitfalls: PyTorch's `F.kl_div(input, target)` expects **log-probabilities as input and probabilities as target**, and computes $D_{\mathrm{KL}}(\text{target}\|\text{input})$; its default `reduction='mean'` averages over every element, so use `'batchmean'` or sum over the vocabulary yourself. For sequences, mask padding and say whether you report per token or per sequence.
+
+**Follow-ups**
+
+- Fit a single Gaussian to a two-mode distribution under each direction. What do you get?
+- Why is the distillation loss multiplied by T squared?
+- Two models have the same perplexity on a test set. Can the KL between them be large?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- Google, Machine Learning Engineer, Aug 2026: KL divergence in language models, including direction and support ([PracHub](https://prachub.com/interview-questions/explain-kl-divergence-in-language-models))
+
+</div>
 
 </details>
 

@@ -1673,3 +1673,306 @@ cards:
     probes:
       - Why left padding for decoder-only generation, and right padding for training?
       - What does merging a LoRA adapter change at inference time?
+
+  - id: dl-044
+    skill: dl-fundamentals
+    also: [python, classical-ml, math]
+    type: coding
+    level: core
+    tracks: [mle, re]
+    q: >-
+      Implement a 1-nearest-neighbour classifier in NumPy with no Python loop over points. Then show that
+      it is the forward pass of a small network. Follow-up: switch to Manhattan distance. What changes?
+    a: |
+      **Vectorised Euclidean version.** Expand the square so the pairwise term is one matrix product:
+      $\lVert x - c\rVert^2 = \lVert x\rVert^2 - 2\,x^\top c + \lVert c\rVert^2$.
+
+      ```python
+      import numpy as np
+
+      def nn_l2(Xq, Xt, yt):
+          """Xq: (N, D) queries, Xt: (M, D) training points, yt: (M,) labels."""
+          d2 = (Xq ** 2).sum(1)[:, None] - 2 * Xq @ Xt.T + (Xt ** 2).sum(1)[None, :]   # (N, M)
+          return yt[d2.argmin(1)]
+      ```
+
+      Memory is $O(NM)$, not $O(NMD)$, and the work is one BLAS call. No square root is needed, since it does not change the argmin.
+
+      **As a forward pass.** $\lVert x\rVert^2$ is the same for every training point, so
+      $\arg\min_j \lVert x - c_j\rVert^2 = \arg\max_j \left(c_j^\top x - \tfrac12\lVert c_j\rVert^2\right)$.
+      That is a linear layer with one unit per training point, weights $W = X_t$ and bias $b_j = -\tfrac12\lVert c_j\rVert^2$, followed by an argmax and a label lookup:
+
+      ```python
+      def nn_as_layer(Xq, Xt, yt):
+          W, b = Xt, -0.5 * (Xt ** 2).sum(1)
+          scores = Xq @ W.T + b                    # (N, M)
+          return yt[scores.argmax(1)]
+      ```
+
+      To output class scores, add a max over the units of each class. The reading: 1-NN is a network that memorises, with width equal to the dataset size and nothing learned. With unit-norm vectors the bias is constant and this is maximum inner-product search, which is what embedding retrieval does.
+
+      **Manhattan distance.** There is no expansion into a matrix product, so the direct broadcast builds an $(N, M, D)$ array. Chunk the queries to bound it:
+
+      ```python
+      def nn_l1(Xq, Xt, yt, chunk=256):
+          out = np.empty(len(Xq), dtype=yt.dtype)
+          for i in range(0, len(Xq), chunk):
+              d = np.abs(Xq[i:i + chunk, None, :] - Xt[None, :, :]).sum(-1)
+              out[i:i + chunk] = yt[d.argmin(1)]
+          return out
+      ```
+
+      Unchunked, 10,000 queries against 60,000 training images of 784 float32 pixels would need 1.9 TB. As a network, $|a| = \mathrm{relu}(a) + \mathrm{relu}(-a)$, so the L1 version needs a ReLU layer with $2MD$ units before the sum: no longer a single linear layer.
+
+      **Pitfalls.**
+
+      - Cancellation: the expanded form subtracts large, nearly equal numbers. In float32 with large-magnitude features, the distance from a point to itself can come out as 8 instead of 0, and small negatives appear. Centre the data, use float64, or clip at zero before any square root.
+      - Ties: `argmin` returns the first index; say so.
+      - Shapes: `[:, None]` and `[None, :]` on the norms. Getting one wrong still broadcasts when $N = M$, and silently gives wrong answers.
+      - Test against a two-loop version on small random data.
+    probes:
+      - Extend this to k neighbours with a majority vote, without sorting every row fully.
+      - At 100 million training points this is too slow. What replaces the exact search, and what do you give up?
+      - Why does nearest-neighbour search degrade in high dimensions, and why does it still work on learned embeddings?
+
+  - id: dl-045
+    skill: dl-fundamentals
+    also: [pytorch, python, math]
+    type: coding
+    level: core
+    tracks: [mle, ai, re]
+    q: >-
+      Write a two-layer MLP classifier in NumPy, forward and backward, and give the shape of every tensor
+      and gradient. Then state the broadcasting rule and show two ways it produces a silent bug.
+    a: |
+      Annotate shapes as you write. With batch $B$, input $D$, hidden $H$, classes $C$:
+
+      ```python
+      import numpy as np
+
+      def forward(X, y, W1, b1, W2, b2):
+          """X: (B, D), y: (B,), W1: (D, H), b1: (H,), W2: (H, C), b2: (C,)."""
+          z1 = X @ W1 + b1                 # (B, H); b1 broadcasts over the batch
+          h = np.maximum(z1, 0)            # (B, H)
+          z2 = h @ W2 + b2                 # (B, C)
+          z2 = z2 - z2.max(1, keepdims=True)                       # (B, 1) keeps the axis
+          logp = z2 - np.log(np.exp(z2).sum(1, keepdims=True))     # (B, C)
+          loss = -logp[np.arange(len(y)), y].mean()                # scalar
+          return loss, (X, z1, h, logp)
+
+      def backward(y, W2, cache):
+          X, z1, h, logp = cache
+          B = len(y)
+          dz2 = np.exp(logp); dz2[np.arange(B), y] -= 1; dz2 /= B  # (B, C)
+          dW2 = h.T @ dz2                  # (H, C)
+          db2 = dz2.sum(0)                 # (C,)
+          dh = dz2 @ W2.T                  # (B, H)
+          dz1 = dh * (z1 > 0)              # (B, H)
+          dW1 = X.T @ dz1                  # (D, H)
+          db1 = dz1.sum(0)                 # (H,)
+          return dW1, db1, dW2, db2
+      ```
+
+      Three rules produce every line of the backward pass:
+
+      - A gradient has the shape of the thing it is the gradient of. That alone tells you `dW2` must be `h.T @ dz2` and not the other order.
+      - Softmax with cross-entropy gives $\partial L/\partial z = (p - \text{onehot}(y))/B$.
+      - **Broadcasting forward is summing backward.** `b2` was copied across the batch, so its gradient sums over the batch axis.
+
+      Parameter count is $DH + H + HC + C$. Note that `torch.nn.Linear(D, H)` stores its weight as $(H, D)$ and computes $xW^\top + b$, and it applies to the last axis, so an input of $(B, T, D)$ gives $(B, T, H)$.
+
+      **Broadcasting rule.** Align shapes from the right. Two dimensions are compatible if they are equal or one of them is 1; a missing leading dimension counts as 1. So $(8, 1, 6)$ with $(7, 1)$ gives $(8, 7, 6)$, and $(2, 3)$ with $(2,)$ is an error, because 3 and 2 are compared.
+
+      **Silent bugs.**
+
+      - Predictions of shape $(B, 1)$ against targets of shape $(B,)$: the subtraction broadcasts to $(B, B)$, the loss is a mean over all pairs, and training runs and converges to predicting the mean. `mse_loss` only warns. Fix with `squeeze(-1)`.
+      - Normalising rows with `x / x.sum(1)`: the sum has shape $(B,)$, which aligns with the last axis. For a square input this runs and divides by the wrong sums. Use `keepdim=True`.
+      - A mask of shape $(B, T)$ applied to scores of shape $(B, H, T, T)$ needs explicit `[:, None, None, :]`. Without it the mask aligns with the last two axes: an error in general, and a silent wrong result when $B = T$.
+
+      Defences: assert shapes at function boundaries, test with every dimension a different size (never $B = T$), and check analytic gradients against autograd or finite differences.
+    probes:
+      - Derive the softmax cross-entropy gradient and show where the 1/B comes from.
+      - Add a third layer and dropout. Which cached values does the backward pass now need?
+      - Your gradient check passes for W2 and fails for W1. Where do you look?
+
+  - id: dl-046
+    skill: dl-fundamentals
+    also: [math, python, pytorch]
+    type: coding
+    level: senior
+    tracks: [mle, re]
+    q: >-
+      Without autograd: given y = cumprod(x) and the upstream gradient dL/dy, write the backward pass in
+      O(n), correct when x contains zeros. Then do the same for a product of weight matrices, and write a
+      numerically stable cross-entropy with its gradient.
+    a: |
+      **Scalar prefix products.** $y_i = \prod_{j \le i} x_j$, so $x_k$ affects every $y_i$ with $i \ge k$:
+
+      $$\frac{\partial L}{\partial x_k} = \sum_{i \ge k} g_i \prod_{j \le i,\, j \ne k} x_j .$$
+
+      The tempting form $\sum_{i \ge k} g_i\, y_i / x_k$ divides by zero. For $x = (2, 0, 3)$ and $g = (1, 1, 1)$ it returns NaN for $x_1$, where the true gradient is $x_0 + x_0 x_2 = 8$. Factor the product instead, into the part before $k$ and the part after:
+
+      $$\frac{\partial L}{\partial x_k} = \Big(\prod_{j<k} x_j\Big)\, s_k, \qquad s_k = g_k + x_{k+1}\, s_{k+1}.$$
+
+      ```python
+      import numpy as np
+
+      def cumprod_backward(x, g):
+          n = len(x)
+          excl = np.ones(n)                    # excl[k] = x[0] * ... * x[k-1]
+          for k in range(1, n):
+              excl[k] = excl[k - 1] * x[k - 1]
+          grad, s = np.empty(n), 0.0
+          for k in range(n - 1, -1, -1):       # s = sum_{i>=k} g[i] * x[k+1] * ... * x[i]
+              s = g[k] + (x[k + 1] * s if k + 1 < n else 0.0)
+              grad[k] = excl[k] * s
+          return grad
+      ```
+
+      No division, two passes, and zeros need no special case.
+
+      **Matrix products.** With $Y_k = W_k Y_{k-1}$ and $Y_0 = I$, carry $B = \partial L/\partial Y_k$ backwards. The order of the factors is fixed by the shapes:
+
+      ```python
+      def matprod_backward(Ws, G):
+          """G[k] = dL/dY_k from a loss on that prefix (zeros if none)."""
+          Ys = [np.eye(Ws[0].shape[1])]
+          for W in Ws:
+              Ys.append(W @ Ys[-1])
+          grads, B = [None] * len(Ws), np.zeros_like(Ys[-1])
+          for k in range(len(Ws) - 1, -1, -1):
+              B = B + G[k]
+              grads[k] = B @ Ys[k].T           # dL/dW_k = B Y_{k-1}^T
+              B = Ws[k].T @ B                  # pass to the previous prefix
+          return grads
+      ```
+
+      For a loss on the last product only, this is $\partial L/\partial W_k = (W_n \cdots W_{k+1})^\top G\, (W_{k-1} \cdots W_1)^\top$. That expression is also why deep linear chains have vanishing or exploding gradients: each weight's gradient is multiplied by all the others.
+
+      **Stable cross-entropy.** Never compute `log(softmax(z))` in two steps. Subtract the row maximum, then use log-sum-exp:
+
+      ```python
+      def cross_entropy(z, y):
+          z = z - z.max(1, keepdims=True)                      # exp cannot overflow
+          logp = z - np.log(np.exp(z).sum(1, keepdims=True))
+          B = len(y)
+          grad = np.exp(logp); grad[np.arange(B), y] -= 1
+          return -logp[np.arange(B), y].mean(), grad / B
+      ```
+
+      For logits $(1000, 0)$ and target class 1 this returns 1000; the two-step version overflows. The gradient is $(\text{softmax}(z) - \text{onehot}(y))/B$.
+
+      **Check your work** against autograd or central finite differences, on inputs with zeros, with non-square matrices so a transposed factor fails loudly, and in float64.
+    probes:
+      - Do the scalar version in log space. What breaks, and how do you handle signs and zeros?
+      - What does the matrix-product gradient tell you about initialising a deep linear network?
+      - Your finite-difference check disagrees in the fifth decimal. Bug or precision, and how do you tell?
+
+  - id: dl-047
+    skill: sequence-models
+    also: [pytorch, dl-fundamentals, training-dynamics]
+    type: coding
+    level: senior
+    tracks: [mle, re]
+    q: >-
+      Implement cross-entropy for a batch of padded sequences with label smoothing: logits of shape
+      (B, T, V), integer targets, and a mask for real tokens. What are the ways to get it subtly wrong?
+    a: |
+      ```python
+      import torch, torch.nn.functional as F
+
+      def masked_smoothed_ce(logits, targets, mask, eps=0.1):
+          """logits: (B, T, V); targets: (B, T) int64; mask: (B, T) bool, True = real token.
+          Returns the mean loss per real token."""
+          logp = F.log_softmax(logits, dim=-1)                              # (B, T, V)
+          safe = targets.masked_fill(~mask, 0)                              # padding ids may be out of range
+          nll = -logp.gather(-1, safe.unsqueeze(-1)).squeeze(-1)            # (B, T)
+          uniform = -logp.mean(dim=-1)                                      # (B, T)
+          loss = (1 - eps) * nll + eps * uniform
+          mask = mask.to(loss.dtype)
+          return (loss * mask).sum() / mask.sum().clamp_min(1)
+      ```
+
+      **Why this is the smoothed loss.** The target is $q = (1 - \varepsilon)\,\text{onehot}(y) + \varepsilon/V$. Cross-entropy is linear in the target, so it splits into $(1-\varepsilon)$ times the usual negative log-likelihood plus $\varepsilon$ times the cross-entropy to the uniform distribution, which is the mean of $-\log p$ over the vocabulary. This matches `F.cross_entropy(..., label_smoothing=eps, ignore_index=...)`. Some papers spread $\varepsilon$ over the $V - 1$ wrong classes only; say which convention you use.
+
+      **Ways to get it wrong.**
+
+      - **The denominator.** Averaging over all $B \cdot T$ positions scales the loss by the fraction of real tokens. With 61% real tokens the loss and gradient are 61% of the right value, and they change from batch to batch with the amount of padding, which acts like a noisy learning rate.
+      - **Indexing with padding ids.** A padding id of -100 or one outside the vocabulary crashes `gather`, or on GPU fails with an unhelpful assertion. Replace it before indexing, then mask.
+      - **Multiplying by the mask without changing the normaliser**, or masking the logits instead of the loss.
+      - **Softmax then log.** Use `log_softmax`; the two-step version underflows.
+      - **An empty mask.** A batch with no real tokens divides by zero; clamp the denominator.
+      - **Smoothing at evaluation.** Report unsmoothed loss and perplexity on validation data. The smoothed loss has a floor above zero, the entropy of the smoothed target: 1.41 nats for $\varepsilon = 0.1$ and $V = 50{,}000$.
+      - **Per-token against per-sequence averaging.** Per-token weights long sequences more. Either is defensible; mixing them between training and evaluation is not.
+
+      **What smoothing does.** With hard targets the loss keeps pushing the correct logit up without bound. With smoothing the optimum is a finite gap, $\log\frac{1 - \varepsilon + \varepsilon/V}{\varepsilon/V}$ (13.0 for the numbers above), which limits over-confidence and usually improves calibration and accuracy slightly. The costs: probabilities are no longer honest likelihoods, perplexity gets worse, and a teacher trained with smoothing gives a less informative signal for distillation.
+
+      **Tests.** Compare with the built-in on random inputs in float64; check that the gradient at masked positions is exactly zero; check that adding padding to a batch does not change the loss.
+    probes:
+      - How would you add per-token weights, for example to down-weight a template that repeats in every example?
+      - Why does label smoothing hurt distillation from that model?
+      - The loss is computed in half precision and occasionally returns infinity. Where can that come from?
+
+  - id: dl-048
+    skill: transformers
+    also: [pytorch, debug-perf, llm-inference, training-dynamics]
+    type: debug
+    level: senior
+    tracks: [mle, re, ai]
+    q: >-
+      You are given a small decoder-only transformer in PyTorch that runs without errors and trains badly,
+      with several planted bugs. How do you find them? Then add a KV cache to its generation loop and show
+      that it is correct.
+    a: |
+      **Find bugs with tests that localise, not by reading top to bottom.**
+
+      1. **Initial loss.** With random weights it should be near $\ln V$. Far below means leakage; far above means bad initialisation or a wrong loss input.
+      2. **Causality.** Change the token at position $t$; logits before $t$ must not change. This catches a missing or reversed mask in one assertion.
+      3. **Overfit one batch.** Loss should go to about zero in a few hundred steps. If it cannot, the bug is in the model or optimiser, not the data.
+      4. **Loss near zero on real data** within a few steps means the model sees its target: inputs and targets not shifted by one, or the mask.
+      5. **Reference comparison.** Copy weights into `F.scaled_dot_product_attention` or a known-good block and compare outputs.
+      6. **Train and eval modes.** Two eval-mode forward passes must be identical.
+
+      **The usual planted bugs.** Mask built with `triu` where `tril` is meant, applied after the softmax, or filled with 0 and not $-\infty$; softmax over the wrong axis; the $1/\sqrt{d_k}$ scale missing; heads merged with `view` without the `transpose` back, which mixes positions and heads; no positional embedding; a residual connection dropped; targets not shifted; loss averaged over padding; probabilities passed to `cross_entropy`; `zero_grad` missing; `model.eval()` missing during generation.
+
+      **KV cache.** In causal attention, the keys and values of past positions do not depend on later tokens. So generation can feed only the new token, compute its query, key and value, and append the key and value to a per-layer cache.
+
+      ```python
+      def forward(self, x, cache=None):                      # x: (B, T, D), T = new tokens only
+          B, T, D = x.shape
+          q, k, v = self.qkv(x).view(B, T, 3, self.h, D // self.h).permute(2, 0, 3, 1, 4)   # (B, h, T, d_h)
+          if cache is not None:
+              if "k" in cache:
+                  k, v = torch.cat([cache["k"], k], 2), torch.cat([cache["v"], v], 2)
+              cache["k"], cache["v"] = k, v
+          S = k.shape[2]                                     # past + new
+          att = q @ k.transpose(-1, -2) / math.sqrt(k.shape[-1])                            # (B, h, T, S)
+          causal = torch.ones(S, S, dtype=torch.bool, device=x.device).tril()[S - T:]
+          att = att.masked_fill(~causal, float("-inf")).softmax(-1)
+          return self.proj((att @ v).transpose(1, 2).reshape(B, T, D))
+
+      @torch.no_grad()
+      def generate(model, idx, n):
+          caches = [{} for _ in model.blocks]
+          logits = model(idx, caches)                        # prompt once
+          for _ in range(n):
+              nxt = logits[:, -1].argmax(-1, keepdim=True)
+              idx = torch.cat([idx, nxt], 1)
+              logits = model(nxt, caches, offset=idx.shape[1] - 1)
+          return idx
+      ```
+
+      **Where cache bugs hide.**
+
+      - **Position.** The new token must get position `offset`, not 0. This is the most common mistake.
+      - **Mask rows.** With $T$ new tokens and $S$ total, the mask is the last $T$ rows of the $S \times S$ triangle.
+      - **One cache per layer**, and per sequence in the batch; beam search must reorder it with the beams.
+      - **Context limit.** With learned absolute positions, sliding the window invalidates the cache.
+
+      **Prove it.** Logits from one full forward pass must equal the concatenation of cached incremental passes, to floating-point tolerance, and cached greedy generation must return the same tokens as the uncached loop.
+
+      **Cost.** Without a cache each step recomputes the whole prefix, so attention work over $n$ generated tokens grows like $n^3$; with it, like $n^2$. The price is memory: $2 L T d$ values per sequence, about 4.3 GB at $L = 32$, $d = 4096$, $T = 8192$ in 16-bit floats.
+    probes:
+      - The cached and uncached outputs agree for the first 20 tokens and then diverge slightly. Bug or floating point?
+      - What changes in the cache for relative or rotary position encodings?
+      - How would you share the cache of a common prompt prefix across many requests?

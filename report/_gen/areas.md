@@ -1,7 +1,7 @@
 
 ### Programming and software engineering {#area-swe}
 
-Named in **97%** of postings. [Area page: checklist and 39 questions](../skills/swe.qmd).
+Named in **97%** of postings. [Area page: checklist and 41 questions](../skills/swe.qmd).
 
 | Skill | All postings | MLE | AI eng | Research eng | Employers naming it most |
 |:--|:--|--:|--:|--:|:--|
@@ -27,7 +27,7 @@ Named in **97%** of postings. [Area page: checklist and 39 questions](../skills/
 
 ### ML fundamentals and statistics {#area-mlfund}
 
-Named in **52%** of postings. [Area page: checklist and 40 questions](../skills/mlfund.qmd).
+Named in **52%** of postings. [Area page: checklist and 42 questions](../skills/mlfund.qmd).
 
 | Skill | All postings | MLE | AI eng | Research eng | Employers naming it most |
 |:--|:--|--:|--:|--:|:--|
@@ -47,7 +47,7 @@ Named in **52%** of postings. [Area page: checklist and 40 questions](../skills/
 
 ### Deep learning {#area-dl}
 
-Named in **52%** of postings. [Area page: checklist and 43 questions](../skills/dl.qmd).
+Named in **52%** of postings. [Area page: checklist and 48 questions](../skills/dl.qmd).
 
 | Skill | All postings | MLE | AI eng | Research eng | Employers naming it most |
 |:--|:--|--:|--:|--:|:--|
@@ -89,7 +89,7 @@ Named in **79%** of postings. [Area page: checklist and 43 questions](../skills/
 
 ### LLM application engineering (agents, RAG, prompts) {#area-llmapp}
 
-Named in **74%** of postings. [Area page: checklist and 45 questions](../skills/llmapp.qmd).
+Named in **74%** of postings. [Area page: checklist and 47 questions](../skills/llmapp.qmd).
 
 | Skill | All postings | MLE | AI eng | Research eng | Employers naming it most |
 |:--|:--|--:|--:|--:|:--|
@@ -112,7 +112,7 @@ Named in **74%** of postings. [Area page: checklist and 45 questions](../skills/
 
 ### Evaluation and experimentation {#area-eval}
 
-Named in **86%** of postings. [Area page: checklist and 36 questions](../skills/eval.qmd).
+Named in **86%** of postings. [Area page: checklist and 37 questions](../skills/eval.qmd).
 
 | Skill | All postings | MLE | AI eng | Research eng | Employers naming it most |
 |:--|:--|--:|--:|--:|:--|
@@ -130,7 +130,7 @@ Named in **86%** of postings. [Area page: checklist and 36 questions](../skills/
 
 ### Search, recommendation, ads and ranking {#area-recsys}
 
-Named in **55%** of postings. [Area page: checklist and 46 questions](../skills/recsys.qmd).
+Named in **55%** of postings. [Area page: checklist and 47 questions](../skills/recsys.qmd).
 
 | Skill | All postings | MLE | AI eng | Research eng | Employers naming it most |
 |:--|:--|--:|--:|--:|:--|
@@ -149,7 +149,7 @@ Named in **55%** of postings. [Area page: checklist and 46 questions](../skills/
 
 ### Training infrastructure and data systems {#area-infra}
 
-Named in **78%** of postings. [Area page: checklist and 35 questions](../skills/infra.qmd).
+Named in **78%** of postings. [Area page: checklist and 36 questions](../skills/infra.qmd).
 
 | Skill | All postings | MLE | AI eng | Research eng | Employers naming it most |
 |:--|:--|--:|--:|--:|:--|
@@ -169,7 +169,7 @@ Named in **78%** of postings. [Area page: checklist and 35 questions](../skills/
 
 ### Inference, serving and model optimization {#area-serving}
 
-Named in **79%** of postings. [Area page: checklist and 31 questions](../skills/serving.qmd).
+Named in **79%** of postings. [Area page: checklist and 33 questions](../skills/serving.qmd).
 
 | Skill | All postings | MLE | AI eng | Research eng | Employers naming it most |
 |:--|:--|--:|--:|--:|:--|
@@ -204,7 +204,7 @@ Named in **87%** of postings. [Area page: checklist and 31 questions](../skills/
 
 ### Reinforcement learning and decision making {#area-rl}
 
-Named in **20%** of postings. [Area page: checklist and 26 questions](../skills/rl.qmd).
+Named in **20%** of postings. [Area page: checklist and 27 questions](../skills/rl.qmd).
 
 | Skill | All postings | MLE | AI eng | Research eng | Employers naming it most |
 |:--|:--|--:|--:|--:|:--|
@@ -218,7 +218,7 @@ Named in **20%** of postings. [Area page: checklist and 26 questions](../skills/
 
 ### Domain specialties {#area-domain}
 
-Named in **54%** of postings. [Area page: checklist and 30 questions](../skills/domain.qmd).
+Named in **54%** of postings. [Area page: checklist and 31 questions](../skills/domain.qmd).
 
 | Skill | All postings | MLE | AI eng | Research eng | Employers naming it most |
 |:--|:--|--:|--:|--:|:--|
@@ -239,7 +239,7 @@ Named in **54%** of postings. [Area page: checklist and 30 questions](../skills/
 
 ### Research skills {#area-research}
 
-Named in **68%** of postings. [Area page: checklist and 34 questions](../skills/research.qmd).
+Named in **68%** of postings. [Area page: checklist and 35 questions](../skills/research.qmd).
 
 | Skill | All postings | MLE | AI eng | Research eng | Employers naming it most |
 |:--|:--|--:|--:|--:|:--|

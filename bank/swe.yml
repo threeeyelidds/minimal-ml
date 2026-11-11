@@ -1619,3 +1619,193 @@ cards:
     probes:
       - Lead time fell 30% and reverts doubled. What do you conclude and change?
       - How do you onboard a junior engineer in a team where agents write most first drafts?
+
+  - id: swe-040
+    skill: dsa
+    also: [python, swe-practice]
+    type: coding
+    level: core
+    tracks: [mle, ai, re]
+    q: >-
+      Implement an LRU cache with O(1) `get` and `put`. Then a staged follow-up, as in a timed assessment:
+      build an in-memory key-value store with fields, add a prefix scan, add per-field TTL where every call
+      carries a timestamp, and finally add backup and restore.
+    a: |
+      **LRU cache.** A hash map from key to node, plus a doubly linked list ordered by recency. The map gives O(1) lookup; the list gives O(1) move-to-front and O(1) eviction from the tail. Two sentinel nodes remove every empty-list branch.
+
+      ```python
+      class Node:
+          __slots__ = ("key", "val", "prev", "next")
+          def __init__(self, key=None, val=None):
+              self.key, self.val, self.prev, self.next = key, val, None, None
+
+      class LRUCache:
+          def __init__(self, capacity):
+              self.cap, self.map = capacity, {}
+              self.head, self.tail = Node(), Node()      # head.next is most recent
+              self.head.next, self.tail.prev = self.tail, self.head
+
+          def _unlink(self, n):
+              n.prev.next, n.next.prev = n.next, n.prev
+
+          def _push_front(self, n):
+              n.prev, n.next = self.head, self.head.next
+              self.head.next.prev = n
+              self.head.next = n
+
+          def get(self, key):
+              n = self.map.get(key)
+              if n is None:
+                  return None
+              self._unlink(n); self._push_front(n)
+              return n.val
+
+          def put(self, key, val):
+              n = self.map.get(key)
+              if n is not None:
+                  n.val = val
+                  self._unlink(n); self._push_front(n)
+                  return
+              if len(self.map) == self.cap:
+                  lru = self.tail.prev
+                  self._unlink(lru); del self.map[lru.key]
+              n = Node(key, val)
+              self.map[key] = n; self._push_front(n)
+      ```
+
+      Pitfalls: the node must store its key, or eviction cannot delete the map entry; updating an existing key must refresh recency and must not evict; `get` counts as a use. In Python, `collections.OrderedDict` with `move_to_end` and `popitem(last=False)` is the same structure. Say so, then write the list if asked.
+
+      **Staged store.** The stages are easy alone; the test is whether stage 1 survives stage 3. Put liveness in one helper, so TTL changes one function and not every method.
+
+      ```python
+      class DB:
+          """key -> field -> (value, expires_at or None)"""
+          def __init__(self):
+              self.data = {}
+
+          def _live(self, key, ts):
+              rec = self.data.get(key, {})
+              return {f: v for f, (v, exp) in rec.items() if exp is None or ts < exp}
+
+          def set(self, ts, key, field, value, ttl=None):
+              self.data.setdefault(key, {})[field] = (value, None if ttl is None else ts + ttl)
+
+          def get(self, ts, key, field):
+              return self._live(key, ts).get(field)
+
+          def delete(self, ts, key, field):
+              if field in self._live(key, ts):
+                  del self.data[key][field]
+                  return True
+              return False
+
+          def scan(self, ts, key, prefix=""):
+              return sorted((f, v) for f, v in self._live(key, ts).items() if f.startswith(prefix))
+
+          def backup(self, ts):          # store remaining lifetime, not absolute expiry
+              return {k: {f: (v, None if exp is None else exp - ts)
+                          for f, (v, exp) in rec.items() if exp is None or ts < exp}
+                      for k, rec in self.data.items()}
+
+          def restore(self, ts, snap):
+              self.data = {k: {f: (v, None if left is None else ts + left)
+                               for f, (v, left) in rec.items()}
+                           for k, rec in snap.items()}
+      ```
+
+      What graders check: the expiry boundary (here a field set at `ts` with `ttl` is live on `[ts, ts + ttl)`; read the statement for which side is closed), deleting an expired field returns false, scan order is specified, and a restore recomputes expiry from the remaining lifetime. Expiry here is lazy: dead fields stay in memory until overwritten, which is fine for a timed task and worth saying aloud.
+
+      In a timed assessment, pass each stage's tests before reading the next, and do not design for stages you have not seen beyond keeping storage access behind one or two helpers.
+    probes:
+      - Make the LRU cache safe for concurrent readers and writers. Where does a single lock hurt, and what do real caches do instead?
+      - The store now holds 10 million fields and most have expired. How do you reclaim memory without a full scan on every call?
+      - Change the eviction policy to LFU with O(1) operations. What extra structure do you need?
+
+  - id: swe-041
+    skill: dsa
+    also: [python]
+    type: coding
+    level: senior
+    tracks: [mle, re]
+    q: >-
+      A multi-part simulation question. A grid holds susceptible, infected and wall cells, and each step
+      every infected cell infects its four neighbours. Part 1: write one step. Part 2: how many steps until
+      nothing changes, and how many cells are never infected? Part 3: infected cells recover after k steps
+      and become immune. Part 4: infection succeeds with probability p per infected neighbour. Part 5: make
+      a step fast on a large grid.
+    a: |
+      The parts reuse one state representation, so choose it for the last part and not the first: integer codes per cell, and a step that **reads the old grid and writes a new one**. Updating in place is the classic bug: a cell infected in this step would infect its neighbours in the same step.
+
+      ```python
+      from collections import deque
+      import numpy as np
+
+      S, I, R, W = 0, 1, 2, 3          # susceptible, infected, recovered, wall
+      DIRS = ((1, 0), (-1, 0), (0, 1), (0, -1))
+
+      def step(grid, age=None, recover_after=None):
+          n, m = len(grid), len(grid[0])
+          new = [row[:] for row in grid]
+          new_age = [row[:] for row in age] if age is not None else None
+          for r in range(n):
+              for c in range(m):
+                  if grid[r][c] != I:
+                      continue
+                  for dr, dc in DIRS:
+                      rr, cc = r + dr, c + dc
+                      if 0 <= rr < n and 0 <= cc < m and grid[rr][cc] == S:
+                          new[rr][cc] = I
+                  if recover_after is not None:          # part 3
+                      new_age[r][c] += 1
+                      if new_age[r][c] >= recover_after:
+                          new[r][c] = R
+          return (new, new_age) if age is not None else new
+      ```
+
+      **Part 2** does not need the simulation. Without recovery, a cell is infected at the step equal to its shortest-path distance from the nearest infected cell, so one multi-source BFS gives the answer in O(nm) instead of O(nm) per step:
+
+      ```python
+      def time_to_saturate(grid):
+          n, m = len(grid), len(grid[0])
+          dist = [[-1] * m for _ in range(n)]
+          q = deque()
+          for r in range(n):
+              for c in range(m):
+                  if grid[r][c] == I:
+                      dist[r][c] = 0; q.append((r, c))
+          last = 0
+          while q:
+              r, c = q.popleft()
+              for dr, dc in DIRS:
+                  rr, cc = r + dr, c + dc
+                  if 0 <= rr < n and 0 <= cc < m and grid[rr][cc] == S and dist[rr][cc] < 0:
+                      dist[rr][cc] = last = dist[r][c] + 1
+                      q.append((rr, cc))
+          unreached = sum(grid[r][c] == S and dist[r][c] < 0
+                          for r in range(n) for c in range(m))
+          return last, unreached
+      ```
+
+      **Part 3** breaks that shortcut: with recovery the front can die out before it reaches a cell, so you simulate. State the order of events inside a step (here an infected cell infects, then ages, then may recover) because the tests depend on it.
+
+      **Parts 4 and 5.** A susceptible cell with $k$ infected neighbours is infected with probability $1 - (1-p)^k$. Count neighbours with four shifted slices instead of a Python loop:
+
+      ```python
+      def step_np(g, p=1.0, rng=None):
+          inf = (g == I)
+          k = np.zeros(g.shape, dtype=int)
+          k[1:, :] += inf[:-1, :]; k[:-1, :] += inf[1:, :]
+          k[:, 1:] += inf[:, :-1]; k[:, :-1] += inf[:, 1:]
+          hit = k > 0 if p >= 1.0 else rng.random(g.shape) < 1 - (1 - p) ** k
+          out = g.copy()
+          out[(g == S) & hit] = I
+          return out
+      ```
+
+      Slices do not wrap around, which `np.roll` would. Pass the random generator in, so a run is reproducible and a test can fix the seed.
+
+      **Testing as you go.** Check the deterministic vectorised step against the loop version on random small grids, check BFS against simulate-until-stable, and check the stochastic step by frequency: one cell between two infected cells with $p = 0.3$ should be infected in about 51% of trials.
+    probes:
+      - The grid is 100,000 by 100,000 and almost empty. What representation and what update loop do you use?
+      - With recovery and p < 1, how would you estimate the probability that the outbreak reaches a given cell, and how many runs do you need for a given error?
+      - Your vectorised step disagrees with the loop version on one random grid in a thousand. How do you find the bug?

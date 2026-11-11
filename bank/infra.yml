@@ -1894,3 +1894,44 @@ cards:
     probes:
       - How do you choose the ranges for domain randomisation?
       - Your policy succeeds in simulation and fails on hardware. What is your first measurement?
+
+  - id: infra-036
+    skill: dist-training
+    also: [gpu, hpc, math, dl-fundamentals]
+    type: derivation
+    level: senior
+    tracks: [re, mle]
+    q: >-
+      A matrix multiply Y = XW, with X of shape (B, d_in) and W of shape (d_in, d_out), is split across P
+      devices. Give the ways to shard it, the communication each needs in the forward and backward pass,
+      and a performance model: FLOPs, memory, network. Then apply it to a feed-forward block.
+    a: |
+      **Single device.** $2\,B\,d_\text{in}\,d_\text{out}$ FLOPs (a multiply and an add per term), $d_\text{in} d_\text{out}$ weights, and with upstream gradient $G = \partial L/\partial Y$: $\partial L/\partial W = X^\top G$ and $\partial L/\partial X = G W^\top$.
+
+      **Three ways to shard.**
+
+      | Shard | Each device holds | Forward communication | Backward communication |
+      |:--|:--|:--|:--|
+      | Batch rows | all of $W$, $B/P$ rows of $X$ | none | sum $X^\top G$ across devices: all-reduce of $d_\text{in} d_\text{out}$ values |
+      | Columns of $W$ (output dim) | $W[:, c_p]$, all of $X$ | none to compute; $Y$ is the concatenation of the parts | $\partial L/\partial W$ is local; $\partial L/\partial X = \sum_p G[:, c_p]\, W[:, c_p]^\top$: all-reduce of $B d_\text{in}$ values |
+      | Rows of $W$ (input dim) | $W[r_p, :]$, $X[:, r_p]$ | $Y = \sum_p X[:, r_p]\, W[r_p, :]$: all-reduce of $B d_\text{out}$ values | every device needs $G$; both gradients are then local |
+
+      Batch sharding replicates the weights, so it scales throughput and not model size. The other two split the weights, which is what you need when $W$ does not fit on one device. The pattern to remember: wherever the forward pass concatenates, the backward pass sums, and the reverse.
+
+      **Feed-forward block** ($d \to 4d \to d$). Shard the first matrix by columns and the second by rows, on the same partition of the hidden units. Each device computes its own slice of the hidden layer, applies the nonlinearity (elementwise, so local), and multiplies by its rows of the second matrix. The hidden activations never leave the device. The cost is **one all-reduce of $B d$ values** at the output, and one in the backward pass for the gradient with respect to the input.
+
+      **Performance model.**
+
+      - Compute time is FLOPs divided by the FLOP rate the device actually achieves.
+      - Communication time is bytes divided by link bandwidth, plus latency per message. A ring all-reduce moves about $2(P-1)/P$ times the tensor size per device.
+      - Memory per device is the weight shard, the activations kept for the backward pass, and communication buffers.
+
+      Worked example, with $d = 8192$, $B = 4096$ token positions, 16-bit floats, $P = 8$: each matrix has 268M weights, 537 MB. The block costs $4.4 \times 10^{12}$ FLOPs. At an assumed $10^{14}$ FLOP/s per device that is 44 ms on one device and 5.5 ms on eight. The all-reduce tensor is 67 MB; at an assumed 50 GB/s it takes about 2.3 ms. So communication is already 30% of the step, and it does not shrink as devices are added, while compute per device does. That ratio, not the FLOP count, sets the scaling limit.
+
+      **Roofline check.** Arithmetic intensity is FLOPs per byte moved through memory. For a large batch the weights are reused across rows, intensity is high and the multiply is compute-bound. For $B = 1$, each 2-byte weight is read once for 2 FLOPs: 1 FLOP per byte, which is bound by memory bandwidth, and more compute does not help. The attainable rate is $\min(\text{peak FLOP/s},\ \text{intensity} \times \text{memory bandwidth})$.
+
+      **What to verify.** The assumed rates: measure them. And the identities: split a small random example in NumPy and compare with the unsharded result.
+    probes:
+      - Communication is 30% of the step at eight devices. What are your options to reduce it?
+      - Which sharding would you choose when the batch is one long sequence, and why?
+      - How does the picture change when devices are in different machines and the link is ten times slower?

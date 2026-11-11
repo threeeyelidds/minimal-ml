@@ -1,6 +1,6 @@
 ---
 title: "Training infrastructure and data systems"
-subtitle: "Named in 78% of 2253 senior postings · 35 review cards"
+subtitle: "Named in 78% of 2253 senior postings · 36 review cards"
 toc: true
 toc-depth: 3
 ---
@@ -19,7 +19,7 @@ Share of postings that name each skill, overall and by track.
 | [Data pipelines and ETL (Spark, Beam, Airflow, Flink, Kafka)](#data-pipelines) | <span class="barwrap"><span class="bar " style="--w:39%"></span><span class="pct">39%</span></span> | 44% | 37% | 30% | 5 |
 | [GPU computing and accelerators](#gpu) | <span class="barwrap"><span class="bar " style="--w:28%"></span><span class="pct">28%</span></span> | 28% | 26% | 39% | 3 |
 | [Cluster scheduling and compute orchestration (Kubernetes, Slurm, Ray)](#cluster) | <span class="barwrap"><span class="bar " style="--w:26%"></span><span class="pct">26%</span></span> | 22% | 31% | 20% | 3 |
-| [Distributed / large-scale training](#dist-training) | <span class="barwrap"><span class="bar " style="--w:16%"></span><span class="pct">16%</span></span> | 21% | 7% | 36% | 5 |
+| [Distributed / large-scale training](#dist-training) | <span class="barwrap"><span class="bar " style="--w:16%"></span><span class="pct">16%</span></span> | 21% | 7% | 36% | 6 |
 | [Simulation, sandboxes and RL environments](#rl-envs) | <span class="barwrap"><span class="bar " style="--w:16%"></span><span class="pct">16%</span></span> | 16% | 12% | 28% | 3 |
 | [ML platforms and experiment tracking (MLflow, W&B, SageMaker)](#exp-tracking) | <span class="barwrap"><span class="bar " style="--w:16%"></span><span class="pct">16%</span></span> | 22% | 12% | 7% | 3 |
 | [Dataset engineering at scale (loaders, sharding, petabyte data)](#dataloading) | <span class="barwrap"><span class="bar " style="--w:12%"></span><span class="pct">12%</span></span> | 16% | 9% | 13% | 3 |
@@ -877,6 +877,54 @@ $\tau^* \approx 22$ minutes and waste about 18%, before restart time.
 
 - How does the answer change if a failed node can be replaced without restarting the whole job?
 - What would you measure in production to set these parameters?
+
+</details>
+
+<details class="qa" id="infra-036">
+<summary><span class="tag tag-senior">senior</span><span class="tag tag-type">derivation</span><span class="tag tag-track">RE</span> <span class="tag tag-track">MLE</span><span class="tag tag-rep" title="A third-party site lists a question on this topic as asked in an interview">asked at OpenAI, Anthropic, Google</span> A matrix multiply Y = XW, with X of shape (B, d_in) and W of shape (d_in, d_out), is split across P devices. Give the ways to shard it, the communication each needs in the forward and backward pass, and a performance model: FLOPs, memory, network. Then apply it to a feed-forward block.</summary>
+
+**Single device.** $2\,B\,d_\text{in}\,d_\text{out}$ FLOPs (a multiply and an add per term), $d_\text{in} d_\text{out}$ weights, and with upstream gradient $G = \partial L/\partial Y$: $\partial L/\partial W = X^\top G$ and $\partial L/\partial X = G W^\top$.
+
+**Three ways to shard.**
+
+| Shard | Each device holds | Forward communication | Backward communication |
+|:--|:--|:--|:--|
+| Batch rows | all of $W$, $B/P$ rows of $X$ | none | sum $X^\top G$ across devices: all-reduce of $d_\text{in} d_\text{out}$ values |
+| Columns of $W$ (output dim) | $W[:, c_p]$, all of $X$ | none to compute; $Y$ is the concatenation of the parts | $\partial L/\partial W$ is local; $\partial L/\partial X = \sum_p G[:, c_p]\, W[:, c_p]^\top$: all-reduce of $B d_\text{in}$ values |
+| Rows of $W$ (input dim) | $W[r_p, :]$, $X[:, r_p]$ | $Y = \sum_p X[:, r_p]\, W[r_p, :]$: all-reduce of $B d_\text{out}$ values | every device needs $G$; both gradients are then local |
+
+Batch sharding replicates the weights, so it scales throughput and not model size. The other two split the weights, which is what you need when $W$ does not fit on one device. The pattern to remember: wherever the forward pass concatenates, the backward pass sums, and the reverse.
+
+**Feed-forward block** ($d \to 4d \to d$). Shard the first matrix by columns and the second by rows, on the same partition of the hidden units. Each device computes its own slice of the hidden layer, applies the nonlinearity (elementwise, so local), and multiplies by its rows of the second matrix. The hidden activations never leave the device. The cost is **one all-reduce of $B d$ values** at the output, and one in the backward pass for the gradient with respect to the input.
+
+**Performance model.**
+
+- Compute time is FLOPs divided by the FLOP rate the device actually achieves.
+- Communication time is bytes divided by link bandwidth, plus latency per message. A ring all-reduce moves about $2(P-1)/P$ times the tensor size per device.
+- Memory per device is the weight shard, the activations kept for the backward pass, and communication buffers.
+
+Worked example, with $d = 8192$, $B = 4096$ token positions, 16-bit floats, $P = 8$: each matrix has 268M weights, 537 MB. The block costs $4.4 \times 10^{12}$ FLOPs. At an assumed $10^{14}$ FLOP/s per device that is 44 ms on one device and 5.5 ms on eight. The all-reduce tensor is 67 MB; at an assumed 50 GB/s it takes about 2.3 ms. So communication is already 30% of the step, and it does not shrink as devices are added, while compute per device does. That ratio, not the FLOP count, sets the scaling limit.
+
+**Roofline check.** Arithmetic intensity is FLOPs per byte moved through memory. For a large batch the weights are reused across rows, intensity is high and the multiply is compute-bound. For $B = 1$, each 2-byte weight is read once for 2 FLOPs: 1 FLOP per byte, which is bound by memory bandwidth, and more compute does not help. The attainable rate is $\min(\text{peak FLOP/s},\ \text{intensity} \times \text{memory bandwidth})$.
+
+**What to verify.** The assumed rates: measure them. And the identities: split a small random example in NumPy and compare with the unsharded result.
+
+**Follow-ups**
+
+- Communication is 30% of the step at eight devices. What are your options to reduce it?
+- Which sharding would you choose when the batch is one long sequence, and why?
+- How does the picture change when devices are in different machines and the link is ten times slower?
+
+<div class="reported">
+
+**Reported in interviews** (candidate reports on third-party sites, not verified)
+
+- OpenAI, Machine Learning Engineer, Apr 2026: Sharded matrix multiplication and its backpropagation ([PracHub](https://prachub.com/interview-questions/derive-sharded-matrix-multiplication-and-backpropagation))
+- Anthropic, Software Engineer, Sep 2026: Performance model of a sharded matrix multiply: FLOPs, memory, network ([PracHub](https://prachub.com/interview-questions/performance-model-a-sharded-matrix-multiply-flops-memory-network-and-roofline))
+- Anthropic, Software Engineer, Mar 2026: Estimate feed-forward layer compute, memory and sharding communication ([PracHub](https://prachub.com/interview-questions/estimate-ffn-compute-memory-and-sharding-communication))
+- Google, Machine Learning Engineer, Sep 2025: Multi-GPU matrix multiplication ([PracHub](https://prachub.com/interview-questions/design-multi-gpu-matrix-multiplication))
+
+</div>
 
 </details>
 
